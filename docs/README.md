@@ -21,6 +21,7 @@ index below.
 |---|---|
 | [architecture.md](architecture.md) | Runtime shape, routing, data flow, module boundaries, phases |
 | [usage.md](usage.md) | Install, run, test, verify, deploy, and the day-to-day workflows |
+| [travel-content-api.md](travel-content-api.md) | Travel Content System API contract — endpoints, conventions, error codes, invariants |
 
 ## Features
 
