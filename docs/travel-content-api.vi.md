@@ -54,6 +54,7 @@ sai, không phải là một secret yếu.
 |---|---|---|
 | `bad_request` | 400 | Body không phải JSON hợp lệ |
 | `unauthorized` | 401 | Thiếu bearer token hoặc token sai |
+| `payload_too_large` | 413 | Body vượt 256 KiB — bị từ chối trước khi được parse |
 | `not_found` | 404 | Không có bản ghi nào — cũng là thứ mà một bản ghi chưa xuất bản trả về khi gọi công khai |
 | `slug_conflict` | 409 | Slug hoặc id đã bị dùng |
 | `invalid_state` | 409 | Bị một quy tắc vòng đời từ chối (xem *Các bất biến*) |
@@ -62,6 +63,12 @@ sai, không phải là một secret yếu.
 | `admin_auth_unconfigured` | 503 | `ADMIN_API_TOKEN` chưa đặt hoặc quá ngắn |
 
 Các vấn đề về tham chiếu được báo **một lần tất cả**, không phải mỗi lượt gọi một lỗi.
+
+Body của request bị giới hạn ở **256 KiB** cho mọi endpoint ghi, kể cả Planner.
+`Content-Length` được kiểm trước, nhưng đó chỉ là lời khai, nên body còn được đo
+ngay khi đang truyền tới và kết nối bị cắt ngay khi vượt ngưỡng. Giới hạn được áp
+*trước khi* payload được parse hay validate — đó mới là thứ ngăn một collection
+quá lớn chạm tới bộ validate.
 
 ## Endpoint công khai
 

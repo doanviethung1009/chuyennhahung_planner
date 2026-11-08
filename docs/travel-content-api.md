@@ -54,6 +54,7 @@ as a misconfiguration, not a weak secret.
 |---|---|---|
 | `bad_request` | 400 | Body is not valid JSON |
 | `unauthorized` | 401 | Missing or wrong bearer token |
+| `payload_too_large` | 413 | Body exceeds 256 KiB — refused before it is parsed |
 | `not_found` | 404 | No such record — also what an unpublished record returns publicly |
 | `slug_conflict` | 409 | Slug or id already taken |
 | `invalid_state` | 409 | Refused by a lifecycle rule (see *Invariants*) |
@@ -62,6 +63,12 @@ as a misconfiguration, not a weak secret.
 | `admin_auth_unconfigured` | 503 | `ADMIN_API_TOKEN` unset or too short |
 
 Reference problems are reported **all at once**, not one per round trip.
+
+A request body is capped at **256 KiB** for every mutating endpoint, the Planner
+included. `Content-Length` is checked first, but it is only a claim, so the body
+is also measured as it streams in and the connection is cut the moment it goes
+over. The limit is enforced *before* the payload is parsed or validated, which
+is what keeps an oversized collection from reaching the validator at all.
 
 ## Public endpoints
 
