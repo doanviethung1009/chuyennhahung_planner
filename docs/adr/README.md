@@ -19,6 +19,10 @@ Write the decision first, then draw it if a picture helps — as a Mermaid block
 inside the ADR itself, in both language twins. A diagram visualizes a decision;
 it does not make one.
 
+The decisions the site already rests on — and did not need a record of their own — are
+described in [../architecture.md](../architecture.md); anything that *changes* one needs an
+ADR here.
+
 | ADR | Decision | Status |
 |---|---|---|
-| — | No ADRs recorded yet. The decisions the site already rests on are described in [../architecture.md](../architecture.md); anything that *changes* one needs a record here. | — |
+| [0001](0001-travel-content-system.md) | Travel Content System: typed entities behind a store interface, no database yet, `zod` validation, fail-closed admin auth | Accepted |

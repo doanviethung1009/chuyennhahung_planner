@@ -1,5 +1,7 @@
 # ADR 0001 — Travel Content System: entities, persistence and admin surface
 
+🇻🇳 Bản tiếng Việt: [0001-travel-content-system.vi.md](0001-travel-content-system.vi.md)
+
 - **Status**: Accepted
 - **Date**: 2026-11-08
 - **Deciders**: owner (persistence + validation choices), system-architect (contract)
