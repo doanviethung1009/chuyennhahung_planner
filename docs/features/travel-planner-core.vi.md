@@ -52,6 +52,7 @@ route này cấp tài khoản người đi chơi và **không đọc hay sửa �
 | `POST` | `/api/admin/planner/users` | Tạo một người đi chơi, trả token của họ **một lần** |
 | `POST` | `/api/admin/planner/users/:userId/rotate-token` | Cấp token mới, vô hiệu token cũ |
 | `DELETE` | `/api/admin/planner/users/:userId` | Xoá một người đi chơi không sở hữu trip nào |
+| `GET` | `/api/admin/planner/integrity` | Quét tham chiếu và cấu trúc. Chỉ báo định danh, không bao giờ báo nội dung trip |
 
 Mã lỗi theo đúng envelope của Travel Content System
 ([travel-content-api.vi.md](../travel-content-api.vi.md)), cộng thêm hai mã cho
@@ -164,7 +165,8 @@ thành chuỗi.
 | [`src/server/planner/http.ts`](../../src/server/planner/http.ts) | Lớp bọc route, `ETag`/`If-Match`, envelope response |
 | [`src/server/planner/instance.ts`](../../src/server/planner/instance.ts) | Repository dùng chung cho cả process |
 | [`src/app/api/planner/**`](../../src/app/api/planner) | Route handler cho người đi chơi |
-| [`src/app/api/admin/planner/users/**`](../../src/app/api/admin/planner/users) | Route handler cho người vận hành |
+| [`src/app/api/admin/planner/users/**`](../../src/app/api/admin/planner/users) | Route handler cho người vận hành — cấp tài khoản |
+| [`src/app/api/admin/planner/integrity/route.ts`](../../src/app/api/admin/planner/integrity/route.ts) | Route handler cho người vận hành — hàm quét toàn vẹn |
 
 `src/server/content/errors.ts` được thêm hai mã chung của HTTP
 (`precondition_required`, `version_conflict`), và `src/server/content/store.ts`
@@ -173,14 +175,15 @@ signature đã export.
 
 ## Test
 
-65 test trong bốn file, tất cả đều xanh.
+87 test trong năm file, tất cả đều xanh.
 
 | File | Thực sự khẳng định điều gì |
 |---|---|
 | [`planner-repository.test.ts`](../../tests/planner-repository.test.ts) | Sinh ngày và gán ngày tháng; activity từ catalog so với activity tự tạo cùng tiêu đề/phân loại được suy ra; vị trí chèn; quy tắc hoán vị khi đổi thứ tự; di chuyển giữa các ngày kéo theo khoản chi liên kết; lưu trữ/khôi phục/xoá hẳn; kéo dài một trip và việc từ chối rút ngắn qua một ngày không rỗng; quy tắc tham chiếu giữa khoản chi, ngày và activity; xoay vòng token làm token cũ vô hiệu; và truy cập chéo chủ sở hữu trả `not_found` ở mọi verb trong khi trip của chủ vẫn nguyên vẹn |
 | [`planner-budget.test.ts`](../../tests/planner-budget.test.ts) | `per_person` được nhân đúng một lần và nhân lại khi số người đổi; dự toán và thực tế không bao giờ bị cộng lại; một activity đã quyết toán bị loại khỏi số dự phóng; một khoản chi 0₫ vẫn quyết toán; tách theo phân loại, theo ngày và ở mức cả trip; và ranh giới tiền — đầu vào `bigint`, chuỗi chữ số và số, từ chối giá trị mà một double không giữ chính xác được, `jsonSafe` trên `bigint` lồng nhau, và phép tính có kiểm tra tràn |
 | [`planner-acceptance.test.ts`](../../tests/planner-acceptance.test.ts) | Kịch bản demo từ đầu đến cuối (Đà Lạt, 3 ngày 2 đêm, 2 người, 5.000.000₫, lãng mạn); clone template `da-lat-3-ngay-lang-man` **seed thật**; bằng chứng template giống nguyên vẹn từng byte sau khi bản clone bị di chuyển, xoá bớt và đổi giá; và một lần reload qua file JSON thật, nơi một repository mới thấy đủ mọi dòng |
-| [`planner-api.test.ts`](../../tests/planner-api.test.ts) | Chính các route handler thật: các đường 401, admin token rõ ràng không đọc được trip nào, 422 kèm đường dẫn field, toàn bộ luồng activity→đổi thứ tự→khoản chi→ngân sách, 428 khi thiếu `If-Match`, 412 khi version lạc hậu, 400 khi nó sai dạng, 404 cô lập theo từng verb, và trình tự lưu trữ/khôi phục/xoá hẳn |
+| [`planner-api.test.ts`](../../tests/planner-api.test.ts) | Chính các route handler thật: các đường 401, admin token rõ ràng không đọc được trip nào, 422 kèm đường dẫn field, toàn bộ luồng activity→đổi thứ tự→khoản chi→ngân sách, 428 khi thiếu `If-Match`, 412 khi version lạc hậu, 400 khi nó sai dạng, 404 cô lập theo từng verb, trình tự lưu trữ/khôi phục/xoá hẳn, và hàm quét chỉ dành cho người vận hành |
+| [`planner-integrity.test.ts`](../../tests/planner-integrity.test.ts) | Mỗi test phá một invariant, bằng cách ghi trực tiếp vào store để đi vòng qua repository đúng như một lần sửa tay sẽ làm: chủ sở hữu và destination không tồn tại, `endDate` sai, trạng thái lưu trữ lệch với `archivedAt`, thiếu một ngày và lỗ trong cách đánh số, một ngày lệch khỏi lịch của trip, lỗ và trùng trong `order`, một place đã bị rút, các dòng thuộc về trip khác, dòng mồ côi ở cả ba collection con, một khoản chi có ngày trái với activity của nó, trùng id và trùng handle, digest token sai dạng — cộng một test khẳng định hàm quét không để lộ tiêu đề, nhãn, ghi chú hay số tiền, và một test khẳng định template bị sửa hay bị rút được báo là lạc hậu chứ không phải hỏng |
 
 Cố ý không test: giới hạn tần suất (hiện chưa có), và tranh chấp ghi giữa nhiều
 process — JSON store không chịu được điều đó và test sẽ chỉ khẳng định một hạn
@@ -200,9 +203,11 @@ chế đã biết chứ không phải một hành vi.
   từng người đi chơi bằng tay qua API admin, và một token bị mất thì chỉ xoay vòng
   được chứ không lấy lại được. Một session hay nhà cung cấp danh tính thật cần ADR
   riêng.
-- **Chưa có hàm quét toàn vẹn cho Planner.** Hệ nội dung có `validateIntegrity()`;
-  Planner thì chưa, nên một file `planner.json` bị sửa tay vẫn có thể tạo ra tham
-  chiếu treo. Đây là khoảng trống rõ nhất còn lại.
+- **Hàm quét toàn vẹn phát hiện, chứ không tự sửa.** `GET
+  /api/admin/planner/integrity` nêu tên mọi invariant bị phá mà nó tìm được, còn
+  việc sửa vẫn là một lần chỉnh tay hoặc một thay đổi tiếp theo. Cũng không có gì
+  chạy nó theo lịch — nó chạy khi được gọi, nên một lần hỏng do sửa tay sẽ nằm im
+  cho tới khi có người hỏi tới.
 - **Chưa có giao diện.** Trang Planner ở `/thiet-ke-chuyen-di` vẫn là trang nội
   dung chỉ có liên hệ, như mô tả trong
   [plan-your-trip.vi.md](plan-your-trip.vi.md). Nối nó vào API là việc của

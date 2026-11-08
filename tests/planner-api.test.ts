@@ -26,6 +26,7 @@ let routes: {
   adminUsers: typeof import('../src/app/api/admin/planner/users/route');
   adminUser: typeof import('../src/app/api/admin/planner/users/[userId]/route');
   adminRotate: typeof import('../src/app/api/admin/planner/users/[userId]/rotate-token/route');
+  adminIntegrity: typeof import('../src/app/api/admin/planner/integrity/route');
 };
 
 interface RequestOptions {
@@ -100,6 +101,7 @@ beforeAll(async () => {
     adminRotate: await import(
       '../src/app/api/admin/planner/users/[userId]/rotate-token/route'
     ),
+    adminIntegrity: await import('../src/app/api/admin/planner/integrity/route'),
   };
 });
 
@@ -531,5 +533,23 @@ describe('provisioning', () => {
       }),
     );
     expect(again.status).toBe(409);
+  });
+});
+
+describe('integrity sweep', () => {
+  it('is operator-only and reports a clean document as ok', async () => {
+    const token = await provision('integrity-flow');
+    await routes.trips.POST(req('POST', { token, body: tripBody() }));
+
+    // A traveller token is not an operator token, even for a read-only sweep.
+    expect((await routes.adminIntegrity.GET(req('GET', { token }))).status).toBe(401);
+    expect((await routes.adminIntegrity.GET(req('GET'))).status).toBe(401);
+
+    const response = await routes.adminIntegrity.GET(req('GET', { token: ADMIN_TOKEN }));
+    expect(response.status).toBe(200);
+    const body = await json(response);
+    // Earlier tests in this file left trips behind in the same store; they were
+    // all written through the repository, so the sweep must find nothing.
+    expect(body).toEqual({ ok: true, issues: [] });
   });
 });

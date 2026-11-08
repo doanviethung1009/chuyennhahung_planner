@@ -197,11 +197,15 @@ tranh nhau. Mô hình danh tính là tạm thời và không có tự đăng ký
 khẩu hay hết hạn session; người vận hành cấp tài khoản cho từng người bằng tay.
 Không có ràng buộc toàn vẹn nào bên dưới repository, nên một file JSON bị sửa tay
 vẫn có thể tạo ra tham chiếu treo — Planner chưa có hàm quét `validateIntegrity()`
-riêng, và đó là khoảng trống rõ nhất còn lại.
+riêng, và đó là khoảng trống rõ nhất còn lại. *(Bổ chính 09/11/2026: hàm quét đó
+đã được thêm ngay sau đó, dưới dạng `GET /api/admin/planner/integrity`. Nó phát
+hiện và báo cáo; nó không tự sửa, và không có gì chạy nó theo lịch. Xem
+[features/travel-planner-core.vi.md](../features/travel-planner-core.vi.md).)*
 
 **Việc tiếp theo, mỗi việc cần ADR hoặc phase riêng.** Một session hoặc nhà cung
 cấp danh tính thật; chọn engine SQL và viết migration đầu tiên; một hàm quét toàn
-vẹn cho Planner; giao diện Planner, thuộc frontend và chưa bắt đầu; gợi ý map và
+vẹn cho Planner (đã xong — xem phần bổ chính ở trên); giao diện Planner, thuộc
+frontend và chưa bắt đầu; gợi ý map và
 AI, vốn đã được đề bài hoãn lại.
 
 ## Hình dạng SQL mà cấu trúc này sẽ thành

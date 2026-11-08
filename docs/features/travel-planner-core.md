@@ -51,6 +51,7 @@ travellers and **cannot read or edit any trip**.
 | `POST` | `/api/admin/planner/users` | Creates a traveller, returns their token **once** |
 | `POST` | `/api/admin/planner/users/:userId/rotate-token` | Issues a new token, kills the old one |
 | `DELETE` | `/api/admin/planner/users/:userId` | Removes a traveller who owns no trips |
+| `GET` | `/api/admin/planner/integrity` | Referential and structural sweep. Reports identifiers only, never trip content |
 
 Error codes follow the Travel Content System's envelope
 ([travel-content-api.md](../travel-content-api.md)), plus two added for this
@@ -160,7 +161,8 @@ a raw `bigint` can neither throw nor silently become a string.
 | [`src/server/planner/http.ts`](../../src/server/planner/http.ts) | Route wrappers, `ETag`/`If-Match`, response envelope |
 | [`src/server/planner/instance.ts`](../../src/server/planner/instance.ts) | The process-wide repository |
 | [`src/app/api/planner/**`](../../src/app/api/planner) | Traveller route handlers |
-| [`src/app/api/admin/planner/users/**`](../../src/app/api/admin/planner/users) | Operator route handlers |
+| [`src/app/api/admin/planner/users/**`](../../src/app/api/admin/planner/users) | Operator route handlers — provisioning |
+| [`src/app/api/admin/planner/integrity/route.ts`](../../src/app/api/admin/planner/integrity/route.ts) | Operator route handler — the integrity sweep |
 
 `src/server/content/errors.ts` gained two HTTP-generic codes
 (`precondition_required`, `version_conflict`), and `src/server/content/store.ts`
@@ -169,14 +171,15 @@ signatures unchanged.
 
 ## Tests
 
-65 tests across four files, all green.
+87 tests across five files, all green.
 
 | File | What it actually asserts |
 |---|---|
 | [`planner-repository.test.ts`](../../tests/planner-repository.test.ts) | Day generation and dating; catalog vs self-made activities and the inferred title/category; insert position; reorder permutation rules; cross-day moves carrying a linked expense; archive/restore/purge; growing a trip and the refusal to shorten over a non-empty day; expense/day/activity reference rules; token rotation invalidating the old token; and cross-owner access answering `not_found` on every verb while leaving the owner's trip untouched |
 | [`planner-budget.test.ts`](../../tests/planner-budget.test.ts) | `per_person` scaled once and re-scaled when the party changes; estimate and actual never summed; a settled activity dropped from the projection; a 0₫ expense still settling; by-category, by-day and trip-level splits; and the money boundary — `bigint`, digit-string and number inputs, refusal of values a double cannot hold exactly, `jsonSafe` over a nested `bigint`, and overflow-checked arithmetic |
 | [`planner-acceptance.test.ts`](../../tests/planner-acceptance.test.ts) | The demo scenario end to end (Đà Lạt, 3 ngày 2 đêm, 2 người, 5.000.000₫, lãng mạn); cloning the **real seeded** `da-lat-3-ngay-lang-man` template; proof the template is byte-identical after the clone is moved, deleted from and repriced; and a reload through a real JSON file where a fresh repository sees every row |
-| [`planner-api.test.ts`](../../tests/planner-api.test.ts) | The real route handlers: 401 paths, the admin token explicitly unable to read any trip, 422 with field paths, the full activity→reorder→expense→budget flow, 428 without `If-Match`, 412 on a stale version, 400 on a malformed one, 404 isolation per verb, and the archive/restore/purge sequence |
+| [`planner-api.test.ts`](../../tests/planner-api.test.ts) | The real route handlers: 401 paths, the admin token explicitly unable to read any trip, 422 with field paths, the full activity→reorder→expense→budget flow, 428 without `If-Match`, 412 on a stale version, 400 on a malformed one, 404 isolation per verb, the archive/restore/purge sequence, and the sweep being operator-only |
+| [`planner-integrity.test.ts`](../../tests/planner-integrity.test.ts) | One broken invariant per test, applied by writing straight to the store so the repository is bypassed exactly as a hand edit would bypass it: unknown owner and destination, a wrong `endDate`, archived/`archivedAt` disagreement, a missing day and a numbering gap, a day dated off the trip calendar, an order gap and a duplicated order, a withdrawn place, rows homed to another trip, orphans in all three child collections, an expense whose day contradicts its activity, duplicate ids and handles, a malformed token digest — plus a test asserting the sweep leaks no title, label, note or amount, and one asserting an edited or withdrawn template is reported as staleness rather than damage |
 
 Deliberately untested: rate limiting (there is none yet), and multi-process write
 contention — the JSON store cannot survive it and the tests would be asserting a
@@ -195,9 +198,11 @@ known limitation rather than a behaviour.
   expiry, no rate limiting on token attempts. An operator provisions every
   traveller by hand through the admin API, and a lost token can only be rotated,
   not recovered. A real session or identity provider needs its own ADR.
-- **No Planner integrity sweep.** The content system has `validateIntegrity()`;
-  the Planner does not, so a hand-edited `planner.json` can still produce a
-  dangling reference. This is the most obvious gap left.
+- **The integrity sweep detects, it does not repair.** `GET
+  /api/admin/planner/integrity` names every broken invariant it finds, and fixing
+  one is still a manual edit or a follow-up change. Nothing runs it on a
+  schedule either — it is on demand, so a corruption introduced by a hand edit
+  sits undetected until somebody asks.
 - **No UI.** The Planner page at `/thiet-ke-chuyen-di` is still the contact-only
   content page described in [plan-your-trip.md](plan-your-trip.md). Wiring it up
   is frontend-owned work and has not started.
