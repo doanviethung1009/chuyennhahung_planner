@@ -1,0 +1,17 @@
+# Task Contract: <ID> <title>
+- Class: S | M | L | XL
+- Desired outcome / user impact:
+- Scope IN / OUT:
+- Evidence (existing files, APIs, models):
+- Constraints / dependencies:
+- Architecture decision / ADR (if needed):
+- Interface contract (API, types, DB):
+- Tasks by owner: Architect / FE / BE / QC / Security / Git
+- File ownership (avoid parallel overlap):
+- Acceptance criteria / tests:
+- Security and migration risks:
+- Rollback approach:
+- Budget: max agent invocations; stop condition:
+- State: DESIGNED | IN_PROGRESS | REVIEW | BLOCKED | READY
+- Feature document owner (`docs/features/<slug>.md` + `.vi.md`, CLAUDE.md rules 11–12):
+- Architecture/usage doc updates needed (`docs/architecture.*`, `docs/usage.*`, rule 10):
