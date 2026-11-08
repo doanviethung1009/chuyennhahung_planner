@@ -1,5 +1,7 @@
 # Travel Content System — API reference
 
+🇻🇳 Bản tiếng Việt: [travel-content-api.vi.md](travel-content-api.vi.md)
+
 Five modules: **Travel Stories**, **Travel Places**, **Destination
 Collections**, **Travel Reviews** and reusable **Travel Templates**.
 Design rationale and the entity boundaries are in
