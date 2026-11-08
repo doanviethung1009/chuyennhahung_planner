@@ -7,6 +7,7 @@ import {
   slugConflict,
   versionConflict,
 } from '@/server/content/errors';
+import type { IntegrityIssue } from '@/server/content/repository';
 import type { CostCategory, PlaceCategory } from '@/server/content/schemas';
 import { authorizePlannerUser, hashAccessToken, issueAccessToken, type PlannerIdentity } from './auth';
 import { computeTripBudget, type TripBudgetSummary } from './budget';
@@ -1027,6 +1028,236 @@ export class PlannerRepository {
     data.trips[index] = next;
     return next;
   }
+
+  // -------------------------------------------------------------------------
+  // Integrity sweep — catches a hand-edited JSON file
+  // -------------------------------------------------------------------------
+
+  /**
+   * Referential and structural sweep over the whole Planner document.
+   *
+   * The JSON store enforces no foreign keys and no unique constraints, so every
+   * invariant this repository maintains on write can still be broken by editing
+   * `planner.json` by hand, or by a bug in an earlier version of this code. The
+   * content system answers that with `validateIntegrity()`; this is the Planner's
+   * equivalent, and it checks the things the write paths guarantee: owners exist,
+   * days are 1..n and dated from the trip, activity order has no gaps, an
+   * expense agrees with the activity it is attached to, and nothing is orphaned.
+   *
+   * **It reports identifiers only — never trip content.** No title, label, note
+   * or amount appears in an issue, because this endpoint is reached with the
+   * operator's `ADMIN_API_TOKEN`, which deliberately cannot read a trip
+   * (ADR 0002 §3). An operator learns that trip `trip_7` has a numbering gap,
+   * not where its owner is going or what they spent.
+   */
+  async validateIntegrity(): Promise<IntegrityIssue[]> {
+    const data = await this.snapshot();
+    const issues: IntegrityIssue[] = [];
+    const report = (entity: string, id: string, issue: string) =>
+      issues.push({ entity, id, issue });
+
+    // --- indexes, built once -------------------------------------------------
+    const userIds = new Set(data.users.map((user) => user.id));
+    const tripById = new Map(data.trips.map((trip) => [trip.id, trip]));
+    const dayById = new Map(data.tripDays.map((day) => [day.id, day]));
+    const activityById = new Map(
+      data.tripActivities.map((activity) => [activity.id, activity]),
+    );
+
+    reportDuplicates('planner user', data.users, (user) => user.id, report);
+    reportDuplicates('planner user', data.users, (user) => user.handle, report, 'handle');
+    reportDuplicates('trip', data.trips, (trip) => trip.id, report);
+    reportDuplicates('trip day', data.tripDays, (day) => day.id, report);
+    reportDuplicates('trip activity', data.tripActivities, (a) => a.id, report);
+    reportDuplicates('trip expense', data.tripExpenses, (e) => e.id, report);
+
+    // --- users ---------------------------------------------------------------
+    for (const user of data.users) {
+      if (!/^[0-9a-f]{64}$/.test(user.tokenHash)) {
+        // Reported as a shape problem; the value itself is never echoed.
+        report('planner user', user.id, 'tokenHash is not a 64-character SHA-256 digest');
+      }
+    }
+
+    // --- trips ---------------------------------------------------------------
+    for (const trip of data.trips) {
+      if (!userIds.has(trip.ownerId)) {
+        report('trip', trip.id, `unknown owner "${trip.ownerId}"`);
+      }
+      if (!this.catalog.hasDestination(trip.destinationSlug)) {
+        report('trip', trip.id, `unknown destination "${trip.destinationSlug}"`);
+      }
+      if (trip.version < 1) {
+        report('trip', trip.id, `version ${trip.version} is below 1`);
+      }
+
+      const expectedEnd =
+        trip.startDate === null ? null : addDays(trip.startDate, trip.durationDays - 1);
+      if (trip.endDate !== expectedEnd) {
+        report(
+          'trip',
+          trip.id,
+          `endDate ${describe(trip.endDate)} disagrees with startDate ${describe(trip.startDate)} + ${trip.durationDays} day(s)`,
+        );
+      }
+
+      if (trip.status === 'archived' && trip.archivedAt === null) {
+        report('trip', trip.id, 'archived with no archivedAt');
+      }
+      if (trip.status === 'active' && trip.archivedAt !== null) {
+        report('trip', trip.id, 'active but still carries an archivedAt');
+      }
+
+      const days = data.tripDays
+        .filter((day) => day.tripId === trip.id)
+        .sort((a, b) => a.dayNumber - b.dayNumber);
+      if (days.length !== trip.durationDays) {
+        report(
+          'trip',
+          trip.id,
+          `has ${days.length} day row(s) but durationDays is ${trip.durationDays}`,
+        );
+      }
+      const numbering = days.map((day) => day.dayNumber).join(',');
+      const expected = Array.from({ length: days.length }, (_unused, i) => i + 1).join(',');
+      if (numbering !== expected) {
+        report('trip', trip.id, 'days are not numbered 1..n');
+      }
+
+      // The clone is independent by design, so a withdrawn or edited template is
+      // information rather than corruption — the same line the content system
+      // takes on a template whose source story was deleted.
+      if (trip.sourceTemplate) {
+        const template = await this.catalog.getApprovedTemplate(
+          trip.sourceTemplate.templateSlug,
+        );
+        if (!template) {
+          report(
+            'trip',
+            trip.id,
+            `source template "${trip.sourceTemplate.templateSlug}" is no longer approved (snapshot retained)`,
+          );
+        } else if (template.version > trip.sourceTemplate.templateVersion) {
+          report(
+            'trip',
+            trip.id,
+            `source template "${trip.sourceTemplate.templateSlug}" has moved on: cloned at version ${trip.sourceTemplate.templateVersion}, now ${template.version} (snapshot retained)`,
+          );
+        }
+      }
+    }
+
+    // --- days ----------------------------------------------------------------
+    for (const day of data.tripDays) {
+      const trip = tripById.get(day.tripId);
+      if (!trip) {
+        report('trip day', day.id, `orphan: unknown trip "${day.tripId}"`);
+        continue;
+      }
+      if (day.dayNumber > trip.durationDays) {
+        report(
+          'trip day',
+          day.id,
+          `day ${day.dayNumber} is past the trip's ${trip.durationDays} day(s)`,
+        );
+      }
+      const expectedDate =
+        trip.startDate === null ? null : addDays(trip.startDate, day.dayNumber - 1);
+      if (day.date !== expectedDate) {
+        report(
+          'trip day',
+          day.id,
+          `date ${describe(day.date)} disagrees with the trip's calendar (${describe(expectedDate)})`,
+        );
+      }
+    }
+
+    // --- activities ----------------------------------------------------------
+    const placeSlugs = new Set(
+      data.tripActivities
+        .map((activity) => activity.placeSlug)
+        .filter((slug): slug is string => slug !== null),
+    );
+    const missingPlaces = new Set<string>();
+    for (const slug of placeSlugs) {
+      if ((await this.catalog.getPlace(slug)) === null) missingPlaces.add(slug);
+    }
+
+    for (const activity of data.tripActivities) {
+      if (!tripById.has(activity.tripId)) {
+        report('trip activity', activity.id, `orphan: unknown trip "${activity.tripId}"`);
+        continue;
+      }
+      const day = dayById.get(activity.dayId);
+      if (!day) {
+        report('trip activity', activity.id, `unknown day "${activity.dayId}"`);
+      } else if (day.tripId !== activity.tripId) {
+        report(
+          'trip activity',
+          activity.id,
+          `day "${activity.dayId}" belongs to a different trip`,
+        );
+      }
+      if (activity.placeSlug !== null && missingPlaces.has(activity.placeSlug)) {
+        report('trip activity', activity.id, `unknown place "${activity.placeSlug}"`);
+      }
+    }
+
+    // Order is contiguous per day, which is what keeps a reorder a permutation.
+    const byDay = new Map<string, TripActivity[]>();
+    for (const activity of data.tripActivities) {
+      const bucket = byDay.get(activity.dayId);
+      if (bucket) bucket.push(activity);
+      else byDay.set(activity.dayId, [activity]);
+    }
+    for (const [dayId, activities] of byDay) {
+      const orders = activities.map((activity) => activity.order).sort((a, b) => a - b);
+      const wanted = Array.from({ length: activities.length }, (_unused, i) => i);
+      if (orders.join(',') !== wanted.join(',')) {
+        report('trip day', dayId, 'activity order has a gap or a duplicate');
+      }
+    }
+
+    // --- expenses ------------------------------------------------------------
+    for (const expense of data.tripExpenses) {
+      if (!tripById.has(expense.tripId)) {
+        report('trip expense', expense.id, `orphan: unknown trip "${expense.tripId}"`);
+        continue;
+      }
+
+      const day = expense.dayId === null ? null : dayById.get(expense.dayId);
+      if (expense.dayId !== null && !day) {
+        report('trip expense', expense.id, `unknown day "${expense.dayId}"`);
+      } else if (day && day.tripId !== expense.tripId) {
+        report('trip expense', expense.id, `day "${expense.dayId}" belongs to a different trip`);
+      }
+
+      if (expense.activityId === null) continue;
+      const activity = activityById.get(expense.activityId);
+      if (!activity) {
+        report('trip expense', expense.id, `unknown activity "${expense.activityId}"`);
+        continue;
+      }
+      if (activity.tripId !== expense.tripId) {
+        report(
+          'trip expense',
+          expense.id,
+          `activity "${expense.activityId}" belongs to a different trip`,
+        );
+      }
+      // The write path derives dayId from the activity, so a disagreement here
+      // means the budget's by-day totals are being computed against the wrong day.
+      if (expense.dayId !== activity.dayId) {
+        report(
+          'trip expense',
+          expense.id,
+          `dayId ${describe(expense.dayId)} disagrees with its activity's day ${describe(activity.dayId)}`,
+        );
+      }
+    }
+
+    return issues;
+  }
 }
 
 function toPublicUser(user: PlannerUser): PublicPlannerUser {
@@ -1121,6 +1352,35 @@ function dayDate(startDate: string | null, dayNumber: number): string | null {
 
 function endDateFor(startDate: string | null, durationDays: number): string | null {
   return startDate === null ? null : addDays(startDate, durationDays - 1);
+}
+
+/** Renders a nullable id or date for an issue message, without quoting noise. */
+function describe(value: string | null): string {
+  return value === null ? 'null' : `"${value}"`;
+}
+
+/**
+ * Reports every value that appears more than once under `key`. The JSON store
+ * has no unique constraint, so a duplicated id is a real possibility and a
+ * nasty one — two rows with one id make every lookup order-dependent.
+ */
+function reportDuplicates<T>(
+  entity: string,
+  rows: readonly T[],
+  key: (row: T) => string,
+  report: (entity: string, id: string, issue: string) => void,
+  label = 'id',
+): void {
+  const seen = new Set<string>();
+  const duplicated = new Set<string>();
+  for (const row of rows) {
+    const value = key(row);
+    if (seen.has(value)) duplicated.add(value);
+    seen.add(value);
+  }
+  for (const value of duplicated) {
+    report(entity, value, `${label} "${value}" appears on more than one row`);
+  }
 }
 
 /** Calendar arithmetic in UTC, so a server timezone cannot shift a trip a day. */

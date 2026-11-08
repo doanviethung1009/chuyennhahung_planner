@@ -194,11 +194,15 @@ model is interim and has no self-service signup, password reset or session
 expiry; an operator provisions every traveller by hand. There is no referential
 integrity below the repository, so a hand-edited JSON file can still produce a
 dangling reference — the Planner has no `validateIntegrity()` sweep of its own
-yet, which is the most obvious gap left.
+yet, which is the most obvious gap left. *(Amended 2026-11-09: that sweep was
+added immediately after, as `GET /api/admin/planner/integrity`. It detects and
+reports; it does not repair, and nothing runs it on a schedule. See
+[features/travel-planner-core.md](../features/travel-planner-core.md).)*
 
 **Follow-ups, each needing its own ADR or its own phase.** A real session or
 identity provider; the SQL engine and the first migration; a Planner integrity
-sweep; the Planner UI, which is frontend-owned and not started; map and AI
+sweep (done — see the amendment above); the Planner UI, which is frontend-owned
+and not started; map and AI
 suggestions, explicitly deferred by the brief.
 
 ## The SQL shape this becomes
