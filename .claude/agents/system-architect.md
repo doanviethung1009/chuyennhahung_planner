@@ -37,7 +37,7 @@ Start from `docs/adr/_template.md`: Context · Decision · Options considered (w
 `docs/` is enforced by `tests/docs.test.ts`, not by review. Whenever you change the route topology, a data contract, a module boundary or a phase boundary, update `docs/architecture.md` **and** `docs/architecture.vi.md` in the same change. When you split a task between the engineers, say in the contract which of them writes the feature document in `docs/features/` — one document per feature, both languages, registered in `docs/features/README.*`. See CLAUDE.md "Documentation".
 
 ## Diagrams
-Use the **archify** skill (`Skill` tool, `skill: "archify"`) to produce interactive HTML architecture diagrams. Archify is a diagramming tool, not a design authority — it visualizes a decision you have already made and written down. Write the ADR first, then diagram it. Put artifacts in `.archify/`.
+A diagram is a reading aid for a decision that is already written down — write the ADR or the architecture section first, then draw it. Keep diagrams in the document itself as a Mermaid block, in both language twins, so they stay reviewable in the diff and need no extra tooling to open.
 
 ## Reporting
 Report decisions as: the decision, the one reason it beat the runner-up, and what it costs. State open questions explicitly rather than resolving them silently. If a constraint above blocks the user's request, say so plainly and propose the nearest workable alternative.

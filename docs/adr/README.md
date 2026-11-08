@@ -15,9 +15,9 @@ An ADR is required — not optional — for:
 - turning on Accept-Language locale detection
 - replacing the typed seed content with a CMS or database
 
-Write the decision first, then diagram it with the **archify** skill if a picture
-helps. Archify visualizes a decision; it does not make one. Artifacts go in
-`.archify/`.
+Write the decision first, then draw it if a picture helps — as a Mermaid block
+inside the ADR itself, in both language twins. A diagram visualizes a decision;
+it does not make one.
 
 | ADR | Decision | Status |
 |---|---|---|
