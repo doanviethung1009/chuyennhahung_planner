@@ -1,0 +1,47 @@
+import { getLocale, getTranslations } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
+import { siteConfig } from '@/content/site';
+import { Container } from '@/components/ui/container';
+import { MainNav, type NavLink } from './main-nav';
+import { primaryNav } from './nav-items';
+
+export async function SiteHeader() {
+  const [t, locale] = await Promise.all([
+    getTranslations('nav'),
+    getLocale(),
+  ]);
+
+  const items: NavLink[] = primaryNav.map((item) => ({
+    ...item,
+    label: t(item.key),
+  }));
+
+  return (
+    <header className="sticky top-0 z-50 border-b border-border-subtle bg-background/85 backdrop-blur-md">
+      <Container width="wide">
+        <div className="flex h-(--header-h) items-center justify-between gap-4">
+          <Link
+            href="/"
+            className="group flex shrink-0 flex-col justify-center leading-none"
+          >
+            <span className="font-display text-lg font-semibold tracking-tight text-ink-900 md:text-xl">
+              {siteConfig.name}
+            </span>
+            <span className="hidden text-[0.6875rem] tracking-wide text-foreground-muted md:block">
+              {siteConfig.tagline[locale]}
+            </span>
+          </Link>
+
+          <MainNav
+            items={items}
+            planHref="/plan-your-trip"
+            planLabel={t('planTrip')}
+            openLabel={t('openMenu')}
+            closeLabel={t('closeMenu')}
+            navLabel={t('primary')}
+          />
+        </div>
+      </Container>
+    </header>
+  );
+}

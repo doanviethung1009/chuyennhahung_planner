@@ -1,0 +1,167 @@
+# Chuyện Nhà Hưng
+
+> **Đi đâu cũng có chuyện.** — Every road has a story.
+
+A Vietnamese-first travel-storytelling site: personal stories, destinations,
+an interactive travel map, day-by-day itineraries, video reviews, and a trip
+planning entry point.
+
+## Stack
+
+| Concern | Choice |
+|---|---|
+| Framework | Next.js 16 (App Router, React 19, Turbopack) |
+| Language | TypeScript — `strict` + `noUncheckedIndexedAccess` |
+| Styling | Tailwind CSS v4, CSS-first `@theme` tokens |
+| i18n | `next-intl` 4 — VI default unprefixed, EN at `/en`, localized pathnames |
+| Content | Typed seed data in `src/content/**` |
+| Tests | Vitest 3 |
+
+## Getting started
+
+```bash
+npm install
+npm run dev
+```
+
+| Script | What it does |
+|---|---|
+| `npm run dev` | Dev server |
+| `npm run build` | Production build (prerenders all 57 pages) |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run lint` | ESLint (flat config) |
+| `npm run test` | Vitest — 37 tests |
+| `npm run verify:ui` | Screenshots every route at 375 / 768 / 1440 and fails on horizontal overflow |
+| `npm run covers` | Regenerates the SVG cover artwork |
+
+### Node version
+
+Requires Node **≥ 20.9**. Two notes about the current `20.14` on this machine:
+
+- `package.json` pins `magic-string` to `^0.30.17` via `overrides`, because
+  `@tailwindcss/node` `require()`s it and Node below 20.19 / 22.12 cannot
+  `require()` an ES module. **Remove that override once Node is ≥ 20.19.**
+- Vitest is held at 3.x for the same reason — Vitest 4/5 need Vite 7/8, which
+  require Node ≥ 20.19.
+
+## Routing and localization
+
+Vietnamese is the product; English is a translation. VI renders **unprefixed**
+(`/chuyen-di-choi`), EN is prefixed (`/en/stories`). Accept-Language detection
+is deliberately **off** so a Vietnamese visitor with an English-configured
+browser still lands on Vietnamese.
+
+Canonical (internal) pathnames live in [`src/i18n/routing.ts`](src/i18n/routing.ts)
+and map 1:1 to the `app/[locale]` folders:
+
+| Internal | Vietnamese | English |
+|---|---|---|
+| `/` | `/` | `/en` |
+| `/stories` | `/chuyen-di-choi` | `/en/stories` |
+| `/destinations` | `/kham-pha` | `/en/destinations` |
+| `/map` | `/ban-do` | `/en/map` |
+| `/itineraries` | `/len-lich-trinh` | `/en/itineraries` |
+| `/plan-your-trip` | `/thiet-ke-chuyen-di` | `/en/plan-your-trip` |
+| `/reviews` | `/goc-review` | `/en/reviews` |
+| `/about` | `/ve-nha-hung` | `/en/about` |
+
+Adding a locale means adding it to `routing.ts`, adding `messages/<locale>.json`,
+and filling the new key on every `Localized<T>` field in `src/content/**`.
+`tests/i18n.test.ts` and `tests/content.test.ts` fail until all three are done.
+
+### Tour routes
+
+**Tours are modelled as itineraries** — an itinerary carries the duration,
+indicative price, group size and day-by-day plan a tour would. Legacy tour URLs
+are preserved as permanent (308) redirects in
+[`next.config.ts`](next.config.ts):
+
+```
+/tour, /tours              → /len-lich-trinh
+/tour/:slug, /tours/:slug  → /len-lich-trinh/:slug
+/en/tour…                  → /en/itineraries…
+```
+
+Changing this mapping requires an ADR (see `CLAUDE.md`).
+
+## Design tokens
+
+Every colour, font, radius and shadow is defined once, in the `@theme` block of
+[`src/app/globals.css`](src/app/globals.css). Nothing else in the codebase may
+hard-code one.
+
+- **Palette** — warm paper and clay: cream/sand surfaces, clay terracotta
+  primary, jade accent, ink text.
+- **Type** — Lora (display) and Be Vietnam Pro (body), both loaded with the
+  `vietnamese` subset so diacritics render correctly.
+- **Contrast** — `tests/design-tokens.test.ts` parses the real CSS and asserts
+  WCAG AA (4.5:1 text, 3:1 control boundaries). It already caught two failures:
+  the primary was lightened past AA for white button text, and control borders
+  needed a dedicated `--color-border-strong`.
+
+## Content
+
+Seed content is typed TypeScript in `src/content/`, not a CMS:
+8 destinations, 6 stories, 4 itineraries, 6 video reviews — each with a `vi`
+and `en` value for every user-visible field.
+
+Cover artwork is generated, on-brand SVG (`npm run covers`) rather than stock
+photography, so the site ships with working images and no broken links. Replace
+a `cover` field with a real photograph whenever one is available; `CoverImage`
+already optimizes raster formats and only bypasses the optimizer for SVG.
+
+## ⚠️ Before going live — owner actions
+
+These are plausible defaults, **not verified**:
+
+1. **Facebook handle** — `src/content/site.ts` assumes `chuyennhahung`.
+   Confirm or correct it. (TikTok is set to `@chuyennhahung9495`.)
+2. **Contact email** — `hello@chuyennhahung.vn` must exist; the planning page
+   links a prefilled `mailto:` to it.
+3. **Site URL** — set `NEXT_PUBLIC_SITE_URL`; it drives canonicals, `hreflang`
+   and the sitemap. Defaults to `https://chuyennhahung.vn`.
+4. **Photography** — swap the generated SVG covers for real photos.
+
+## Video reviews
+
+Video cards are **presentational only** — no anchor, no play button, no hover
+lift. We hold no per-video URLs, so a card that linked to the channel would
+imply it opens that specific clip. Visitors reach the clips through the two
+channel buttons on the reviews page, which are the links we can guarantee.
+
+To make the cards clickable later, add a URL field to `VideoReview`, wrap the
+card body in an anchor, and update `tests/content.test.ts`
+(`keeps video reviews link-free`).
+
+## Accessibility
+
+Semantic landmarks, one `<h1>` per page, ordered headings, a skip link,
+visible focus rings, ≥44px touch targets, `aria-current` on the active nav
+item, and a focus-trapped mobile drawer that closes on Escape and on
+navigation.
+
+The travel map is an SVG silhouette with **real HTML anchors** positioned from
+true WGS84 coordinates — keyboard-navigable, crawlable, and fully functional
+with no client JavaScript.
+
+## Not in this phase
+
+The **Planner backend**. The "Plan your trip" page is a content page with real
+contact routes and no server dependency — deliberately no form, because a
+submit button with nothing behind it is a dead control.
+
+## Agents
+
+Three specialist agents are defined in `.claude/agents/`, with shared rules in
+[`CLAUDE.md`](CLAUDE.md):
+
+| Agent | Owns |
+|---|---|
+| `system-architect` | Route topology, data contracts, ADRs, Archify diagrams |
+| `backend-engineer` | API routes, server actions, persistence, validation |
+| `frontend-engineer` | Pages, components, design tokens, i18n catalogues |
+
+The [Archify](https://github.com/tt-a1i/archify) skill (Apache-2.0) is vendored
+into `.claude/skills/archify/` for interactive architecture diagrams. It is a
+*diagramming* tool, not an architecture authority — write the ADR first, then
+visualize it.
