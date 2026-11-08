@@ -12,3 +12,10 @@ screenshots/
 
 # Local content store for the Travel Content System (see docs/adr/0001).
 .data/
+
+# Local pre-change config backups (see .claude/backups/*/README.md).
+.claude/backups/
+# Git worktrees created by Claude Code.
+.claude/worktrees/
+__pycache__/
+*.pyc
