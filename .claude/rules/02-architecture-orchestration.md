@@ -41,11 +41,14 @@ once the contract is stable. Use independent agents **only when file ownership i
 disjoint** — never let two agents edit the same file. Sequence instead of
 parallelizing when scopes overlap.
 
-> **Rule 6 overrides dependency order.** "Backend first" never justifies scaffolding
-> Planner tables, endpoints or queues before the user opens that phase. The Travel
-> Content System (`src/app/api/**`, `src/server/content/**`) is **not** the Planner —
-> it already exists. If a request needs Planner persistence, say the phase must be
-> opened first.
+> **Rule 6 still bounds dependency order, but the boundary has moved.** The Planner
+> backend phase is **open** and shipped (`src/app/api/planner/**`,
+> `docs/adr/0002-planner-core.md`), so "the phase is not open" is no longer the answer
+> to a Planner request. What "backend first" still never justifies is scaffolding the
+> parts that remain deliberately absent — the Planner UI's server dependencies beyond
+> the existing API, a real identity provider, or SQL. Each needs its own ADR. For
+> Planner *UI* work the dependency order is already satisfied: the contract exists,
+> so `frontend-engineer` can start against it.
 
 ## 4. Review gates
 `qc` validates changed behaviour and regressions. `security` reviews auth, data,

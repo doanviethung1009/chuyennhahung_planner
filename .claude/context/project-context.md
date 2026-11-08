@@ -61,9 +61,29 @@ and a public read surface at `api/travel/**`. Designed in
 The on-disk store lives in `.data/` and is **gitignored** — it is local state, not
 content you may commit.
 
-> **The Planner backend is still a separate, unopened phase** (CLAUDE.md rule 6).
-> The Travel Content System is not the Planner. Do not scaffold Planner tables,
-> endpoints or queues until the user opens that phase.
+## Backend — the Planner (the phase is open; this exists too)
+The owner opened the Planner backend phase and it shipped: `src/app/api/planner/**`
+(traveller-facing) and `src/app/api/admin/planner/**` (provisioning), over
+`src/server/planner/**`. Designed in `docs/adr/0002-planner-core.md`.
+
+| Module | Role |
+|---|---|
+| `src/server/planner/auth.ts` | **A principal per traveller**: a `plannerUsers` row holding a SHA-256 digest of a 48-byte token, returned once at provisioning. Every trip carries an `ownerId` and every read and write is filtered by it. |
+| `src/server/planner/repository.ts` | Trips, days, activities, expenses; `identify(request)` throws 401 without a valid token |
+| `src/server/planner/schemas.ts` | Validation schemas for trip input |
+| `src/server/planner/budget.ts`, `money.ts` | Target budget vs estimated/actual cost; integer-safe money |
+| `src/server/planner/http.ts` | Planner HTTP boundary — reuses the content error envelope, adds `ETag`/`If-Match` optimistic concurrency |
+| `src/server/planner/catalog.ts`, `store.ts` | Place catalog access and persistence |
+| `src/server/persistence/json-store.ts` | Shared JSON document store |
+
+> **Two systems, one vocabulary — do not conflate them.** Travel Content is editorial
+> data owned by the brand with a single `ADMIN_API_TOKEN` principal; the Planner is
+> traveller-owned trip data with a principal per traveller. They share the error
+> envelope and `parseJsonBody` from `src/server/content/http.ts`.
+
+> **Still absent, and not to be scaffolded without an ADR:** the Planner **UI**
+> (`/plan-your-trip` is still the contact-only content page), the Planner map, AI
+> suggestions, a real identity provider, and SQL. See `docs/architecture.md#phases`.
 
 ## Other critical modules
 | Path | Role |
