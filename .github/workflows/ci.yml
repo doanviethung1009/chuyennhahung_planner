@@ -1,0 +1,57 @@
+name: CI
+
+# Runs the Definition of done (CLAUDE.md rule 7) on every PR into main, and on
+# main itself after a merge. A local hook cannot enforce anything on the remote,
+# so this is where a change is actually checked.
+#
+# Note: with the repository private on GitHub Free these checks cannot be made
+# *required* — branch protection and rulesets are unavailable. The results are
+# advisory until the repository is public or on GitHub Pro.
+# See .claude/rules/05-git-governance.md.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# A new push supersedes an in-flight run for the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Pinned to the version this project is developed on, so CI and local
+          # agree. CLAUDE.md records that 20.14 sits below Vite 7's 20.19 floor,
+          # which is why the suite stays on Vitest 3 — raising this silently
+          # would make CI stop reproducing the developer's environment.
+          node-version: 20.14.0
+          cache: npm
+
+      - run: npm ci
+
+      - name: typecheck
+        run: npm run typecheck
+
+      - name: lint
+        run: npm run lint
+
+      # Includes tests/docs.test.ts (the bilingual docs contract) and
+      # tests/git-guard.test.ts, which shells out to python3 — present on
+      # ubuntu-latest, and the test skips itself if it ever is not.
+      - name: test
+        run: npm run test
+
+      - name: build
+        run: npm run build
