@@ -1,0 +1,177 @@
+@import 'tailwindcss';
+
+/* ===========================================================================
+   Chuyện Nhà Hưng — design tokens
+   The ONLY place tokens are defined. Never hard-code a colour, font, radius
+   or shadow in a component; extend this block instead.
+   Direction: warm · romantic · modern · minimal · mobile-first.
+   =========================================================================== */
+@theme {
+  /* --- Palette: warm paper & clay ----------------------------------------- */
+  --color-cream-50: #fdfbf8;
+  --color-cream-100: #f9f4ec;
+  --color-sand-200: #f1e6d7;
+  --color-sand-300: #e2cfb6;
+  --color-sand-400: #cdb294;
+
+  --color-clay-300: #e8ab8a;
+  --color-clay-400: #d98e68;
+  --color-clay-500: #c06a42;
+  --color-clay-600: #a1532f;
+  --color-clay-700: #7f3f23;
+
+  --color-ink-900: #241e1b;
+  --color-ink-800: #342c27;
+  --color-ink-700: #463c36;
+  --color-ink-500: #6b5d53;
+  --color-ink-300: #a3948a;
+
+  --color-jade-500: #5c8470;
+  --color-jade-600: #456353;
+  --color-gold-400: #cfa14f;
+  --color-gold-500: #ab8137;
+
+  /* --- Semantic aliases --------------------------------------------------- */
+  --color-background: var(--color-cream-50);
+  --color-surface: #ffffff;
+  --color-surface-muted: var(--color-cream-100);
+  --color-foreground: var(--color-ink-900);
+  --color-foreground-muted: var(--color-ink-500);
+  /* clay-500 is too light to carry white text at body size (3.9:1), so the
+     interactive primary is clay-600 and hover deepens to clay-700. */
+  --color-primary: var(--color-clay-600);
+  --color-primary-strong: var(--color-clay-700);
+  --color-primary-foreground: #ffffff;
+  --color-accent: var(--color-jade-600);
+  --color-highlight: var(--color-gold-500);
+  /* `border` is the decorative hairline between surfaces. `border-strong` is
+     for boundaries that *identify* a control (outlined buttons, switches) and
+     therefore must clear WCAG 1.4.11's 3:1. */
+  --color-border: var(--color-sand-300);
+  --color-border-subtle: var(--color-sand-200);
+  --color-border-strong: #9b8670;
+  --color-ring: var(--color-clay-700);
+
+  /* --- Typography --------------------------------------------------------- */
+  /* Both families are loaded via next/font with the `vietnamese` subset so
+     diacritics (ế, ự, ỡ, ặ …) render correctly. */
+  --font-display: var(--font-lora), ui-serif, Georgia, serif;
+  --font-sans: var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
+
+  --text-eyebrow: 0.78rem;
+  --text-eyebrow--line-height: 1.1;
+  --text-eyebrow--letter-spacing: 0.16em;
+
+  /* --- Radii -------------------------------------------------------------- */
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-pill: 999px;
+
+  /* --- Elevation: warm, low-contrast shadows ------------------------------ */
+  --shadow-soft: 0 1px 2px rgb(36 30 27 / 0.04), 0 8px 24px rgb(36 30 27 / 0.06);
+  --shadow-lift: 0 2px 4px rgb(36 30 27 / 0.05), 0 18px 40px rgb(36 30 27 / 0.1);
+  --shadow-inset-top: inset 0 1px 0 rgb(255 255 255 / 0.5);
+
+  /* --- Motion ------------------------------------------------------------- */
+  --ease-gentle: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --animate-rise: rise 0.6s var(--ease-gentle) both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ===========================================================================
+   Base layer
+   =========================================================================== */
+@layer base {
+  :root {
+    color-scheme: light;
+    /* Sticky header height. The mobile nav drawer offsets itself by this. */
+    --header-h: 4rem;
+  }
+
+  @media (min-width: 64rem) {
+    :root {
+      --header-h: 4.75rem;
+    }
+  }
+
+  * {
+    border-color: var(--color-border-subtle);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: 'kern' 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* A single, consistent, always-visible focus treatment. */
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 3px;
+    border-radius: var(--radius-xs);
+  }
+
+  ::selection {
+    background-color: var(--color-clay-300);
+    color: var(--color-ink-900);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ===========================================================================
+   Utilities
+   =========================================================================== */
+@utility text-eyebrow {
+  font-size: var(--text-eyebrow);
+  line-height: var(--text-eyebrow--line-height);
+  letter-spacing: var(--text-eyebrow--letter-spacing);
+  text-transform: uppercase;
+  font-weight: 600;
+}

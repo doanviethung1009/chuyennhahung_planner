@@ -1,0 +1,213 @@
+{
+  "nav": {
+    "home": "Trang chủ",
+    "stories": "Chuyện đi chơi",
+    "destinations": "Khám phá",
+    "itineraries": "Lên lịch trình",
+    "reviews": "Góc review",
+    "about": "Về nhà Hưng",
+    "map": "Bản đồ hành trình",
+    "planTrip": "Thiết kế chuyến đi",
+    "openMenu": "Mở menu",
+    "closeMenu": "Đóng menu",
+    "primary": "Điều hướng chính",
+    "skipToContent": "Bỏ qua, vào nội dung chính"
+  },
+  "locale": {
+    "label": "Ngôn ngữ",
+    "vi": "Tiếng Việt",
+    "en": "English",
+    "switchTo": "Chuyển sang {name}"
+  },
+  "common": {
+    "readStory": "Đọc chuyện",
+    "viewAll": "Xem tất cả",
+    "viewAllStories": "Xem tất cả chuyện",
+    "viewAllDestinations": "Xem tất cả điểm đến",
+    "viewAllItineraries": "Xem tất cả lịch trình",
+    "viewAllReviews": "Xem tất cả review",
+    "minuteRead": "{minutes} phút đọc",
+    "publishedOn": "Đăng ngày {date}",
+    "from": "Từ",
+    "perPerson": "/ người",
+    "dayCount": "{days} ngày",
+    "nightCount": "{nights} đêm",
+    "visitCount": "Đã đi {count} lần",
+    "firstVisited": "Lần đầu đến {date}",
+    "firstVisitedLabel": "Lần đầu đến",
+    "visitsLabel": "Số lần quay lại",
+    "bestSeason": "Nên đi khi nào",
+    "backToList": "Về danh sách",
+    "relatedStories": "Chuyện ở đây",
+    "relatedItineraries": "Lịch trình liên quan",
+    "seeOnMap": "Xem trên bản đồ",
+    "videoLength": "Thời lượng",
+    "opensInNewTab": "(mở tab mới)",
+    "duration": "{minutes}:{seconds}"
+  },
+  "region": {
+    "all": "Cả nước",
+    "north": "Miền Bắc",
+    "central": "Miền Trung",
+    "south": "Miền Nam"
+  },
+  "pace": {
+    "label": "Nhịp đi",
+    "relaxed": "Đi chậm",
+    "balanced": "Vừa phải",
+    "active": "Đi nhiều"
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Chuyện Nhà Hưng",
+      "title": "Đi đâu cũng có chuyện.",
+      "lead": "Hai đứa mình đi, ăn, ngủ nhờ, đi lạc rồi viết lại hết. Không có lịch trình hoàn hảo — chỉ có chuyện thật và vài lời khuyên dùng được.",
+      "ctaPrimary": "Đọc chuyện mới nhất",
+      "ctaSecondary": "Xem bản đồ hành trình",
+      "statDestinations": "điểm đến đã đi",
+      "statStories": "bài đã viết",
+      "statYears": "năm đi cùng nhau"
+    },
+    "stories": {
+      "eyebrow": "Chuyện mới nhất",
+      "title": "Chuyện đi chơi gần đây",
+      "lead": "Viết ngay sau mỗi chuyến, lúc còn nhớ rõ mùi và giá tiền."
+    },
+    "destinations": {
+      "eyebrow": "Khám phá",
+      "title": "Những nơi hai đứa đã đi",
+      "lead": "Mỗi nơi là một lần đi thật, không phải danh sách sao chép."
+    },
+    "map": {
+      "eyebrow": "Bản đồ",
+      "title": "Hành trình trên bản đồ",
+      "lead": "Chạm vào từng điểm để xem mình đã đi đâu và viết gì ở đó.",
+      "cta": "Mở bản đồ đầy đủ"
+    },
+    "itineraries": {
+      "eyebrow": "Lên lịch trình",
+      "title": "Lịch trình mình đã đi thật",
+      "lead": "Chia theo ngày, kèm chi phí thật và những đoạn mình khuyên nên bỏ."
+    },
+    "plan": {
+      "eyebrow": "Tự thiết kế",
+      "title": "Muốn một chuyến đi của riêng bạn?",
+      "lead": "Kể cho mình bạn có bao nhiêu ngày, đi với ai và thích kiểu gì. Mình sẽ gợi ý một lịch trình dựa trên những chuyến đã đi.",
+      "cta": "Bắt đầu thiết kế"
+    },
+    "reviews": {
+      "eyebrow": "Góc review",
+      "title": "Xem nhanh bằng video",
+      "lead": "Những đoạn quay dọc đường, đăng trên TikTok và Facebook."
+    },
+    "about": {
+      "eyebrow": "Chuyện chúng mình",
+      "title": "Hai đứa, một chiếc xe máy và rất nhiều lần đi lạc",
+      "lead": "Chuyện Nhà Hưng bắt đầu từ một chuyến Đà Lạt năm 2021 mà cả hai đều không chuẩn bị gì. Từ đó đến giờ mình vẫn giữ nguyên cách đi đó.",
+      "cta": "Đọc về nhà Hưng"
+    }
+  },
+  "stories": {
+    "title": "Chuyện đi chơi",
+    "description": "Tất cả những chuyến đi mình đã viết lại — có chuyến suôn sẻ, có chuyến không.",
+    "count": "{count} bài",
+    "empty": "Chưa có bài nào ở đây."
+  },
+  "destinations": {
+    "title": "Khám phá",
+    "description": "Những nơi hai đứa đã đặt chân tới, kèm mùa nên đi và lý do nên đi.",
+    "count": "{count} điểm đến",
+    "filterLabel": "Lọc theo vùng",
+    "empty": "Chưa có điểm đến nào trong vùng này."
+  },
+  "map": {
+    "title": "Bản đồ hành trình",
+    "description": "Toàn bộ điểm đến của Chuyện Nhà Hưng trên một bản đồ. Chạm vào điểm để mở chuyện ở đó.",
+    "mapLabel": "Bản đồ các điểm đến tại Việt Nam",
+    "legend": "Ký hiệu",
+    "legendVisits": "Điểm càng lớn là đi càng nhiều lần",
+    "listTitle": "Danh sách điểm đến",
+    "selectHint": "Chọn một điểm trên bản đồ hoặc trong danh sách."
+  },
+  "itineraries": {
+    "title": "Lên lịch trình",
+    "description": "Lịch trình chi tiết theo ngày, dựng từ những chuyến mình đã đi thật.",
+    "count": "{count} lịch trình",
+    "dayByDay": "Lịch trình theo ngày",
+    "highlights": "Điểm đáng đi",
+    "bestFor": "Phù hợp với",
+    "groupSize": "Số người",
+    "priceNote": "Chi phí tham khảo cho một người, dựa trên chuyến mình đã đi. Không phải giá tour.",
+    "dayLabel": "Ngày {day}",
+    "empty": "Chưa có lịch trình nào."
+  },
+  "plan": {
+    "title": "Thiết kế chuyến đi của bạn",
+    "description": "Mình sẽ gợi ý lịch trình dựa trên số ngày, ngân sách và kiểu đi bạn thích.",
+    "intro": "Hiện mình nhận gợi ý lịch trình qua email và tin nhắn. Công cụ tự lên lịch trình đang được làm, nhưng trong lúc chờ thì cách này nhanh hơn — và bạn nói chuyện với người thật.",
+    "stepsTitle": "Cách làm việc",
+    "step1Title": "Bạn kể qua về chuyến đi",
+    "step1Detail": "Bao nhiêu ngày, đi với ai, đi từ đâu, ngân sách khoảng bao nhiêu, và thích đi chậm hay đi nhiều.",
+    "step2Title": "Mình gửi bản nháp lịch trình",
+    "step2Detail": "Trong vòng 2 – 3 ngày, kèm chi phí tham khảo và vài phương án thay thế.",
+    "step3Title": "Chỉnh lại cho vừa",
+    "step3Detail": "Bạn nói chỗ nào muốn bỏ, chỗ nào muốn ở lâu hơn. Mình sửa cho đến khi vừa.",
+    "step4Title": "Bạn tự đi",
+    "step4Detail": "Mình không bán tour và không nhận hoa hồng. Bạn tự đặt phòng, tự đi, tự quyết.",
+    "contactTitle": "Liên hệ",
+    "contactLead": "Chọn cách nào tiện nhất cho bạn.",
+    "emailCta": "Gửi email cho nhà Hưng",
+    "emailSubject": "Nhờ nhà Hưng gợi ý lịch trình",
+    "emailBody": "Chào nhà Hưng,\n\nMình muốn nhờ gợi ý một chuyến đi.\n\n- Số ngày:\n- Đi từ:\n- Đi với ai:\n- Ngân sách khoảng:\n- Thích đi chậm / đi nhiều:\n- Đã đi những đâu rồi:\n\nCảm ơn hai bạn!",
+    "orBrowse": "Hoặc xem trước những lịch trình mình đã đi",
+    "browseCta": "Xem lịch trình có sẵn"
+  },
+  "reviews": {
+    "title": "Góc review",
+    "description": "Video ngắn quay dọc đường, đăng trên TikTok và Facebook của nhà Hưng.",
+    "count": "{count} video",
+    "channelsTitle": "Theo dõi nhà Hưng",
+    "channelsLead": "Video mới đăng trên hai kênh này trước.",
+    "followOn": "Theo dõi trên {platform}",
+    "empty": "Chưa có video nào."
+  },
+  "about": {
+    "title": "Về nhà Hưng",
+    "description": "Chuyện chúng mình — hai đứa bắt đầu viết lại các chuyến đi từ năm 2021.",
+    "heading": "Chuyện chúng mình",
+    "lead": "Chuyện Nhà Hưng là chỗ hai đứa mình lưu lại những chuyến đi, để sau này còn đọc lại.",
+    "body1": "Mọi thứ bắt đầu từ một chuyến Đà Lạt cuối năm 2021. Hai đứa đặt xe giường nằm trước hai ngày, không đặt phòng, và đến nơi thì trời mưa suốt. Chuyến đó gần như thất bại về mặt kế hoạch, nhưng lại là chuyến mình kể lại nhiều nhất.",
+    "body2": "Sau đó mình bắt đầu ghi chép: đi bao nhiêu tiền, ở đâu, món nào ngon thật, đoạn nào không đáng đi. Ban đầu chỉ để tự nhớ, rồi bạn bè hỏi nhiều quá nên mình viết ra đây.",
+    "body3": "Mình không bán tour, không nhận tài trợ cho bài viết, và không viết về nơi mình chưa đi. Nếu một chỗ không đáng đi, mình sẽ nói thẳng là không đáng.",
+    "valuesTitle": "Vài nguyên tắc",
+    "value1Title": "Chỉ viết nơi đã đi",
+    "value1Detail": "Không tổng hợp lại từ bài của người khác. Mỗi bài là một chuyến thật, có ngày tháng.",
+    "value2Title": "Nói cả phần không hay",
+    "value2Detail": "Chỗ nào đông, đắt, hoặc không xứng công đi — mình nói rõ.",
+    "value3Title": "Chi phí thật",
+    "value3Detail": "Số tiền trong bài là số mình đã trả, không phải giá niêm yết.",
+    "ctaTitle": "Đi cùng nhà Hưng",
+    "ctaLead": "Đọc chuyện mới, xem lịch trình, hoặc nhờ mình gợi ý một chuyến.",
+    "ctaStories": "Đọc chuyện đi chơi",
+    "ctaPlan": "Nhờ gợi ý lịch trình"
+  },
+  "footer": {
+    "exploreHeading": "Khám phá",
+    "aboutHeading": "Nhà Hưng",
+    "followHeading": "Theo dõi",
+    "tagline": "Đi đâu cũng có chuyện.",
+    "blurb": "Chuyện đi chơi, điểm đến và lịch trình của hai đứa mình. Viết từ năm 2021.",
+    "rights": "© {year} Chuyện Nhà Hưng. Mọi bài viết và hình ảnh là của nhà Hưng.",
+    "contact": "Liên hệ"
+  },
+  "notFound": {
+    "title": "Đi lạc rồi",
+    "description": "Trang này không có — có thể đường dẫn đã đổi, hoặc mình gõ sai ở đâu đó.",
+    "cta": "Về trang chủ",
+    "ctaStories": "Hoặc đọc chuyện đi chơi"
+  },
+  "meta": {
+    "homeTitle": "Chuyện Nhà Hưng — Đi đâu cũng có chuyện",
+    "homeDescription": "Chuyện đi chơi, điểm đến và lịch trình chi tiết của hai đứa mình. Viết từ những chuyến đi thật ở Việt Nam."
+  }
+}

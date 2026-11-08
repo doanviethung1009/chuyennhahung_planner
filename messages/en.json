@@ -1,0 +1,213 @@
+{
+  "nav": {
+    "home": "Home",
+    "stories": "Stories",
+    "destinations": "Destinations",
+    "itineraries": "Itineraries",
+    "reviews": "Video reviews",
+    "about": "About us",
+    "map": "Travel map",
+    "planTrip": "Plan your trip",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "primary": "Primary navigation",
+    "skipToContent": "Skip to main content"
+  },
+  "locale": {
+    "label": "Language",
+    "vi": "Tiếng Việt",
+    "en": "English",
+    "switchTo": "Switch to {name}"
+  },
+  "common": {
+    "readStory": "Read the story",
+    "viewAll": "View all",
+    "viewAllStories": "View all stories",
+    "viewAllDestinations": "View all destinations",
+    "viewAllItineraries": "View all itineraries",
+    "viewAllReviews": "View all reviews",
+    "minuteRead": "{minutes} min read",
+    "publishedOn": "Published {date}",
+    "from": "From",
+    "perPerson": "/ person",
+    "dayCount": "{days} days",
+    "nightCount": "{nights} nights",
+    "visitCount": "Visited {count} times",
+    "firstVisited": "First visited {date}",
+    "firstVisitedLabel": "First visited",
+    "visitsLabel": "Times returned",
+    "bestSeason": "When to go",
+    "backToList": "Back to list",
+    "relatedStories": "Stories from here",
+    "relatedItineraries": "Related itineraries",
+    "seeOnMap": "See on the map",
+    "videoLength": "Length",
+    "opensInNewTab": "(opens in a new tab)",
+    "duration": "{minutes}:{seconds}"
+  },
+  "region": {
+    "all": "All of Vietnam",
+    "north": "Northern Vietnam",
+    "central": "Central Vietnam",
+    "south": "Southern Vietnam"
+  },
+  "pace": {
+    "label": "Pace",
+    "relaxed": "Relaxed",
+    "balanced": "Balanced",
+    "active": "Active"
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Chuyện Nhà Hưng",
+      "title": "Every road has a story.",
+      "lead": "The two of us travel, eat, sleep on floors, get lost, and write all of it down. There is no perfect itinerary here — only true stories and advice you can actually use.",
+      "ctaPrimary": "Read the latest story",
+      "ctaSecondary": "See the travel map",
+      "statDestinations": "destinations visited",
+      "statStories": "stories written",
+      "statYears": "years travelling together"
+    },
+    "stories": {
+      "eyebrow": "Latest stories",
+      "title": "Our latest stories",
+      "lead": "Written straight after each trip, while we still remember the smells and the prices."
+    },
+    "destinations": {
+      "eyebrow": "Explore",
+      "title": "Destinations we've explored",
+      "lead": "Every place here is somewhere we actually went — not a list copied from elsewhere."
+    },
+    "map": {
+      "eyebrow": "The map",
+      "title": "Our journey, mapped",
+      "lead": "Tap any point to see where we went and what we wrote about it.",
+      "cta": "Open the full map"
+    },
+    "itineraries": {
+      "eyebrow": "Itineraries",
+      "title": "Itineraries we actually travelled",
+      "lead": "Broken down by day, with real costs and the parts we suggest you skip."
+    },
+    "plan": {
+      "eyebrow": "Plan your own",
+      "title": "Want a trip of your own?",
+      "lead": "Tell us how many days you have, who you're travelling with and the pace you like. We'll suggest an itinerary based on trips we've taken.",
+      "cta": "Start planning"
+    },
+    "reviews": {
+      "eyebrow": "Video reviews",
+      "title": "The quick version, on video",
+      "lead": "Clips filmed along the way, posted on TikTok and Facebook."
+    },
+    "about": {
+      "eyebrow": "Our story",
+      "title": "Two of us, one motorbike, and a lot of wrong turns",
+      "lead": "Chuyện Nhà Hưng started with a 2021 trip to Đà Lạt that neither of us prepared for. We have travelled the same way ever since.",
+      "cta": "Read about us"
+    }
+  },
+  "stories": {
+    "title": "Stories",
+    "description": "Every trip we've written up — the ones that went well, and the ones that didn't.",
+    "count": "{count} stories",
+    "empty": "No stories here yet."
+  },
+  "destinations": {
+    "title": "Destinations",
+    "description": "Places the two of us have actually been, with the season to go and the reason to bother.",
+    "count": "{count} destinations",
+    "filterLabel": "Filter by region",
+    "empty": "No destinations in this region yet."
+  },
+  "map": {
+    "title": "Travel map",
+    "description": "Every Chuyện Nhà Hưng destination on one map. Tap a point to open the stories from there.",
+    "mapLabel": "Map of destinations across Vietnam",
+    "legend": "Legend",
+    "legendVisits": "Bigger points are places we've returned to",
+    "listTitle": "All destinations",
+    "selectHint": "Pick a point on the map, or choose from the list."
+  },
+  "itineraries": {
+    "title": "Itineraries",
+    "description": "Day-by-day itineraries, built from trips we actually took.",
+    "count": "{count} itineraries",
+    "dayByDay": "Day by day",
+    "highlights": "Worth your time",
+    "bestFor": "Best for",
+    "groupSize": "Group size",
+    "priceNote": "Indicative cost per person, based on what we spent. This is not a tour price.",
+    "dayLabel": "Day {day}",
+    "empty": "No itineraries yet."
+  },
+  "plan": {
+    "title": "Plan your own trip",
+    "description": "We'll suggest an itinerary based on your days, budget and the pace you like.",
+    "intro": "For now we take itinerary requests by email and message. A self-serve planner is in the works, but while you wait this is faster — and you're talking to an actual person.",
+    "stepsTitle": "How it works",
+    "step1Title": "Tell us about the trip",
+    "step1Detail": "How many days, who's coming, where you're starting from, roughly what budget, and whether you like it slow or packed.",
+    "step2Title": "We send a draft itinerary",
+    "step2Detail": "Within 2–3 days, with indicative costs and a few alternatives.",
+    "step3Title": "We adjust it",
+    "step3Detail": "Tell us what to cut and where you'd rather stay longer. We'll revise until it fits.",
+    "step4Title": "You travel it yourself",
+    "step4Detail": "We don't sell tours and we take no commission. You book it, you go, you decide.",
+    "contactTitle": "Get in touch",
+    "contactLead": "Whichever is easiest for you.",
+    "emailCta": "Email Chuyện Nhà Hưng",
+    "emailSubject": "Itinerary suggestion request",
+    "emailBody": "Hi Chuyện Nhà Hưng,\n\nI'd love some help planning a trip.\n\n- Number of days:\n- Starting from:\n- Travelling with:\n- Rough budget:\n- Slow or packed:\n- Places I've already been:\n\nThank you both!",
+    "orBrowse": "Or look through the itineraries we've already travelled",
+    "browseCta": "Browse itineraries"
+  },
+  "reviews": {
+    "title": "Video reviews",
+    "description": "Short clips filmed along the way, posted on the Chuyện Nhà Hưng TikTok and Facebook.",
+    "count": "{count} videos",
+    "channelsTitle": "Follow along",
+    "channelsLead": "New clips go up on these two channels first.",
+    "followOn": "Follow on {platform}",
+    "empty": "No videos yet."
+  },
+  "about": {
+    "title": "About us",
+    "description": "Our story — the two of us have been writing up our trips since 2021.",
+    "heading": "Our story",
+    "lead": "Chuyện Nhà Hưng is where the two of us keep our trips, so we can read them back later.",
+    "body1": "It started with a trip to Đà Lạt at the end of 2021. We booked a sleeper bus two days ahead, booked no room at all, and it rained the entire time. As a piece of planning it was close to a failure, and it is still the trip we retell most.",
+    "body2": "After that we started keeping notes: what it cost, where we stayed, which dishes were genuinely good, which stretches were not worth the ride. At first it was just for us, then friends asked so often that we put it here.",
+    "body3": "We don't sell tours, we don't take sponsorship for write-ups, and we don't write about places we haven't been. If somewhere isn't worth the trip, we'll say so plainly.",
+    "valuesTitle": "A few principles",
+    "value1Title": "Only places we've been",
+    "value1Detail": "Nothing aggregated from other people's posts. Every piece is a real trip, with a date on it.",
+    "value2Title": "Including the bad parts",
+    "value2Detail": "If somewhere is crowded, overpriced, or not worth the journey, we say exactly that.",
+    "value3Title": "Real costs",
+    "value3Detail": "The numbers in our write-ups are what we paid, not the advertised price.",
+    "ctaTitle": "Travel with us",
+    "ctaLead": "Read something new, browse an itinerary, or ask us to suggest a trip.",
+    "ctaStories": "Read the stories",
+    "ctaPlan": "Ask for an itinerary"
+  },
+  "footer": {
+    "exploreHeading": "Explore",
+    "aboutHeading": "Chuyện Nhà Hưng",
+    "followHeading": "Follow",
+    "tagline": "Every road has a story.",
+    "blurb": "Travel stories, destinations and itineraries from the two of us. Writing since 2021.",
+    "rights": "© {year} Chuyện Nhà Hưng. All words and images are our own.",
+    "contact": "Contact"
+  },
+  "notFound": {
+    "title": "We're lost",
+    "description": "This page doesn't exist — the link may have changed, or we mistyped something.",
+    "cta": "Back to home",
+    "ctaStories": "Or read our stories"
+  },
+  "meta": {
+    "homeTitle": "Chuyện Nhà Hưng — Every road has a story",
+    "homeDescription": "Travel stories, destinations and day-by-day itineraries from the two of us, written from real trips across Vietnam."
+  }
+}
