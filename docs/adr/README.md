@@ -10,7 +10,7 @@ An ADR is required — not optional — for:
 
 - removing or repointing the permanent tour redirects in `next.config.ts`
 - changing the route topology or the localized pathname map
-- opening the Planner backend phase (data model and submission contract first)
+- opening the Planner backend phase (data model and submission contract first) — done in [0002](0002-planner-core.md); a *further* phase, such as the Planner UI or AI suggestions, needs its own
 - adding a framework, state library, ORM or CSS system
 - turning on Accept-Language locale detection
 - replacing the typed seed content with a CMS or database
@@ -26,3 +26,4 @@ ADR here.
 | ADR | Decision | Status |
 |---|---|---|
 | [0001](0001-travel-content-system.md) | Travel Content System: typed entities behind a store interface, no database yet, `zod` validation, fail-closed admin auth | Accepted |
+| [0002](0002-planner-core.md) | Planner core: four normalised trip collections, a real trip owner with object-level authorization, independent template clones, integer-VND budgeting with a BigInt boundary, `If-Match` concurrency | Accepted |

@@ -4,7 +4,9 @@
 
 A Vietnamese-first travel-storytelling site. Stories, destinations, a travel map,
 day-by-day itineraries, video reviews, and a trip-planning entry point. The
-Planner *backend* is a later phase; see [Phases](#phases).
+Planner *backend* core has shipped as an API — trips, days, activities, expenses
+and budgeting — while the Planner *UI* is still a later phase; see
+[Phases](#phases).
 
 ## At a glance
 
@@ -109,6 +111,21 @@ the map projects, and `cover` points at generated on-brand SVG artwork
 `site.ts` is flagged **owner action required** — the handles and contact email
 are plausible defaults, not verified accounts.
 
+Two **server-side** data sets sit beside this seed content, each a repository
+over a JSON document store rather than a database
+([ADR 0001](adr/0001-travel-content-system.md) §1,
+[ADR 0002](adr/0002-planner-core.md) §1). They are separate documents on purpose:
+editorial content and private traveller data have different privacy, retention
+and backup profiles.
+
+| Store | File | Holds | Contract |
+|---|---|---|---|
+| Travel content | `.data/travel-content.json` (`TRAVEL_CONTENT_STORE`) | places, stories, collections, reviews, templates | [travel-content-api.md](travel-content-api.md) |
+| Planner | `.data/planner.json` (`PLANNER_STORE`) | planner users, trips, trip days, trip activities, trip expenses | [features/travel-planner-core.md](features/travel-planner-core.md) |
+
+Money in both is an integer count of đồng, capped at 10^12 — never a float,
+never a minor unit. Derived totals are recomputed on read, never stored.
+
 ## Module boundaries
 
 The dependency direction is one-way. Nothing below reaches upward.
@@ -121,7 +138,19 @@ components/**        ui/ · layout/ · cards/ · sections/ · map/ · seo/
 lib/**               format.ts · map.ts · metadata.ts   (pure functions)
    ↓
 content/** · i18n/** · messages/**                      (data + contracts)
+
+app/api/**           route handlers: parse, authorize, map errors to status
+   ↓
+server/content/** · server/planner/**    repositories: all invariants
+   ↓
+server/persistence/**                    document store (atomic write + queue)
 ```
+
+The API side is a second, parallel stack and the two meet in one place only: the
+Planner reads the content system through
+[`PlannerCatalog`](../src/server/planner/catalog.ts), a read-only interface with
+three lookups and no writer. That is what makes "cloning a template never
+modifies the template" structural rather than a matter of discipline.
 
 - `lib/` is pure and side-effect free: date/price/duration formatting, the map
   projection, metadata assembly. It is the layer unit tests target directly.
@@ -176,10 +205,20 @@ and the reason `--color-border-strong` exists. Details:
 
 Deliberately absent, and not to be scaffolded early:
 
-- **Planner backend.** `/plan-your-trip` is a content page with real contact
-  routes (mailto, Zalo, Messenger) and no form — a submit button with nothing
-  behind it is a dead control. Opening this phase means a database, validation,
-  rate limiting and an ADR, in that order.
+- **Planner UI.** The Planner *backend* core shipped under `/api/planner`
+  ([ADR 0002](adr/0002-planner-core.md),
+  [features/travel-planner-core.md](features/travel-planner-core.md)):
+  trips, generated days, activities, expenses, budgeting, archive/restore and
+  template cloning. `/plan-your-trip` is still the contact-only content page —
+  wiring it to the API is frontend-owned work and has not started.
+- **Planner map and AI suggestions.** Deliberately deferred by the brief that
+  opened the Planner phase.
+- **A real identity provider.** Planner auth is an interim per-traveller bearer
+  token, provisioned by hand through the admin API. No signup, no password reset,
+  no session expiry. Replacing it needs its own ADR.
+- **SQL.** Both stores are single-process. Multi-instance deployment is the
+  trigger; the target schema and its indexes are already written down in
+  [ADR 0002](adr/0002-planner-core.md#the-sql-shape-this-becomes).
 - **Clickable video cards.** We hold no per-video URLs, so cards are
   presentational. Making them clickable means adding a URL field to
   `VideoReview` and updating `tests/content.test.ts`.

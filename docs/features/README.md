@@ -21,6 +21,7 @@ New features start from [`_template.md`](_template.md) /
 | Plan your trip | [plan-your-trip.md](plan-your-trip.md) | `/thiet-ke-chuyen-di` — Planner entry point, no form by design |
 | Design system | [design-system.md](design-system.md) | `@theme` tokens, primitives, contrast tests |
 | SEO and metadata | [seo-and-metadata.md](seo-and-metadata.md) | Canonicals, `hreflang`, sitemap, JSON-LD |
+| Travel Planner core | [travel-planner-core.md](travel-planner-core.md) | `/api/planner` — trips, days, activities, expenses, budget, template clone |
 
 ## Phases not yet open
 
@@ -29,6 +30,7 @@ Not features, and not to be scaffolded early. See
 
 | Phase | Blocked on |
 |---|---|
-| Planner backend | An approved ADR for the data model and submission contract |
+| Planner UI | The core API shipped in [travel-planner-core.md](travel-planner-core.md); wiring the page to it is frontend work |
+| Planner map and AI suggestions | Deliberately deferred by the brief that opened the Planner phase |
 | Clickable video cards | Per-video URLs we do not hold |
 | Real photography | The owner's photos |
