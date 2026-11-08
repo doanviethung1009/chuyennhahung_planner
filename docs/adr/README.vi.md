@@ -20,6 +20,10 @@ Viết quyết định trước, rồi vẽ sơ đồ bằng skill **archify** n
 Archify vẽ lại một quyết định; nó không ra quyết định. Sản phẩm xuất ra để trong
 `.archify/`.
 
+Những quyết định mà site đang đứng trên — và không cần một bản ghi riêng — được mô tả
+trong [../architecture.vi.md](../architecture.vi.md); còn cái gì *thay đổi* một trong số đó
+thì cần một ADR ở đây.
+
 | ADR | Quyết định | Trạng thái |
 |---|---|---|
-| — | Chưa ghi ADR nào. Những quyết định mà site đang đứng trên được mô tả trong [../architecture.vi.md](../architecture.vi.md); còn cái gì *thay đổi* một trong số đó thì cần một bản ghi ở đây. | — |
+| [0001](0001-travel-content-system.vi.md) | Travel Content System: thực thể có type nằm sau một interface store, chưa có database, validation bằng `zod`, auth admin mặc định đóng | Đã chấp nhận |
