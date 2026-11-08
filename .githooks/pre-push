@@ -1,0 +1,43 @@
+#!/bin/sh
+# Refuse a push that would move `main` directly (CLAUDE.md rule 9).
+#
+# git feeds one line per pushed ref on stdin:
+#   <local ref> <local sha> <remote ref> <remote sha>
+# A deletion arrives with a local sha of all zeroes, which still counts as
+# moving the branch, so the remote ref alone decides.
+#
+# Enable once per clone:   git config core.hooksPath .githooks
+# Check it is enabled:     git config --get core.hooksPath
+#
+# This guards YOUR terminal, and it is not remote branch protection: anyone
+# cloning fresh has it off until they enable it. See
+# .claude/rules/05-git-governance.md.
+
+refused=0
+
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+	[ -n "$remote_ref" ] || continue
+
+	if [ "$remote_ref" = "refs/heads/main" ]; then
+		refused=1
+	fi
+done
+
+if [ "$refused" -eq 1 ]; then
+	cat >&2 <<'MSG'
+
+  Refused: this push would move `main` directly.
+
+  CLAUDE.md rule 9 - `main` only ever moves through a merged PR.
+  Push the branch and open a PR instead:
+
+    git push -u origin <type>/<short-kebab-summary>
+    gh pr create --base main
+
+  To override deliberately, add --no-verify.
+
+MSG
+	exit 1
+fi
+
+exit 0
