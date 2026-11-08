@@ -29,7 +29,7 @@ Three specialist agents. Route work to the one that owns the files.
 
 | Agent | Owns | Never touches |
 |---|---|---|
-| `system-architect` | Route topology, data contracts, ADRs in `docs/adr/`, `docs/architecture.*`, Archify diagrams | App code, design tokens |
+| `system-architect` | Route topology, data contracts, ADRs in `docs/adr/`, `docs/architecture.*`, diagrams | App code, design tokens |
 | `backend-engineer` | `src/app/api/**`, server actions, persistence, validation, caching | Components, tokens, route topology |
 | `frontend-engineer` | `src/app/**` markup, `src/components/**`, `globals.css` tokens, `messages/*.json` | API handlers, persistence, route topology |
 
@@ -188,10 +188,3 @@ route map, the data contracts, the module boundaries, a phase boundary, or how
 the app is run — the corresponding edit to `docs/architecture.*` or
 `docs/usage.*`. Write the ADR first when the change rests on a decision with a
 real trade-off.
-
-## Skills
-- **archify** (`.claude/skills/archify/`, Apache-2.0, vendored from
-  [tt-a1i/archify](https://github.com/tt-a1i/archify)) — generates validated,
-  interactive standalone-HTML architecture/sequence/flow diagrams. It is a
-  *diagramming* tool, not an architecture authority: write the ADR first, then
-  visualize it. Owned by `system-architect`. Artifacts go in `.archify/`.

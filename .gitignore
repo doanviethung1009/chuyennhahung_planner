@@ -8,7 +8,6 @@ build
 next-env.d.ts
 tsconfig.tsbuildinfo
 coverage
-.archify/
 screenshots/
 
 # Local content store for the Travel Content System (see docs/adr/0001).

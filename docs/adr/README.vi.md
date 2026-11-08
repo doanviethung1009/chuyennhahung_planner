@@ -16,9 +16,9 @@ Phải có ADR — không phải tuỳ chọn — cho các việc sau:
 - bật dò locale theo Accept-Language
 - thay nội dung seed có type bằng một CMS hoặc database
 
-Viết quyết định trước, rồi vẽ sơ đồ bằng skill **archify** nếu hình ảnh giúp được.
-Archify vẽ lại một quyết định; nó không ra quyết định. Sản phẩm xuất ra để trong
-`.archify/`.
+Viết quyết định trước, rồi vẽ sơ đồ nếu hình ảnh giúp được — bằng một block
+Mermaid ngay trong ADR, ở cả hai bản ngôn ngữ. Sơ đồ chỉ vẽ lại một quyết định;
+nó không ra quyết định.
 
 | ADR | Quyết định | Trạng thái |
 |---|---|---|

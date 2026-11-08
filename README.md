@@ -204,14 +204,9 @@ Three specialist agents are defined in `.claude/agents/`, with shared rules in
 
 | Agent | Owns |
 |---|---|
-| `system-architect` | Route topology, data contracts, ADRs, Archify diagrams |
+| `system-architect` | Route topology, data contracts, ADRs, diagrams |
 | `backend-engineer` | API routes, server actions, persistence, validation |
 | `frontend-engineer` | Pages, components, design tokens, i18n catalogues |
-
-The [Archify](https://github.com/tt-a1i/archify) skill (Apache-2.0) is vendored
-into `.claude/skills/archify/` for interactive architecture diagrams. It is a
-*diagramming* tool, not an architecture authority — write the ADR first, then
-visualize it.
 
 Whoever ships a change writes its documentation: the feature document belongs to
 the agent that owns the code, `docs/architecture.*` and `docs/adr/**` to the
