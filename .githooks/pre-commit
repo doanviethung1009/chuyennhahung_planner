@@ -1,0 +1,33 @@
+#!/bin/sh
+# Refuse a commit made directly on `main` (CLAUDE.md rule 9: `main` only ever
+# moves through a merged PR).
+#
+# Enable once per clone:   git config core.hooksPath .githooks
+# Check it is enabled:     git config --get core.hooksPath
+#
+# This guards YOUR terminal. The PreToolUse guard in .claude/hooks/git_guard.py
+# only gates Claude Code's own tool calls, so neither replaces the other, and
+# neither is remote branch protection. See .claude/rules/05-git-governance.md.
+
+# `symbolic-ref` also reports an unborn branch, where `rev-parse --abbrev-ref`
+# prints the literal "HEAD" and would let a first commit on `main` through.
+branch=$(git symbolic-ref --short -q HEAD) || exit 0
+
+if [ "$branch" = "main" ]; then
+	cat >&2 <<'MSG'
+
+  Refused: you are on `main`.
+
+  CLAUDE.md rule 9 - `main` only ever moves through a merged PR.
+
+    git switch -c <type>/<short-kebab-summary>
+
+  Types: feat fix refactor style test docs chore
+
+  To override deliberately, add --no-verify.
+
+MSG
+	exit 1
+fi
+
+exit 0

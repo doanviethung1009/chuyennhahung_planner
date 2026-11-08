@@ -97,8 +97,46 @@ echo '{"tool_input":{"command":"git push --force"}}' | python3 .claude/hooks/git
 ```
 It should print a JSON `permissionDecision` of `deny`.
 
-## What the hook cannot do
-A local hook cannot enforce remote branch protection. Real enforcement needs provider
-branch-protection rules or rulesets on `main`, with required CI checks and human
-reviewers. **This repository has no `.github/` workflows yet** — recommended CI jobs
-when it gets them: typecheck, lint, test, build, secret scan, dependency scan.
+## Three layers, and what each one actually covers
+Nothing here is remote branch protection. Be precise about which layer catches what,
+because a guard that looks like enforcement but is not is worse than none.
+
+| Layer | Covers | Does not cover |
+|---|---|---|
+| `.claude/hooks/git_guard.py` (`PreToolUse`) | Claude Code's own tool calls | your terminal, any other client |
+| `.githooks/pre-commit`, `pre-push` | **your terminal**, once enabled per clone | a fresh clone that has not enabled it; `--no-verify`; the remote |
+| `.github/workflows/ci.yml` | every PR into `main`, and `main` after merge | nothing is *blocked* — see below |
+
+### Enabling the git hooks
+They live in a tracked directory, so they are reviewed like code, but git does not use
+them until each clone opts in:
+
+```bash
+git config core.hooksPath .githooks   # once per clone
+git config --get core.hooksPath       # confirm
+```
+
+`pre-commit` refuses a commit while HEAD is on `main`. `pre-push` refuses a push that
+would move `refs/heads/main`, including a deletion, and including when `main` is one ref
+among several in the same push. Both print the branch-and-PR route instead, and both can
+be overridden deliberately with `--no-verify` — that is a choice, not an accident.
+
+Worktrees matter here: `core.hooksPath` is shared across the whole repository, and the
+hooks read **the branch of the worktree the command runs in**. The `PreToolUse` guard got
+exactly this wrong once (PR #9) and silently stopped enforcing rule 9.
+
+### Why CI cannot be made required
+Required status checks need provider branch-protection rules or rulesets, and both are
+unavailable while this repository is **private on GitHub Free**:
+
+```
+403 Upgrade to GitHub Pro or make this repository public to enable this feature.
+```
+
+So CI results are **advisory**: a red run does not block a merge, and a human still has
+to look. Real enforcement needs GitHub Pro or a public repository, and then
+branch-protection on `main` requiring the `verify` job.
+
+Still not wired up, and worth adding when CI can be made required: secret scanning and a
+dependency scan. `npm ci` currently reports 20 advisories (9 moderate, 9 high,
+2 critical), which nothing in the pipeline fails on yet.

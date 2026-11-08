@@ -25,6 +25,17 @@ Tiếng Việt ở `/`, tiếng Anh ở `/en`. Không cần tạo `.env`;
 `NEXT_PUBLIC_SITE_URL` là biến duy nhất và mặc định về
 `https://chuyennhahung.vn`.
 
+Mỗi bản clone cần thêm một bước nữa mà git không tự làm được — bật các git hook
+đã được theo dõi trong repo, để commit không lọt vào `main`:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+`pre-commit` từ chối commit khi bạn đang ở `main`, còn `pre-push` từ chối cú push
+làm `main` dịch chuyển; cả hai đều chỉ lại đường đi qua branch và PR. Nếu thật sự
+cố ý thì ghi đè bằng `--no-verify`.
+
 ## Các lệnh
 
 | Lệnh | Tác dụng |
@@ -53,6 +64,12 @@ npm run typecheck && npm run lint && npm run test
 Thay đổi UI thì phải xem lại ở 375px, 768px và 1280px. Nếu có gì fail hoặc bị bỏ
 qua, nói ra — báo "xong" trên một lần chạy đang fail là lỗi duy nhất không sửa
 lại được ở đây.
+
+`.github/workflows/ci.yml` chạy đúng ba lệnh đó cộng thêm `npm run build` trên mọi
+PR vào `main`. Hãy xem nó là ý kiến thứ hai, không phải cổng chặn: các check này
+**không thể đặt thành bắt buộc** khi repo còn private trên GitHub Free, vì ở đó
+không có branch protection lẫn ruleset. Vì vậy một lần chạy đỏ không ngăn được
+merge — vẫn phải có người xem.
 
 ## Những việc thường làm
 

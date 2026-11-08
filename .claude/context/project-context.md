@@ -16,9 +16,11 @@ lives in `docs/` and is bilingual and test-enforced — see CLAUDE.md "Documenta
 | i18n | `next-intl` `^4.14.9`, localized pathnames, `localePrefix: 'as-needed'` |
 | Package manager | npm (`package-lock.json`) |
 | Node | v20.14.0 locally |
-| Python 3 | 3.13.7 — **required** for the `PreToolUse` git guard hook |
+| Python 3 | 3.13.7 — **required** for the `PreToolUse` git guard hook and `tests/git-guard.test.ts` |
 | Tests | Vitest `^3.2.7` — Node 20.14 is below Vite 7's 20.19 floor, so Vitest 4/5 **cannot** run here |
-| Deployment / CI | **No `.github/` workflows.** Branch protection is convention + a local hook only |
+| CI | `.github/workflows/ci.yml` — typecheck, lint, test, build on every PR into `main`. **Advisory only:** required checks need branch protection, unavailable while the repo is private on GitHub Free |
+| Local git guards | `.githooks/pre-commit` + `pre-push` refuse commits/pushes that move `main`; opt in per clone with `git config core.hooksPath .githooks` |
+| Deployment | No deploy workflow. `NEXT_PUBLIC_SITE_URL` must be set at **build** time |
 
 ## Commands (the real ones — do not invent others)
 ```bash

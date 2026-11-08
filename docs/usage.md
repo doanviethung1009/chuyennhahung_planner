@@ -25,6 +25,17 @@ Vietnamese is at `/`, English at `/en`. There is no `.env` file to create;
 `NEXT_PUBLIC_SITE_URL` is the only variable and it falls back to
 `https://chuyennhahung.vn`.
 
+One more step per clone, which git cannot do for you — turn on the tracked git
+hooks that keep commits off `main`:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+`pre-commit` refuses a commit while you are on `main`, and `pre-push` refuses a
+push that would move `main`; both point you at the branch-and-PR route instead.
+Override deliberately with `--no-verify` if you ever really mean it.
+
 ## Commands
 
 | Command | What it does |
@@ -53,6 +64,12 @@ npm run typecheck && npm run lint && npm run test
 A UI change adds a look at 375px, 768px and 1280px. If something failed or was
 skipped, say so — a passing summary over a failing run is the one unrecoverable
 mistake here.
+
+`.github/workflows/ci.yml` runs the same three plus `npm run build` on every PR
+into `main`. Treat it as a second opinion, not as a gate: these checks **cannot
+be made required** while the repository is private on GitHub Free, because
+branch protection and rulesets are unavailable there. A red run therefore does
+not stop a merge — a human still has to look.
 
 ## Common tasks
 
