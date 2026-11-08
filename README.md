@@ -30,7 +30,7 @@ npm run dev
 | `npm run build` | Production build (prerenders all 57 pages) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint (flat config) |
-| `npm run test` | Vitest — 37 tests |
+| `npm run test` | Vitest — 47 tests |
 | `npm run verify:ui` | Screenshots every route at 375 / 768 / 1440 and fails on horizontal overflow |
 | `npm run covers` | Regenerates the SVG cover artwork |
 
@@ -43,6 +43,23 @@ Requires Node **≥ 20.9**. Two notes about the current `20.14` on this machine:
   `require()` an ES module. **Remove that override once Node is ≥ 20.19.**
 - Vitest is held at 3.x for the same reason — Vitest 4/5 need Vite 7/8, which
   require Node ≥ 20.19.
+
+## Documentation
+
+Full documentation lives in [`docs/`](docs/README.md) — every document in English
+and Vietnamese (`<name>.vi.md`):
+
+| Document | What it covers |
+|---|---|
+| [docs/architecture.md](docs/architecture.md) · [vi](docs/architecture.vi.md) | Runtime shape, request path, route map, data contracts, module boundaries, phases |
+| [docs/usage.md](docs/usage.md) · [vi](docs/usage.vi.md) | Install, run, test, verify, deploy, and the common extension tasks |
+| [docs/features/](docs/features/README.md) · [vi](docs/features/README.vi.md) | One document per feature, with a template for new ones |
+| [docs/adr/](docs/adr/README.md) · [vi](docs/adr/README.vi.md) | Architecture decision records, and what requires one |
+
+Every new feature ships a feature document in both languages and a row in the
+feature register. `tests/docs.test.ts` enforces it: missing translation, drifted
+heading structure, missing section, unregistered document or broken relative link
+all fail the suite. The rules are in [`CLAUDE.md`](CLAUDE.md).
 
 ## Routing and localization
 
@@ -165,3 +182,7 @@ The [Archify](https://github.com/tt-a1i/archify) skill (Apache-2.0) is vendored
 into `.claude/skills/archify/` for interactive architecture diagrams. It is a
 *diagramming* tool, not an architecture authority — write the ADR first, then
 visualize it.
+
+Whoever ships a change writes its documentation: the feature document belongs to
+the agent that owns the code, `docs/architecture.*` and `docs/adr/**` to the
+architect.

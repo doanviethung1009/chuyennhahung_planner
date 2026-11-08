@@ -1,0 +1,135 @@
+# Cách sử dụng — Chuyện Nhà Hưng
+
+🇬🇧 English version: [usage.md](usage.md)
+
+Cách chạy, kiểm chứng và mở rộng ứng dụng. Muốn biết *nó gồm những gì*, đọc
+[architecture.vi.md](architecture.vi.md).
+
+## Yêu cầu
+
+- **Node ≥ 20.9.** Bản `20.14` hiện có trên máy này kéo theo hai hệ quả:
+  `package.json` ghim `magic-string` qua `overrides` vì `@tailwindcss/node`
+  `require()` một ES module, và Vitest bị giữ ở 3.x vì Vitest 4/5 cần Vite 7/8
+  (Node ≥ 20.19). **Bỏ cả hai cái ghim này khi lên Node ≥ 20.19.**
+- npm (repo có sẵn `package-lock.json`).
+- Google Chrome ở đường dẫn mặc định của macOS, chỉ dùng cho `npm run verify:ui`.
+
+## Cài và chạy
+
+```bash
+npm install
+npm run dev          # http://localhost:3000
+```
+
+Tiếng Việt ở `/`, tiếng Anh ở `/en`. Không cần tạo `.env`;
+`NEXT_PUBLIC_SITE_URL` là biến duy nhất và mặc định về
+`https://chuyennhahung.vn`.
+
+## Các lệnh
+
+| Lệnh | Tác dụng |
+|---|---|
+| `npm run dev` | Dev server với Turbopack |
+| `npm run build` | Build production — prerender toàn bộ 57 trang |
+| `npm start` | Chạy bản build production |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run lint` | ESLint, flat config |
+| `npm run test` | Vitest, chạy một lượt |
+| `npm run verify:ui` | Chụp 13 route ở 375/768/1440 vào `screenshots/`, fail nếu tràn ngang |
+| `npm run covers` | Sinh lại tranh cover SVG vào `public/images/covers/` |
+
+`verify:ui` cần một server dev hoặc production đang chạy, và nhận thêm base URL
+cùng thư mục xuất tuỳ chọn:
+`node scripts/screenshots.mjs http://localhost:3000 out/shots`.
+
+## Định nghĩa "xong"
+
+Mọi thay đổi đều kết thúc bằng ba lệnh này, và phải **nêu đúng kết quả thật**:
+
+```bash
+npm run typecheck && npm run lint && npm run test
+```
+
+Thay đổi UI thì phải xem lại ở 375px, 768px và 1280px. Nếu có gì fail hoặc bị bỏ
+qua, nói ra — báo "xong" trên một lần chạy đang fail là lỗi duy nhất không sửa
+lại được ở đây.
+
+## Những việc thường làm
+
+### Thêm một mục nội dung
+
+1. Thêm vào bộ dữ liệu trong `src/content/<collection>.ts`, điền cả `vi` **và**
+   `en` cho mọi field `Localized<T>`. `typecheck` sẽ bắt nếu thiếu locale.
+2. Slug viết thường, nối bằng gạch ngang, không trùng — `tests/content.test.ts`
+   kiểm tra điều này.
+3. Chạy `npm run covers` để mục mới có tranh cover, hoặc trỏ `cover` tới một ảnh
+   thật trong `public/images/`.
+4. Điểm đến còn cần `coords` WGS84 thật; bản đồ chiếu theo toạ độ đó, sai một con
+   số là có một cái ghim trông rất thật nằm sai chỗ.
+
+### Thêm một chuỗi hiển thị cho người dùng
+
+Thêm key vào **cả** `messages/vi.json` và `messages/en.json`, rồi đọc bằng
+`useTranslations` / `getTranslations`. Không bao giờ hard-code chuỗi trong
+component. `tests/i18n.test.ts` kiểm tra key khớp nhau, placeholder ICU khớp
+nhau, và cảnh báo khi một giá trị tiếng Việt bị copy nguyên sang tiếng Anh.
+
+### Thêm một route
+
+1. Thêm pathname nội bộ cùng đoạn VI và EN vào `pathnames` trong
+   [`src/i18n/routing.ts`](../src/i18n/routing.ts).
+2. Tạo thư mục tương ứng dưới `src/app/[locale]/`.
+3. Export `generateMetadata` dùng `buildPageMetadata` từ
+   [`src/lib/metadata.ts`](../src/lib/metadata.ts).
+4. Thêm vào `src/app/sitemap.ts`, và vào `primaryNav` / `footerExtraNav` trong
+   [`nav-items.ts`](../src/components/layout/nav-items.ts) nếu nó thuộc một menu.
+5. Thêm nhãn điều hướng vào cả hai file messages.
+6. Thêm route vào `scripts/screenshots.mjs`.
+7. Viết tài liệu: một tài liệu tính năng trong
+   [`features/`](features/README.vi.md) bằng cả hai ngôn ngữ, và cập nhật bảng
+   route trong [architecture.md](architecture.md) cùng
+   [architecture.vi.md](architecture.vi.md).
+
+### Thêm một design token
+
+Thêm vào `@theme` trong [`globals.css`](../src/app/globals.css) — nơi duy nhất
+được phép — rồi dùng utility sinh ra từ nó. Nếu đó là màu chữ hoặc màu của một
+control, mở rộng `tests/design-tokens.test.ts` để tương phản được *kiểm tra*, chứ
+không phải được *giả định*.
+
+### Thêm một locale
+
+Ba việc làm cùng lúc: `locales` + `pathnames` trong `routing.ts`, thêm
+`messages/<locale>.json`, và thêm key mới vào mọi field `Localized<T>` trong
+`src/content/**`. `tests/i18n.test.ts` và `tests/content.test.ts` sẽ fail đến khi
+làm đủ cả ba.
+
+## Trước khi lên sóng — việc của chủ nhà
+
+Đây là các giá trị hợp lý nhưng **chưa được kiểm chứng**. Phải xác nhận từng mục:
+
+1. **Handle Facebook** — `src/content/site.ts` đang giả định `chuyennhahung`.
+2. **Email liên hệ** — `hello@chuyennhahung.vn` phải tồn tại thật; trang thiết kế
+   chuyến đi có link `mailto:` điền sẵn tới địa chỉ này.
+3. **URL site** — đặt `NEXT_PUBLIC_SITE_URL`; nó quyết định canonical, `hreflang`
+   và sitemap.
+4. **Ảnh** — thay tranh SVG sinh tự động bằng ảnh thật.
+
+## Deploy
+
+`npm run build` tạo ra một app prerender hoàn toàn, không phụ thuộc dữ liệu lúc
+chạy, nên host Next.js nào cũng được (Vercel, Node server sau nginx, container).
+`NEXT_PUBLIC_SITE_URL` phải được đặt lúc **build** — nó được nướng vào canonical,
+`hreflang` và sitemap. Đổi nội dung thì phải build lại; hiện chưa có CMS và chưa
+có đường revalidate.
+
+## Khắc phục sự cố
+
+| Hiện tượng | Nguyên nhân |
+|---|---|
+| `require() of ES Module` từ `@tailwindcss/node` | Node < 20.19 mà override `magic-string` đã bị bỏ |
+| Vitest không chạy | Đã cài Vitest 4/5 trên Node < 20.19 — phải ở lại 3.x |
+| Một URL tiếng Việt trả 404 | Pathname chưa có trong `pathnames` ở `routing.ts`, hoặc tên thư mục không khớp pathname nội bộ |
+| `MISSING_MESSAGE` lúc chạy | Key chỉ được thêm vào một file messages |
+| `npm run verify:ui` không mở được browser | Chrome không nằm ở đường dẫn macOS hard-code trong `scripts/screenshots.mjs` |
+| Dấu tiếng Việt hiển thị sai | Thêm font mà thiếu subset `vietnamese` |

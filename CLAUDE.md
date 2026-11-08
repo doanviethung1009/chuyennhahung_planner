@@ -29,7 +29,7 @@ Three specialist agents. Route work to the one that owns the files.
 
 | Agent | Owns | Never touches |
 |---|---|---|
-| `system-architect` | Route topology, data contracts, ADRs in `docs/adr/`, Archify diagrams | App code, design tokens |
+| `system-architect` | Route topology, data contracts, ADRs in `docs/adr/`, `docs/architecture.*`, Archify diagrams | App code, design tokens |
 | `backend-engineer` | `src/app/api/**`, server actions, persistence, validation, caching | Components, tokens, route topology |
 | `frontend-engineer` | `src/app/**` markup, `src/components/**`, `globals.css` tokens, `messages/*.json` | API handlers, persistence, route topology |
 
@@ -38,6 +38,11 @@ Rules for each live in `.claude/agents/<name>.md` and are binding on that agent.
 **Ownership is exclusive.** If a task spans two agents, the architect splits it and
 defines the contract between the halves first. An agent that needs a change in
 someone else's files requests it — it does not make it.
+
+**Documentation is not a fourth agent.** Whoever ships the change writes its
+document: the feature document in `docs/features/` belongs to the agent that
+owns the code, `docs/architecture.*` and `docs/adr/**` belong to the architect,
+and `docs/usage.*` belongs to whoever changed how the app is run or operated.
 
 ## Rules that bind everyone
 
@@ -65,6 +70,21 @@ someone else's files requests it — it does not make it.
 9. **Every feature ships through a branch and a PR.** No direct commits to `main`,
    no silent local-only work. See *Git workflow* below — it is binding on every
    agent and on the main session.
+10. **The architecture and the usage of the app stay documented.**
+    [`docs/architecture.md`](docs/architecture.md) describes the runtime shape,
+    route map, data contracts, module boundaries and phases;
+    [`docs/usage.md`](docs/usage.md) describes how to install, run, verify, extend
+    and deploy it. A change that makes either of them wrong is not finished until
+    that document is corrected in the same change.
+11. **Every new feature ships a feature document.** Copy
+    `docs/features/_template.md`, fill all seven sections, and register the
+    feature in `docs/features/README.md`. No document, no done — a feature that
+    only exists in the code is undocumented work, and `tests/docs.test.ts` fails
+    on an unregistered document.
+12. **Every document exists in Vietnamese too.** English at `<name>.md` is the
+    canonical file; Vietnamese at `<name>.vi.md` is a full translation with the
+    same heading structure, not a summary. Both are written in the same change,
+    and `tests/docs.test.ts` fails on a missing twin or a drifted structure.
 
 ## Git workflow
 
@@ -138,6 +158,36 @@ and lands on `main` through a pull request.
   its command output, and the main session handles git.
 - When a task spans two agents, their work still lands in one branch and one PR,
   split into separate commits per agent's ownership area.
+
+## Documentation
+
+`docs/` is a maintained product surface, enforced by `tests/docs.test.ts` the way
+the message catalogues are enforced by `tests/i18n.test.ts`.
+
+```
+docs/
+  README.md / README.vi.md          index — every document is registered here
+  architecture.md / .vi.md          runtime shape, routes, data, boundaries, phases
+  usage.md / .vi.md                 install, run, test, verify, deploy, common tasks
+  features/README.md / .vi.md       the feature register
+  features/_template.md / .vi.md    start every feature document from this
+  features/<slug>.md / .vi.md       one per feature
+  adr/README.md / .vi.md            ADR index + what requires an ADR
+  adr/_template.md / .vi.md         Context · Decision · Options · Consequences
+```
+
+What the test enforces: a Vietnamese twin for every document, an identical
+heading skeleton between the two languages, a single `h1`, a link from each
+document to its translation, the seven required sections in every feature
+document, registration in the matching index, and that every relative link
+resolves to a file that exists.
+
+Shipping a feature therefore means: the code, the feature document in both
+languages, the row in `docs/features/README.*`, and — if the change touched the
+route map, the data contracts, the module boundaries, a phase boundary, or how
+the app is run — the corresponding edit to `docs/architecture.*` or
+`docs/usage.*`. Write the ADR first when the change rests on a decision with a
+real trade-off.
 
 ## Skills
 - **archify** (`.claude/skills/archify/`, Apache-2.0, vendored from

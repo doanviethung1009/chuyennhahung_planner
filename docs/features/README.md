@@ -1,0 +1,34 @@
+# Features — register
+
+🇻🇳 Bản tiếng Việt: [README.vi.md](README.vi.md)
+
+Every feature in the app has one document here, in both languages. **A feature
+that is not in this table is not finished** — `tests/docs.test.ts` fails on a
+document that is not registered, and on a registered document whose Vietnamese
+twin is missing.
+
+New features start from [`_template.md`](_template.md) /
+[`_template.vi.md`](_template.vi.md).
+
+| Feature | Document | What it covers |
+|---|---|---|
+| i18n and routing | [i18n-and-routing.md](i18n-and-routing.md) | Locales, localized pathnames, middleware, message catalogues |
+| Stories | [stories.md](stories.md) | `/chuyen-di-choi` index and detail, the storytelling core |
+| Destinations | [destinations.md](destinations.md) | `/kham-pha` index and detail, the cross-reference hub |
+| Travel map | [travel-map.md](travel-map.md) | `/ban-do` — SVG silhouette, real coordinates, no JS |
+| Itineraries | [itineraries.md](itineraries.md) | `/len-lich-trinh` plus the permanent tour redirects |
+| Video reviews | [video-reviews.md](video-reviews.md) | `/goc-review` — deliberately link-free cards, channel buttons |
+| Plan your trip | [plan-your-trip.md](plan-your-trip.md) | `/thiet-ke-chuyen-di` — Planner entry point, no form by design |
+| Design system | [design-system.md](design-system.md) | `@theme` tokens, primitives, contrast tests |
+| SEO and metadata | [seo-and-metadata.md](seo-and-metadata.md) | Canonicals, `hreflang`, sitemap, JSON-LD |
+
+## Phases not yet open
+
+Not features, and not to be scaffolded early. See
+[../architecture.md](../architecture.md#phases).
+
+| Phase | Blocked on |
+|---|---|
+| Planner backend | An approved ADR for the data model and submission contract |
+| Clickable video cards | Per-video URLs we do not hold |
+| Real photography | The owner's photos |
