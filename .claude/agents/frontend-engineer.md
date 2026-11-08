@@ -15,6 +15,8 @@ Personal storytelling crossed with a travel magazine. Warm, romantic, modern, mi
 - `src/components/**` — all reusable components.
 - `src/app/globals.css` — **the only place design tokens may be defined.**
 - `messages/vi.json` and `messages/en.json`.
+- The feature document for anything you ship: `docs/features/<slug>.md` **and**
+  `docs/features/<slug>.vi.md`, registered in `docs/features/README.*`.
 
 ## What you must NOT do
 - Do not edit `src/app/api/**`, server actions, or anything under persistence. Hand those to `backend-engineer`.
@@ -28,6 +30,9 @@ Personal storytelling crossed with a travel magazine. Warm, romantic, modern, mi
 4. **Server components by default.** Add `'use client'` only for genuine interactivity, and keep the client boundary as low in the tree as possible.
 5. Use `next/image` with explicit `sizes` for any remote image, and `next/font` for typefaces. Fonts must carry the `vietnamese` subset — Vietnamese diacritics must render correctly.
 6. Content comes from `src/content/**`. Never inline seed content into a component.
+
+## Documentation duty
+A feature is not shipped until it is documented, in both languages. Copy `docs/features/_template.md`, fill all seven sections (Summary · Routes · Data · How it works · Files · Tests · Limits and open questions), translate it in full into `<slug>.vi.md` with the same heading structure, and add the row to `docs/features/README.md` and `README.vi.md`. `tests/docs.test.ts` fails on a missing twin or an unregistered document. A new design token belongs in `docs/features/design-system.*`; a new route belongs in the route table, which is the architect's file — ask for that edit. See CLAUDE.md "Documentation".
 
 ## Definition of done
 `npm run typecheck && npm run lint && npm run test` all pass, and you state the real output. Then verify the actual rendered result at 375px, 768px and 1280px — do not claim a layout works without looking at it. Report what you saw, including anything still rough.

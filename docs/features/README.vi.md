@@ -1,0 +1,34 @@
+# Tính năng — sổ đăng ký
+
+🇬🇧 English version: [README.md](README.md)
+
+Mỗi tính năng trong app có đúng một tài liệu ở đây, bằng cả hai ngôn ngữ. **Một
+tính năng không có trong bảng này là tính năng chưa xong** — `tests/docs.test.ts`
+fail khi có tài liệu chưa được đăng ký, và khi một tài liệu đã đăng ký mà thiếu
+bản tiếng Việt.
+
+Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
+[`_template.vi.md`](_template.vi.md).
+
+| Tính năng | Tài liệu | Nội dung |
+|---|---|---|
+| i18n và routing | [i18n-and-routing.vi.md](i18n-and-routing.vi.md) | Locale, pathname bản địa hoá, middleware, file messages |
+| Chuyện đi chơi | [stories.vi.md](stories.vi.md) | `/chuyen-di-choi` danh sách và chi tiết, phần kể chuyện cốt lõi |
+| Điểm đến | [destinations.vi.md](destinations.vi.md) | `/kham-pha` danh sách và chi tiết, trung tâm tham chiếu chéo |
+| Bản đồ hành trình | [travel-map.vi.md](travel-map.vi.md) | `/ban-do` — silhouette SVG, toạ độ thật, không cần JS |
+| Lịch trình | [itineraries.vi.md](itineraries.vi.md) | `/len-lich-trinh` cùng các redirect tour vĩnh viễn |
+| Góc review video | [video-reviews.vi.md](video-reviews.vi.md) | `/goc-review` — card cố ý không link, nút kênh |
+| Thiết kế chuyến đi | [plan-your-trip.vi.md](plan-your-trip.vi.md) | `/thiet-ke-chuyen-di` — điểm vào Planner, chủ đích không form |
+| Hệ thiết kế | [design-system.vi.md](design-system.vi.md) | Token `@theme`, primitive, test tương phản |
+| SEO và metadata | [seo-and-metadata.vi.md](seo-and-metadata.vi.md) | Canonical, `hreflang`, sitemap, JSON-LD |
+
+## Các phase chưa mở
+
+Không phải tính năng, và không được dựng sớm. Xem
+[../architecture.vi.md](../architecture.vi.md#các-phase).
+
+| Phase | Đang chờ |
+|---|---|
+| Backend Planner | Một ADR được duyệt cho model dữ liệu và hợp đồng gửi form |
+| Card video bấm được | URL của từng video mà ta chưa có |
+| Ảnh thật | Ảnh của chủ nhà |
