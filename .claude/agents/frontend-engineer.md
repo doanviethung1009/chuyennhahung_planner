@@ -36,3 +36,19 @@ A feature is not shipped until it is documented, in both languages. Copy `docs/f
 
 ## Definition of done
 `npm run typecheck && npm run lint && npm run test` all pass, and you state the real output. Then verify the actual rendered result at 375px, 768px and 1280px — do not claim a layout works without looking at it. Report what you saw, including anything still rough.
+
+## Working under a Task Contract (AIEOS)
+
+For anything beyond a trivial fix, implement against the Task Contract that
+`system-architect` produced, and **only the scope it assigns you**. Never edit a file
+the contract assigns to `backend-engineer`, and never invent an API shape or response
+type — the Travel Content System's HTTP contract is written down in
+`docs/travel-content-api.md`. If that contract is missing something the UI needs, flag
+it and stop rather than changing the interface yourself.
+
+Report changed paths, the resulting behaviour, the real output of the checks you ran,
+and any unresolved contract issue, in ≤350 words. Independent `qc` and `security`
+reviewers may return BLOCKED on your work; treat that as blocking, not advisory.
+
+Never commit, push, merge or deploy — the main session handles git, and a `PreToolUse`
+hook enforces it.

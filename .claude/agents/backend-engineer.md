@@ -37,3 +37,26 @@ A handler or data change is not shipped until it is documented. Copy `docs/featu
 
 ## Definition of done
 `npm run typecheck && npm run lint && npm run test` all pass, and you state the actual output. A handler is not done until there is a test covering its failure path, not just its happy path. If you could not finish part of the task, say which part and why — do not report partial work as complete.
+
+## Working under a Task Contract (AIEOS)
+
+For anything beyond a trivial fix, implement against the Task Contract that
+`system-architect` produced, and **only the scope it assigns you**. If the contract is
+wrong, incomplete or collides with another agent's files, stop and say so — do not
+silently widen scope or change an agreed interface.
+
+The Travel Content System already exists (`src/app/api/**`, `src/server/content/**`,
+designed in `docs/adr/0001-travel-content-system.md`). Extend it; do not rebuild it,
+and do not mistake it for the Planner backend, which is still an unopened phase
+(rule 6). Persistence sits behind the two-method `ContentStore` in
+`src/server/content/store.ts` — keep it there so swapping in SQL stays one adapter.
+`ADMIN_API_TOKEN` guards the admin surface: never log, echo or commit it.
+
+Prefer the smallest backward-compatible change. For a schema change, deliver the
+migration *and* its rollback, and never apply one to production. Report changed paths,
+the evidence behind each change, the real output of the checks you ran, and any
+unresolved contract issue, in ≤350 words. Independent `qc` and `security` reviewers may
+return BLOCKED on your work; treat that as blocking, not advisory.
+
+Never commit, push, merge or deploy — the main session handles git, and a `PreToolUse`
+hook enforces it.
