@@ -66,17 +66,29 @@ headings, visible focus rings, labels tied to inputs, real `<button>`/`<a>` elem
 (never a `div` with an `onClick`), ≥44px touch targets, and `alt` that carries meaning
 (empty `alt=""` only for decoration).
 
-## 6. The Planner backend is a later phase
-Until the user opens it, the Planner CTA is a content page with real contact
-affordances (mailto, Zalo, Messenger) and **no server dependency**. Do not scaffold
-Planner tables, endpoints or queues early, even if it seems helpful. **This rule
-overrides the AIEOS "backend first" dependency order.** Opening the phase needs an ADR.
+## 6. The Planner UI is the open phase; the backend already shipped
+The owner opened the Planner backend phase, and it landed as an API:
+`src/app/api/planner/**` over `src/server/planner/**` — trips, days generated from the
+trip length, activities from the place catalog or invented, reordering and moving
+activities between days, expenses, a target budget, archive/restore and template
+cloning. Designed in `docs/adr/0002-planner-core.md`.
 
-> The **Travel Content System is not the Planner.** It already exists — 26 route
-> handlers under `src/app/api/`, a token-guarded admin surface and a public read
-> surface, designed in `docs/adr/0001-travel-content-system.md` with its HTTP contract
-> in `docs/travel-content-api.md`. Extend it; do not rebuild it, and do not treat its
-> existence as permission to start the Planner backend.
+**What is still not built**, and must not be scaffolded without its own ADR:
+
+| Absent | Note |
+|---|---|
+| Planner **UI** | `/plan-your-trip` is still the contact-only content page (mailto, Zalo, Messenger). Wiring it to the API is `frontend-engineer` work and has not started. A submit button with nothing behind it is a dead control — rule 4. |
+| Planner map, AI suggestions | Deliberately deferred by the brief that opened the phase |
+| A real identity provider | Planner auth is an interim per-traveller bearer token, provisioned by hand through the admin API. No signup, no password reset, no session expiry. |
+| SQL | Both stores are single-process. Multi-instance deployment is the trigger. |
+
+> Two separate systems, one HTTP vocabulary. The **Travel Content System** (26 handlers
+> under `src/app/api/admin/travel/**` and `src/app/api/travel/**`,
+> `docs/adr/0001-travel-content-system.md`) is editorial content owned by the brand,
+> with one principal: `ADMIN_API_TOKEN`. The **Planner** is traveller-owned trip data,
+> with a principal per traveller. They share the error envelope and `parseJsonBody`
+> from `src/server/content/http.ts` — extend either, rebuild neither, and do not
+> conflate them.
 
 ## 7. Definition of done
 `typecheck`, `lint` and `test` passing *and the output stated*. See

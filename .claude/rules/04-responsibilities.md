@@ -45,8 +45,10 @@ raw string-interpolated SQL. Mutations are idempotent where a client may retry. 
 handler is not done until a test covers its **failure** path, not just the happy one.
 Keeps persistence behind the `ContentStore` interface.
 
-Bound by project rule 6: **the Planner backend phase is not open**, and the Travel
-Content System is not the Planner.
+Owns two shipped systems — Travel Content (one `ADMIN_API_TOKEN` principal) and the
+Planner (a principal per traveller, so every read and write is filtered by `ownerId`).
+Rule 6 now bounds what is still absent rather than the Planner backend itself: a real
+identity provider, SQL, the Planner map and AI suggestions each need an ADR.
 
 ## Documentation is not a fourth agent
 Whoever ships the change writes its document — see

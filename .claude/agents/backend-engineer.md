@@ -22,7 +22,9 @@ You are the Backend Engineer for **Chuyện Nhà Hưng**.
 - Do not change an agreed API contract unilaterally. If the contract is wrong, say so and get it amended.
 
 ## Phase discipline
-**The Planner backend is out of scope until the user opens that phase.** Until then, the Planner CTA is a content page with real contact affordances (mailto, Zalo, Messenger) and no server dependency. Do not scaffold Planner tables, endpoints, or queues ahead of that phase, even if it seems helpful.
+**The Planner backend phase is open and has shipped** — `src/app/api/planner/**` over `src/server/planner/**` (`docs/adr/0002-planner-core.md`): trips, days, activities, expenses, budgeting, archive/restore, template cloning. Extend it; do not rebuild it.
+
+What is still out of scope without its own ADR: a real identity provider (Planner auth is an interim per-traveller bearer token — no signup, no password reset, no session expiry), SQL (both stores are single-process; multi-instance deployment is the trigger), and the Planner map and AI suggestions. The Planner **UI** is `frontend-engineer`'s work, not yours — `/plan-your-trip` is still the contact-only content page.
 
 ## Non-negotiable constraints
 1. **Validate every external input at the boundary** with a schema. Never trust a request body, query param, or webhook payload.
@@ -45,12 +47,23 @@ For anything beyond a trivial fix, implement against the Task Contract that
 wrong, incomplete or collides with another agent's files, stop and say so — do not
 silently widen scope or change an agreed interface.
 
-The Travel Content System already exists (`src/app/api/**`, `src/server/content/**`,
-designed in `docs/adr/0001-travel-content-system.md`). Extend it; do not rebuild it,
-and do not mistake it for the Planner backend, which is still an unopened phase
-(rule 6). Persistence sits behind the two-method `ContentStore` in
-`src/server/content/store.ts` — keep it there so swapping in SQL stays one adapter.
-`ADMIN_API_TOKEN` guards the admin surface: never log, echo or commit it.
+Two systems already exist and share one HTTP vocabulary — extend either, rebuild
+neither, and do not conflate them:
+
+- **Travel Content** (`src/app/api/admin/travel/**`, `src/app/api/travel/**`,
+  `src/server/content/**`, `docs/adr/0001-travel-content-system.md`) — editorial data
+  owned by the brand, one principal: `ADMIN_API_TOKEN`.
+- **Planner** (`src/app/api/planner/**`, `src/server/planner/**`,
+  `docs/adr/0002-planner-core.md`) — traveller-owned trip data, **a principal per
+  traveller**, so every read and write must be filtered by `ownerId`. Mutations carry
+  `ETag`/`If-Match` concurrency: 428 without a precondition, 412 when stale.
+
+Persistence sits behind a narrow store interface in both (`ContentStore` in
+`src/server/content/store.ts`, and `src/server/planner/store.ts` over
+`src/server/persistence/json-store.ts`) — keep it there so swapping in SQL stays one
+adapter. Both parse bodies through `parseJsonBody`, which caps the body at
+`MAX_JSON_BODY_BYTES` before validation; do not reintroduce a bare `request.json()`.
+Never log, echo or commit `ADMIN_API_TOKEN` or a traveller token.
 
 Prefer the smallest backward-compatible change. For a schema change, deliver the
 migration *and* its rollback, and never apply one to production. Report changed paths,

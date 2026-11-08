@@ -6,8 +6,12 @@
 
 Trang để khách nhờ nhà mình thiết kế một chuyến đi cho họ. Hiện tại nó giải thích
 cách làm việc đó qua bốn bước và trao cho khách những đường liên hệ thật. **Nó
-không có form, và đó là chủ đích** — backend của Planner thuộc phase sau, mà một
-nút submit không có gì phía sau là một nút chết.
+không có form, và đó là chủ đích** — việc nối trang này với API Planner là phần
+frontend chưa bắt đầu, mà một nút submit không có gì phía sau là một nút chết.
+
+Backend của Planner thì đã ra mắt ([ADR 0002](../adr/0002-planner-core.vi.md),
+[travel-planner-core.vi.md](travel-planner-core.vi.md)), nên hợp đồng mà trang này
+sẽ gửi tới đã tồn tại. Thứ còn thiếu là UI, không phải phía server.
 
 ## Route
 

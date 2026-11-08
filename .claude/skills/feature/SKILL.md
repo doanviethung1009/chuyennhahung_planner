@@ -35,5 +35,8 @@ Given request: $ARGUMENTS
 8. Summarize: changed files, each check as PASS / FAIL / NOT RUN with its real
    output, security verdict, remaining issues, rollback note, next action.
 
-**Phase guard:** if the request needs Planner persistence, stop at step 2 and say
-the Planner backend phase is not open (CLAUDE.md rule 6) rather than scaffolding it.
+**Phase guard:** the Planner backend has shipped, so a Planner request is ordinary
+work against an existing contract (`docs/adr/0002-planner-core.md`). Stop at step 2
+only if the request needs something still deliberately absent — a real identity
+provider, SQL, the Planner map or AI suggestions — and say it needs its own ADR
+(CLAUDE.md rule 6) rather than scaffolding it.

@@ -6,8 +6,12 @@
 
 The page where a visitor asks the family to plan a trip for them. Today it
 explains how that works in four steps and hands over real contact routes. **It
-has no form on purpose** — the Planner backend is a later phase, and a submit
-button with nothing behind it is a dead control.
+has no form on purpose** — wiring it to the Planner API is frontend work that has
+not started, and a submit button with nothing behind it is a dead control.
+
+The Planner *backend* has since shipped ([ADR 0002](../adr/0002-planner-core.md),
+[travel-planner-core.md](travel-planner-core.md)), so the contract this page will
+eventually post to already exists. What is missing is the UI, not the server.
 
 ## Routes
 

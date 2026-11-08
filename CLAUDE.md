@@ -73,10 +73,14 @@ and `docs/usage.*` belongs to whoever changed how the app is run or operated.
 5. **Accessibility is not optional**: semantic landmarks, one `<h1>`, ordered
    headings, visible focus, real `<button>`/`<a>` elements, ≥44px touch targets,
    meaningful `alt`.
-6. **The Planner backend is a later phase.** Until the user opens it, the Planner CTA
-   is a content page with real contact affordances and no server dependency. Do not
-   scaffold Planner tables or endpoints early. The Travel Content System is **not**
-   the Planner. *This rule overrides the AIEOS "backend first" dependency order.*
+6. **The Planner UI is the open phase; the backend already shipped.** The owner opened
+   the Planner backend phase and it landed as an API — trips, days, activities,
+   expenses, budgeting ([ADR 0002](docs/adr/0002-planner-core.md)). `/plan-your-trip`
+   is still the contact-only content page: wiring it up is frontend work that has not
+   started, and a submit button with nothing behind it is a dead control (rule 4).
+   Still deliberately absent, and not to be scaffolded early: the Planner map, AI
+   suggestions, a real identity provider, and SQL. Each needs its own ADR —
+   see [Phases](docs/architecture.md#phases).
 7. **Definition of done** is `typecheck`, `lint` and `test` passing *and the output
    stated*. Report what actually happened — if something fails or was skipped, say so.
    Never write PASS for a check you did not run; write NOT RUN.

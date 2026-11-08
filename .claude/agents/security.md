@@ -48,8 +48,27 @@ read surface at `api/travel/**`) over `src/server/content/**`. Designed in
 - Seed content in `src/content/**` is static typed TypeScript, not user input — do not
   report it as an injection sink.
 
-The **Planner** backend is a separate, unopened phase (CLAUDE.md rule 6). The Travel
-Content System is not the Planner.
+The **Planner** backend has also shipped (`src/app/api/planner/**` over
+`src/server/planner/**`, `docs/adr/0002-planner-core.md`), and it is the more
+interesting surface of the two, because it is the first place this system has **more
+than one principal**:
+
+- `src/server/planner/auth.ts` holds a SHA-256 digest of a 48-byte token per
+  traveller, issued once at provisioning and never stored or returned again. Every
+  trip carries an `ownerId`, and `repository.identify(request)` throws 401 without a
+  valid token.
+- So unlike the content system, a **horizontal** authorization boundary exists here:
+  one traveller must not reach another's trip. Check that every read and write is
+  filtered by `ownerId` and not merely by trip id — that is the boundary most likely
+  to be broken by a new endpoint.
+- Mutations use `ETag`/`If-Match` optimistic concurrency. A missing precondition
+  answers 428 and a stale one 412; a write must never be partially applied.
+- Auth is deliberately interim: no signup, no password reset, no session expiry.
+  Say that plainly rather than reporting it as a finding — it is recorded in
+  ADR 0002 §3 and replacing it needs its own ADR.
+
+Request bodies are capped before parsing (`MAX_JSON_BODY_BYTES` in
+`src/server/content/http.ts`), which both systems share along with the error envelope.
 
 ## How to report
 Verdict is **PASS**, **PASS_WITH_WARNINGS** or **BLOCKED**, each finding with
