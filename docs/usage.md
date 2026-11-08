@@ -21,9 +21,20 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
-Vietnamese is at `/`, English at `/en`. There is no `.env` file to create;
-`NEXT_PUBLIC_SITE_URL` is the only variable and it falls back to
-`https://chuyennhahung.vn`.
+Vietnamese is at `/`, English at `/en`. The site renders with no `.env` at all;
+every variable below has a working default or disables a feature by failing
+closed.
+
+| Variable | Default | What it does |
+|---|---|---|
+| `NEXT_PUBLIC_SITE_URL` | `https://chuyennhahung.vn` | Canonicals, `hreflang`, sitemap. Must be set at **build** time |
+| `ADMIN_API_TOKEN` | *unset* | Guards every admin route. Unset, or shorter than 32 chars, and they all answer `503` — never an open default |
+| `TRAVEL_CONTENT_STORE` | `.data/travel-content.json` | Where the content store lives |
+| `TRAVEL_CONTENT_AUTOSEED` | `true` | Set `false` to skip seeding demo content on first use |
+| `PLANNER_STORE` | `.data/planner.json` | Where Planner trips live. Separate file from the content store by design |
+
+`.data/` is gitignored. Nothing in it is seeded for the Planner — see
+*Provision a Planner traveller* below.
 
 One more step per clone, which git cannot do for you — turn on the tracked git
 hooks that keep commits off `main`:
@@ -82,6 +93,38 @@ not stop a merge — a human still has to look.
    photograph in `public/images/`.
 4. A destination also needs real WGS84 `coords`; the map projects them and a
    wrong value puts a truthful-looking pin in the wrong place.
+
+### Provision a Planner traveller
+
+The Planner has no signup. Every traveller is provisioned by an operator, and the
+access token is shown **once** — if it is lost, rotate it; it cannot be read back.
+
+```bash
+# 1. A real secret, at least 32 characters, or every admin route answers 503.
+export ADMIN_API_TOKEN="$(openssl rand -base64 36)"
+
+# 2. Create the traveller. Keep `accessToken` from the response.
+curl -s -X POST http://localhost:3000/api/admin/planner/users \
+  -H "authorization: Bearer $ADMIN_API_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"handle":"hung-tran","displayName":"Hưng Trần"}'
+
+# 3. That token — not the admin one — is what reaches their trips.
+curl -s http://localhost:3000/api/planner -H "authorization: Bearer <accessToken>"
+```
+
+Mutating an existing trip needs the version from its `ETag`:
+
+```bash
+curl -s -X PATCH http://localhost:3000/api/planner/<id> \
+  -H "authorization: Bearer <accessToken>" \
+  -H 'if-match: "3"' -H 'content-type: application/json' \
+  -d '{"partySize":4}'
+```
+
+Without `If-Match` the answer is 428; with a stale version, 412. See
+[features/travel-planner-core.md](features/travel-planner-core.md) for the full
+endpoint list.
 
 ### Add a user-visible string
 

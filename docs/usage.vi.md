@@ -21,9 +21,20 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
-Tiếng Việt ở `/`, tiếng Anh ở `/en`. Không cần tạo `.env`;
-`NEXT_PUBLIC_SITE_URL` là biến duy nhất và mặc định về
-`https://chuyennhahung.vn`.
+Tiếng Việt ở `/`, tiếng Anh ở `/en`. Site chạy được mà không cần `.env` nào cả;
+mọi biến dưới đây đều có mặc định dùng được, hoặc tự tắt tính năng theo hướng
+đóng an toàn.
+
+| Biến | Mặc định | Làm gì |
+|---|---|---|
+| `NEXT_PUBLIC_SITE_URL` | `https://chuyennhahung.vn` | Canonical, `hreflang`, sitemap. Phải đặt lúc **build** |
+| `ADMIN_API_TOKEN` | *chưa đặt* | Bảo vệ mọi route admin. Chưa đặt, hoặc ngắn hơn 32 ký tự, thì tất cả trả `503` — không bao giờ mở mặc định |
+| `TRAVEL_CONTENT_STORE` | `.data/travel-content.json` | Nơi content store nằm |
+| `TRAVEL_CONTENT_AUTOSEED` | `true` | Đặt `false` để bỏ qua seed nội dung demo ở lần dùng đầu |
+| `PLANNER_STORE` | `.data/planner.json` | Nơi trip của Planner nằm. Tách file khỏi content store một cách có chủ đích |
+
+`.data/` đã được gitignore. Planner không seed gì trong đó — xem *Cấp tài khoản
+cho một người đi chơi trong Planner* bên dưới.
 
 Mỗi bản clone cần thêm một bước nữa mà git không tự làm được — bật các git hook
 đã được theo dõi trong repo, để commit không lọt vào `main`:
@@ -83,6 +94,39 @@ merge — vẫn phải có người xem.
    thật trong `public/images/`.
 4. Điểm đến còn cần `coords` WGS84 thật; bản đồ chiếu theo toạ độ đó, sai một con
    số là có một cái ghim trông rất thật nằm sai chỗ.
+
+### Cấp tài khoản cho một người đi chơi trong Planner
+
+Planner không có đăng ký. Mọi người đi chơi đều do người vận hành cấp tài khoản,
+và access token chỉ hiện ra **một lần** — nếu mất thì xoay vòng lại; không đọc
+lại được.
+
+```bash
+# 1. Một secret thật, tối thiểu 32 ký tự, nếu không mọi route admin trả 503.
+export ADMIN_API_TOKEN="$(openssl rand -base64 36)"
+
+# 2. Tạo người đi chơi. Giữ lại `accessToken` trong response.
+curl -s -X POST http://localhost:3000/api/admin/planner/users \
+  -H "authorization: Bearer $ADMIN_API_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"handle":"hung-tran","displayName":"Hưng Trần"}'
+
+# 3. Chính token đó — không phải token admin — mới chạm được tới trip của họ.
+curl -s http://localhost:3000/api/planner -H "authorization: Bearer <accessToken>"
+```
+
+Sửa một trip đang có thì cần version lấy từ `ETag` của nó:
+
+```bash
+curl -s -X PATCH http://localhost:3000/api/planner/<id> \
+  -H "authorization: Bearer <accessToken>" \
+  -H 'if-match: "3"' -H 'content-type: application/json' \
+  -d '{"partySize":4}'
+```
+
+Thiếu `If-Match` thì nhận 428; version lạc hậu thì 412. Xem
+[features/travel-planner-core.vi.md](features/travel-planner-core.vi.md) để có
+danh sách endpoint đầy đủ.
 
 ### Thêm một chuỗi hiển thị cho người dùng
 

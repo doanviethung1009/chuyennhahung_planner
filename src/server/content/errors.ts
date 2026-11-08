@@ -12,7 +12,9 @@ export type ContentErrorCode =
   | 'not_found'
   | 'slug_conflict'
   | 'invalid_reference'
-  | 'invalid_state';
+  | 'invalid_state'
+  | 'precondition_required'
+  | 'version_conflict';
 
 const STATUS_BY_CODE: Record<ContentErrorCode, number> = {
   bad_request: 400,
@@ -23,6 +25,8 @@ const STATUS_BY_CODE: Record<ContentErrorCode, number> = {
   slug_conflict: 409,
   invalid_reference: 422,
   invalid_state: 409,
+  precondition_required: 428,
+  version_conflict: 412,
 };
 
 export interface FieldIssue {
@@ -66,4 +70,28 @@ export function invalidReference(issues: FieldIssue[]): ContentError {
 
 export function invalidState(message: string): ContentError {
   return new ContentError('invalid_state', message);
+}
+
+/**
+ * A mutation that needs to know which version the caller is editing arrived
+ * without `If-Match`. Answering 428 rather than applying the write is what
+ * makes a lost update impossible instead of merely unlikely.
+ */
+export function preconditionRequired(message: string): ContentError {
+  return new ContentError('precondition_required', message);
+}
+
+/**
+ * The caller edited version N while the stored record has already moved past
+ * it. The write is refused whole — never partially applied.
+ */
+export function versionConflict(
+  entity: string,
+  expected: number,
+  actual: number,
+): ContentError {
+  return new ContentError(
+    'version_conflict',
+    `${entity} has moved on: you edited version ${expected}, the stored version is ${actual} — re-read it and retry`,
+  );
 }

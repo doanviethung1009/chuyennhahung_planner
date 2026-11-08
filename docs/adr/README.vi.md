@@ -11,7 +11,7 @@ Phải có ADR — không phải tuỳ chọn — cho các việc sau:
 
 - bỏ hoặc đổi đích các redirect tour vĩnh viễn trong `next.config.ts`
 - thay đổi topology route hoặc bản đồ pathname bản địa hoá
-- mở phase backend Planner (model dữ liệu và hợp đồng gửi form trước đã)
+- mở phase backend Planner (model dữ liệu và hợp đồng gửi form trước đã) — đã làm trong [0002](0002-planner-core.vi.md); một phase *tiếp theo*, như giao diện Planner hay gợi ý AI, cần ADR riêng
 - thêm một framework, thư viện state, ORM hay hệ CSS
 - bật dò locale theo Accept-Language
 - thay nội dung seed có type bằng một CMS hoặc database
@@ -27,3 +27,4 @@ thì cần một ADR ở đây.
 | ADR | Quyết định | Trạng thái |
 |---|---|---|
 | [0001](0001-travel-content-system.vi.md) | Travel Content System: thực thể có type nằm sau một interface store, chưa có database, validation bằng `zod`, auth admin mặc định đóng | Đã chấp nhận |
+| [0002](0002-planner-core.vi.md) | Lõi Planner: bốn collection trip chuẩn hoá, chủ sở hữu trip thật với phân quyền theo đối tượng, bản clone template độc lập, ngân sách số nguyên đồng kèm ranh giới BigInt, tương tranh bằng `If-Match` | Đã chấp nhận |

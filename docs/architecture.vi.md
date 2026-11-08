@@ -4,7 +4,9 @@
 
 Một trang kể chuyện du lịch lấy tiếng Việt làm gốc. Chuyện đi chơi, điểm đến, bản
 đồ hành trình, lịch trình theo ngày, review video, và một điểm vào để thiết kế
-chuyến đi. *Backend* của Planner thuộc phase sau; xem [Các phase](#các-phase).
+chuyến đi. Phần lõi *backend* của Planner đã ship dưới dạng API — trip, ngày,
+activity, chi phí và ngân sách — còn *giao diện* Planner vẫn thuộc phase sau; xem
+[Các phase](#các-phase).
 
 ## Tổng quan nhanh
 
@@ -110,6 +112,22 @@ lên, và `cover` trỏ tới tranh SVG sinh tự động đúng tinh thần th�
 `site.ts` được đánh dấu **cần chủ nhà xác nhận** — các handle và email liên hệ là
 giá trị hợp lý nhưng chưa được kiểm chứng.
 
+Bên cạnh nội dung seed này còn hai bộ dữ liệu **phía server**, mỗi bộ là một
+repository nằm trên một JSON document store chứ không phải database
+([ADR 0001](adr/0001-travel-content-system.vi.md) §1,
+[ADR 0002](adr/0002-planner-core.vi.md) §1). Chúng là hai document riêng biệt một
+cách có chủ đích: nội dung biên tập và dữ liệu riêng tư của người đi chơi có yêu
+cầu riêng tư, lưu trữ và sao lưu khác nhau.
+
+| Store | File | Chứa gì | Hợp đồng |
+|---|---|---|---|
+| Travel content | `.data/travel-content.json` (`TRAVEL_CONTENT_STORE`) | place, story, collection, review, template | [travel-content-api.vi.md](travel-content-api.vi.md) |
+| Planner | `.data/planner.json` (`PLANNER_STORE`) | planner user, trip, ngày, activity, chi phí | [features/travel-planner-core.vi.md](features/travel-planner-core.vi.md) |
+
+Tiền ở cả hai đều là số nguyên đồng, chặn trên ở 10^12 — không bao giờ là số
+thực, không bao giờ là đơn vị nhỏ. Các tổng dẫn xuất được tính lại khi đọc, không
+bao giờ được lưu.
+
 ## Ranh giới module
 
 Hướng phụ thuộc là một chiều. Tầng dưới không bao giờ gọi lên tầng trên.
@@ -122,7 +140,19 @@ components/**        ui/ · layout/ · cards/ · sections/ · map/ · seo/
 lib/**               format.ts · map.ts · metadata.ts   (hàm thuần)
    ↓
 content/** · i18n/** · messages/**                      (dữ liệu + hợp đồng)
+
+app/api/**           route handler: parse, phân quyền, map lỗi sang status
+   ↓
+server/content/** · server/planner/**    repository: toàn bộ invariant
+   ↓
+server/persistence/**                    document store (ghi nguyên tử + hàng đợi)
 ```
+
+Phía API là một tầng thứ hai chạy song song, và hai bên chỉ gặp nhau ở đúng một
+chỗ: Planner đọc hệ nội dung qua
+[`PlannerCatalog`](../src/server/planner/catalog.ts), một interface chỉ-đọc với ba
+phép tra cứu và không có hàm ghi. Đó là thứ khiến "clone template không bao giờ
+sửa template" thành chuyện cấu trúc chứ không phải chuyện kỷ luật.
 
 - `lib/` là tầng thuần, không side effect: format ngày/giá/thời lượng, phép chiếu
   bản đồ, dựng metadata. Đây là tầng unit test nhắm trực tiếp vào.
@@ -176,10 +206,19 @@ WCAG AA — đó là lý do màu primary tương tác là `clay-600` chứ khôn
 
 Những thứ vắng mặt có chủ đích, và không được dựng sớm:
 
-- **Backend của Planner.** `/thiet-ke-chuyen-di` là trang nội dung với đường liên
-  hệ thật (mailto, Zalo, Messenger) và không có form — một nút submit không có gì
-  phía sau là một nút chết. Mở phase này nghĩa là database, validation, rate
-  limiting và một ADR, theo đúng thứ tự đó.
+- **Giao diện Planner.** Phần lõi *backend* của Planner đã ship dưới
+  `/api/planner` ([ADR 0002](adr/0002-planner-core.vi.md),
+  [features/travel-planner-core.vi.md](features/travel-planner-core.vi.md)):
+  trip, ngày sinh tự động, activity, chi phí, ngân sách, lưu trữ/khôi phục và
+  clone template. `/thiet-ke-chuyen-di` vẫn là trang nội dung chỉ có liên hệ —
+  nối nó vào API là việc của frontend và chưa bắt đầu.
+- **Map và gợi ý AI cho Planner.** Cố ý hoãn lại theo đề bài đã mở phase Planner.
+- **Một nhà cung cấp danh tính thật.** Auth của Planner hiện là bearer token tạm
+  thời cho từng người đi chơi, cấp bằng tay qua API admin. Không đăng ký, không
+  đặt lại mật khẩu, không hết hạn session. Thay nó cần ADR riêng.
+- **SQL.** Cả hai store chỉ an toàn trong một process. Triển khai nhiều instance
+  là mốc phải chuyển; schema đích và các index đã được ghi sẵn trong
+  [ADR 0002](adr/0002-planner-core.vi.md#hình-dạng-sql-mà-cấu-trúc-này-sẽ-thành).
 - **Card video bấm được.** Chúng ta không có URL của từng video, nên card chỉ để
   trình bày. Muốn bấm được thì phải thêm field URL vào `VideoReview` và cập nhật
   `tests/content.test.ts`.

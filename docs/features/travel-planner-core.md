@@ -1,0 +1,213 @@
+# Feature — Travel Planner core
+
+🇻🇳 Bản tiếng Việt: [travel-planner-core.vi.md](travel-planner-core.vi.md)
+
+## Summary
+
+Lets a traveller plan a real trip and keep it: a trip with one day per day of
+travel, activities drawn from the place catalog or invented on the spot, a target
+budget measured against what the plan costs and what has actually been paid, and
+a clone of an approved itinerary template as a starting point. It serves the
+person going on the trip, not the editor — every trip belongs to one traveller
+and nobody else can see it, including the site's own admin token.
+
+This is the backend phase that [`CLAUDE.md`](../../CLAUDE.md) rule 6 held back
+until the owner opened it, decided in
+[ADR 0002](../adr/0002-planner-core.md). There is no Planner UI yet; this ships
+the API and the domain rules underneath it.
+
+## Routes
+
+No page routes. The feature is an API surface, so nothing is added to the
+localized pathname map.
+
+Traveller endpoints — `Authorization: Bearer <planner access token>`. The owner
+comes from the token, never from the payload or the query string.
+
+| Method | Path | What it does |
+|---|---|---|
+| `GET` | `/api/planner` | The caller's trips. Active only, unless `?status=archived` |
+| `POST` | `/api/planner` | Creates a trip and its days. `source: "blank"` or `source: "template"` |
+| `GET` | `/api/planner/:id` | The whole trip: days with activities, expenses, budget |
+| `PATCH` | `/api/planner/:id` | Title, dates, duration, party size, budget, style, pace, note |
+| `DELETE` | `/api/planner/:id` | Archives it. `?purge=true` erases an already-archived trip |
+| `POST` | `/api/planner/:id/restore` | Brings an archived trip back |
+| `GET` | `/api/planner/:id/budget` | The budget summary on its own |
+| `PATCH` | `/api/planner/:id/days/:dayNumber` | Titles and notes a day |
+| `POST` | `/api/planner/:id/activities` | Adds an activity to a day |
+| `PATCH` | `/api/planner/:id/activities/:activityId` | Edits an activity in place |
+| `DELETE` | `/api/planner/:id/activities/:activityId` | Removes an activity |
+| `PATCH` | `/api/planner/:id/reorder` | `op: "reorder-day"` or `op: "move-activity"` |
+| `POST` | `/api/planner/:id/expenses` | Records money paid |
+| `PATCH` | `/api/planner/:id/expenses/:expenseId` | Edits an expense |
+| `DELETE` | `/api/planner/:id/expenses/:expenseId` | Removes an expense |
+
+Operator endpoints — `Authorization: Bearer <ADMIN_API_TOKEN>`. These provision
+travellers and **cannot read or edit any trip**.
+
+| Method | Path | What it does |
+|---|---|---|
+| `GET` | `/api/admin/planner/users` | Lists travellers. Never returns a token digest |
+| `POST` | `/api/admin/planner/users` | Creates a traveller, returns their token **once** |
+| `POST` | `/api/admin/planner/users/:userId/rotate-token` | Issues a new token, kills the old one |
+| `DELETE` | `/api/admin/planner/users/:userId` | Removes a traveller who owns no trips |
+
+Error codes follow the Travel Content System's envelope
+([travel-content-api.md](../travel-content-api.md)), plus two added for this
+feature: `precondition_required` (428) and `version_conflict` (412).
+
+## Data
+
+Four collections in `.data/planner.json` (override with `PLANNER_STORE`), kept
+separate from the content store, plus a fifth for owners. Shapes and validators
+are in [`schemas.ts`](../../src/server/planner/schemas.ts) — every type is
+`z.infer`-ed from the schema that validates it.
+
+| Collection | Becomes | Key fields |
+|---|---|---|
+| `users` | `planner_users` | `handle`, `displayName`, `tokenHash` (SHA-256, never returned) |
+| `trips` | `trips` | `ownerId`, `destinationSlug`, `startDate`, `durationDays`, `partySize`, `budget.targetTotalVnd`, `status`, `sourceTemplate`, `version` |
+| `tripDays` | `trip_days` | `tripId`, `dayNumber` (1..n), `date` (derived), `title`, `note` |
+| `tripActivities` | `trip_activities` | `tripId`, `dayId`, `order` (0..m), `placeSlug`, `title`, `estimatedCostVnd`, `costScope`, `category` |
+| `tripExpenses` | `trip_expenses` | `tripId`, `dayId`, `activityId`, `amountVnd`, `costScope`, `category`, `paidOn` |
+
+References to existing entities are by slug and are checked on write:
+`destinationSlug` → [`destinations.ts`](../../src/content/destinations.ts),
+`placeSlug` → the Travel Content System's places, `templateSlug` → a **public**
+`TravelTemplate`.
+
+Fields that carry real weight:
+
+- **`costScope`** (`group` | `per_person`) is the most error-prone value in trip
+  budgeting — "500k for dinner" means something different for two people than per
+  head — so it is explicit on every money row and never inferred.
+- **`activityId` on an expense** is what links a payment to the thing it paid
+  for, and therefore what stops an activity and its expense being counted twice.
+- **`version`** is the optimistic-lock counter for the whole trip.
+- **`tokenHash`** must never appear in a response. A test asserts that.
+
+Money is integer đồng everywhere, capped at 10^12 by the content system's
+`vndSchema`. Nothing here needs the owner's real data; the one operational
+prerequisite is a real `ADMIN_API_TOKEN`.
+
+## How it works
+
+Server only — route handlers and a repository, no client code and no component.
+
+A request enters through
+[`plannerRoute`](../../src/server/planner/http.ts), which resolves the process-wide
+repository, turns the bearer token into a `PlannerIdentity`, and maps any thrown
+`ContentError` to its status. Authentication is therefore not something an
+individual route can forget. The handler receives the owner's id and passes it
+into every repository call.
+
+[`PlannerRepository`](../../src/server/planner/repository.ts) owns all the rules.
+Reads and writes go through `requireOwnedTrip`, which throws **404 for another
+traveller's trip** — the same stance `getPublishedStory` takes on an unpublished
+story, so the API never confirms an id exists to someone who may not see it.
+Writes run inside `transaction`, a serialised read-modify-write over the store;
+a throw anywhere inside abandons the whole change, so a failed validation cannot
+leave half an activity behind.
+
+Day numbers and activity orders are never trusted from the client. Creating a
+trip generates days 1..n from `durationDays` and dates them from `startDate`;
+changing either re-dates or adds days, and shortening a trip over a day that
+still holds an activity or an expense is refused rather than silently destructive.
+Reordering requires a permutation of that day's ids; moving an activity renumbers
+both days and drags any linked expense along with it, so day totals stay truthful.
+
+The budget is computed on every read by
+[`budget.ts`](../../src/server/planner/budget.ts) and never stored — a derived
+total that can be saved is a derived total that can be wrong. Three figures are
+kept apart: the target, the plan (`estimatedTotalVnd`, activities only) and the
+money paid (`actualTotalVnd`, expenses only). The first two are never summed.
+`projectedTotalVnd` is the one figure that mixes them, and it skips any activity
+that already has an expense, so 310.000₫ paid against a 250.000₫ plan projects
+310.000₫ rather than 560.000₫. A `per_person` amount is multiplied by the party
+size exactly once, on its way into a total.
+
+Cloning reads an approved template through
+[`PlannerCatalog`](../../src/server/planner/catalog.ts) — a read-only interface
+with three lookups and no writer — and writes entirely new rows. The template
+cannot be modified because the dependency has no way to modify it.
+
+Concurrency: a trip response carries `ETag: "<version>"`. Mutations of existing
+state require it back as `If-Match` and answer **428** without it, **412** when it
+is stale. Appends treat it as optional but verify it when sent.
+
+Error and empty paths: an unknown trip, day, activity or expense is a 404; a
+reference that does not resolve is a 422 with the field path; an archived trip is
+readable and restorable but answers 409 to an edit; `DELETE` never destroys on
+the first request.
+
+[`money.ts`](../../src/server/planner/money.ts) is the boundary for the day a SQL
+driver arrives: `normalizeVnd` accepts `number | bigint | string` and refuses
+anything a double cannot hold exactly, and `jsonSafe` runs over every response so
+a raw `bigint` can neither throw nor silently become a string.
+
+## Files
+
+| Path | Role |
+|---|---|
+| [`src/server/persistence/json-store.ts`](../../src/server/persistence/json-store.ts) | Generic document store — atomic write, in-process write queue. Shared with the content store |
+| [`src/server/planner/schemas.ts`](../../src/server/planner/schemas.ts) | Validators and the types inferred from them |
+| [`src/server/planner/store.ts`](../../src/server/planner/store.ts) | `PlannerData` and its memory/JSON-file stores |
+| [`src/server/planner/auth.ts`](../../src/server/planner/auth.ts) | Token issue, hashing, constant-time resolution to an owner |
+| [`src/server/planner/catalog.ts`](../../src/server/planner/catalog.ts) | Read-only window onto destinations, places and approved templates |
+| [`src/server/planner/budget.ts`](../../src/server/planner/budget.ts) | Budget computation — pure functions over rows |
+| [`src/server/planner/money.ts`](../../src/server/planner/money.ts) | Integer-đồng rules and the BigInt/JSON boundary |
+| [`src/server/planner/repository.ts`](../../src/server/planner/repository.ts) | All domain logic and every invariant |
+| [`src/server/planner/http.ts`](../../src/server/planner/http.ts) | Route wrappers, `ETag`/`If-Match`, response envelope |
+| [`src/server/planner/instance.ts`](../../src/server/planner/instance.ts) | The process-wide repository |
+| [`src/app/api/planner/**`](../../src/app/api/planner) | Traveller route handlers |
+| [`src/app/api/admin/planner/users/**`](../../src/app/api/admin/planner/users) | Operator route handlers |
+
+`src/server/content/errors.ts` gained two HTTP-generic codes
+(`precondition_required`, `version_conflict`), and `src/server/content/store.ts`
+became a thin wrapper over the shared document store with its exported
+signatures unchanged.
+
+## Tests
+
+65 tests across four files, all green.
+
+| File | What it actually asserts |
+|---|---|
+| [`planner-repository.test.ts`](../../tests/planner-repository.test.ts) | Day generation and dating; catalog vs self-made activities and the inferred title/category; insert position; reorder permutation rules; cross-day moves carrying a linked expense; archive/restore/purge; growing a trip and the refusal to shorten over a non-empty day; expense/day/activity reference rules; token rotation invalidating the old token; and cross-owner access answering `not_found` on every verb while leaving the owner's trip untouched |
+| [`planner-budget.test.ts`](../../tests/planner-budget.test.ts) | `per_person` scaled once and re-scaled when the party changes; estimate and actual never summed; a settled activity dropped from the projection; a 0₫ expense still settling; by-category, by-day and trip-level splits; and the money boundary — `bigint`, digit-string and number inputs, refusal of values a double cannot hold exactly, `jsonSafe` over a nested `bigint`, and overflow-checked arithmetic |
+| [`planner-acceptance.test.ts`](../../tests/planner-acceptance.test.ts) | The demo scenario end to end (Đà Lạt, 3 ngày 2 đêm, 2 người, 5.000.000₫, lãng mạn); cloning the **real seeded** `da-lat-3-ngay-lang-man` template; proof the template is byte-identical after the clone is moved, deleted from and repriced; and a reload through a real JSON file where a fresh repository sees every row |
+| [`planner-api.test.ts`](../../tests/planner-api.test.ts) | The real route handlers: 401 paths, the admin token explicitly unable to read any trip, 422 with field paths, the full activity→reorder→expense→budget flow, 428 without `If-Match`, 412 on a stale version, 400 on a malformed one, 404 isolation per verb, and the archive/restore/purge sequence |
+
+Deliberately untested: rate limiting (there is none yet), and multi-process write
+contention — the JSON store cannot survive it and the tests would be asserting a
+known limitation rather than a behaviour.
+
+## Limits and open questions
+
+- **Single-process persistence**, inherited from
+  [ADR 0001](../adr/0001-travel-content-system.md) §1. The write queue serialises
+  within one Node process and cannot across two, so the optimistic concurrency
+  here protects against two *users* racing, not two *instances*. Multi-instance
+  deployment is the trigger to pick SQL — the shape is already written down in
+  [ADR 0002](../adr/0002-planner-core.md#the-sql-shape-this-becomes), including
+  the indexes.
+- **Identity is interim.** No self-service signup, no password reset, no session
+  expiry, no rate limiting on token attempts. An operator provisions every
+  traveller by hand through the admin API, and a lost token can only be rotated,
+  not recovered. A real session or identity provider needs its own ADR.
+- **No Planner integrity sweep.** The content system has `validateIntegrity()`;
+  the Planner does not, so a hand-edited `planner.json` can still produce a
+  dangling reference. This is the most obvious gap left.
+- **No UI.** The Planner page at `/thiet-ke-chuyen-di` is still the contact-only
+  content page described in [plan-your-trip.md](plan-your-trip.md). Wiring it up
+  is frontend-owned work and has not started.
+- **Deliberately out of scope this round**, per the brief: map integration and AI
+  suggestions.
+- **`destinationSlug` is immutable** once a trip exists. Activities hang off
+  places in that destination, so moving a trip elsewhere is a new trip, not an
+  edit. If travellers ask to "move" a trip, that is a product decision, not a bug.
+- **Open question: retention.** Archived trips are kept indefinitely. Nobody has
+  said how long traveller data should be held, so nothing expires it.
+- **Open question: sharing.** A trip is visible to exactly one traveller. Shared
+  or collaborative trips would need a membership table and a second look at every
+  authorization check in the repository.
