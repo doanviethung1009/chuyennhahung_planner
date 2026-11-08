@@ -6,6 +6,7 @@
  */
 export type ContentErrorCode =
   | 'bad_request'
+  | 'payload_too_large'
   | 'validation_failed'
   | 'unauthorized'
   | 'admin_auth_unconfigured'
@@ -18,6 +19,7 @@ export type ContentErrorCode =
 
 const STATUS_BY_CODE: Record<ContentErrorCode, number> = {
   bad_request: 400,
+  payload_too_large: 413,
   validation_failed: 422,
   unauthorized: 401,
   admin_auth_unconfigured: 503,
@@ -46,6 +48,18 @@ export class ContentError extends Error {
     this.status = STATUS_BY_CODE[code];
     this.issues = issues;
   }
+}
+
+/**
+ * The request body was refused before it was parsed. Reported as 413 rather
+ * than 400 so a client can tell "too big" from "malformed" and shrink the
+ * payload instead of retrying it unchanged.
+ */
+export function payloadTooLarge(maxBytes: number): ContentError {
+  return new ContentError(
+    'payload_too_large',
+    `request body exceeds the ${maxBytes}-byte limit`,
+  );
 }
 
 export function notFound(entity: string, id: string): ContentError {

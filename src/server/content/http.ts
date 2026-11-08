@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authorizeAdmin } from './auth';
-import { ContentError, type FieldIssue } from './errors';
+import { ContentError, payloadTooLarge, type FieldIssue } from './errors';
 import { listQuerySchema } from './schemas';
 
 export interface ApiErrorBody {
@@ -63,14 +63,84 @@ export function toErrorResponse(error: unknown): NextResponse {
   return NextResponse.json(body, { status: 500, headers: NO_STORE });
 }
 
-/** Parses a JSON body against `schema`, turning malformed JSON into a 400. */
+/**
+ * The largest request body any endpoint here will read.
+ *
+ * Every legitimate payload is a single record — the entire seed file is under
+ * 30 KB — so this leaves roughly a tenfold margin while still bounding how much
+ * memory one request can cost. It is deliberately enforced *before* parsing:
+ * `request.json()` buffers the whole body first, so a cap applied afterwards
+ * would be a cap on nothing.
+ */
+export const MAX_JSON_BODY_BYTES = 256 * 1024;
+
+/**
+ * Reads the body as text, refusing to buffer more than `maxBytes`.
+ *
+ * `Content-Length` is checked first because it is free, but it is only a claim:
+ * it can be absent on a chunked request and it can lie. So the stream is also
+ * measured as it arrives and cancelled the moment it goes over, which is what
+ * actually bounds the cost.
+ */
+async function readBodyText(request: Request, maxBytes: number): Promise<string> {
+  const declared = Number(request.headers.get('content-length'));
+  if (Number.isFinite(declared) && declared > maxBytes) {
+    throw payloadTooLarge(maxBytes);
+  }
+
+  const body = request.body;
+  // No stream to measure (an empty body, or a runtime that does not expose
+  // one): fall back to the buffered read, having checked the declared length.
+  if (!body) return request.text();
+
+  const reader = body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+
+      total += value.byteLength;
+      if (total > maxBytes) throw payloadTooLarge(maxBytes);
+      chunks.push(value);
+    }
+  } catch (error) {
+    await reader.cancel().catch(() => {});
+    throw error;
+  }
+
+  const joined = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    joined.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder('utf-8', { fatal: false }).decode(joined);
+}
+
+/**
+ * Parses a JSON body against `schema`, turning malformed JSON into a 400 and an
+ * oversized body into a 413.
+ *
+ * The size limit is not only a denial-of-service guard in the abstract: the
+ * pinned `zod` 3.x is subject to GHSA-mrhx-c7xc-m3w5, where validating an
+ * oversized constrained collection can exhaust memory. Bounding the bytes that
+ * reach `schema.parse` bounds that too, and it keeps holding once zod is
+ * upgraded.
+ */
 export async function parseJsonBody<S extends z.ZodTypeAny>(
   request: Request,
   schema: S,
+  maxBytes = MAX_JSON_BODY_BYTES,
 ): Promise<z.infer<S>> {
+  const text = await readBodyText(request, maxBytes);
+
   let raw: unknown;
   try {
-    raw = await request.json();
+    raw = JSON.parse(text) as unknown;
   } catch {
     throw new ContentError('bad_request', 'request body is not valid JSON');
   }
