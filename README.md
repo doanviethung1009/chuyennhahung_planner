@@ -110,6 +110,24 @@ photography, so the site ships with working images and no broken links. Replace
 a `cover` field with a real photograph whenever one is available; `CoverImage`
 already optimizes raster formats and only bypasses the optimizer for SVG.
 
+### Travel Content System
+
+A separate, writable layer with CRUD APIs for five modules — travel stories,
+places, destination collections, reviews and reusable itinerary templates.
+It **reuses** the destination and itinerary entities above rather than
+duplicating them, and the public pages continue to render the typed seed data.
+
+- Contract and endpoints: [`docs/travel-content-api.md`](docs/travel-content-api.md)
+- Why it is built this way: [`docs/adr/0001-travel-content-system.md`](docs/adr/0001-travel-content-system.md)
+
+There is **no database**: entities live behind a store interface with a
+JSON-file implementation under `.data/` (gitignored), seeded with demo content
+on first use. That is a deliberate, single-process-only choice — see the ADR
+before deploying more than one instance.
+
+Admin mutations need `ADMIN_API_TOKEN` (32+ characters) and fail closed without
+it. Every monetary field is an integer count of đồng.
+
 ## ⚠️ Before going live — owner actions
 
 These are plausible defaults, **not verified**:
@@ -121,6 +139,11 @@ These are plausible defaults, **not verified**:
 3. **Site URL** — set `NEXT_PUBLIC_SITE_URL`; it drives canonicals, `hreflang`
    and the sitemap. Defaults to `https://chuyennhahung.vn`.
 4. **Photography** — swap the generated SVG covers for real photos.
+5. **`ADMIN_API_TOKEN`** — generate one (`openssl rand -hex 32`) before the
+   Travel Content System admin API can be used at all. Without it every
+   `/api/admin/**` route returns 503.
+6. **Affiliate links** — every seeded place has an empty `affiliateLinks`
+   array. No partner programme is assumed; add real ones or leave it empty.
 
 ## Video reviews
 
@@ -146,9 +169,16 @@ with no client JavaScript.
 
 ## Not in this phase
 
-The **Planner backend**. The "Plan your trip" page is a content page with real
+The **AI Planner**. The "Plan your trip" page is a content page with real
 contact routes and no server dependency — deliberately no form, because a
 submit button with nothing behind it is a dead control.
+
+No **user-trip** entity exists either: the Travel Content System keeps the blog
+(stories), the reusable templates and user trips strictly separate, and the
+third of those is Planner territory for a later phase.
+
+There is also no **admin UI**. The Travel Content System is an API in this
+phase; the admin surface is `curl`, or whatever client the owner prefers.
 
 ## Agents
 
