@@ -10,6 +10,8 @@ const config = [
       'coverage/**',
       'next-env.d.ts',
       '.claude/skills/**',
+      // Transient agent worktrees carry their own copy of the vendored skill.
+      '.claude/worktrees/**',
     ],
   },
   ...coreWebVitals,
