@@ -87,6 +87,28 @@ describe('share lifecycle', () => {
     expect(await planner.getSharedTrip(token)).toBeNull();
   });
 
+  it('revokes the link on archive, so restoring does not revive it', async () => {
+    const { planner, userId, tripId, token } = await sharedTrip('public');
+    const { trip } = await planner.getTrip(userId, tripId);
+    const archived = await planner.archiveTrip(userId, tripId, trip.version);
+    expect(archived).toMatchObject({ visibility: 'private', shareToken: null, shareTokenCreatedAt: null });
+
+    const restored = await planner.restoreTrip(userId, tripId, archived.version);
+    expect(restored.trip).toMatchObject({
+      status: 'active',
+      visibility: 'private',
+      shareToken: null,
+      shareTokenCreatedAt: null,
+    });
+    expect(await planner.getSharedTrip(token)).toBeNull();
+
+    const reshared = await planner.setVisibility(userId, tripId, 'unlisted');
+    expect(reshared.shareToken).toMatch(TOKEN_RE);
+    expect(reshared.shareToken).not.toBe(token);
+    expect(await planner.getSharedTrip(token)).toBeNull();
+    expect(await planner.getSharedTrip(reshared.shareToken!)).not.toBeNull();
+  });
+
   it('returns null for malformed tokens without a lookup', async () => {
     const { planner } = await sharedTrip();
     for (const bad of ['', 'short', 'a'.repeat(44), `${'a'.repeat(42)}!`, '../etc/passwd']) {
@@ -550,10 +572,13 @@ describe('share index (W3)', () => {
     expect(await planner.getSharedTrip(token)).toBeNull();
 
     await planner.restoreTrip(userId, tripId, archived.version);
-    expect(await planner.getSharedTrip(token)).not.toBeNull();
+    expect(await planner.getSharedTrip(token)).toBeNull();
+
+    const reshared = await planner.setVisibility(userId, tripId, 'unlisted');
+    expect(await planner.getSharedTrip(reshared.shareToken!)).not.toBeNull();
 
     const rotated = await planner.rotateShareToken(userId, tripId);
-    expect(await planner.getSharedTrip(token)).toBeNull();
+    expect(await planner.getSharedTrip(reshared.shareToken!)).toBeNull();
     expect(await planner.getSharedTrip(rotated.shareToken!)).not.toBeNull();
 
     await planner.revokeShare(userId, tripId);

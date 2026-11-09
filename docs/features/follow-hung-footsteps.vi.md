@@ -68,7 +68,9 @@ API được dùng (đều cùng origin, xác thực bằng cookie; body là `.s
    `/my-trips`. `429` hiển thị thời gian chờ.
 4. **Chuyến đi của tôi** (`MyTrips`) liệt kê trip đang dùng hoặc đã lưu trữ; đổi
    tình trạng, nhân bản, lưu trữ, khôi phục và xoá vĩnh viễn hai bước. `401` chuyển
-   tới đăng nhập kèm `returnTo`; `412` làm mới danh sách.
+   tới đăng nhập kèm `returnTo`; `412` làm mới danh sách. Lưu trữ cũng thu hồi
+   link chia sẻ, nên trip được khôi phục sẽ trở về riêng tư và chia sẻ lại sẽ tạo
+   token mới.
 5. **Chi tiết chuyến đi** (`TripDetail`) hiển thị chuyến đi chỉ đọc cùng tình trạng,
    nhân bản, lưu trữ và `SharePanel`: chọn chế độ hiển thị, đường dẫn (dựng phía
    client từ token trả về và locale hiện tại), sao chép, tạo mới, ngừng chia sẻ.

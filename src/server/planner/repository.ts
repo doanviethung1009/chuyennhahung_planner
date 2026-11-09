@@ -687,6 +687,11 @@ export class PlannerRepository {
    * Soft delete. The trip and everything under it stay exactly as they were —
    * this is the "lưu và khôi phục" half of saving a trip, and it is what
    * `DELETE /api/planner/:id` does, so a mis-click costs one request to undo.
+   *
+   * The one thing archiving does *not* keep is a share link. Archiving already
+   * hides it, and restoring must not silently bring back a link the owner may
+   * have forgotten was out there — so the trip comes back private, and sharing
+   * it again mints a fresh token.
    */
   archiveTrip(ownerId: string, tripId: string, expectedVersion: number | null): Promise<Trip> {
     return this.transaction((data) => {
@@ -698,11 +703,14 @@ export class PlannerRepository {
       return this.touch(data, index, trip, {
         status: 'archived',
         archivedAt: this.timestamp(),
+        visibility: 'private',
+        shareToken: null,
+        shareTokenCreatedAt: null,
       });
     });
   }
 
-  /** Brings an archived trip back, untouched. */
+  /** Brings an archived trip back, private (see `archiveTrip`). */
   restoreTrip(ownerId: string, tripId: string, expectedVersion: number | null): Promise<TripView> {
     return this.transaction((data) => {
       const { trip, index } = PlannerRepository.requireOwnedTrip(data, ownerId, tripId);
