@@ -511,3 +511,52 @@ describe('HTTP: session probe and rate limits', () => {
     expect(((await last!.json()) as { error: { code: string } }).error.code).toBe('rate_limited');
   });
 });
+
+describe('share index (W3)', () => {
+  function countingStore() {
+    const inner = createMemoryPlannerStore(emptyPlannerData());
+    const counter = { reads: 0 };
+    const store = {
+      read: () => {
+        counter.reads += 1;
+        return inner.read();
+      },
+      write: (next: Parameters<typeof inner.write>[0]) => inner.write(next),
+    };
+    return { store, counter };
+  }
+
+  it('a wrong guess costs no store read once the index is warm', async () => {
+    const { store, counter } = countingStore();
+    const planner = makePlanner({ store });
+    const { userId } = await makeOwner(planner);
+    const { trip } = await planner.createTrip(userId, daLatTripInput());
+    const { shareToken } = await planner.setVisibility(userId, trip.id, 'unlisted');
+
+    expect(await planner.getSharedTrip(shareToken!)).not.toBeNull(); // warms the index
+    const before = counter.reads;
+    for (let i = 0; i < 20; i++) {
+      expect(await planner.getSharedTrip(`${'A'.repeat(42)}${i % 10}`)).toBeNull();
+    }
+    expect(counter.reads).toBe(before);
+  });
+
+  it('archiving, rotating and revoking take effect through a warm index', async () => {
+    const { planner, userId, tripId, token } = await sharedTrip();
+    expect(await planner.getSharedTrip(token)).not.toBeNull();
+
+    const { trip } = await planner.getTrip(userId, tripId);
+    const archived = await planner.archiveTrip(userId, tripId, trip.version);
+    expect(await planner.getSharedTrip(token)).toBeNull();
+
+    await planner.restoreTrip(userId, tripId, archived.version);
+    expect(await planner.getSharedTrip(token)).not.toBeNull();
+
+    const rotated = await planner.rotateShareToken(userId, tripId);
+    expect(await planner.getSharedTrip(token)).toBeNull();
+    expect(await planner.getSharedTrip(rotated.shareToken!)).not.toBeNull();
+
+    await planner.revokeShare(userId, tripId);
+    expect(await planner.getSharedTrip(rotated.shareToken!)).toBeNull();
+  });
+});

@@ -117,6 +117,15 @@ export class PlannerRepository {
   private readonly newId: (prefix: string) => string;
   /** Serialises read-modify-write pairs so two mutations cannot interleave. */
   private queue: Promise<unknown> = Promise.resolve();
+  /**
+   * SHA-256 (hex) of every live share token → trip id, so resolving a share
+   * link is one map lookup instead of re-hashing every trip on every
+   * unauthenticated request (and a wrong guess never reads the store at all).
+   * Dropped on every write; `shareIndexGeneration` stops a read that raced a
+   * write from caching an index built from the older snapshot.
+   */
+  private shareIndex: Map<string, string> | null = null;
+  private shareIndexGeneration = 0;
 
   constructor(options: PlannerRepositoryOptions) {
     this.store = options.store;
@@ -139,6 +148,8 @@ export class PlannerRepository {
       const data = withTripDefaults(await this.store.read());
       const result = await mutate(data);
       await this.store.write(data);
+      this.shareIndex = null;
+      this.shareIndexGeneration += 1;
       return result;
     };
     const chained = this.queue.then(run, run);
@@ -860,25 +871,42 @@ export class PlannerRepository {
   /**
    * Resolves a share link to a read-only view, or null. Null is the answer for
    * every failure — malformed, unknown, revoked, private, archived — so a caller
-   * cannot tell them apart. The format is checked before any lookup, and the
-   * candidate is compared by digest in constant time over every shared trip with
-   * no early exit.
+   * cannot tell them apart. The format is checked before any lookup; the
+   * candidate's digest is looked up in the cached share index, and a hit is
+   * re-checked against a fresh read and compared in constant time.
    */
   async getSharedTrip(token: string): Promise<SharedTripView | null> {
     if (typeof token !== 'string' || !SHARE_TOKEN_PATTERN.test(token)) return null;
 
+    const index = await this.loadShareIndex();
+    const tripId = index.get(shareTokenDigest(token));
+    if (tripId === undefined) return null;
+
+    // The index only narrows the search. The decision is always re-made
+    // against a fresh read, so a token revoked or rotated since the index was
+    // built can never resolve.
     const data = await this.snapshot();
-    const candidate = createHash('sha256').update(token).digest();
-    let found: Trip | null = null;
+    const trip = data.trips.find((candidate) => candidate.id === tripId);
+    if (!trip || !isShareable(trip)) return null;
+    const stored = Buffer.from(shareTokenDigest(trip.shareToken), 'hex');
+    const presented = Buffer.from(shareTokenDigest(token), 'hex');
+    if (!timingSafeEqual(stored, presented)) return null;
+
+    return buildSharedView(buildTripView(data, trip), trip.visibility);
+  }
+
+  private async loadShareIndex(): Promise<Map<string, string>> {
+    if (this.shareIndex) return this.shareIndex;
+
+    const generation = this.shareIndexGeneration;
+    const data = await this.snapshot();
+    const index = new Map<string, string>();
     for (const trip of data.trips) {
-      if (trip.status !== 'active' || trip.visibility === 'private' || trip.shareToken === null) {
-        continue;
-      }
-      const stored = createHash('sha256').update(trip.shareToken).digest();
-      if (timingSafeEqual(stored, candidate)) found = trip;
+      if (isShareable(trip)) index.set(shareTokenDigest(trip.shareToken), trip.id);
     }
-    if (!found || found.visibility === 'private') return null;
-    return buildSharedView(buildTripView(data, found), found.visibility);
+    // A write landed while we were reading: use this index once, don't keep it.
+    if (generation === this.shareIndexGeneration) this.shareIndex = index;
+    return index;
   }
 
   /** Session details for `GET /api/planner/session`. Never returns a credential. */
@@ -1602,6 +1630,17 @@ function toPublicUser(user: PlannerUser): PublicPlannerUser {
 // ---------------------------------------------------------------------------
 // Pure helpers
 // ---------------------------------------------------------------------------
+
+/** A trip whose share link may resolve: active, not private, with a token. */
+function isShareable(
+  trip: Trip,
+): trip is Trip & { shareToken: string; visibility: 'unlisted' | 'public' } {
+  return trip.status === 'active' && trip.visibility !== 'private' && trip.shareToken !== null;
+}
+
+function shareTokenDigest(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
 
 /** A fresh share token: 32 random bytes, base64url (43 characters). */
 function newShareToken(): string {
