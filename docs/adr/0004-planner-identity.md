@@ -1,6 +1,6 @@
-# ADR 0003 — Planner identity: a session cookie over the existing access token
+# ADR 0004 — Planner identity: a session cookie over the existing access token
 
-🇻🇳 Bản tiếng Việt: [0003-planner-identity.vi.md](0003-planner-identity.vi.md)
+🇻🇳 Bản tiếng Việt: [0004-planner-identity.vi.md](0004-planner-identity.vi.md)
 
 - **Status:** Proposed — needs the owner's acceptance before any code is written
 - **Date:** 2026-11-09

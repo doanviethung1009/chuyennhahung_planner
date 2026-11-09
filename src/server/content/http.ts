@@ -131,7 +131,7 @@ async function readBodyText(request: Request, maxBytes: number): Promise<string>
  * reach `schema.parse` bounds that too, and it keeps holding once zod is
  * upgraded.
  */
-export async function parseJsonBody<S extends z.ZodTypeAny>(
+export async function parseJsonBody<S extends z.ZodType>(
   request: Request,
   schema: S,
   maxBytes = MAX_JSON_BODY_BYTES,

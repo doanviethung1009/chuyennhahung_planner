@@ -1,6 +1,6 @@
-# ADR 0003 — Danh tính Planner: session cookie dựng trên access token hiện có
+# ADR 0004 — Danh tính Planner: session cookie dựng trên access token hiện có
 
-🇬🇧 English version: [0003-planner-identity.md](0003-planner-identity.md)
+🇬🇧 English version: [0004-planner-identity.md](0004-planner-identity.md)
 
 - **Trạng thái:** Đề xuất — cần chủ sản phẩm chấp nhận trước khi viết bất kỳ dòng code nào
 - **Ngày:** 09/11/2026

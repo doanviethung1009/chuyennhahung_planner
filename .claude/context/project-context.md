@@ -14,6 +14,7 @@ lives in `docs/` and is bilingual and test-enforced — see CLAUDE.md "Documenta
 | Language | TypeScript `^5.9.3`, `strict` + `noUncheckedIndexedAccess` |
 | Styling | Tailwind CSS `^4.3.5` — CSS-first `@theme` tokens in `src/app/globals.css` |
 | i18n | `next-intl` `^4.14.9`, localized pathnames, `localePrefix: 'as-needed'` |
+| Validation | `zod` `^4.6.7` — on the trust boundary for both API surfaces. Use `z.iso.*` and `z.ZodType`; the 3.x spellings (`z.string().datetime()`, `z.ZodTypeAny`) are deprecated. See `docs/adr/0003-zod-4.md` |
 | Package manager | npm (`package-lock.json`) |
 | Node | v20.14.0 locally |
 | Python 3 | 3.13.7 — **required** for the `PreToolUse` git guard hook and `tests/git-guard.test.ts` |
