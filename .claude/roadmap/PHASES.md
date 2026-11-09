@@ -7,7 +7,7 @@ Trạng thái phase hiện tại: [`CURRENT.md`](CURRENT.md). Việc tồn đọ
 [`backlog.md`](backlog.md). Trạng thái deploy từng phase:
 [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md).
 
-Cập nhật lần cuối: 2026-11-09 — thêm `DEPLOY-STATUS.md`, làm mới theo `main` @ `124868e`.
+Cập nhật lần cuối: 2026-11-10 — đóng Phase 05, Phase 07 thành phase hiện tại.
 Tạo lần đầu từ `main` @ `3d42707`.
 
 ## Quy tắc định danh
@@ -34,9 +34,9 @@ Trạng thái: `Done` · `Partial` · `In progress` · `Designed` (có ADR/contr
 | 02 | Travel Content System | Done | — | 00 |
 | 03 | Travel Planner Core | Done | — | 02 |
 | 04 | Interactive Planner UI | Partial | P2 | 03 |
-| 05 | Story → Planner, My Trips & Sharing | **In progress — phase hiện tại** | P0 | 02, 03 |
+| 05 | Story → Planner, My Trips & Sharing | Done (2026-11-10) | — | 02, 03 |
 | 06 | AI Planner, Affiliate & Optimization | Not started | P2 | 05, 04 (editor), 07 (phần affiliate) |
-| 07 | Admin Portal, CMS & RBAC | Designed (ADR 0006 Proposed, PR #25) | **P1 — làm ngay sau 05** | 05 |
+| 07 | Admin Portal, CMS & RBAC | **Phase hiện tại — Blocked chờ P07-D1** (ADR 0006 Proposed) | **P1** | 05 |
 | 08 | Media Library & Analytics | Not started | P3 | 07 |
 | 09 | Production Readiness & Launch | Not started | P4 | 07, 08 (hoặc loại trừ có ghi lại) |
 
@@ -49,8 +49,8 @@ flowchart LR
   P02 --> P03[03 Planner Core]
   P03 --> P04[04 Planner UI - Partial]
   P02 --> P05
-  P03 --> P05[05 Story→Planner - HIỆN TẠI]
-  P05 --> P07[07 Admin/CMS/RBAC - P1]
+  P03 --> P05[05 Story→Planner - Done]
+  P05 --> P07[07 Admin/CMS/RBAC - HIỆN TẠI]
   P05 --> P06[06 AI/Affiliate/Optim - P2]
   P04 -. editor .-> P06
   P07 -. affiliate CMS .-> P06
@@ -111,8 +111,10 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
 - **Ràng buộc:** Planner map cần ADR riêng (CLAUDE.md quy tắc 6).
 
 ## Phase 05 — Story → Planner, My Trips & Sharing
-- **Trạng thái:** In progress — **phase hiện tại**. Chi tiết và tiêu chí đóng:
-  [`CURRENT.md`](CURRENT.md).
+- **Trạng thái:** Done — 2026-11-10. Đủ 5 tiêu chí đóng: kiểm tay, `/sec-check`
+  PASS_WITH_WARNINGS, `/qc-check` PASS, test độc lập clone, đồng bộ tài liệu; `build`
+  pass. Bằng chứng: [`CURRENT.md`](CURRENT.md) → *Phase 05 đã đóng*. Cảnh báo P05-W1
+  (khóa rate limiter) chuyển sang backlog, chặn deploy chứ không chặn phase.
 - **Bằng chứng đã ship:** PR #23 (`feat/follow-hung-footsteps`, merge 2026-11-09):
   [ADR 0005](../../docs/adr/0005-trip-sharing-and-story-cloning.md),
   `.claude/contracts/follow-hung-footsteps.md`, 5 route mới, `src/server/rate-limit.ts`,

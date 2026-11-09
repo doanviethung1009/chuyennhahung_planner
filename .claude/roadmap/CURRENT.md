@@ -1,72 +1,55 @@
-# Phase hiện tại — Phase 05: Story → Planner, My Trips & Sharing
+# Phase hiện tại — Phase 07: Admin Portal, CMS & RBAC
 
 Roadmap đầy đủ: [`PHASES.md`](PHASES.md) · Tồn đọng: [`backlog.md`](backlog.md) ·
 Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
 
-- **Trạng thái:** In progress.
-- **Cập nhật:** 2026-11-09, kiểm trên `main` @ `124868e` (sau PR #27).
+- **Trạng thái:** **Blocked — chờ quyết định của chủ nhà** (P07-D1). Chưa code gì.
+- **Cập nhật:** 2026-11-10, branch `test/clone-independence-guarantees` (PR #29).
+- **Phase trước:** Phase 05 — **Done** 2026-11-10 (xem bên dưới).
+- **Phase sau:** Phase 06 (P2). Theo quy tắc "07 trước 06" trong `PHASES.md`: khi 07 bị
+  chặn, đội làm phần 04/06 không phụ thuộc 07 (P04-1 editor, P06-5 Optimization).
 - **Deploy:** chưa có môi trường nào — xem `DEPLOY-STATUS.md` (D1–D6).
-- **Phase kế tiếp:** **Phase 07 — Admin Portal, CMS & RBAC** (P1), rồi Phase 06 (P2).
-  Lý do: quyết định của chủ dự án ngày 2026-11-09; xem quy tắc "07 trước 06" trong
-  `PHASES.md`.
 
-## Đã ship (có bằng chứng)
+## Điều kiện mở Phase 07
 
-| Hạng mục | Bằng chứng |
-|---|---|
-| ADR 0005 Accepted | `docs/adr/0005-trip-sharing-and-story-cloning.md` |
-| Story → template link + section "Lịch trình thực tế" | `src/content/stories.ts`, `src/app/[locale]/stories/[slug]/page.tsx` |
-| `/trip-setup`, `/sign-in`, `/my-trips`, `/my-trips/[id]`, `/shared/[token]` | `src/app/[locale]/**`, `src/components/planner/*` |
-| Duplicate, planningStatus, share/rotate/revoke, public read | `src/app/api/planner/[id]/**`, `src/app/api/shared/[token]` |
-| Rate limiter, `rate_limited` 429 | `src/server/rate-limit.ts`, `tests/rate-limit.test.ts` |
-| Open-redirect guard | `src/lib/return-to.ts`, `tests/return-to.test.ts` |
-| Feature doc song ngữ | `docs/features/follow-hung-footsteps.md` + `.vi.md` |
-| PR | #23, merge 2026-11-09 |
-| Thu hồi share link khi archive; restore về private | PR #27 (`fix/revoke-share-on-archive`) |
+- [x] Phase 05 đóng.
+- [x] P07-R0 — ADR 0006 đã commit (PR #25), nhãn phase đã đổi (PR #28).
+- [ ] **P07-D1 — chủ nhà trả lời:**
+  1. Nhà cung cấp danh tính: giữ token do operator cấp + session (ADR 0004), hay
+     Auth.js / dịch vụ hosted?
+  2. Ai là admin: chỉ chủ nhà, hay một nhóm?
+  3. Có bắt buộc MFA cho `admin` không?
+- [ ] P07-D2 — ADR 0006 → Accepted (sau D1), rồi Task Contract cho backend (module
+  identity, `can`, audit store) trước mọi UI portal.
+- [ ] D1 trong `DEPLOY-STATUS.md` — chủ nhà chọn nơi chạy (quyết định khi nào cần SQL,
+  P09-1; admin portal tạo người ghi thứ hai vào store JSON).
 
-Kiểm tra: xem PR của branch này (typecheck, lint, test chạy lại khi cập nhật).
-CI trên `main` @ `124868e`: **success** (typecheck, lint, test, build).
+Thứ tự làm sau khi mở: `backlog.md` → Phase 07 (P07-1 … P07-9).
 
-## Tiêu chí đóng Phase 05 (còn 2, 3)
+## Việc làm được trong lúc chờ (không phụ thuộc 07)
 
-1. **Kiểm thủ công trên trình duyệt** — luồng ẩn danh → tùy chỉnh → lưu → đăng nhập →
-   khôi phục nháp → lưu trip → share → mở link ở cửa sổ riêng tư; 375/768/1280px.
-   Contract tiêu chí 16. Trạng thái: ✅ **đạt** — 2026-11-10, dev server local, tài khoản
-   test. Story → `/tao-chuyen-di` → lưu ẩn danh → `/dang-nhap?returnTo=…` → đăng nhập →
-   nháp được khôi phục → lưu → `/chuyen-di-cua-toi/[id]` (có ghi nguồn story) → bật
-   "unlisted" → `/chia-se/[token]` mở không cookie: 200, `noindex`, `no-referrer`; token
-   sai → 404. 375/768/1280px: một `<h1>`, không tràn ngang. **Tìm và sửa một lỗi:** ô
-   ngân sách có `step={100000}` nên trình duyệt chặn gửi với giá trị mặc định 750000 —
-   đổi thành `step={1}` (`src/components/planner/trip-setup-form.tsx`). Chưa kiểm: bản EN,
-   cửa sổ riêng tư thật (dùng curl không cookie thay thế).
-2. **`/sec-check`** — public read không xác thực, xử lý token, rate limiter, open
-   redirect. Contract khuyến nghị "strongly". Trạng thái: **NOT RUN** (theo bằng chứng có).
-3. **`/qc-check`** — phase XL. Trạng thái: **NOT RUN** (theo bằng chứng có).
-4. **Test cho các bảo đảm độc lập của clone:** ✅ `tests/planner-clone-independence.test.ts`
-   — trip không đổi khi template bị sửa/rút/xóa; không chia sẻ object (template đóng
-   băng sâu, sửa tại chỗ hai chiều); purge trip không đụng template và vẫn clone lại được.
-5. **Đồng bộ tài liệu đã cũ:** ✅ xong. `CLAUDE.md` quy tắc 6 sửa ở PR #24; contract đã
-   ghi `State: IMPLEMENTED (merged PR #23)`; `.claude/rules/03` §6 sửa ở branch này.
-   Còn lại: contract → `DONE` khi 2–3 xong hoặc được chủ nhà chấp nhận rủi ro (P05-5).
+- P04-1 — editor ngày/hoạt động/chi phí trong `/my-trips/[id]` (frontend-engineer).
+- P06-5 — Optimization: hiệu năng, SEO, ngân sách bundle (frontend-engineer).
+- P05-W1 — sửa khóa rate limiter (cảnh báo security, xem dưới) — nên làm trước deploy.
 
-Khi 1–5 xong (hoặc chủ nhà chấp nhận rủi ro bằng văn bản cho mục 2–3), chuyển Phase 05
-sang `Done` trong `PHASES.md` và mở Phase 07 ở file này.
+## Phase 05 đã đóng — bằng chứng
 
-## Ngoài phạm vi Phase 05 (không làm ở đây)
+| Tiêu chí | Kết quả | Bằng chứng |
+|---|---|---|
+| 1. Kiểm tay trên trình duyệt | ✅ | 2026-11-10, dev local: luồng story → setup → lưu ẩn danh → đăng nhập (`returnTo`) → khôi phục nháp → lưu → chi tiết → share → mở link không cookie (200, `noindex`, `no-referrer`; token sai 404); 375/768/1280px. Tìm và sửa lỗi `step` ô ngân sách. Chưa kiểm: bản EN. |
+| 2. `/sec-check` | ✅ **PASS_WITH_WARNINGS** | 2026-11-10, agent `security`, phạm vi PR #23 + #27 + #29. Không có blocker. |
+| 3. `/qc-check` | ✅ **PASS** | 2026-11-10, agent `qc`: typecheck, lint, test 26 file / 403 test pass; VI/EN khớp khóa; không có `href="#"`. |
+| 4. Test độc lập clone | ✅ | `tests/planner-clone-independence.test.ts` (PR #29) |
+| 5. Đồng bộ tài liệu | ✅ | PR #24, #28; contract `State: DONE` |
+| Contract tiêu chí 17 (`build`) | ✅ | `npm run build` 2026-11-10: compiled, 61 trang |
 
-Gallery trip public; identity provider thật/đăng ký; Planner map; AI; SQL; nháp ẩn danh
-phía server; editor lịch trình đầy đủ (thuộc Phase 04); `/plan-your-trip`; tour redirect.
+### Cảnh báo còn mở từ `/sec-check` (không chặn đóng phase, chặn deploy)
 
-## Việc đang song song ở nơi khác
-
-- ADR 0006 và `tests/client-boundary.test.ts` đã merge (PR #25). Nhãn "Phase 06" cho
-  Admin Portal đã đổi thành **Phase 07** ở ADR 0006, `docs/architecture.*` và addendum
-  contract (branch này) — P07-R0 xong khi branch này merge.
-- `chore/upgrade-vitest-5` đã merge (PR #22).
-
-## Chuẩn bị mở Phase 07 (song song, không chờ 05 đóng)
-
-- [x] P07-R0 — ADR 0006 đã commit, nhãn phase đã đổi.
-- [ ] P07-D1 — **chủ nhà trả lời:** nhà cung cấp danh tính, ai là admin, MFA cho `admin`.
-- [ ] P07-D2 — ADR 0006 → Accepted (sau 05 đóng + D1).
-- [ ] D1 trong `DEPLOY-STATUS.md` — chủ nhà chọn nơi chạy (ảnh hưởng thời điểm cần SQL).
+- **P05-W1 (LOW):** khóa rate limiter lấy hop đầu của `x-forwarded-for`, rồi
+  `x-real-ip`, rồi `'unknown'` (`src/server/rate-limit.ts:93-102`). Client có thể đổi
+  header để né giới hạn 10/phút đăng nhập và 60/phút đọc share; không có proxy tin cậy
+  thì mọi người chung một bucket `'unknown'` → một client ồn có thể khóa người khác.
+  Đoán token vẫn bất khả thi (token truy cập 48 byte, share token 32 byte). Sửa trước
+  deploy — gắn với D3 trong `DEPLOY-STATUS.md`.
+- **INFO:** share token lưu dạng rõ trong store (owner cần xem lại link) — giữ `.data/`
+  ngoài các bản sao lưu rời khỏi máy chủ (D4).

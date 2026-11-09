@@ -22,7 +22,7 @@ không có bằng chứng trong repo, GitHub hoặc lời xác nhận của ch�
 | G7 Staging | Chạy trên môi trường thử, env đủ, smoke test pass | URL + ngày + commit |
 | G8 Production | Phát hành thật, có kế hoạch rollback | URL + ngày + commit |
 
-Ký hiệu: ✅ có bằng chứng · ❌ chưa đạt · ⏳ NOT RUN · — không áp dụng.
+Ký hiệu: ✅ có bằng chứng · ⚠️ đạt kèm cảnh báo · ❌ chưa đạt · ⏳ NOT RUN · — không áp dụng.
 
 ## Bảng trạng thái
 
@@ -33,8 +33,8 @@ Ký hiệu: ✅ có bằng chứng · ❌ chưa đạt · ⏳ NOT RUN · — kh�
 | 02 Travel Content System | ✅ | ✅ | ✅ ADR 0001 | — | ⏳ | ⏳ | ⏳ | ⏳ | **Chưa deploy** |
 | 03 Travel Planner Core | ✅ #11, #13, #20 | ✅ | ✅ ADR 0002, 0004 | — | ⏳ | ⏳ | ⏳ | ⏳ | **Chưa deploy** |
 | 04 Interactive Planner UI | ❌ Partial | — | — | ⏳ | ⏳ | — | ⏳ | ⏳ | Chưa xong code |
-| 05 Story → Planner (hiện tại) | ✅ #23, #27 | ✅ | ✅ ADR 0005 | ✅ 2026-11-10 (local) | ⏳ | ⏳ | ⏳ | ⏳ | **Chưa deploy** |
-| 07 Admin Portal, CMS & RBAC | ❌ chỉ có ADR 0006 (#25) | — | ⏳ ADR Proposed | — | — | — | — | — | Chưa bắt đầu |
+| 05 Story → Planner (Done) | ✅ #23, #27 (#29 chờ merge) | ✅ | ✅ ADR 0005 | ✅ 2026-11-10 (local) | ✅ PASS | ⚠️ PASS_WITH_WARNINGS (P05-W1) | ⏳ | ⏳ | **Chưa deploy** |
+| 07 Admin Portal, CMS & RBAC (hiện tại) | ❌ chỉ có ADR 0006 (#25) | — | ⏳ ADR Proposed | — | — | — | — | — | Chưa bắt đầu |
 | 06 AI, Affiliate & Optimization | ❌ | — | — | — | — | — | — | — | Chưa bắt đầu |
 | 08 Media & Analytics | ❌ | — | — | — | — | — | — | — | Chưa bắt đầu |
 | 09 Production Readiness & Launch | ❌ | — | — | — | — | — | — | — | Chưa bắt đầu |

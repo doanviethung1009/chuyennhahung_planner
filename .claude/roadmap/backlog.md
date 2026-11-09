@@ -7,18 +7,19 @@ Mỗi mục: ID ổn định `P<phase>-<n>`, chủ sở hữu (agent), phụ thu
 lại; mục bỏ đi được gạch và ghi lý do, không xóa. Sắp theo thứ tự triển khai
 (05 → 07 → 06 → 08 → 09), không theo Phase ID.
 
-## Phase 05 — Story → Planner, My Trips & Sharing (hiện tại, P0)
+## Phase 05 — Story → Planner, My Trips & Sharing (Done 2026-11-10)
 
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
 | ~~P05-1~~ | ~~Kiểm thủ công luồng đầy đủ trên trình duyệt, 3 khổ màn hình~~ — xong 2026-11-10, sửa lỗi `step` ô ngân sách | main session | — |
-| P05-2 | `/sec-check` cho share token, public read, rate limiter, `returnTo` | user gọi `security` | — |
-| P05-3 | `/qc-check` theo tiêu chí contract | user gọi `qc` | — |
+| ~~P05-2~~ | `/sec-check` cho share token, public read, rate limiter, `returnTo` | user gọi `security` | — |
+| ~~P05-3~~ | `/qc-check` theo tiêu chí contract | user gọi `qc` | — |
 | ~~P05-4~~ | ~~Test độc lập clone~~ — xong: `tests/planner-clone-independence.test.ts` | backend-engineer | — |
-| P05-5 | Contract `follow-hung-footsteps` → `State: DONE` sau P05-2, P05-3 | system-architect | P05-2, P05-3 |
+| ~~P05-5~~ | Contract `follow-hung-footsteps` → `State: DONE` sau P05-2, P05-3 | system-architect | P05-2, P05-3 |
+| P05-W1 | Khóa rate limiter từ proxy tin cậy/header nền tảng, bỏ bucket chung `'unknown'` (`src/server/rate-limit.ts:93-102`) — cảnh báo LOW của `/sec-check` 2026-11-10; chặn deploy | backend-engineer | D1, D3 |
 | ~~P05-6~~ | ~~Sửa đoạn đã cũ: CLAUDE.md quy tắc 6 và rules/03 §6~~ — xong: CLAUDE.md ở PR #24, rules/03 §6 ở branch deploy-checklist | system-architect | — |
 
-## Phase 07 — Admin Portal, CMS & RBAC (P1, ngay sau 05)
+## Phase 07 — Admin Portal, CMS & RBAC (P1, phase hiện tại — chờ P07-D1)
 
 Nguồn: ADR 0006 (PR #25) và mục Phases trong `docs/architecture.md`. Chép lại ở đây,
 không sửa ý.
