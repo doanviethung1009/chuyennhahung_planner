@@ -70,11 +70,21 @@ every XL), so the user can decide. When called, both may return BLOCKED, and BLO
 stops the work — it is not advisory. Cap the loop at two review/fix cycles, then
 escalate to the user instead of iterating further.
 
-**Rule 6 overrides dependency order.** "Backend first" never justifies scaffolding
-Planner tables, endpoints or queues before the user opens that phase. The Travel
-Content System (`src/app/api/**`, `src/server/content/**`) is **not** the Planner — it
-already exists and is designed in `docs/adr/0001-travel-content-system.md`. If a
-request needs Planner persistence, say the phase must be opened first.
+**Rule 6 still bounds dependency order, but the boundary has moved.** The Planner
+backend phase is **open and shipped**: `src/app/api/planner/**` over
+`src/server/planner/**`, designed in `docs/adr/0002-planner-core.md`. A Planner request
+is ordinary work against that contract — extend it, do not answer "the phase must be
+opened first". For Planner **UI** work the dependency order is already satisfied, so
+`frontend-engineer` can start against the existing API.
+
+What "backend first" still never justifies is scaffolding the parts that remain
+deliberately absent: the Planner map, AI suggestions, a real identity provider, or
+SQL. If a request needs one of those, stop and say it needs its own ADR first.
+
+The Travel Content System (`src/app/api/admin/travel/**`, `src/app/api/travel/**`,
+`src/server/content/**`, `docs/adr/0001-travel-content-system.md`) is **not** the
+Planner. The two share the error envelope and `parseJsonBody` from
+`src/server/content/http.ts` — extend either, rebuild neither, and do not conflate them.
 
 **Read the facts before deciding.** `.claude/context/project-context.md` holds the
 verified stack, module map and test list. Keep it current when you change the shape of
