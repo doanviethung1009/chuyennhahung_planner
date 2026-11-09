@@ -2,7 +2,7 @@
 
 🇬🇧 English version: [0004-planner-identity.md](0004-planner-identity.md)
 
-- **Trạng thái:** Đề xuất — cần chủ sản phẩm chấp nhận trước khi viết bất kỳ dòng code nào
+- **Trạng thái:** Đã chấp nhận — chủ sản phẩm chấp nhận ngày 09/11/2026; phần hiện thực theo sau
 - **Ngày:** 09/11/2026
 - **Chủ sở hữu:** system-architect
 - **Người quyết định:** chủ sản phẩm (phạm vi sản phẩm), system-architect (hợp đồng)
@@ -155,9 +155,11 @@ nhập trong [usage.vi.md](../usage.vi.md) và bản song sinh.
 
 Cần chủ sản phẩm cho ý kiến:
 
-1. **Chấp nhận hay từ chối ADR này.** Chưa viết code tới khi đó.
+1. ~~Chấp nhận hay từ chối ADR này.~~ **Đã chấp nhận ngày 09/11/2026.**
 2. **Thời hạn cookie** — 14 ngày tuyệt đối / 7 ngày không hoạt động là một phỏng
-   đoán cho cách nhân viên dùng. Hãy nói nếu cần ngắn hơn.
-3. **Khách có tự dùng không, và khoảng khi nào.** Nếu câu trả lời là "sắp rồi",
-   phương án C trở thành quyết định tốt hơn ngay bây giờ, và ADR này nên bị từ
-   chối để viết ADR đó thay thế.
+   đoán cho cách nhân viên dùng, và là con số phần hiện thực đang dùng. Hãy nói
+   nếu cần ngắn hơn; cả hai đều là một hằng số duy nhất.
+3. ~~Khách có tự dùng không, và khoảng khi nào.~~ Đã trả lời trước khi viết ADR
+   này: **nhân viên nội bộ trước, khách có thể dùng sau.** Đó là điều đã chọn
+   phương án B. Nếu điều đó đổi, phương án C là nơi hướng này đi tới, và quyết
+   định (3) là thứ giữ cho bước đó rẻ.

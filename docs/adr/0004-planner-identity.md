@@ -2,7 +2,7 @@
 
 🇻🇳 Bản tiếng Việt: [0004-planner-identity.vi.md](0004-planner-identity.vi.md)
 
-- **Status:** Proposed — needs the owner's acceptance before any code is written
+- **Status:** Accepted — the owner accepted it on 2026-11-09; implementation follows
 - **Date:** 2026-11-09
 - **Owner:** system-architect
 - **Decided by:** owner (product scope), system-architect (contract)
@@ -153,9 +153,11 @@ and its twin, and a sign-in task in [usage.md](../usage.md) and its twin.
 
 Needs the owner's input:
 
-1. **Accept or reject this ADR.** No code until then.
-2. **Cookie lifetime** — 14 days absolute / 7 days idle is a guess at what suits
-   staff use. Say if it should be shorter.
-3. **Whether customers will self-serve, and roughly when.** If the answer is
-   "soon", option C becomes the better decision now and this ADR should be
-   rejected in favour of writing that one instead.
+1. ~~Accept or reject this ADR.~~ **Accepted 2026-11-09.**
+2. **Cookie lifetime** — 14 days absolute / 7 days idle was a guess at what suits
+   staff use, and is what the implementation uses. Say if it should be shorter;
+   both numbers are single constants.
+3. ~~Whether customers will self-serve, and roughly when.~~ Answered before this
+   ADR was written: **internal staff first, customers possibly later.** That is
+   what selected option B. If that changes, option C is where this goes, and
+   decision (3) is what keeps the move cheap.
