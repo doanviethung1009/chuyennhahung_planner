@@ -67,7 +67,9 @@ API used (all same-origin, cookie-authenticated; bodies are `.strict()`):
    `429` shows the retry delay.
 4. **My Trips** (`MyTrips`) lists active or archived trips; status change,
    duplicate, archive, restore and a two-step permanent delete. A `401` redirects
-   to sign-in with `returnTo`; a `412` refreshes the list.
+   to sign-in with `returnTo`; a `412` refreshes the list. Archiving also revokes
+   the share link, so a restored trip comes back private and sharing it again
+   mints a new token.
 5. **Trip detail** (`TripDetail`) shows the trip read-only plus status, duplicate,
    archive and `SharePanel`: visibility select, link (built client-side from the
    returned token and the active locale), copy, rotate, revoke. The token lives in

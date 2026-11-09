@@ -87,6 +87,28 @@ describe('share lifecycle', () => {
     expect(await planner.getSharedTrip(token)).toBeNull();
   });
 
+  it('revokes the link on archive, so restoring does not revive it', async () => {
+    const { planner, userId, tripId, token } = await sharedTrip('public');
+    const { trip } = await planner.getTrip(userId, tripId);
+    const archived = await planner.archiveTrip(userId, tripId, trip.version);
+    expect(archived).toMatchObject({ visibility: 'private', shareToken: null, shareTokenCreatedAt: null });
+
+    const restored = await planner.restoreTrip(userId, tripId, archived.version);
+    expect(restored.trip).toMatchObject({
+      status: 'active',
+      visibility: 'private',
+      shareToken: null,
+      shareTokenCreatedAt: null,
+    });
+    expect(await planner.getSharedTrip(token)).toBeNull();
+
+    const reshared = await planner.setVisibility(userId, tripId, 'unlisted');
+    expect(reshared.shareToken).toMatch(TOKEN_RE);
+    expect(reshared.shareToken).not.toBe(token);
+    expect(await planner.getSharedTrip(token)).toBeNull();
+    expect(await planner.getSharedTrip(reshared.shareToken!)).not.toBeNull();
+  });
+
   it('returns null for malformed tokens without a lookup', async () => {
     const { planner } = await sharedTrip();
     for (const bad of ['', 'short', 'a'.repeat(44), `${'a'.repeat(42)}!`, '../etc/passwd']) {
@@ -262,6 +284,28 @@ describe('backward compatibility', () => {
       planningStatus: 'draft', visibility: 'private', shareToken: null, duplicatedFromTripId: null,
     });
     expect(tripSchema.safeParse(old).success).toBe(true);
+  });
+
+  it('restores a trip archived with a live token (stored before the fix) as private', async () => {
+    const store0 = createMemoryPlannerStore();
+    const planner0 = makePlanner({ store: store0 });
+    const { userId } = await makeOwner(planner0);
+    const { trip } = await planner0.createTrip(userId, daLatTripInput());
+    const token = 'A'.repeat(43);
+    const legacy: Trip = {
+      ...trip,
+      status: 'archived',
+      archivedAt: trip.updatedAt,
+      visibility: 'unlisted',
+      shareToken: token,
+      shareTokenCreatedAt: trip.updatedAt,
+    };
+    const stored = await store0.read();
+    const store = createMemoryPlannerStore({ ...stored, trips: [legacy] });
+    const planner = makePlanner({ store });
+    const restored = await planner.restoreTrip(userId, trip.id, legacy.version);
+    expect(restored.trip).toMatchObject({ status: 'active', visibility: 'private', shareToken: null });
+    expect(await planner.getSharedTrip(token)).toBeNull();
   });
 });
 
@@ -550,10 +594,13 @@ describe('share index (W3)', () => {
     expect(await planner.getSharedTrip(token)).toBeNull();
 
     await planner.restoreTrip(userId, tripId, archived.version);
-    expect(await planner.getSharedTrip(token)).not.toBeNull();
+    expect(await planner.getSharedTrip(token)).toBeNull();
+
+    const reshared = await planner.setVisibility(userId, tripId, 'unlisted');
+    expect(await planner.getSharedTrip(reshared.shareToken!)).not.toBeNull();
 
     const rotated = await planner.rotateShareToken(userId, tripId);
-    expect(await planner.getSharedTrip(token)).toBeNull();
+    expect(await planner.getSharedTrip(reshared.shareToken!)).toBeNull();
     expect(await planner.getSharedTrip(rotated.shareToken!)).not.toBeNull();
 
     await planner.revokeShare(userId, tripId);
