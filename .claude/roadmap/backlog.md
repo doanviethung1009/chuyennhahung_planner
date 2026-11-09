@@ -1,6 +1,7 @@
 # Backlog theo phase
 
-Roadmap: [`PHASES.md`](PHASES.md) · Phase hiện tại: [`CURRENT.md`](CURRENT.md)
+Roadmap: [`PHASES.md`](PHASES.md) · Phase hiện tại: [`CURRENT.md`](CURRENT.md) ·
+Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
 
 Mỗi mục: ID ổn định `P<phase>-<n>`, chủ sở hữu (agent), phụ thuộc. ID mục không đánh số
 lại; mục bỏ đi được gạch và ghi lý do, không xóa. Sắp theo thứ tự triển khai
@@ -15,17 +16,16 @@ lại; mục bỏ đi được gạch và ghi lý do, không xóa. Sắp theo th
 | P05-3 | `/qc-check` theo tiêu chí contract | user gọi `qc` | — |
 | P05-4 | Test độc lập clone: template sửa/rút không đổi trip; không chia sẻ object; purge không đụng template | backend-engineer | — |
 | P05-5 | Contract `follow-hung-footsteps` → `State: DONE` sau P05-1..4 | system-architect | P05-1..4 |
-| P05-6 | Sửa đoạn đã cũ: CLAUDE.md quy tắc 6 và rules/03 §6 ("Planner UI has not started") | system-architect | — |
+| ~~P05-6~~ | ~~Sửa đoạn đã cũ: CLAUDE.md quy tắc 6 và rules/03 §6~~ — xong: CLAUDE.md ở PR #24, rules/03 §6 ở branch deploy-checklist | system-architect | — |
 
 ## Phase 07 — Admin Portal, CMS & RBAC (P1, ngay sau 05)
 
-Nguồn: bản nháp chưa commit của ADR 0006 và mục Phases trong `docs/architecture.md`
-ở branch `docs/adr-unified-identity-roles` (nhãn cũ "Phase 06"). Chép lại ở đây, không
-sửa ý.
+Nguồn: ADR 0006 (PR #25) và mục Phases trong `docs/architecture.md`. Chép lại ở đây,
+không sửa ý.
 
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
-| P07-R0 | Commit ADR 0006 + `tests/client-boundary.test.ts`; đổi mọi "Phase 06 (Admin Portal & CMS)" thành "Phase 07" ở ADR, `docs/architecture.*`, addendum contract | system-architect | — |
+| ~~P07-R0~~ | ~~Commit ADR 0006 + `tests/client-boundary.test.ts`; đổi nhãn "Phase 06" thành "Phase 07"~~ — xong: commit ở PR #25, đổi nhãn ở branch deploy-checklist | system-architect | — |
 | P07-D1 | **Chủ nhà quyết:** nhà cung cấp danh tính (giữ token + session hay Auth.js/hosted), ai là admin, MFA cho `admin` | owner | — |
 | P07-D2 | ADR 0006 → Accepted | system-architect | P05 đóng, P07-R0, P07-D1 |
 | P07-1 | Role model: `role` trên user (thiếu = `member`), `can()` thuần, map quyền tĩnh | backend-engineer | P07-D2 |
@@ -73,6 +73,7 @@ có trước khi chạy nhiều instance.
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
 | P09-1 | SQL + nhiều instance (schema đích ở ADR 0002) | system-architect → BE | P07-1 |
-| P09-2 | Merge `chore/upgrade-vitest-5`; rà advisory còn lại | main session | — |
+| P09-2 | ~~Merge `chore/upgrade-vitest-5`~~ (PR #22); rà advisory còn lại | main session | — |
 | P09-3 | Dữ liệu thật của chủ nhà: handle, số điện thoại, email đặt tour | owner | — |
 | P09-4 | `/release-check`, `/qc-check`, `/sec-check` toàn hệ thống | user | P07, P08 hoặc loại trừ có ghi |
+| P09-5 | Chọn nơi chạy + workflow deploy + sao lưu store (D1–D6 trong `DEPLOY-STATUS.md`) | owner → system-architect | D1 trước SQL nếu chọn serverless |

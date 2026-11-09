@@ -85,9 +85,9 @@ cloning. Designed in `docs/adr/0002-planner-core.md`.
 
 | Absent | Note |
 |---|---|
-| Planner **UI** | `/plan-your-trip` is still the contact-only content page (mailto, Zalo, Messenger). Wiring it to the API is `frontend-engineer` work and has not started. A submit button with nothing behind it is a dead control — rule 4. |
+| Planner **UI** (beyond ADR 0005) | ADR 0005 shipped story-to-trip cloning, `/sign-in`, `/my-trips`, read-only `/my-trips/[id]` and `/shared/[token]`. Still absent: an in-browser editor for days/activities/expenses, and `/plan-your-trip` is still the contact-only content page (mailto, Zalo, Messenger). A submit button with nothing behind it is a dead control — rule 4. |
 | Planner map, AI suggestions | Deliberately deferred by the brief that opened the phase |
-| A real identity provider | Planner auth is an interim per-traveller bearer token, provisioned by hand through the admin API. No signup, no password reset, no session expiry. |
+| A real identity provider | An operator-provisioned per-traveller token, exchanged for an expiring `HttpOnly` session cookie (ADR 0004). No signup, no password reset, no OAuth, no MFA. Roles are designed in ADR 0006 (Proposed, Phase 07). |
 | SQL | Both stores are single-process. Multi-instance deployment is the trigger. |
 
 > Two separate systems, one HTTP vocabulary. The **Travel Content System** (26 handlers

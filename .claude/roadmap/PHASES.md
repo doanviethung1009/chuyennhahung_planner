@@ -4,10 +4,11 @@
 
 File làm việc của agent (không thuộc `docs/`, không bị `tests/docs.test.ts` kiểm).
 Trạng thái phase hiện tại: [`CURRENT.md`](CURRENT.md). Việc tồn đọng theo phase:
-[`backlog.md`](backlog.md).
+[`backlog.md`](backlog.md). Trạng thái deploy từng phase:
+[`DEPLOY-STATUS.md`](DEPLOY-STATUS.md).
 
-Cập nhật lần cuối: 2026-11-09 — tạo file roadmap từ bằng chứng trên `main` @ `3d42707`
-(chưa từng có `.claude/roadmap/` trước đó trong bất kỳ branch hay worktree nào).
+Cập nhật lần cuối: 2026-11-09 — thêm `DEPLOY-STATUS.md`, làm mới theo `main` @ `124868e`.
+Tạo lần đầu từ `main` @ `3d42707`.
 
 ## Quy tắc định danh
 
@@ -35,7 +36,7 @@ Trạng thái: `Done` · `Partial` · `In progress` · `Designed` (có ADR/contr
 | 04 | Interactive Planner UI | Partial | P2 | 03 |
 | 05 | Story → Planner, My Trips & Sharing | **In progress — phase hiện tại** | P0 | 02, 03 |
 | 06 | AI Planner, Affiliate & Optimization | Not started | P2 | 05, 04 (editor), 07 (phần affiliate) |
-| 07 | Admin Portal, CMS & RBAC | Designed (ADR 0006 nháp, chưa commit) | **P1 — làm ngay sau 05** | 05 |
+| 07 | Admin Portal, CMS & RBAC | Designed (ADR 0006 Proposed, PR #25) | **P1 — làm ngay sau 05** | 05 |
 | 08 | Media Library & Analytics | Not started | P3 | 07 |
 | 09 | Production Readiness & Launch | Not started | P4 | 07, 08 (hoặc loại trừ có ghi lại) |
 
@@ -135,12 +136,9 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
   Phần Optimization không phụ thuộc 07.
 
 ## Phase 07 — Admin Portal, CMS & RBAC
-- **Trạng thái:** Designed — **chưa commit**. Thiết kế nằm ở
-  `docs/adr/0006-unified-identity-and-roles.md` (+ `.vi.md`), trạng thái *Proposed*, là
-  thay đổi chưa commit trong worktree `prompt-05-planner-trips-sharing-7d932b`
-  (branch `docs/adr-unified-identity-roles`). Bản nháp đó gọi phase này là
-  "Phase 06 (Admin Portal & CMS)" — **phải đổi thành Phase 07** trước khi merge
-  (xem `backlog.md` → Phase 07, mục R0).
+- **Trạng thái:** Designed. Thiết kế ở `docs/adr/0006-unified-identity-and-roles.md`
+  (+ `.vi.md`), *Proposed*, merge ở PR #25. Nhãn cũ "Phase 06 (Admin Portal & CMS)" đã
+  đổi thành Phase 07 (P07-R0). Còn chờ chủ nhà quyết định P07-D1.
 - **Phạm vi:** một user model với `role: member|editor|admin`; `can(identity, action)`
   thuần; `ADMIN_API_TOKEN` thành service principal; session admin chặt hơn; audit log;
   CMS sửa template/story qua content store; UI Admin Portal.

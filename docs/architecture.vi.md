@@ -264,7 +264,7 @@ Những thứ vắng mặt có chủ đích, và không được dựng sớm:
 - **SQL.** Cả hai store chỉ an toàn trong một process. Triển khai nhiều instance
   là mốc phải chuyển; schema đích và các index đã được ghi sẵn trong
   [ADR 0002](adr/0002-planner-core.vi.md#hình-dạng-sql-mà-cấu-trúc-này-sẽ-thành).
-- **Phase 06 — Admin Portal & CMS (đã công bố, chưa bắt đầu).** Không mục nào bên
+- **Phase 07 — Admin Portal, CMS & RBAC (đã công bố, chưa bắt đầu).** Không mục nào bên
   dưới được dựng hay dựng sớm; mỗi mục cần ghi quyết định trước. Hướng thiết kế:
   [ADR 0006](adr/0006-unified-identity-and-roles.vi.md) (Đề xuất). Backlog phụ
   thuộc và quyết định:
