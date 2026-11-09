@@ -151,6 +151,7 @@ export const stories: Story[] = [
     destinationSlugs: ['da-lat'],
     cover: '/images/covers/story-da-lat.svg',
     featured: false,
+    plannerTemplateSlug: 'da-lat-3-ngay-lang-man',
   },
   {
     slug: 'nhung-thu-mang-di-ma-khong-bao-gio-dung',

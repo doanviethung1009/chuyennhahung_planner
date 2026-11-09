@@ -21,6 +21,7 @@ Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
 | Thiết kế chuyến đi | [plan-your-trip.vi.md](plan-your-trip.vi.md) | `/thiet-ke-chuyen-di` — điểm vào Planner, chủ đích không form |
 | Hệ thiết kế | [design-system.vi.md](design-system.vi.md) | Token `@theme`, primitive, test tương phản |
 | SEO và metadata | [seo-and-metadata.vi.md](seo-and-metadata.vi.md) | Canonical, `hreflang`, sitemap, JSON-LD |
+| Đi theo dấu chân nhà Hưng | [follow-hung-footsteps.vi.md](follow-hung-footsteps.vi.md) | Lịch trình trong story, thiết lập chuyến đi, đăng nhập, Chuyến đi của tôi, đường dẫn chia sẻ chỉ đọc |
 | Lõi Travel Planner | [travel-planner-core.vi.md](travel-planner-core.vi.md) | `/api/planner` — trip, ngày, activity, chi phí, ngân sách, clone template |
 
 ## Các phase chưa mở
@@ -30,7 +31,7 @@ Không phải tính năng, và không được dựng sớm. Xem
 
 | Phase | Đang chờ |
 |---|---|
-| Giao diện Planner | API lõi đã ship trong [travel-planner-core.vi.md](travel-planner-core.vi.md); nối trang vào nó là việc của frontend |
+| Giao diện soạn Planner đầy đủ | API lõi đã ship trong [travel-planner-core.vi.md](travel-planner-core.vi.md); luồng clone và chia sẻ nằm ở [follow-hung-footsteps.vi.md](follow-hung-footsteps.vi.md), nhưng sửa ngày, activity và chi phí trong trình duyệt thì chưa làm |
 | Map và gợi ý AI cho Planner | Cố ý hoãn lại theo đề bài đã mở phase Planner |
 | Card video bấm được | URL của từng video mà ta chưa có |
 | Ảnh thật | Ảnh của chủ nhà |
