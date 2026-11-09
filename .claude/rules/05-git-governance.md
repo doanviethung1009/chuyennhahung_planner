@@ -1,3 +1,10 @@
+---
+paths:
+  - ".githooks/**"
+  - ".github/**"
+  - ".claude/hooks/**"
+---
+
 # Git governance
 
 Progress has to be visible in the repository, not only in a chat transcript. Every
