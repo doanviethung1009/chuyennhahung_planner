@@ -122,7 +122,7 @@ cầu riêng tư, lưu trữ và sao lưu khác nhau.
 | Store | File | Chứa gì | Hợp đồng |
 |---|---|---|---|
 | Travel content | `.data/travel-content.json` (`TRAVEL_CONTENT_STORE`) | place, story, collection, review, template | [travel-content-api.vi.md](travel-content-api.vi.md) |
-| Planner | `.data/planner.json` (`PLANNER_STORE`) | planner user, trip, ngày, activity, chi phí | [features/travel-planner-core.vi.md](features/travel-planner-core.vi.md) |
+| Planner | `.data/planner.json` (`PLANNER_STORE`) | planner user, session trình duyệt, trip, ngày, activity, chi phí | [features/travel-planner-core.vi.md](features/travel-planner-core.vi.md) |
 
 Tiền ở cả hai đều là số nguyên đồng, chặn trên ở 10^12 — không bao giờ là số
 thực, không bao giờ là đơn vị nhỏ. Các tổng dẫn xuất được tính lại khi đọc, không
@@ -213,9 +213,12 @@ Những thứ vắng mặt có chủ đích, và không được dựng sớm:
   clone template. `/thiet-ke-chuyen-di` vẫn là trang nội dung chỉ có liên hệ —
   nối nó vào API là việc của frontend và chưa bắt đầu.
 - **Map và gợi ý AI cho Planner.** Cố ý hoãn lại theo đề bài đã mở phase Planner.
-- **Một nhà cung cấp danh tính thật.** Auth của Planner hiện là bearer token tạm
-  thời cho từng người đi chơi, cấp bằng tay qua API admin. Không đăng ký, không
-  đặt lại mật khẩu, không hết hạn session. Thay nó cần ADR riêng.
+- **Một nhà cung cấp danh tính thật.** Auth của Planner là access token cấp cho
+  từng người đi chơi bởi người vận hành, và trình duyệt đổi nó lấy một session
+  cookie `HttpOnly` có hạn ([ADR 0004](adr/0004-planner-identity.vi.md)). Thế là
+  đủ cho nhân viên dùng và cố ý không phải một hệ danh tính: không có đăng ký
+  công khai, không đặt lại mật khẩu, không OAuth, không MFA. Thêm những thứ đó là
+  ADR tiếp theo, và `resolveIdentity` là đường ráp duy nhất nó phải thay.
 - **SQL.** Cả hai store chỉ an toàn trong một process. Triển khai nhiều instance
   là mốc phải chuyển; schema đích và các index đã được ghi sẵn trong
   [ADR 0002](adr/0002-planner-core.vi.md#hình-dạng-sql-mà-cấu-trúc-này-sẽ-thành).

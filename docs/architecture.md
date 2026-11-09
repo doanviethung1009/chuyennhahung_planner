@@ -121,7 +121,7 @@ and backup profiles.
 | Store | File | Holds | Contract |
 |---|---|---|---|
 | Travel content | `.data/travel-content.json` (`TRAVEL_CONTENT_STORE`) | places, stories, collections, reviews, templates | [travel-content-api.md](travel-content-api.md) |
-| Planner | `.data/planner.json` (`PLANNER_STORE`) | planner users, trips, trip days, trip activities, trip expenses | [features/travel-planner-core.md](features/travel-planner-core.md) |
+| Planner | `.data/planner.json` (`PLANNER_STORE`) | planner users, browser sessions, trips, trip days, trip activities, trip expenses | [features/travel-planner-core.md](features/travel-planner-core.md) |
 
 Money in both is an integer count of đồng, capped at 10^12 — never a float,
 never a minor unit. Derived totals are recomputed on read, never stored.
@@ -213,9 +213,12 @@ Deliberately absent, and not to be scaffolded early:
   wiring it to the API is frontend-owned work and has not started.
 - **Planner map and AI suggestions.** Deliberately deferred by the brief that
   opened the Planner phase.
-- **A real identity provider.** Planner auth is an interim per-traveller bearer
-  token, provisioned by hand through the admin API. No signup, no password reset,
-  no session expiry. Replacing it needs its own ADR.
+- **A real identity provider.** Planner auth is an operator-provisioned
+  per-traveller access token, which a browser exchanges for an expiring
+  `HttpOnly` session cookie ([ADR 0004](adr/0004-planner-identity.md)). That is
+  enough for staff use and is deliberately not an identity system: there is no
+  public signup, no password reset, no OAuth and no MFA. Adding those is the next
+  ADR, and `resolveIdentity` is the single seam it would replace.
 - **SQL.** Both stores are single-process. Multi-instance deployment is the
   trigger; the target schema and its indexes are already written down in
   [ADR 0002](adr/0002-planner-core.md#the-sql-shape-this-becomes).

@@ -113,6 +113,33 @@ curl -s -X POST http://localhost:3000/api/admin/planner/users \
 curl -s http://localhost:3000/api/planner -H "authorization: Bearer <accessToken>"
 ```
 
+A browser does not use that token directly — it signs in once and gets an
+`HttpOnly` cookie ([ADR 0004](adr/0004-planner-identity.md)). With curl, use a
+cookie jar:
+
+```bash
+# Sign in. The cookie lands in the jar; it is never readable by JavaScript.
+curl -s -c jar.txt -X POST http://localhost:3000/api/planner/session \
+  -H 'content-type: application/json' \
+  -d '{"accessToken":"<accessToken>"}'
+
+# Reads need nothing more.
+curl -s -b jar.txt http://localhost:3000/api/planner
+
+# Mutations must state a same-origin Origin — that is the CSRF rule cookies
+# oblige, and a cookie request without it is refused with 403.
+curl -s -b jar.txt -X POST http://localhost:3000/api/planner \
+  -H 'origin: http://localhost:3000' -H 'content-type: application/json' \
+  -d '{"source":"blank","title":"Đà Lạt 3 ngày","destinationSlug":"da-lat","durationDays":3,"partySize":2,"budget":{"targetTotalVnd":5000000}}'
+
+# Sign out.
+curl -s -b jar.txt -X DELETE http://localhost:3000/api/planner/session \
+  -H 'origin: http://localhost:3000'
+```
+
+A session lasts 14 days, or 7 days without use. `rotate-token` signs the
+traveller out everywhere.
+
 Mutating an existing trip needs the version from its `ETag`:
 
 ```bash

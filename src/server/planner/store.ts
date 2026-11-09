@@ -4,6 +4,7 @@ import {
   type DocumentStore,
 } from '@/server/persistence/json-store';
 import type {
+  PlannerSession,
   PlannerUser,
   Trip,
   TripActivity,
@@ -24,6 +25,12 @@ import type {
  */
 export interface PlannerData {
   users: PlannerUser[];
+  /**
+   * Browser sessions (ADR 0004). Separate from `users` because a session is
+   * revocable, expiring state while a user is not, and because sweeping expired
+   * rows must never touch the user record.
+   */
+  sessions: PlannerSession[];
   trips: Trip[];
   tripDays: TripDay[];
   tripActivities: TripActivity[];
@@ -33,13 +40,21 @@ export interface PlannerData {
 export type PlannerStore = DocumentStore<PlannerData>;
 
 export function emptyPlannerData(): PlannerData {
-  return { users: [], trips: [], tripDays: [], tripActivities: [], tripExpenses: [] };
+  return {
+    users: [],
+    sessions: [],
+    trips: [],
+    tripDays: [],
+    tripActivities: [],
+    tripExpenses: [],
+  };
 }
 
 /** Fills in any collection a partial or hand-edited file is missing. */
 function normalize(partial: Partial<PlannerData>): PlannerData {
   return {
     users: partial.users ?? [],
+    sessions: partial.sessions ?? [],
     trips: partial.trips ?? [],
     tripDays: partial.tripDays ?? [],
     tripActivities: partial.tripActivities ?? [],

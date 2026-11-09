@@ -9,6 +9,7 @@ export type ContentErrorCode =
   | 'payload_too_large'
   | 'validation_failed'
   | 'unauthorized'
+  | 'forbidden'
   | 'admin_auth_unconfigured'
   | 'not_found'
   | 'slug_conflict'
@@ -22,6 +23,7 @@ const STATUS_BY_CODE: Record<ContentErrorCode, number> = {
   payload_too_large: 413,
   validation_failed: 422,
   unauthorized: 401,
+  forbidden: 403,
   admin_auth_unconfigured: 503,
   not_found: 404,
   slug_conflict: 409,
@@ -91,6 +93,16 @@ export function invalidState(message: string): ContentError {
  * without `If-Match`. Answering 428 rather than applying the write is what
  * makes a lost update impossible instead of merely unlikely.
  */
+/**
+ * The caller is authenticated but this particular request is not allowed —
+ * used for the same-origin requirement that cookie authentication brings with
+ * it (ADR 0004 §4). Note that *object-level* refusals are deliberately 404s,
+ * not 403s: a trip must not confirm its own existence to a non-owner.
+ */
+export function forbidden(message: string): ContentError {
+  return new ContentError('forbidden', message);
+}
+
 export function preconditionRequired(message: string): ContentError {
   return new ContentError('precondition_required', message);
 }
