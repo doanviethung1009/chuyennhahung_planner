@@ -102,19 +102,67 @@ Planner không có đăng ký. Mọi người đi chơi đều do người vận
 và access token chỉ hiện ra **một lần** — nếu mất thì xoay vòng lại; không đọc
 lại được.
 
-```bash
-# 1. Một secret thật, tối thiểu 32 ký tự, nếu không mọi route admin trả 503.
-export ADMIN_API_TOKEN="$(openssl rand -base64 36)"
+Có hai loại mã, rất dễ nhầm:
 
-# 2. Tạo người đi chơi. Giữ lại `accessToken` trong response.
+| Mã | Ai giữ | Mở được gì |
+|---|---|---|
+| `ADMIN_API_TOKEN` | người vận hành (server đọc từ `.env.local`) | API quản trị — tạo người đi chơi, cấp lại mã cho họ |
+| `accessToken` | một người đi chơi | các chuyến đi của chính người đó — là mã gõ vào trang `/dang-nhap` |
+
+**Bước 1 — đưa khóa quản trị cho server.** Phải là *server* đọc được khóa; lệnh
+`export` trong terminal chỉ có tác dụng với các lệnh gõ ở terminal đó, không tới
+được một `npm run dev` đang chạy. Ghi khóa vào `.env.local` (đã gitignore) rồi
+khởi động lại dev server (nếu file đã có dòng này thì bỏ qua bước này):
+
+```bash
+printf 'ADMIN_API_TOKEN=%s\n' "$(openssl rand -base64 36 | tr -d '\n/+=')" >> .env.local
+```
+
+**Bước 2 — nạp cùng khóa đó vào terminal**, đứng ở thư mục chứa `.env.local`, để
+`curl` gửi được. Lệnh không in gì ra:
+
+```bash
+export ADMIN_API_TOKEN="$(grep '^ADMIN_API_TOKEN=' .env.local | cut -d= -f2-)"
+```
+
+**Bước 3 — xác định cổng.** `npm run dev` in ra `Local: http://localhost:<cổng>`.
+Nếu 3000 đã có người dùng, Next tự chuyển sang 3001, 3002… và khi đó
+`localhost:3000` là server *của người khác*. Dùng đúng cổng server của bạn in ra;
+các ví dụ bên dưới ghi 3000.
+
+**Bước 4 — tạo người đi chơi.** Giữ lại `accessToken` trong kết quả: mã chỉ hiện
+**một lần**, hệ thống chỉ lưu bản băm.
+
+```bash
 curl -s -X POST http://localhost:3000/api/admin/planner/users \
   -H "authorization: Bearer $ADMIN_API_TOKEN" \
   -H 'content-type: application/json' \
   -d '{"handle":"hung-tran","displayName":"Hưng Trần"}'
+```
 
-# 3. Chính token đó — không phải token admin — mới chạm được tới trip của họ.
+Kết quả thành công có dạng
+`{"user":{"id":"usr_…","handle":"hung-tran",…},"accessToken":"…64 ký tự…"}`.
+Gửi `accessToken` riêng cho người đi chơi; không dán vào chat, issue hay commit.
+
+Các lệnh quản trị khác cho người đi chơi:
+
+```bash
+# Liệt kê người đi chơi (không bao giờ trả về mã).
+curl -s http://localhost:3000/api/admin/planner/users \
+  -H "authorization: Bearer $ADMIN_API_TOKEN"
+
+# Mất hoặc lộ mã: cấp mã mới. Mã cũ hết hiệu lực ngay và người đó bị đăng xuất
+# ở mọi nơi.
+curl -s -X POST http://localhost:3000/api/admin/planner/users/<userId>/rotate-token \
+  -H "authorization: Bearer $ADMIN_API_TOKEN"
+```
+
+Mã của người đi chơi — không phải khóa quản trị — mới mở được chuyến đi của họ:
+
+```bash
 curl -s http://localhost:3000/api/planner -H "authorization: Bearer <accessToken>"
 ```
+
 
 Trình duyệt không dùng trực tiếp token đó — nó đăng nhập một lần và nhận một
 cookie `HttpOnly` ([ADR 0004](adr/0004-planner-identity.vi.md)). Với curl thì
@@ -155,6 +203,47 @@ curl -s -X PATCH http://localhost:3000/api/planner/<id> \
 Thiếu `If-Match` thì nhận 428; version lạc hậu thì 412. Xem
 [features/travel-planner-core.vi.md](features/travel-planner-core.vi.md) để có
 danh sách endpoint đầy đủ.
+
+### Chạy thử Planner từ đầu đến cuối
+
+Toàn bộ hành trình của người đọc trong [tính năng đi theo dấu chân](features/follow-hung-footsteps.vi.md),
+làm tay trên trình duyệt. Làm sau mục *Cấp tài khoản cho một người đi chơi trong
+Planner*, với `accessToken` của người đó trong tay. Đường dẫn dưới đây là bản
+tiếng Việt; site tiếng Anh có cùng các trang dưới `/en`.
+
+1. **Đọc câu chuyện.** Mở `/chuyen-di-choi/di-da-lat-lan-thu-sau`. Gần cuối bài có
+   phần "Lịch trình thực tế" (các ngày thật của chuyến đó) và nút để tự lên kế
+   hoạch. Hiện đây là câu chuyện duy nhất gắn với một template
+   (`da-lat-3-ngay-lang-man`); các câu chuyện khác không có hai phần này.
+2. **Tuỳ chỉnh bản sao.** Nút mở `/tao-chuyen-di/da-lat-3-ngay-lang-man`. Điền tên
+   chuyến, ngày đi, số người, ngân sách, phong cách, nhịp độ và ghi chú, rồi lưu.
+   Chưa cần đăng nhập: bản nháp chỉ nằm trong tab trình duyệt này
+   (`sessionStorage`), không lên server.
+3. **Đăng nhập.** Lưu khi chưa đăng nhập sẽ chuyển tới `/dang-nhap`. Dán
+   `accessToken`. Bạn quay lại form, bản nháp vẫn còn, và chuyến đi được lưu.
+   Trình duyệt giờ giữ một cookie phiên `HttpOnly`; bản thân mã không được lưu
+   trong trình duyệt.
+4. **Tìm trong Chuyến đi của tôi.** `/chuyen-di-cua-toi` liệt kê chuyến đi. Mở nó.
+   Ở trang chi tiết bạn đặt được tình trạng kế hoạch (Bản nháp / Đã lên kế hoạch /
+   Đã đi xong), nhân bản, lưu trữ và chia sẻ. Bản sao là độc lập: sửa nó không bao giờ
+   làm thay đổi template gốc hay câu chuyện.
+5. **Chia sẻ.** Trong "Chia sẻ chuyến đi", đổi "Ai xem được":
+
+   | Lựa chọn | Ai mở được link | Công cụ tìm kiếm |
+   |---|---|---|
+   | Riêng tư | không ai — không có link | — |
+   | Ai có đường dẫn đều xem được | ai có link | không lập chỉ mục |
+   | Công khai | ai có link | được phép lập chỉ mục |
+
+   Rồi bấm "Sao chép đường dẫn". Link có dạng `/chia-se/<43 ký tự>`.
+6. **Mở như người lạ.** Dán link vào cửa sổ ẩn danh. Bạn thấy lịch trình chỉ đọc,
+   không có nút sửa, không cần đăng nhập. Bạn không thấy chủ chuyến đi, ghi chú
+   chung của chuyến đi hay khoản chi nào.
+7. **Thu hồi.** "Tạo đường dẫn mới" làm link cũ chết ngay và tạo link mới; "Ngừng
+   chia sẻ" đưa chuyến đi về riêng tư. Tải lại cửa sổ ẩn danh: link cũ giờ hiện
+   trang không tìm thấy ("Đi lạc rồi").
+
+Nếu một bước không chạy như trên, xem *Khắc phục sự cố* bên dưới.
 
 ### Thêm một chuỗi hiển thị cho người dùng
 
@@ -223,3 +312,9 @@ có đường revalidate.
 | `MISSING_MESSAGE` lúc chạy | Key chỉ được thêm vào một file messages |
 | `npm run verify:ui` không mở được browser | Chrome không nằm ở đường dẫn macOS hard-code trong `scripts/screenshots.mjs` |
 | Dấu tiếng Việt hiển thị sai | Thêm font mà thiếu subset `vietnamese` |
+| `admin_auth_unconfigured` (503) từ một route admin | **Server** chưa có `ADMIN_API_TOKEN` từ 32 ký tự. Ghi vào `.env.local` và khởi động lại `npm run dev` — `export` ở terminal khác không tới được server đang chạy. Nếu đã có, bạn đang gọi nhầm server: kiểm tra cổng mà `npm run dev` in ra |
+| `unauthorized` (401) từ một route admin | Khóa `curl` gửi khác khóa của server. Chạy lại dòng `export … .env.local` ở thư mục chứa đúng `.env.local` đó |
+| `localhost:3000` trả lời nhưng là hành vi cũ hoặc ứng dụng khác | Một dev server khác (worktree khác, dự án khác) đang giữ cổng 3000; server của bạn đã chuyển sang 3001+. Dùng cổng được in ra, hoặc dừng server kia |
+| Trang đăng nhập báo mã chưa đúng | Phải là `accessToken` của người đi chơi, không phải `ADMIN_API_TOKEN`; hoặc mã đã được cấp lại. Cấp lại lần nữa và dùng mã mới |
+| Trang đăng nhập bảo đợi | Giới hạn đăng nhập (10 lần mỗi phút) — đợi đúng thời gian hiển thị |
+| Link chia sẻ hiện trang không tìm thấy ("Đi lạc rồi") | Chuyến đi đang riêng tư, đã lưu trữ, hoặc link đã bị thay bằng "Tạo đường dẫn mới" — cố ý trông giống hệt nhau |
