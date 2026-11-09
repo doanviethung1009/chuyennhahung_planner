@@ -8,11 +8,28 @@ import { siteConfig } from '@/content/site';
 import { getStory, stories } from '@/content/stories';
 import { getDestination } from '@/content/destinations';
 import { formatDate } from '@/lib/format';
+import { getRepository } from '@/server/content/instance';
+import type { TravelTemplate } from '@/server/content/schemas';
 import { Container } from '@/components/ui/container';
+import { ButtonLink } from '@/components/ui/button';
+import { ItineraryDays } from '@/components/planner/itinerary-days';
 import { Prose } from '@/components/ui/prose';
 import { Badge, MetaRow } from '@/components/ui/badge';
 import { CoverImage } from '@/components/ui/cover-image';
 import { JsonLd } from '@/components/seo/json-ld';
+
+/** The linked itinerary changes with the content store, so re-check it often. */
+export const revalidate = 60;
+
+/** A missing or withdrawn template means no section and no CTA, never a dead link. */
+async function loadLinkedTemplate(slug: string | undefined): Promise<TravelTemplate | null> {
+  if (!slug) return null;
+  try {
+    return await (await getRepository()).getPublicTemplate(slug);
+  } catch {
+    return null;
+  }
+}
 
 type Params = { params: Promise<{ locale: Locale; slug: string }> };
 
@@ -43,7 +60,8 @@ export default async function StoryPage({ params }: Params) {
   const story = getStory(slug);
   if (!story) notFound();
 
-  const t = await getTranslations('common');
+  const [t, tJourney] = await Promise.all([getTranslations('common'), getTranslations('journey')]);
+  const template = await loadLinkedTemplate(story.plannerTemplateSlug);
   const places = story.destinationSlugs
     .map(getDestination)
     .filter((d) => d !== undefined);
@@ -125,6 +143,43 @@ export default async function StoryPage({ params }: Params) {
           <Prose paragraphs={story.body[locale]} />
         </div>
       </Container>
+
+      {template ? (
+        <Container width="narrow">
+          <section aria-labelledby="real-itinerary" className="border-t border-border-subtle pb-16 pt-12 md:pb-20">
+            <h2 id="real-itinerary" className="font-display text-2xl font-semibold md:text-3xl">
+              {tJourney('title')}
+            </h2>
+            <p className="mt-2 text-base text-foreground-muted">{tJourney('lead')}</p>
+            <div className="mt-8">
+              <ItineraryDays
+                locale={locale}
+                days={template.days.map((day) => ({
+                  dayNumber: day.day,
+                  title: day.title[locale],
+                  date: null,
+                  summary: day.summary?.[locale] ?? null,
+                  activities: day.activities.map((a) => ({
+                    title: a.title[locale],
+                    startTime: a.startTime ?? null,
+                    note: a.note?.[locale] ?? null,
+                  })),
+                }))}
+              />
+            </div>
+            <div className="mt-10 rounded-2xl bg-surface-muted p-6 md:p-8">
+              <p className="text-base text-foreground-muted">{tJourney('ctaLead')}</p>
+              <ButtonLink
+                href={{ pathname: '/trip-setup/[template]', params: { template: template.slug } }}
+                size="lg"
+                className="mt-4"
+              >
+                {tJourney('cta')}
+              </ButtonLink>
+            </div>
+          </section>
+        </Container>
+      ) : null}
     </article>
   );
 }

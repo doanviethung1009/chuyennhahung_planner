@@ -1,3 +1,5 @@
+import { stories } from '@/content/stories';
+import type { Localized } from '@/content/types';
 import { destinations } from '@/content/destinations';
 import type { TravelContentRepository } from '@/server/content/repository';
 import type { Place, TravelTemplate } from '@/server/content/schemas';
@@ -17,11 +19,18 @@ export interface PlannerCatalog {
   getPlace(slug: string): Promise<Place | null>;
   /** Only an *approved* (public) template may be cloned — a draft is invisible. */
   getApprovedTemplate(slug: string): Promise<TravelTemplate | null>;
+  /** The site story whose `plannerTemplateSlug` is this template, if any. */
+  getLinkedStory(templateSlug: string): { slug: string; title: Localized<string> } | null;
 }
 
 export function createContentCatalog(
   content: TravelContentRepository,
   knownDestinationSlugs: Iterable<string> = destinations.map((d) => d.slug),
+  siteStories: ReadonlyArray<{
+    slug: string;
+    title: Localized<string>;
+    plannerTemplateSlug?: string;
+  }> = stories,
 ): PlannerCatalog {
   const destinationSlugs = new Set(knownDestinationSlugs);
 
@@ -35,6 +44,10 @@ export function createContentCatalog(
       } catch {
         return null;
       }
+    },
+    getLinkedStory(templateSlug) {
+      const story = siteStories.find((s) => s.plannerTemplateSlug === templateSlug);
+      return story ? { slug: story.slug, title: story.title } : null;
     },
     async getApprovedTemplate(slug) {
       try {

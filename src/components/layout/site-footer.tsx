@@ -26,6 +26,7 @@ const columns: Column[] = [
       { key: 'about', href: '/about' },
       { key: 'reviews', href: '/reviews' },
       { key: 'planTrip', href: '/plan-your-trip' },
+      { key: 'myTrips', href: '/my-trips' },
     ],
   },
 ];

@@ -42,7 +42,11 @@ export function toErrorResponse(error: unknown): NextResponse {
     const body: ApiErrorBody = {
       error: { code: error.code, message: error.message, issues: error.issues },
     };
-    return NextResponse.json(body, { status: error.status, headers: NO_STORE });
+    const headers: Record<string, string> = { ...NO_STORE };
+    if (error.retryAfterSeconds !== null) {
+      headers['retry-after'] = String(error.retryAfterSeconds);
+    }
+    return NextResponse.json(body, { status: error.status, headers });
   }
 
   if (error instanceof z.ZodError) {
@@ -137,6 +141,28 @@ export async function parseJsonBody<S extends z.ZodType>(
   maxBytes = MAX_JSON_BODY_BYTES,
 ): Promise<z.infer<S>> {
   const text = await readBodyText(request, maxBytes);
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text) as unknown;
+  } catch {
+    throw new ContentError('bad_request', 'request body is not valid JSON');
+  }
+  return schema.parse(raw) as z.infer<S>;
+}
+
+/**
+ * Like `parseJsonBody`, but an empty body is a valid request and parses as `{}`.
+ * For endpoints whose every field is optional, so a client can send a bare POST
+ * without inventing a `{}`. The size limit and the schema still apply.
+ */
+export async function parseOptionalJsonBody<S extends z.ZodType>(
+  request: Request,
+  schema: S,
+  maxBytes = MAX_JSON_BODY_BYTES,
+): Promise<z.infer<S>> {
+  const text = await readBodyText(request, maxBytes);
+  if (text.trim() === '') return schema.parse({}) as z.infer<S>;
 
   let raw: unknown;
   try {

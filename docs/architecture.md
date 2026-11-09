@@ -72,6 +72,11 @@ folders. The visible URL per locale is defined once, in
 | `/plan-your-trip` | `/thiet-ke-chuyen-di` | `/en/plan-your-trip` |
 | `/reviews` | `/goc-review` | `/en/reviews` |
 | `/about` | `/ve-nha-hung` | `/en/about` |
+| `/trip-setup/[template]` | `/tao-chuyen-di/[template]` | `/en/trip-setup/[template]` |
+| `/sign-in` | `/dang-nhap` | `/en/sign-in` |
+| `/my-trips` | `/chuyen-di-cua-toi` | `/en/my-trips` |
+| `/my-trips/[id]` | `/chuyen-di-cua-toi/[id]` | `/en/my-trips/[id]` |
+| `/shared/[token]` | `/chia-se/[token]` | `/en/shared/[token]` |
 
 Two types keep navigation honest: `AppPathname` is every internal route, and
 `StaticPathname` excludes `[slug]` routes so a dynamic route can never be listed
@@ -201,11 +206,48 @@ and the reason `--color-border-strong` exists. Details:
 | Build | `npm run build` | every page prerenders |
 | UI | `npm run verify:ui` | screenshots at 375/768/1440, fails on overflow |
 
+## Trip sharing and story cloning
+
+"Follow Nhà Hưng's footsteps" ([ADR 0005](adr/0005-trip-sharing-and-story-cloning.md);
+task contract in `.claude/contracts/follow-hung-footsteps.md`). It adds no new
+subsystem: it extends the Planner and adds one public read path.
+
+```mermaid
+flowchart LR
+  S[Story page] -->|plannerTemplateSlug| T[Public template]
+  S --> CTA[Trip Setup]
+  CTA -->|POST /api/planner, 401 keeps draft| SI[Sign in]
+  CTA --> M[My Trips: independent clone]
+  M -->|PUT share| L[/shared/token read-only/]
+```
+
+- **Story link.** `Story.plannerTemplateSlug` (optional,
+  [`types.ts`](../src/content/types.ts)) names a public template. The story page
+  renders the itinerary and the call to action only while that template is public.
+- **Trip fields added**, all optional on stored rows: `planningStatus`
+  (`draft | planned | completed`, default `draft`, separate from the `active |
+  archived` lifecycle), `visibility` (`private | unlisted | public`, default
+  `private`), `shareToken`, `shareTokenCreatedAt`, `duplicatedFromTripId`, and
+  `sourceTemplate.story` (attribution, derived server-side by
+  `PlannerCatalog.getLinkedStory`, never from client input).
+- **Share link.** A 256-bit random token. It resolves only when the token matches,
+  visibility is `unlisted` or `public`, and the trip is active; every other case is
+  one identical 404. `GET /api/shared/[token]` and `/shared/[token]` return a
+  sanitised projection (no owner identity, no ids, no `version`, no trip note, no
+  expenses) and never mutate. There is no public gallery.
+- **Public endpoints are rate limited** by
+  `src/server/rate-limit.ts`: in-memory and
+  per-process, so it shares SQL's multi-instance trigger, and its client key is only
+  as trustworthy as the proxy that sets `x-forwarded-for`.
+- **Private pages** (`/sign-in`, `/my-trips`, `/my-trips/[id]`, `/trip-setup/[template]`)
+  are `noindex` and excluded from the sitemap; `/shared/[token]` is `noindex` unless
+  the trip is `public`, and sends `Referrer-Policy: no-referrer`.
+
 ## Phases
 
 Deliberately absent, and not to be scaffolded early:
 
-- **Planner UI.** The Planner *backend* core shipped under `/api/planner`
+- **Planner UI** — partly opened by [ADR 0005](adr/0005-trip-sharing-and-story-cloning.md): story-to-trip cloning, My Trips, sign-in and the read-only share page only. A full trip editor, the Planner map and AI suggestions are not. The Planner *backend* core shipped under `/api/planner`
   ([ADR 0002](adr/0002-planner-core.md),
   [features/travel-planner-core.md](features/travel-planner-core.md)):
   trips, generated days, activities, expenses, budgeting, archive/restore and

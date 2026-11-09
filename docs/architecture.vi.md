@@ -72,6 +72,11 @@ trong [`src/i18n/routing.ts`](../src/i18n/routing.ts):
 | `/plan-your-trip` | `/thiet-ke-chuyen-di` | `/en/plan-your-trip` |
 | `/reviews` | `/goc-review` | `/en/reviews` |
 | `/about` | `/ve-nha-hung` | `/en/about` |
+| `/trip-setup/[template]` | `/tao-chuyen-di/[template]` | `/en/trip-setup/[template]` |
+| `/sign-in` | `/dang-nhap` | `/en/sign-in` |
+| `/my-trips` | `/chuyen-di-cua-toi` | `/en/my-trips` |
+| `/my-trips/[id]` | `/chuyen-di-cua-toi/[id]` | `/en/my-trips/[id]` |
+| `/shared/[token]` | `/chia-se/[token]` | `/en/shared/[token]` |
 
 Hai type giữ cho điều hướng không sai: `AppPathname` là mọi route nội bộ, còn
 `StaticPathname` loại bỏ các route `[slug]` để một route động không bao giờ bị
@@ -202,11 +207,48 @@ WCAG AA — đó là lý do màu primary tương tác là `clay-600` chứ khôn
 | Build | `npm run build` | mọi trang prerender được |
 | UI | `npm run verify:ui` | ảnh chụp ở 375/768/1440, fail nếu tràn ngang |
 
+## Chia sẻ chuyến đi và nhân bản từ câu chuyện
+
+"Đi theo dấu chân nhà Hưng" ([ADR 0005](adr/0005-trip-sharing-and-story-cloning.vi.md);
+hợp đồng nằm ở `.claude/contracts/follow-hung-footsteps.md`). Không thêm hệ thống con
+mới: nó mở rộng Planner và thêm một đường đọc công khai.
+
+```mermaid
+flowchart LR
+  S[Trang câu chuyện] -->|plannerTemplateSlug| T[Template công khai]
+  S --> CTA[Trip Setup]
+  CTA -->|POST /api/planner, 401 giữ bản nháp| SI[Đăng nhập]
+  CTA --> M[My Trips: bản nhân bản độc lập]
+  M -->|PUT share| L[/shared/token chỉ-đọc/]
+```
+
+- **Liên kết câu chuyện.** `Story.plannerTemplateSlug` (tùy chọn,
+  [`types.ts`](../src/content/types.ts)) trỏ tới một template công khai. Trang câu
+  chuyện chỉ hiển thị lịch trình và lời kêu gọi hành động khi template còn công khai.
+- **Trường thêm vào trip**, đều tùy chọn trên dòng đã lưu: `planningStatus`
+  (`draft | planned | completed`, mặc định `draft`, tách khỏi vòng đời `active |
+  archived`), `visibility` (`private | unlisted | public`, mặc định `private`),
+  `shareToken`, `shareTokenCreatedAt`, `duplicatedFromTripId`, và `sourceTemplate.story`
+  (attribution, do server suy ra bằng `PlannerCatalog.getLinkedStory`, không bao giờ
+  từ dữ liệu client).
+- **Link chia sẻ.** Token ngẫu nhiên 256 bit. Chỉ mở được khi token khớp, visibility
+  là `unlisted` hoặc `public`, và trip còn active; mọi trường hợp khác là một 404 giống
+  hệt nhau. `GET /api/shared/[token]` và `/shared/[token]` trả bản chiếu đã lọc (không
+  danh tính chủ sở hữu, không id, không `version`, không ghi chú trip, không chi phí)
+  và không bao giờ thay đổi dữ liệu. Không có thư viện công khai.
+- **Endpoint công khai có giới hạn tần suất** bởi
+  `src/server/rate-limit.ts`: trong bộ nhớ, theo từng
+  tiến trình, nên cùng điều kiện đa-instance với SQL, và khóa client chỉ đáng tin bằng
+  proxy đặt `x-forwarded-for`.
+- **Trang riêng tư** (`/sign-in`, `/my-trips`, `/my-trips/[id]`,
+  `/trip-setup/[template]`) là `noindex` và không có trong sitemap; `/shared/[token]` là
+  `noindex` trừ khi trip là `public`, và gửi `Referrer-Policy: no-referrer`.
+
 ## Các phase
 
 Những thứ vắng mặt có chủ đích, và không được dựng sớm:
 
-- **Giao diện Planner.** Phần lõi *backend* của Planner đã ship dưới
+- **Giao diện Planner** — được mở một phần bởi [ADR 0005](adr/0005-trip-sharing-and-story-cloning.vi.md): chỉ gồm nhân bản story thành trip, My Trips, đăng nhập và trang chia sẻ chỉ-đọc. Trình sửa trip đầy đủ, bản đồ Planner và gợi ý AI thì chưa. Phần lõi *backend* của Planner đã ship dưới
   `/api/planner` ([ADR 0002](adr/0002-planner-core.vi.md),
   [features/travel-planner-core.vi.md](features/travel-planner-core.vi.md)):
   trip, ngày sinh tự động, activity, chi phí, ngân sách, lưu trữ/khôi phục và

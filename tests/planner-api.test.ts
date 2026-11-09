@@ -553,3 +553,27 @@ describe('integrity sweep', () => {
     expect(body).toEqual({ ok: true, issues: [] });
   });
 });
+
+describe('duplicate over HTTP', () => {
+  it('accepts a POST with an empty body, as a browser or curl sends it', async () => {
+    const token = await provision('duplicate-bare-post');
+    const created = await routes.trips.POST(req('POST', { token, body: tripBody() }));
+    const { trip } = await json(created);
+    const duplicate = await import('../src/app/api/planner/[id]/duplicate/route');
+
+    // Under Next an empty POST still has a (zero-length) body stream, so the
+    // handler cannot rely on `request.body === null`.
+    const bare = new Request(`${BASE}/api/planner/${trip.id}/duplicate`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}` },
+      body: '',
+    });
+    const response = await duplicate.POST(bare, params({ id: trip.id }));
+
+    expect(response.status).toBe(201);
+    const copy = (await json(response)).trip;
+    expect(copy.id).not.toBe(trip.id);
+    expect(copy.duplicatedFromTripId).toBe(trip.id);
+    expect(copy.startDate).toBe(trip.startDate);
+  });
+});
