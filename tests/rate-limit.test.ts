@@ -43,6 +43,32 @@ describe('createRateLimiter', () => {
     // An old key behaves as brand new, which is all the sweep may change.
     expect(limiter.check('k0').ok).toBe(true);
   });
+
+  it('a flood of fresh keys cannot reset a blocked bucket (W2)', () => {
+    const c = clock();
+    const limiter = createRateLimiter({ limit: 2, windowMs: 60_000, now: c.now, maxKeys: 5 });
+    limiter.check('attacker');
+    limiter.check('attacker');
+    expect(limiter.check('attacker').ok).toBe(false);
+
+    // Spray far more distinct keys than the ceiling, within the window.
+    for (let i = 0; i < 50; i++) limiter.check(`spoof-${i}`);
+
+    expect(limiter.check('attacker').ok).toBe(false);
+  });
+
+  it('evicts the least-recently-seen key, not the first inserted', () => {
+    const c = clock();
+    const limiter = createRateLimiter({ limit: 2, windowMs: 60_000, now: c.now, maxKeys: 3 });
+    limiter.check('old-but-active'); // 1 of 2
+    limiter.check('b');
+    limiter.check('c');
+    limiter.check('old-but-active'); // 2 of 2, now most recent — and blocked
+    limiter.check('d'); // over the ceiling: 'b' goes, not 'old-but-active'
+    limiter.check('e');
+
+    expect(limiter.check('old-but-active').ok).toBe(false);
+  });
 });
 
 describe('clientKey', () => {
