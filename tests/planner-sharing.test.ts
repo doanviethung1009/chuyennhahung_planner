@@ -285,6 +285,28 @@ describe('backward compatibility', () => {
     });
     expect(tripSchema.safeParse(old).success).toBe(true);
   });
+
+  it('restores a trip archived with a live token (stored before the fix) as private', async () => {
+    const store0 = createMemoryPlannerStore();
+    const planner0 = makePlanner({ store: store0 });
+    const { userId } = await makeOwner(planner0);
+    const { trip } = await planner0.createTrip(userId, daLatTripInput());
+    const token = 'A'.repeat(43);
+    const legacy: Trip = {
+      ...trip,
+      status: 'archived',
+      archivedAt: trip.updatedAt,
+      visibility: 'unlisted',
+      shareToken: token,
+      shareTokenCreatedAt: trip.updatedAt,
+    };
+    const stored = await store0.read();
+    const store = createMemoryPlannerStore({ ...stored, trips: [legacy] });
+    const planner = makePlanner({ store });
+    const restored = await planner.restoreTrip(userId, trip.id, legacy.version);
+    expect(restored.trip).toMatchObject({ status: 'active', visibility: 'private', shareToken: null });
+    expect(await planner.getSharedTrip(token)).toBeNull();
+  });
 });
 
 // ---------------------------------------------------------------------------

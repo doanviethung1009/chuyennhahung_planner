@@ -718,7 +718,14 @@ export class PlannerRepository {
       if (trip.status !== 'archived') {
         throw invalidState(`trip "${tripId}" is not archived`);
       }
-      const next = this.touch(data, index, trip, { status: 'active', archivedAt: null });
+      // Also cleared here for trips archived before archiving revoked links.
+      const next = this.touch(data, index, trip, {
+        status: 'active',
+        archivedAt: null,
+        visibility: 'private',
+        shareToken: null,
+        shareTokenCreatedAt: null,
+      });
       return buildTripView(data, next);
     });
   }
