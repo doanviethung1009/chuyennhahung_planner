@@ -27,3 +27,4 @@ ADR here.
 |---|---|---|
 | [0001](0001-travel-content-system.md) | Travel Content System: typed entities behind a store interface, no database yet, `zod` validation, fail-closed admin auth | Accepted |
 | [0002](0002-planner-core.md) | Planner core: four normalised trip collections, a real trip owner with object-level authorization, independent template clones, integer-VND budgeting with a BigInt boundary, `If-Match` concurrency | Accepted |
+| [0003](0003-planner-identity.md) | Planner identity: an `HttpOnly` session cookie exchanged for the existing access token, behind one `resolveIdentity` seam, with CSRF as the explicit cost | Proposed |
