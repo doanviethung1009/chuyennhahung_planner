@@ -1,3 +1,10 @@
+---
+paths:
+  - "src/**"
+  - "messages/**"
+  - "next.config.ts"
+---
+
 # Project-specific rules — Chuyện Nhà Hưng
 
 > Đi đâu cũng có chuyện.

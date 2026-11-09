@@ -1,3 +1,10 @@
+---
+paths:
+  - "src/**"
+  - "tests/**"
+  - ".claude/contracts/**"
+---
+
 # Architecture orchestration (AIEOS)
 
 Architect-first. For any code-changing request, triage the architecture **before**

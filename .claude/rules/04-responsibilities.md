@@ -1,3 +1,9 @@
+---
+paths:
+  - ".claude/agents/**"
+  - ".claude/contracts/**"
+---
+
 # Responsibilities — architect / FE / BE / QC / Security / Git
 
 **Ownership is exclusive.** If a task spans two agents, `system-architect` splits it and

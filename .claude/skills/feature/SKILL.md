@@ -5,7 +5,7 @@ description: Route a new feature through architecture triage, scoped implementat
 
 Given request: $ARGUMENTS
 
-1. Apply `CLAUDE.md` and the relevant files in `.claude/rules/`. Inspect
+1. Apply `CLAUDE.md`; open the relevant file in `.claude/rules/` if it has not loaded. Inspect
    `.claude/context/project-context.md` and only the code you actually need —
    use the `explorer` agent for locating files rather than broad reads.
 2. Classify **S / M / L / XL**. For S do a brief inline triage and implement
@@ -23,8 +23,10 @@ Given request: $ARGUMENTS
    **not** spawn `qc` or `security` — they run only when the user calls
    `/qc-check` or `/sec-check`. If the change warrants one (M and above for `qc`;
    a trust-boundary change or any XL task for `security`), recommend it in step 8.
-6. Ask **`git-controller`** for a read-only diff assessment. Do **not** commit,
-   push, merge or deploy without explicit user approval.
+6. Assess the diff yourself with `git status` and `git diff --stat` — that is enough
+   for S/M. Spawn **`git-controller`** only for L/XL or when the user asks
+   (`/git-review`). Do **not** commit, push, merge or deploy without explicit user
+   approval.
 7. **Ship the documentation with the code** (CLAUDE.md rules 10–12): the feature
    document from `docs/features/_template.md` in **both** languages with the same
    heading structure, the row in `docs/features/README.md` and `README.vi.md`, and —

@@ -1,3 +1,12 @@
+---
+paths:
+  - "src/**"
+  - "tests/**"
+  - "messages/**"
+  - "next.config.ts"
+  - "package.json"
+---
+
 # Global engineering rules
 
 Applies to every agent and to the main session, on every task.

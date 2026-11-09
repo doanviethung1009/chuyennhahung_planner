@@ -1,3 +1,9 @@
+---
+paths:
+  - "docs/**"
+  - "tests/docs.test.ts"
+---
+
 # Documentation contract
 
 `docs/` is a maintained product surface, enforced by `tests/docs.test.ts` the way the

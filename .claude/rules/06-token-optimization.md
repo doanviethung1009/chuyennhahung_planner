@@ -1,3 +1,10 @@
+---
+paths:
+  - ".claude/agents/**"
+  - ".claude/skills/**"
+  - "CLAUDE.md"
+---
+
 # Token and credit discipline
 
 The user pays for every agent you spawn and every file you read. Spend accordingly.
@@ -47,7 +54,31 @@ Preserve a concise handoff in `.claude/contracts/<task-id>.md` for cross-session
 continuity, and keep `.claude/context/project-context.md` current. Pass compact Task
 Contracts to agents instead of whole transcripts.
 
-## Why the detail lives in `.claude/rules/`
-`CLAUDE.md` is loaded into context on every single turn; these rule files are read on
-demand. Keeping `CLAUDE.md` short is itself a token optimization — so when you add a
-rule, put the binding one-liner in `CLAUDE.md` and the detail here.
+## Keep the main session short — this is where the credits go
+Measured on this project's own transcripts (2026-11-09, 12 sessions): the **main
+session accounted for ~98% of all tokens** and every subagent together for ~2%. One
+session alone ran 731 model calls, grew to a 567k-token context, never compacted, and
+consumed about half of everything. Every call re-reads the whole context, so cost
+grows roughly with the *square* of session length.
+
+- **One session per branch/PR.** Start a fresh session for the next unit of work
+  instead of continuing in a long one; the branch, the PR and
+  `.claude/contracts/<task-id>.md` carry the handoff.
+- **`/compact` once the context passes ~150k tokens**, and `/clear` between unrelated
+  tasks.
+- **Use the strongest model only for the hard part.** A main session on `opus` that
+  runs hundreds of routine `Bash` calls is the most expensive way to do that work —
+  switch the session to `sonnet` in the app for routine work, or hand the
+  implementation to a `sonnet` agent, which returns a compact report instead of its
+  whole working context.
+- Do not paste long logs or whole files into the conversation; summarise them.
+
+## How these rule files are loaded
+`CLAUDE.md` is loaded on every turn **and into every subagent**. Every `.md` in
+`.claude/rules/` would be too, unless it is scoped — so each rule file here carries a
+`paths:` frontmatter list and is loaded only when the session works on matching files
+(code, docs, agents, hooks). It can always be opened explicitly.
+
+When you add a rule: put the binding one-liner in `CLAUDE.md`, the detail in the rule
+file whose `paths:` cover the files it governs, and **never** add a rule file without
+`paths:` — an unscoped rule file is paid for on every turn of every session.
