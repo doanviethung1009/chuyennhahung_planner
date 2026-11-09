@@ -264,7 +264,7 @@ Deliberately absent, and not to be scaffolded early:
 - **SQL.** Both stores are single-process. Multi-instance deployment is the
   trigger; the target schema and its indexes are already written down in
   [ADR 0002](adr/0002-planner-core.md#the-sql-shape-this-becomes).
-- **Phase 06 — Admin Portal & CMS (announced, not started).** Nothing below is
+- **Phase 07 — Admin Portal, CMS & RBAC (announced, not started).** Nothing below is
   built or to be scaffolded early; each item needs its decision recorded first.
   Design direction: [ADR 0006](adr/0006-unified-identity-and-roles.md) (Proposed).
   Backlog of dependencies and decisions:

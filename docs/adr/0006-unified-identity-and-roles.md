@@ -2,7 +2,7 @@
 
 🇻🇳 Bản tiếng Việt: [0006-unified-identity-and-roles.vi.md](0006-unified-identity-and-roles.vi.md)
 
-- **Status:** Proposed — to be accepted when Phase 06 (Admin Portal & CMS) opens. No code is written against it before then.
+- **Status:** Proposed — to be accepted when Phase 07 (Admin Portal, CMS & RBAC) opens. No code is written against it before then.
 - **Date:** 2026-11-09
 - **Owner:** system-architect
 
@@ -13,7 +13,7 @@ Two credentials exist and neither is a role system:
 - **Planner:** `PlannerIdentity { userId, handle, source }` (`src/server/planner/auth.ts:53`), produced by `PlannerRepository.identify` (`src/server/planner/repository.ts:177`), which tries the session cookie and then a bearer token. Every trip method then filters by `ownerId` through `requireOwnedTrip` (`repository.ts:354-359`). ADR 0004 calls this seam `resolveIdentity`; no symbol of that name exists in `src/` — the seam is `identify`.
 - **Travel Content System:** one principal, `AdminIdentity { principal: 'admin-token' }` (`src/server/content/auth.ts:11-14`), checked by `authorizeAdmin` (`:48`) against `ADMIN_API_TOKEN`. The Planner already borrows it to provision users (`src/server/planner/http.ts:254`).
 
-Phase 06 puts people in a browser behind an admin screen. The token cannot be that credential: it is one shared, non-expiring, unattributable secret, and a browser that held it would turn any XSS into permanent takeover — the same argument ADR 0004 made for travellers. Unknown: the identity provider, and whether admins are the owner alone or a team.
+Phase 07 puts people in a browser behind an admin screen. The token cannot be that credential: it is one shared, non-expiring, unattributable secret, and a browser that held it would turn any XSS into permanent takeover — the same argument ADR 0004 made for travellers. Unknown: the identity provider, and whether admins are the owner alone or a team.
 
 ## Decision
 
@@ -81,10 +81,10 @@ Easier: one place decides identity; roles are testable as a pure function; the p
 
 Harder: every route must declare its action and call `can`, so the cost is a sweep of `plannerRoute` and the admin wrapper; a role stored on a user raises the stakes of a stolen session (an admin session is more valuable than a member one), so admin sessions need stricter lifetimes and the CSRF check in `requireSameOrigin` (`src/server/planner/http.ts:107`) becomes load-bearing for admin mutations; the token remains a live secret until step 4 completes; the in-memory rate limiter is per-process, so admin sign-in throttling is only as good as that until SQL. Reversing means ignoring `role`; the data is additive.
 
-**Tests not yet written** (gaps, owned by backend-engineer when Phase 06 opens): `can` matrix per role; service principal denied `trip:*`; an `admin` session gets `not_found` on another member's trip; role absent reads as `member`; no admin route reachable by a `member` session.
+**Tests not yet written** (gaps, owned by backend-engineer when Phase 07 opens): `can` matrix per role; service principal denied `trip:*`; an `admin` session gets `not_found` on another member's trip; role absent reads as `member`; no admin route reachable by a `member` session.
 
 ## Follow-up
 
-- Accept this ADR when Phase 06 opens; then a Task Contract for the backend (identity module, `can`, audit store) before any portal UI.
-- `docs/architecture.md` and `.vi.md` Phases carry the Phase 06 backlog.
+- Accept this ADR when Phase 07 opens; then a Task Contract for the backend (identity module, `can`, audit store) before any portal UI.
+- `docs/architecture.md` and `.vi.md` Phases carry the Phase 07 backlog.
 - Needs the owner: identity provider choice, who the admins are, whether MFA is required for `admin`.

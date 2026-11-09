@@ -1,9 +1,11 @@
 # Phase hiện tại — Phase 05: Story → Planner, My Trips & Sharing
 
-Roadmap đầy đủ: [`PHASES.md`](PHASES.md) · Tồn đọng: [`backlog.md`](backlog.md)
+Roadmap đầy đủ: [`PHASES.md`](PHASES.md) · Tồn đọng: [`backlog.md`](backlog.md) ·
+Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
 
 - **Trạng thái:** In progress.
-- **Cập nhật:** 2026-11-09, kiểm trên `main` @ `3d42707`.
+- **Cập nhật:** 2026-11-09, kiểm trên `main` @ `124868e` (sau PR #27).
+- **Deploy:** chưa có môi trường nào — xem `DEPLOY-STATUS.md` (D1–D6).
 - **Phase kế tiếp:** **Phase 07 — Admin Portal, CMS & RBAC** (P1), rồi Phase 06 (P2).
   Lý do: quyết định của chủ dự án ngày 2026-11-09; xem quy tắc "07 trước 06" trong
   `PHASES.md`.
@@ -20,9 +22,10 @@ Roadmap đầy đủ: [`PHASES.md`](PHASES.md) · Tồn đọng: [`backlog.md`](
 | Open-redirect guard | `src/lib/return-to.ts`, `tests/return-to.test.ts` |
 | Feature doc song ngữ | `docs/features/follow-hung-footsteps.md` + `.vi.md` |
 | PR | #23, merge 2026-11-09 |
+| Thu hồi share link khi archive; restore về private | PR #27 (`fix/revoke-share-on-archive`) |
 
-Kiểm tra chạy lúc cập nhật: `npm run test` → 24 file, 386 test **pass**.
-`typecheck`, `lint`, `build`: **NOT RUN** trong lần cập nhật roadmap này (chỉ đổi tài liệu).
+Kiểm tra: xem PR của branch này (typecheck, lint, test chạy lại khi cập nhật).
+CI trên `main` @ `124868e`: **success** (typecheck, lint, test, build).
 
 ## Tiêu chí đóng Phase 05 (chưa đạt)
 
@@ -32,13 +35,12 @@ Kiểm tra chạy lúc cập nhật: `npm run test` → 24 file, 386 test **pass
 2. **`/sec-check`** — public read không xác thực, xử lý token, rate limiter, open
    redirect. Contract khuyến nghị "strongly". Trạng thái: **NOT RUN** (theo bằng chứng có).
 3. **`/qc-check`** — phase XL. Trạng thái: **NOT RUN** (theo bằng chứng có).
-4. **Test cho các bảo đảm độc lập của clone** (nêu trong addendum chưa commit của
+4. **Test cho các bảo đảm độc lập của clone** (nêu trong addendum của
    contract): trip đã clone không đổi khi template bị sửa/rút; không chia sẻ object
    giữa template và clone; purge trip không đụng template.
-5. **Đồng bộ tài liệu đã cũ:** `.claude/contracts/follow-hung-footsteps.md` vẫn ghi
-   `State: DESIGNED`; `CLAUDE.md` quy tắc 6 và `.claude/rules/03-project-chuyen-nha-hung.md`
-   §6 vẫn ghi Planner UI "has not started" trong khi `docs/architecture.md` ghi "partly
-   opened by ADR 0005".
+5. **Đồng bộ tài liệu đã cũ:** ✅ xong. `CLAUDE.md` quy tắc 6 sửa ở PR #24; contract đã
+   ghi `State: IMPLEMENTED (merged PR #23)`; `.claude/rules/03` §6 sửa ở branch này.
+   Còn lại: contract → `DONE` khi 1–4 xong (P05-5).
 
 Khi 1–5 xong (hoặc chủ nhà chấp nhận rủi ro bằng văn bản cho mục 2–3), chuyển Phase 05
 sang `Done` trong `PHASES.md` và mở Phase 07 ở file này.
@@ -50,8 +52,14 @@ phía server; editor lịch trình đầy đủ (thuộc Phase 04); `/plan-your-
 
 ## Việc đang song song ở nơi khác
 
-- Worktree `prompt-05-planner-trips-sharing-7d932b`, branch
-  `docs/adr-unified-identity-roles`: **chưa commit** — ADR 0006 (Proposed),
-  `tests/client-boundary.test.ts`, mục Phases trong `docs/architecture.*`, addendum của
-  contract. Dùng nhãn cũ "Phase 06" cho Admin Portal → cần đổi thành Phase 07.
-- Branch `chore/upgrade-vitest-5`: chưa merge (nâng Vitest 3 → 5, gỡ 2 advisory critical).
+- ADR 0006 và `tests/client-boundary.test.ts` đã merge (PR #25). Nhãn "Phase 06" cho
+  Admin Portal đã đổi thành **Phase 07** ở ADR 0006, `docs/architecture.*` và addendum
+  contract (branch này) — P07-R0 xong khi branch này merge.
+- `chore/upgrade-vitest-5` đã merge (PR #22).
+
+## Chuẩn bị mở Phase 07 (song song, không chờ 05 đóng)
+
+- [x] P07-R0 — ADR 0006 đã commit, nhãn phase đã đổi.
+- [ ] P07-D1 — **chủ nhà trả lời:** nhà cung cấp danh tính, ai là admin, MFA cho `admin`.
+- [ ] P07-D2 — ADR 0006 → Accepted (sau 05 đóng + D1).
+- [ ] D1 trong `DEPLOY-STATUS.md` — chủ nhà chọn nơi chạy (ảnh hưởng thời điểm cần SQL).

@@ -2,7 +2,7 @@
 
 🇬🇧 English: [0006-unified-identity-and-roles.md](0006-unified-identity-and-roles.md)
 
-- **Trạng thái:** Proposed (đề xuất) — sẽ được chấp nhận khi Phase 06 (Admin Portal & CMS) mở. Chưa viết code nào dựa trên ADR này trước đó.
+- **Trạng thái:** Proposed (đề xuất) — sẽ được chấp nhận khi Phase 07 (Admin Portal, CMS & RBAC) mở. Chưa viết code nào dựa trên ADR này trước đó.
 - **Ngày:** 2026-11-09
 - **Người sở hữu:** system-architect
 
@@ -13,7 +13,7 @@ Hiện có hai loại credential và không cái nào là hệ vai trò:
 - **Planner:** `PlannerIdentity { userId, handle, source }` (`src/server/planner/auth.ts:53`), do `PlannerRepository.identify` (`src/server/planner/repository.ts:177`) tạo ra, thử session cookie rồi tới bearer token. Sau đó mọi phương thức về trip đều lọc theo `ownerId` qua `requireOwnedTrip` (`repository.ts:354-359`). ADR 0004 gọi đường ráp này là `resolveIdentity`; trong `src/` không có symbol tên đó — đường ráp thực tế là `identify`.
 - **Travel Content System:** một principal duy nhất, `AdminIdentity { principal: 'admin-token' }` (`src/server/content/auth.ts:11-14`), được `authorizeAdmin` (`:48`) kiểm tra với `ADMIN_API_TOKEN`. Planner đã mượn nó để cấp người dùng (`src/server/planner/http.ts:254`).
 
-Phase 06 đưa con người vào trình duyệt sau một màn hình admin. Token không thể là credential đó: nó là một bí mật dùng chung, không hết hạn, không quy được cho ai, và trình duyệt giữ nó sẽ biến mọi lỗ XSS thành chiếm quyền vĩnh viễn — đúng lập luận ADR 0004 đã dùng cho người đi chơi. Chưa biết: nhà cung cấp danh tính, và admin chỉ là chủ nhà hay là cả một nhóm.
+Phase 07 đưa con người vào trình duyệt sau một màn hình admin. Token không thể là credential đó: nó là một bí mật dùng chung, không hết hạn, không quy được cho ai, và trình duyệt giữ nó sẽ biến mọi lỗ XSS thành chiếm quyền vĩnh viễn — đúng lập luận ADR 0004 đã dùng cho người đi chơi. Chưa biết: nhà cung cấp danh tính, và admin chỉ là chủ nhà hay là cả một nhóm.
 
 ## Quyết định
 
@@ -81,10 +81,10 @@ Dễ hơn: một nơi duy nhất quyết định danh tính; vai trò kiểm th�
 
 Khó hơn: mọi route phải khai báo action và gọi `can`, nên cái giá là rà lại `plannerRoute` và wrapper admin; vai trò gắn vào user làm session bị đánh cắp đáng giá hơn (session admin quý hơn session member), nên session admin cần thời hạn chặt hơn và kiểm tra CSRF ở `requireSameOrigin` (`src/server/planner/http.ts:107`) trở thành chốt chịu lực cho mutation của admin; token vẫn là bí mật còn sống tới khi bước 4 xong; rate limiter in-memory là theo từng process, nên chặn đăng nhập admin chỉ tốt bằng nó cho tới khi có SQL. Đảo ngược nghĩa là bỏ qua `role`; dữ liệu chỉ thêm vào.
 
-**Test chưa viết** (khoảng trống, backend-engineer đảm nhận khi Phase 06 mở): ma trận `can` theo vai trò; service principal bị từ chối `trip:*`; session `admin` nhận `not_found` khi đọc trip của member khác; thiếu role đọc là `member`; session `member` không vào được route admin nào.
+**Test chưa viết** (khoảng trống, backend-engineer đảm nhận khi Phase 07 mở): ma trận `can` theo vai trò; service principal bị từ chối `trip:*`; session `admin` nhận `not_found` khi đọc trip của member khác; thiếu role đọc là `member`; session `member` không vào được route admin nào.
 
 ## Việc tiếp theo
 
-- Chấp nhận ADR này khi Phase 06 mở; sau đó là Task Contract cho backend (module identity, `can`, audit store) trước mọi UI portal.
-- Mục Các phase trong `docs/architecture.md` và `.vi.md` mang backlog của Phase 06.
+- Chấp nhận ADR này khi Phase 07 mở; sau đó là Task Contract cho backend (module identity, `can`, audit store) trước mọi UI portal.
+- Mục Các phase trong `docs/architecture.md` và `.vi.md` mang backlog của Phase 07.
 - Cần chủ nhà quyết: chọn nhà cung cấp danh tính, ai là admin, có bắt buộc MFA cho `admin` không.
