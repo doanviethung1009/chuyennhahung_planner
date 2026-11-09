@@ -28,7 +28,11 @@ export const isoDateSchema = z
     return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value);
   }, 'is not a real calendar date');
 
-export const timestampSchema = z.string().datetime();
+// `z.iso.datetime()` is zod 4's home for this; `z.string().datetime()` still
+// works but is deprecated. Verified equivalent before the swap: both accept a
+// UTC instant with or without milliseconds and reject a date, an offset and a
+// space-separated form, with the same message.
+export const timestampSchema = z.iso.datetime();
 
 /**
  * Money is always an integer count of đồng — never a float, never cents.
