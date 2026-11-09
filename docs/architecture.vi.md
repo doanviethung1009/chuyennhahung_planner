@@ -18,7 +18,7 @@ activity, chi phí và ngân sách — còn *giao diện* Planner vẫn thuộc 
 | i18n | `next-intl` 4, VI không prefix, EN ở `/en` | [`src/i18n/`](../src/i18n) |
 | Styling | Tailwind v4, token `@theme` theo hướng CSS-first | [`src/app/globals.css`](../src/app/globals.css) |
 | Nội dung | Dữ liệu seed TypeScript có type, không CMS | [`src/content/`](../src/content) |
-| Test | Vitest 3 trên Node 24 (giờ đã nâng lên 4/5 được, nhưng chưa nâng) | [`tests/`](../tests) |
+| Test | Vitest 5 trên Node 24 | [`tests/`](../tests) |
 | Lưu trữ | **Không có.** Không database, không API route, không server action | — |
 
 Không có backend. Mỗi trang là một tệp tĩnh sinh ra lúc build từ dữ liệu có type

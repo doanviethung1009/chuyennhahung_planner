@@ -10,8 +10,8 @@ How to run, verify and extend the app. For *what it is made of*, read
 - **Node 24 LTS**, pinned in `.nvmrc` (`24.22.2`) — run `nvm use` in the repo. CI
   reads the same file, so local and CI cannot drift apart. `engines.node` is
   `>=24`, and npm warns on anything older.
-  The `magic-string` override that Node 20.14 needed is gone. Vitest is still on
-  3.x: Node 24 *allows* Vitest 4/5 now, but that upgrade has not been done.
+  The `magic-string` override that Node 20.14 needed is gone, and Vitest is on 5.x,
+  which Node 20.14 could not run.
 - npm (the repo ships `package-lock.json`).
 - Google Chrome at the default macOS path, only for `npm run verify:ui`.
 

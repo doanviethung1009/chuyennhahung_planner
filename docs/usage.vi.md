@@ -10,8 +10,8 @@ Cách chạy, kiểm chứng và mở rộng ứng dụng. Muốn biết *nó g�
 - **Node 24 LTS**, ghim trong `.nvmrc` (`24.22.2`) — chạy `nvm use` trong repo. CI
   đọc cùng file đó, nên máy và CI không thể lệch nhau. `engines.node` là `>=24`, và
   npm cảnh báo nếu dùng bản cũ hơn.
-  Override `magic-string` mà Node 20.14 cần đã được gỡ. Vitest vẫn ở 3.x: Node 24
-  giờ *cho phép* Vitest 4/5, nhưng việc nâng đó chưa được làm.
+  Override `magic-string` mà Node 20.14 cần đã được gỡ, và Vitest đã lên 5.x — bản
+  mà Node 20.14 không chạy được.
 - npm (repo có sẵn `package-lock.json`).
 - Google Chrome ở đường dẫn mặc định của macOS, chỉ dùng cho `npm run verify:ui`.
 
