@@ -11,18 +11,19 @@ Each agent's binding rules live in `.claude/agents/<name>.md`.
 
 | Agent | Model | Mode | Owns | Never touches |
 |---|---|---|---|---|
-| `system-architect` | opus | designs | Route topology, localized pathname map, data contracts (`src/content/types.ts`, `src/lib/`), API/server-action contracts, ADRs in `docs/adr/`, `docs/architecture.*`, `docs/README.*`, Task Contracts in `.claude/contracts/`, phase boundaries | App code, design tokens |
-| `frontend-engineer` | opus | implements | `src/app/**` markup & layouts, `src/components/**`, `@theme` tokens in `src/app/globals.css`, `messages/vi.json`, `messages/en.json`, the feature document for what it ships | API handlers, persistence, route topology, `docs/architecture.*` |
-| `backend-engineer` | opus | implements | `src/app/api/**`, `src/server/**`, server actions, persistence & migrations, validation, authorization, rate limiting, error shapes, server caching, backend tests, the feature document for what it ships | Components, design tokens, route topology, `docs/architecture.*` |
+| `system-architect` | sonnet | designs | Route topology, localized pathname map, data contracts (`src/content/types.ts`, `src/lib/`), API/server-action contracts, ADRs in `docs/adr/`, `docs/architecture.*`, `docs/README.*`, Task Contracts in `.claude/contracts/`, phase boundaries | App code, design tokens |
+| `frontend-engineer` | sonnet | implements | `src/app/**` markup & layouts, `src/components/**`, `@theme` tokens in `src/app/globals.css`, `messages/vi.json`, `messages/en.json`, the feature document for what it ships | API handlers, persistence, route topology, `docs/architecture.*` |
+| `backend-engineer` | sonnet | implements | `src/app/api/**`, `src/server/**`, server actions, persistence & migrations, validation, authorization, rate limiting, error shapes, server caching, backend tests, the feature document for what it ships | Components, design tokens, route topology, `docs/architecture.*` |
 | `explorer` | haiku | **read-only** | Locating files, routes, symbols, message keys | Everything — it never edits |
-| `qc` | sonnet | **read-only** | Independent verification of changed behaviour, regressions, VI/EN parity, docs contract, a11y, acceptance criteria | Never edits files |
-| `security` | sonnet | **read-only** | Auth, authorization, secrets, input validation, injection, privacy, dependencies, migration risk | Never edits files |
+| `qc` | sonnet | **read-only, on demand** | Independent verification of changed behaviour, regressions, VI/EN parity, docs contract, a11y, acceptance criteria | Never edits files |
+| `security` | sonnet | **read-only, on demand** | Auth, authorization, secrets, input validation, injection, privacy, dependencies, migration risk | Never edits files |
 | `git-controller` | haiku | **read-only** | Branch/diff/PR assessment, commit & PR wording, secret and scope detection | Never mutates git state |
 
 ## Architect
 Decides structure; produces decisions, contracts and diagrams — **never application
 code**. Classifies S/M/L/XL, writes the Task Contract, assigns disjoint file ownership,
-names which engineer writes the feature document, sets the QC/security gates, and
+names which engineer writes the feature document, recommends (never schedules) a
+`qc`/`security` review where one is warranted, and
 accepts or rejects the result. Keeps `docs/architecture.*` true and
 `.claude/context/project-context.md` current.
 
@@ -55,15 +56,19 @@ Whoever ships the change writes its document — see
 `.claude/rules/07-documentation.md` for the ownership table and what
 `tests/docs.test.ts` enforces.
 
-## QC and Security — independent, and able to block
+## QC and Security — on demand, independent, and able to block
+**They run only when the user calls them** (`/qc-check`, `/sec-check`, or by asking
+in words). No flow, skill or agent spawns them automatically; until called they are
+reported as NOT RUN.
+
 Neither is the implementer's helper; both are the check on their work. Neither edits
 files. Each returns an explicit verdict, with `file:line` evidence, and distinguishes
 *not verified* from *verified good*. **A BLOCKED verdict stops the work** — it is not
 advisory, and it is not overridden by the implementer. Only the user overrides it.
 
-- `qc` → **PASS** / **BLOCKED** / **NOT VERIFIED**. Required for M and above.
-- `security` → **PASS** / **PASS_WITH_WARNINGS** / **BLOCKED**. Mandatory for XL and
-  any trust-boundary change.
+- `qc` → **PASS** / **BLOCKED** / **NOT VERIFIED**. Recommended for M and above.
+- `security` → **PASS** / **PASS_WITH_WARNINGS** / **BLOCKED**. Strongly recommended
+  for XL and any trust-boundary change — but still only on the user's call.
 
 ## Git controller — read-only, always
 Inspects and proposes; the user acts. It never stages, commits, pushes, merges,

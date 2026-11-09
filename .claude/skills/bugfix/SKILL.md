@@ -20,7 +20,9 @@ test that fails before it and passes after — `tests/` holds the suite. Run
 If the bug was that a document had gone stale or wrong, fixing the document **is** the
 fix — `docs/` is enforced by `tests/docs.test.ts`, in both languages.
 
-Use **`qc`** for M and above, **`security`** when a security boundary is involved.
+Do not spawn `qc` or `security`: they run only when the user calls `/qc-check` or
+`/sec-check`. Recommend them in the report when the fix is M or above, or touches a
+security boundary.
 Do not refactor unrelated files while you are in there.
 
 **Git:** a bug on `main` gets its own `fix/<summary>` branch and its own PR — never

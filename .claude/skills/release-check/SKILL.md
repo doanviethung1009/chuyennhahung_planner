@@ -10,7 +10,9 @@ Gather evidence — do not assert anything you have not checked:
 
 - `npm run typecheck`, `npm run lint`, `npm run test`, `npm run build` — each as
   PASS / FAIL / NOT RUN with its real output.
-- `qc` verdict and `security` verdict, with any BLOCKED item still open.
+- `qc` verdict and `security` verdict **from runs the user already called**, with any
+  BLOCKED item still open; report NOT RUN for one that was never called and recommend
+  `/qc-check` / `/sec-check`. This checklist does not spawn them itself.
 - VI/EN parity: both catalogues in sync, no untranslated user-visible string.
 - Documentation contract: every document has its Vietnamese twin with a mirrored
   heading structure and is registered in its index; any shipped feature has its
