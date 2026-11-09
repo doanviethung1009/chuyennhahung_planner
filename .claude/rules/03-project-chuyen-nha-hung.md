@@ -16,7 +16,8 @@ Verified stack facts, the module map and the real test list:
 | i18n | `next-intl` 4, VI default unprefixed, EN at `/en`, localized pathnames |
 | Content | Typed seed data in `src/content/**` |
 | Backend | Travel Content System — `src/app/api/**`, `src/server/content/**`, JSON document store in `.data/` |
-| Tests | Vitest 3 (Node 20.14 here is below Vite 7's 20.19 floor, so Vitest 4/5 cannot run) |
+| Runtime | Node 24 LTS, pinned in `.nvmrc` and read by CI — run `nvm use` |
+| Tests | Vitest 3 (Node 24 now permits Vitest 4/5; not yet upgraded) |
 
 ```bash
 npm run dev        # dev server

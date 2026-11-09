@@ -7,10 +7,11 @@ How to run, verify and extend the app. For *what it is made of*, read
 
 ## Requirements
 
-- **Node ≥ 20.9.** Two consequences of the current `20.14` on this machine:
-  `package.json` pins `magic-string` via `overrides` because `@tailwindcss/node`
-  `require()`s an ES module, and Vitest is held at 3.x because Vitest 4/5 need
-  Vite 7/8 (Node ≥ 20.19). **Drop both pins once Node ≥ 20.19.**
+- **Node 24 LTS**, pinned in `.nvmrc` (`24.22.2`) — run `nvm use` in the repo. CI
+  reads the same file, so local and CI cannot drift apart. `engines.node` is
+  `>=24`, and npm warns on anything older.
+  The `magic-string` override that Node 20.14 needed is gone. Vitest is still on
+  3.x: Node 24 *allows* Vitest 4/5 now, but that upgrade has not been done.
 - npm (the repo ships `package-lock.json`).
 - Google Chrome at the default macOS path, only for `npm run verify:ui`.
 
@@ -184,8 +185,8 @@ there is no CMS and no revalidation path yet.
 
 | Symptom | Cause |
 |---|---|
-| `require() of ES Module` from `@tailwindcss/node` | Node < 20.19 and the `magic-string` override was removed |
-| Vitest refuses to start | Vitest 4/5 installed on Node < 20.19 — stay on 3.x |
+| `require() of ES Module` from `@tailwindcss/node` | Running on a Node older than `.nvmrc` — run `nvm use` |
+| `npm warn EBADENGINE` on install | Same cause: a Node older than `.nvmrc`. Run `nvm use`, then `npm ci` |
 | A Vietnamese URL 404s | Pathname missing from `pathnames` in `routing.ts`, or the folder name does not match the internal pathname |
 | `MISSING_MESSAGE` at runtime | Key added to one catalogue only |
 | `npm run verify:ui` cannot launch | Chrome is not at the hard-coded macOS path in `scripts/screenshots.mjs` |

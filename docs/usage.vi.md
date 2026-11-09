@@ -7,10 +7,11 @@ Cách chạy, kiểm chứng và mở rộng ứng dụng. Muốn biết *nó g�
 
 ## Yêu cầu
 
-- **Node ≥ 20.9.** Bản `20.14` hiện có trên máy này kéo theo hai hệ quả:
-  `package.json` ghim `magic-string` qua `overrides` vì `@tailwindcss/node`
-  `require()` một ES module, và Vitest bị giữ ở 3.x vì Vitest 4/5 cần Vite 7/8
-  (Node ≥ 20.19). **Bỏ cả hai cái ghim này khi lên Node ≥ 20.19.**
+- **Node 24 LTS**, ghim trong `.nvmrc` (`24.22.2`) — chạy `nvm use` trong repo. CI
+  đọc cùng file đó, nên máy và CI không thể lệch nhau. `engines.node` là `>=24`, và
+  npm cảnh báo nếu dùng bản cũ hơn.
+  Override `magic-string` mà Node 20.14 cần đã được gỡ. Vitest vẫn ở 3.x: Node 24
+  giờ *cho phép* Vitest 4/5, nhưng việc nâng đó chưa được làm.
 - npm (repo có sẵn `package-lock.json`).
 - Google Chrome ở đường dẫn mặc định của macOS, chỉ dùng cho `npm run verify:ui`.
 
@@ -188,8 +189,8 @@ có đường revalidate.
 
 | Hiện tượng | Nguyên nhân |
 |---|---|
-| `require() of ES Module` từ `@tailwindcss/node` | Node < 20.19 mà override `magic-string` đã bị bỏ |
-| Vitest không chạy | Đã cài Vitest 4/5 trên Node < 20.19 — phải ở lại 3.x |
+| `require() of ES Module` từ `@tailwindcss/node` | Đang chạy Node cũ hơn `.nvmrc` — chạy `nvm use` |
+| `npm warn EBADENGINE` khi cài | Cùng nguyên nhân: Node cũ hơn `.nvmrc`. Chạy `nvm use`, rồi `npm ci` |
 | Một URL tiếng Việt trả 404 | Pathname chưa có trong `pathnames` ở `routing.ts`, hoặc tên thư mục không khớp pathname nội bộ |
 | `MISSING_MESSAGE` lúc chạy | Key chỉ được thêm vào một file messages |
 | `npm run verify:ui` không mở được browser | Chrome không nằm ở đường dẫn macOS hard-code trong `scripts/screenshots.mjs` |
