@@ -277,6 +277,8 @@ Những thứ vắng mặt có chủ đích, và không được dựng sớm:
   - **CMS sửa template** — chỉ qua content store; giữ các bản sửa cũ của template hay dựa vào snapshot đã clone là chưa quyết (clone vốn đã độc lập nên lịch sử là tuỳ chọn).
   - **Ranh giới template/trip** — template ở content store, trip ở planner store, chỉ nối bằng bản sao giá trị `sourceTemplate`.
   - **Bảo đảm chưa được test cần đóng trước** — xem khoảng trống trong ADR 0006 và các khoảng trống về độc lập của clone trong báo cáo Prompt 05.
+  - **Nhận diện client của bộ giới hạn tần suất (security W2)** — `clientKey` tin hop đầu tiên của `x-forwarded-for`, giá trị do chính người gọi đặt (`src/server/rate-limit.ts:97`); một loạt key khác nhau khiến mỗi lần kiểm tra phải dọn toàn bộ map; không có header proxy thì mọi người bị gộp vào `'unknown'`. Điều kiện kích hoạt: deploy sau proxy/CDN hoặc chạy instance thứ hai. Cách sửa: lấy hop do hạ tầng thêm vào, dọn theo lô, chuyển sang kho giới hạn tần suất dùng chung.
+  - **Ghi chú hoạt động trên trang chia sẻ (security W3)** — `buildSharedView` lộ `note` của từng hoạt động (`src/server/planner/repository.ts:1719`). Hiện ghi chú này chỉ đến từ template khi clone hoặc qua API, vì trình duyệt chưa có trình sửa hoạt động. Điều kiện kích hoạt: ra mắt trình sửa lịch trình. Khi đó quyết định: cảnh báo trong khung chia sẻ, hoặc bỏ ghi chú hoạt động khỏi trang chia sẻ (đổi ADR 0005).
 - **Card video bấm được.** Chúng ta không có URL của từng video, nên card chỉ để
   trình bày. Muốn bấm được thì phải thêm field URL vào `VideoReview` và cập nhật
   `tests/content.test.ts`.

@@ -277,6 +277,8 @@ Deliberately absent, and not to be scaffolded early:
   - **CMS editing of templates** — through the content store only; versioning prior template revisions versus relying on cloned snapshots is undecided (clones are already independent, so history is optional).
   - **Template/trip boundary** — templates in the content store, trips in the planner store, linked only by the `sourceTemplate` value copy.
   - **Untested guarantees to close first** — see the gaps listed in ADR 0006 and the clone-independence gaps in the report for Prompt 05.
+  - **Rate-limiter client identity (security W2)** — `clientKey` trusts the first `x-forwarded-for` hop, which the caller controls (`src/server/rate-limit.ts:97`); a flood of distinct keys makes every check prune the whole map; no proxy header collapses everyone into `'unknown'`. Trigger: deploying behind a proxy/CDN or a second instance. Fix: take the hop the platform appends, batch the eviction, move to the shared rate-limit store.
+  - **Activity notes on shared pages (security W3)** — `buildSharedView` exposes each activity's `note` (`src/server/planner/repository.ts:1719`). Today those notes come only from the template clone or the API, since the browser has no activity editor. Trigger: shipping the itinerary editor. Decide then: a warning in the share panel, or drop activity notes from the shared view (changes ADR 0005).
 - **Clickable video cards.** We hold no per-video URLs, so cards are
   presentational. Making them clickable means adding a URL field to
   `VideoReview` and updating `tests/content.test.ts`.
