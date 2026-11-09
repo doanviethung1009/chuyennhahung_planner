@@ -45,6 +45,13 @@ export interface Story {
   destinationSlugs: string[];
   cover: string;
   featured: boolean;
+  /**
+   * Slug of a public Planner template (Travel Content System) that is this
+   * story's real itinerary. When set and the template is still public, the story
+   * page renders the itinerary and a "plan a trip like ours" call to action; when
+   * the template is missing or withdrawn both silently disappear. See ADR 0005.
+   */
+  plannerTemplateSlug?: string;
 }
 
 export interface ItineraryDay {

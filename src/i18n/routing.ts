@@ -22,6 +22,11 @@ export const pathnames = {
   '/itineraries': { vi: '/len-lich-trinh', en: '/itineraries' },
   '/itineraries/[slug]': { vi: '/len-lich-trinh/[slug]', en: '/itineraries/[slug]' },
   '/plan-your-trip': { vi: '/thiet-ke-chuyen-di', en: '/plan-your-trip' },
+  '/trip-setup/[template]': { vi: '/tao-chuyen-di/[template]', en: '/trip-setup/[template]' },
+  '/sign-in': { vi: '/dang-nhap', en: '/sign-in' },
+  '/my-trips': { vi: '/chuyen-di-cua-toi', en: '/my-trips' },
+  '/my-trips/[id]': { vi: '/chuyen-di-cua-toi/[id]', en: '/my-trips/[id]' },
+  '/shared/[token]': { vi: '/chia-se/[token]', en: '/shared/[token]' },
   '/reviews': { vi: '/goc-review', en: '/reviews' },
   '/about': { vi: '/ve-nha-hung', en: '/about' },
 } as const;

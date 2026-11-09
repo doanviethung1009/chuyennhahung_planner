@@ -30,3 +30,4 @@ thì cần một ADR ở đây.
 | [0002](0002-planner-core.vi.md) | Lõi Planner: bốn collection trip chuẩn hoá, chủ sở hữu trip thật với phân quyền theo đối tượng, bản clone template độc lập, ngân sách số nguyên đồng kèm ranh giới BigInt, tương tranh bằng `If-Match` | Đã chấp nhận |
 | [0003](0003-zod-4.vi.md) | Nâng `zod` lên 4.x để xoá GHSA-mrhx-c7xc-m3w5 thay vì rào nó sau cap body; di trú hai chỗ gọi deprecated, đã kiểm hành vi không đổi | Đã chấp nhận |
 | [0004](0004-planner-identity.vi.md) | Danh tính Planner: session cookie `HttpOnly` đổi từ access token hiện có, nằm sau một đường ráp `resolveIdentity`, với CSRF là chi phí tường minh | Đã chấp nhận |
+| [0005](0005-trip-sharing-and-story-cloning.vi.md) | Chia sẻ chuyến đi và nhân bản từ câu chuyện: link chia sẻ năng lực không đoán được với bản chiếu chỉ-đọc đã lọc, trạng thái kế hoạch tách khỏi vòng đời, attribution do server suy ra, rate limit trong bộ nhớ | Đã chấp nhận |
