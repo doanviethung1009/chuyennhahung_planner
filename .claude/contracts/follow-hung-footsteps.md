@@ -107,6 +107,9 @@ Revert the PR. Stored `.data/planner.json` rows keep the extra optional fields a
 ## Budget
 Max 2 implementer invocations (BE then FE). Stop condition: BE reports typecheck/lint/test green before FE starts; any BLOCKED review from the user stops the work; at most two review/fix cycles, then escalate.
 
-## State: DESIGNED
+## State: IMPLEMENTED (merged PR #23)
 ## Feature document owner: frontend-engineer — `docs/features/follow-hung-footsteps.md` + `.vi.md`, registered in `docs/features/README.*` (BE supplies the API behaviour per this contract)
 ## Architecture/usage doc updates needed: `docs/architecture.*` done. `docs/usage.*`: none unless the BE adds an env var (it should not; limits are code constants).
+
+## Addendum: Phase 06 readiness
+Phase 06 (Admin Portal & CMS) is announced, not started. Prompt 05's scope and acceptance are unchanged. Identity/role design is in `docs/adr/0006-unified-identity-and-roles.md` (Proposed); backlog in `docs/architecture.md` Phases. Known untested clone guarantees (not covered by this contract's tests): an existing trip's days/activities unchanged after the template is edited or withdrawn (only the integrity report text is asserted, `tests/planner-integrity.test.ts:398`); no shared object references between template and clone (ids only); purging a trip leaves the template untouched.

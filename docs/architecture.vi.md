@@ -264,6 +264,19 @@ Những thứ vắng mặt có chủ đích, và không được dựng sớm:
 - **SQL.** Cả hai store chỉ an toàn trong một process. Triển khai nhiều instance
   là mốc phải chuyển; schema đích và các index đã được ghi sẵn trong
   [ADR 0002](adr/0002-planner-core.vi.md#hình-dạng-sql-mà-cấu-trúc-này-sẽ-thành).
+- **Phase 06 — Admin Portal & CMS (đã công bố, chưa bắt đầu).** Không mục nào bên
+  dưới được dựng hay dựng sớm; mỗi mục cần ghi quyết định trước. Hướng thiết kế:
+  [ADR 0006](adr/0006-unified-identity-and-roles.vi.md) (Đề xuất). Backlog phụ
+  thuộc và quyết định:
+  - **Nhà cung cấp danh tính** — giữ token do người vận hành cấp cộng session, hay dùng Auth.js / hosted; quyết định đăng ký, đặt lại mật khẩu, MFA cho `admin`. ADR riêng.
+  - **Mô hình vai trò** — `member` / `editor` / `admin` trên một mô hình user, hàm thuần `can(identity, action, resource)`, `ADMIN_API_TOKEN` hạ thành service principal.
+  - **Củng cố session admin và CSRF** — thời hạn ngắn hơn theo vai trò; `requireSameOrigin` thành chốt chịu lực cho mutation admin; token không bao giờ tới Client Component (`tests/client-boundary.test.ts`).
+  - **Audit log** — ai đổi template hay vai trò nào, và mọi lần đọc trip để hỗ trợ.
+  - **SQL và nhiều instance** — admin portal khiến có người ghi thứ hai vào store; store JSON và rate limiter theo process không sống nổi qua một instance.
+  - **Store cho rate limit** — chặn đăng nhập admin cần store dùng chung khi có hơn một process.
+  - **CMS sửa template** — chỉ qua content store; giữ các bản sửa cũ của template hay dựa vào snapshot đã clone là chưa quyết (clone vốn đã độc lập nên lịch sử là tuỳ chọn).
+  - **Ranh giới template/trip** — template ở content store, trip ở planner store, chỉ nối bằng bản sao giá trị `sourceTemplate`.
+  - **Bảo đảm chưa được test cần đóng trước** — xem khoảng trống trong ADR 0006 và các khoảng trống về độc lập của clone trong báo cáo Prompt 05.
 - **Card video bấm được.** Chúng ta không có URL của từng video, nên card chỉ để
   trình bày. Muốn bấm được thì phải thêm field URL vào `VideoReview` và cập nhật
   `tests/content.test.ts`.
