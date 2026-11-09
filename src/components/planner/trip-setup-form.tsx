@@ -189,7 +189,9 @@ export function TripSetupForm({
             type="number"
             inputMode="numeric"
             min={0}
-            step={100000}
+            // Any whole number of đồng: the default is the template's estimate
+            // (e.g. 750000), and a coarser step makes the browser block submit.
+            step={1}
             required
             className={inputClass}
             value={draft.budget}
