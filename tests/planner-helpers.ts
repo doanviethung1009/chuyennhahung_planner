@@ -119,6 +119,7 @@ export function fakeCatalog(
     hasDestination: (slug) => slug === 'da-lat' || slug === 'moc-chau',
     getPlace: async (slug) => places.get(slug) ?? null,
     getApprovedTemplate: async () => null,
+    getLinkedStory: () => null,
     ...overrides,
   };
 }

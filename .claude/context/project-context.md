@@ -75,6 +75,9 @@ The owner opened the Planner backend phase and it shipped: `src/app/api/planner/
 | `src/server/planner/budget.ts`, `money.ts` | Target budget vs estimated/actual cost; integer-safe money |
 | `src/server/planner/http.ts` | Planner HTTP boundary — reuses the content error envelope, adds `ETag`/`If-Match` optimistic concurrency |
 | `src/server/planner/catalog.ts`, `store.ts` | Place catalog access and persistence |
+| `src/server/rate-limit.ts` | In-memory sliding-window limiter (`createRateLimiter`, `clientKey`, `shareReadLimiter` 60/min, `signInLimiter` 10/min, `checkShareRead(headers)` for the share page). Per-process, spoofable key — ADR 0005 |
+| `PlannerRepository` sharing methods | `duplicateTrip`, `setVisibility`, `rotateShareToken`, `revokeShare`, `getSharedTrip(token): SharedTripView \| null` (allow-list projection), `describeSession`; catalog gains `getLinkedStory` (ADR 0005) |
+| `src/app/api/planner/[id]/{duplicate,share,share/rotate}`, `GET /api/planner/session`, `GET /api/shared/[token]` | Duplicate, share lifecycle, session probe, public read-only view (GET only, identical 404s, `rate_limited` 429 + `Retry-After`) |
 | `src/server/persistence/json-store.ts` | Shared JSON document store |
 
 > **Two systems, one vocabulary — do not conflate them.** Travel Content is editorial

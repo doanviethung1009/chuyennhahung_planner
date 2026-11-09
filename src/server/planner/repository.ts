@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import {
   ContentError,
   invalidReference,
@@ -34,7 +34,12 @@ import {
   type PlannerSession,
   type PlannerUser,
   type PlannerUserCreateInput,
+  SHARE_TOKEN_PATTERN,
   type PublicPlannerUser,
+  type ShareState,
+  type SharedTripView,
+  type TripDuplicateInput,
+  type Visibility,
   type Trip,
   type TripActivity,
   type TripActivityCreateInput,
@@ -131,7 +136,7 @@ export class PlannerRepository {
    */
   private transaction<T>(mutate: (data: PlannerData) => Promise<T> | T): Promise<T> {
     const run = async (): Promise<T> => {
-      const data = await this.store.read();
+      const data = withTripDefaults(await this.store.read());
       const result = await mutate(data);
       await this.store.write(data);
       return result;
@@ -145,8 +150,8 @@ export class PlannerRepository {
     return this.now().toISOString();
   }
 
-  private snapshot(): Promise<PlannerData> {
-    return this.store.read();
+  private async snapshot(): Promise<PlannerData> {
+    return withTripDefaults(await this.store.read());
   }
 
   // -------------------------------------------------------------------------
@@ -448,6 +453,11 @@ export class PlannerRepository {
         status: 'active',
         archivedAt: null,
         sourceTemplate: draft.sourceTemplate,
+        planningStatus: 'draft',
+        visibility: 'private',
+        shareToken: null,
+        shareTokenCreatedAt: null,
+        duplicatedFromTripId: null,
         version: 1,
         createdAt: at,
         updatedAt: at,
@@ -576,6 +586,7 @@ export class PlannerRepository {
         durationDays: template.durationDays,
         estimatedTotalVnd: template.estimatedTotalVnd,
         clonedAt: at,
+        story: this.catalog.getLinkedStory(template.slug),
       },
       days,
       activities,
@@ -633,6 +644,7 @@ export class PlannerRepository {
           ? { targetTotalVnd: patch.budget.targetTotalVnd, currency: 'VND' }
           : trip.budget,
         note: patch.note !== undefined ? patch.note : trip.note,
+        planningStatus: patch.planningStatus ?? trip.planningStatus,
       });
       return buildTripView(data, next);
     });
@@ -711,6 +723,179 @@ export class PlannerRepository {
       data.tripActivities = data.tripActivities.filter((row) => row.tripId !== tripId);
       data.tripExpenses = data.tripExpenses.filter((row) => row.tripId !== tripId);
     });
+  }
+
+  // -------------------------------------------------------------------------
+  // Duplicate and sharing (ADR 0005)
+  // -------------------------------------------------------------------------
+
+  /**
+   * An independent copy of an active trip: new ids on every row, a draft,
+   * private, no token. The source is only read — never written.
+   */
+  duplicateTrip(
+    ownerId: string,
+    tripId: string,
+    input: TripDuplicateInput = {},
+  ): Promise<TripView> {
+    return this.transaction((data) => {
+      const { trip } = PlannerRepository.requireOwnedTrip(data, ownerId, tripId);
+      PlannerRepository.requireActive(trip);
+
+      const at = this.timestamp();
+      const copyId = this.newId('trip');
+      const dayIds = new Map<string, string>();
+      const activityIds = new Map<string, string>();
+
+      const days: TripDay[] = data.tripDays
+        .filter((day) => day.tripId === trip.id)
+        .map((day) => {
+          const id = this.newId('day');
+          dayIds.set(day.id, id);
+          return { ...day, id, tripId: copyId, createdAt: at, updatedAt: at };
+        });
+      const activities: TripActivity[] = [];
+      for (const activity of data.tripActivities.filter((row) => row.tripId === trip.id)) {
+        const id = this.newId('act');
+        activityIds.set(activity.id, id);
+        activities.push({
+          ...activity,
+          id,
+          tripId: copyId,
+          dayId: dayIds.get(activity.dayId) ?? activity.dayId,
+          createdAt: at,
+          updatedAt: at,
+        });
+      }
+      const expenses: TripExpense[] = data.tripExpenses
+        .filter((row) => row.tripId === trip.id)
+        .map((expense) => ({
+          ...expense,
+          id: this.newId('exp'),
+          tripId: copyId,
+          dayId: expense.dayId === null ? null : (dayIds.get(expense.dayId) ?? null),
+          activityId:
+            expense.activityId === null ? null : (activityIds.get(expense.activityId) ?? null),
+          createdAt: at,
+          updatedAt: at,
+        }));
+
+      const copy: Trip = {
+        ...structuredClone(trip),
+        id: copyId,
+        title: input.title ?? `${trip.title} (bản sao)`.slice(0, 120),
+        status: 'active',
+        archivedAt: null,
+        planningStatus: 'draft',
+        visibility: 'private',
+        shareToken: null,
+        shareTokenCreatedAt: null,
+        duplicatedFromTripId: trip.id,
+        version: 1,
+        createdAt: at,
+        updatedAt: at,
+      };
+
+      data.trips.push(copy);
+      data.tripDays.push(...days);
+      data.tripActivities.push(...activities);
+      data.tripExpenses.push(...expenses);
+      return buildTripView(data, copy);
+    });
+  }
+
+  /**
+   * Sets who may read the trip. Non-private mints a token if there is none and
+   * otherwise keeps it (idempotent); `private` clears it, which is a revoke.
+   * Not a content edit: it does not bump `version`, so a share change never
+   * makes the owner's open editor stale.
+   */
+  setVisibility(ownerId: string, tripId: string, visibility: Visibility): Promise<ShareState> {
+    return this.transaction((data) => {
+      const { trip, index } = PlannerRepository.requireOwnedTrip(data, ownerId, tripId);
+      PlannerRepository.requireActive(trip);
+
+      let { shareToken, shareTokenCreatedAt } = trip;
+      if (visibility === 'private') {
+        shareToken = null;
+        shareTokenCreatedAt = null;
+      } else if (shareToken === null) {
+        shareToken = newShareToken();
+        shareTokenCreatedAt = this.timestamp();
+      }
+      data.trips[index] = { ...trip, visibility, shareToken, shareTokenCreatedAt };
+      return { visibility, shareToken, shareTokenCreatedAt };
+    });
+  }
+
+  /** Replaces the token; the old link stops working at once. */
+  rotateShareToken(ownerId: string, tripId: string): Promise<ShareState> {
+    return this.transaction((data) => {
+      const { trip, index } = PlannerRepository.requireOwnedTrip(data, ownerId, tripId);
+      PlannerRepository.requireActive(trip);
+      if (trip.visibility === 'private') {
+        throw invalidState(`trip "${tripId}" is private — share it before rotating the link`);
+      }
+      const shareToken = newShareToken();
+      const shareTokenCreatedAt = this.timestamp();
+      data.trips[index] = { ...trip, shareToken, shareTokenCreatedAt };
+      return { visibility: trip.visibility, shareToken, shareTokenCreatedAt };
+    });
+  }
+
+  /** Makes the trip private and kills the link. Idempotent. */
+  revokeShare(ownerId: string, tripId: string): Promise<ShareState> {
+    return this.transaction((data) => {
+      const { trip, index } = PlannerRepository.requireOwnedTrip(data, ownerId, tripId);
+      data.trips[index] = {
+        ...trip,
+        visibility: 'private',
+        shareToken: null,
+        shareTokenCreatedAt: null,
+      };
+      return { visibility: 'private', shareToken: null, shareTokenCreatedAt: null };
+    });
+  }
+
+  /**
+   * Resolves a share link to a read-only view, or null. Null is the answer for
+   * every failure — malformed, unknown, revoked, private, archived — so a caller
+   * cannot tell them apart. The format is checked before any lookup, and the
+   * candidate is compared by digest in constant time over every shared trip with
+   * no early exit.
+   */
+  async getSharedTrip(token: string): Promise<SharedTripView | null> {
+    if (typeof token !== 'string' || !SHARE_TOKEN_PATTERN.test(token)) return null;
+
+    const data = await this.snapshot();
+    const candidate = createHash('sha256').update(token).digest();
+    let found: Trip | null = null;
+    for (const trip of data.trips) {
+      if (trip.status !== 'active' || trip.visibility === 'private' || trip.shareToken === null) {
+        continue;
+      }
+      const stored = createHash('sha256').update(trip.shareToken).digest();
+      if (timingSafeEqual(stored, candidate)) found = trip;
+    }
+    if (!found || found.visibility === 'private') return null;
+    return buildSharedView(buildTripView(data, found), found.visibility);
+  }
+
+  /** Session details for `GET /api/planner/session`. Never returns a credential. */
+  async describeSession(
+    request: Request,
+    userId: string,
+  ): Promise<{ user: PublicPlannerUser; expiresAt: string | null }> {
+    const data = await this.snapshot();
+    const user = data.users.find((candidate) => candidate.id === userId);
+    if (!user) throw new ContentError('unauthorized', 'this credential is not valid');
+
+    const presented = sessionTokenFromRequest(request);
+    const session = presented ? findSessionByToken(data.sessions, presented) : null;
+    return {
+      user: toPublicUser(user),
+      expiresAt: session && session.userId === userId ? session.expiresAt : null,
+    };
   }
 
   // -------------------------------------------------------------------------
@@ -1417,6 +1602,85 @@ function toPublicUser(user: PlannerUser): PublicPlannerUser {
 // ---------------------------------------------------------------------------
 // Pure helpers
 // ---------------------------------------------------------------------------
+
+/** A fresh share token: 32 random bytes, base64url (43 characters). */
+function newShareToken(): string {
+  return randomBytes(32).toString('base64url');
+}
+
+/**
+ * Rows written before ADR 0005 lack the sharing fields. They read as the safe
+ * defaults — a draft, private, no token — and nothing is rewritten until the
+ * row is next saved.
+ */
+function withTripDefaults(data: PlannerData): PlannerData {
+  for (const trip of data.trips) {
+    trip.planningStatus ??= 'draft';
+    trip.visibility ??= 'private';
+    trip.shareToken ??= null;
+    trip.shareTokenCreatedAt ??= null;
+    trip.duplicatedFromTripId ??= null;
+    if (trip.sourceTemplate) trip.sourceTemplate.story ??= null;
+  }
+  return data;
+}
+
+function endTimeFor(startTime: string | null, durationMinutes: number): string | null {
+  if (startTime === null) return null;
+  const [h, m] = startTime.split(':').map(Number);
+  const total = (h ?? 0) * 60 + (m ?? 0) + durationMinutes;
+  if (total >= 24 * 60) return null;
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
+/**
+ * The public projection. Every output field is named here; nothing is spread
+ * from the trip, a day or an activity, so a new stored field stays private
+ * until it is added below on purpose.
+ */
+function buildSharedView(view: TripView, visibility: 'unlisted' | 'public'): SharedTripView {
+  const { trip } = view;
+  return {
+    title: trip.title,
+    destinationSlug: trip.destinationSlug,
+    startDate: trip.startDate,
+    endDate: trip.endDate,
+    durationDays: trip.durationDays,
+    partySize: trip.partySize,
+    travelStyle: trip.travelStyle,
+    pace: trip.pace,
+    planningStatus: trip.planningStatus,
+    visibility,
+    days: view.days.map((day) => ({
+      dayNumber: day.dayNumber,
+      title: day.title,
+      date: day.date,
+      activities: day.activities.map((activity) => ({
+        order: activity.order,
+        title: activity.title,
+        placeSlug: activity.placeSlug,
+        startTime: activity.startTime,
+        endTime: endTimeFor(activity.startTime, activity.durationMinutes),
+        category: activity.category,
+        note: activity.note,
+      })),
+    })),
+    budget: {
+      currency: 'VND',
+      targetTotalVnd: trip.budget.targetTotalVnd,
+      estimatedTotalVnd: view.budget.estimatedTotalVnd,
+    },
+    attribution: trip.sourceTemplate
+      ? {
+          templateTitle: trip.sourceTemplate.title,
+          story: trip.sourceTemplate.story
+            ? { slug: trip.sourceTemplate.story.slug, title: trip.sourceTemplate.story.title }
+            : null,
+          clonedAt: trip.sourceTemplate.clonedAt,
+        }
+      : null,
+  };
+}
 
 /** What a creation path produces before the trip row itself is assembled. */
 interface TripDraft {

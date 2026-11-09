@@ -59,6 +59,23 @@ export const costScopeSchema = z.enum(['group', 'per_person']);
 
 export const tripStatusSchema = z.enum(['active', 'archived']);
 
+/** Where the traveller is in planning — independent of `status` (archive). */
+export const planningStatusSchema = z.enum(['draft', 'planned', 'completed']);
+
+/** Who may read a trip. Changed only through the share endpoints (ADR 0005). */
+export const visibilitySchema = z.enum(['private', 'unlisted', 'public']);
+
+/** 32 random bytes, base64url: 43 characters. Checked before any lookup. */
+export const SHARE_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+
+/** `PUT /share` body. Strict: `shareToken` and friends are never accepted. */
+export const shareSettingsSchema = z.object({ visibility: visibilitySchema }).strict();
+
+/** `POST /duplicate` body. Strict, so visibility/token cannot be smuggled in. */
+export const tripDuplicateSchema = z
+  .object({ title: z.string().trim().min(1).max(120).optional() })
+  .strict();
+
 export const budgetInputSchema = z.object({
   targetTotalVnd: vndSchema,
   currency: z.literal('VND').default('VND'),
@@ -117,16 +134,17 @@ const tripCoreInputSchema = z.object({
 });
 
 /** A trip planned from scratch. Days are generated from `durationDays`. */
-export const tripBlankCreateSchema = tripCoreInputSchema.extend({
-  source: z.literal('blank'),
-});
+export const tripBlankCreateSchema = tripCoreInputSchema
+  .extend({ source: z.literal('blank') })
+  .strict();
 
 /**
  * A trip cloned from an approved (public) template. Shape, duration and
  * destination come from the template; the traveller supplies only what is
  * theirs — when they are going, how many of them, and what they want to spend.
  */
-export const tripFromTemplateCreateSchema = z.object({
+export const tripFromTemplateCreateSchema = z
+  .object({
   source: z.literal('template'),
   templateSlug: slugSchema,
   /** Defaults to the template's Vietnamese title. */
@@ -138,7 +156,8 @@ export const tripFromTemplateCreateSchema = z.object({
   travelStyle: travelStyleSchema.nullable().optional(),
   pace: paceSchema.nullable().optional(),
   note: noteSchema,
-});
+  })
+  .strict();
 
 export const tripCreateSchema = z.discriminatedUnion('source', [
   tripBlankCreateSchema,
@@ -149,9 +168,37 @@ export const tripCreateSchema = z.discriminatedUnion('source', [
  * PATCH semantics. `destinationSlug` is immutable: activities hang off places
  * in that destination, so moving a trip elsewhere is a new trip, not an edit.
  */
-export const tripUpdateSchema = tripCoreInputSchema
-  .omit({ destinationSlug: true })
-  .partial();
+/**
+ * PATCH schemas are built from the create schemas, but a create schema's
+ * `.default(...)` must not survive into a PATCH: Zod 4 applies a default even
+ * inside `.optional()`/`.partial()`, so `{ planningStatus: 'planned' }` would
+ * parse as `{ planningStatus, startDate: null, pace: null, note: null, … }` and
+ * silently wipe every field the client did not send. Strip the defaults first,
+ * then make every field optional.
+ */
+type WithoutDefaults<S extends z.ZodRawShape> = {
+  [K in keyof S]: S[K] extends z.ZodDefault<infer Inner> ? Inner : S[K];
+};
+
+function withoutDefaults<S extends z.ZodRawShape>(shape: S): WithoutDefaults<S> {
+  return Object.fromEntries(
+    Object.entries(shape).map(([key, field]) => [
+      key,
+      field instanceof z.ZodDefault ? field.unwrap() : field,
+    ]),
+  ) as WithoutDefaults<S>;
+}
+
+export const tripUpdateSchema = z
+  .object(
+    withoutDefaults(
+      tripCoreInputSchema
+        .omit({ destinationSlug: true })
+        .extend({ planningStatus: planningStatusSchema }).shape,
+    ),
+  )
+  .partial()
+  .strict();
 
 /**
  * The frozen record of the template a trip was cloned from. Provenance only —
@@ -166,6 +213,14 @@ export const tripTemplateSnapshotSchema = z.object({
   durationDays: z.number().int().min(1),
   estimatedTotalVnd: vndSchema,
   clonedAt: timestampSchema,
+  /**
+   * The story this template is linked to, derived server-side at clone time —
+   * never accepted from a client. Absent on older rows, which read as null.
+   */
+  story: z
+    .object({ slug: slugSchema, title: localizedTextSchema })
+    .nullable()
+    .default(null),
 });
 
 export const tripSchema = z.object({
@@ -186,6 +241,14 @@ export const tripSchema = z.object({
   status: tripStatusSchema,
   archivedAt: timestampSchema.nullable(),
   sourceTemplate: tripTemplateSnapshotSchema.nullable(),
+  /** Absent on older rows, which read as `draft`. */
+  planningStatus: planningStatusSchema.default('draft'),
+  /** Absent on older rows, which read as `private`. */
+  visibility: visibilitySchema.default('private'),
+  /** Bearer secret for the read-only link. Never leaves the owner's API. */
+  shareToken: z.string().regex(SHARE_TOKEN_PATTERN).nullable().default(null),
+  shareTokenCreatedAt: timestampSchema.nullable().default(null),
+  duplicatedFromTripId: plannerIdSchema.nullable().default(null),
   /** Bumped on every mutation of the trip or anything under it (ADR 0002 §6). */
   version: z.number().int().min(1),
   createdAt: timestampSchema,
@@ -198,7 +261,7 @@ export const tripSchema = z.object({
 
 export const tripDayUpdateSchema = z.object({
   title: z.string().trim().max(160).nullable().optional(),
-  note: noteSchema.optional(),
+  note: noteSchema.unwrap().optional(),
 });
 
 export const tripDaySchema = z.object({
@@ -252,7 +315,8 @@ export const tripActivityCreateSchema = activityFieldsSchema
  * Moving an activity is `PATCH /reorder`, not a field update: an edit that
  * silently re-homed a row would make ordering unauditable.
  */
-export const tripActivityUpdateSchema = activityFieldsSchema
+export const tripActivityUpdateSchema = z
+  .object(withoutDefaults(activityFieldsSchema.shape))
   .partial()
   .omit({ placeSlug: true });
 
@@ -315,7 +379,9 @@ const expenseFieldsSchema = z.object({
 });
 
 export const tripExpenseCreateSchema = expenseFieldsSchema;
-export const tripExpenseUpdateSchema = expenseFieldsSchema.partial();
+export const tripExpenseUpdateSchema = z
+  .object(withoutDefaults(expenseFieldsSchema.shape))
+  .partial();
 
 export const tripExpenseSchema = z.object({
   id: plannerIdSchema,
@@ -359,6 +425,10 @@ export type TripCreateInput = z.infer<typeof tripCreateSchema>;
 export type TripBlankCreateInput = z.infer<typeof tripBlankCreateSchema>;
 export type TripFromTemplateCreateInput = z.infer<typeof tripFromTemplateCreateSchema>;
 export type TripUpdateInput = z.infer<typeof tripUpdateSchema>;
+export type PlanningStatus = z.infer<typeof planningStatusSchema>;
+export type Visibility = z.infer<typeof visibilitySchema>;
+export type ShareSettingsInput = z.infer<typeof shareSettingsSchema>;
+export type TripDuplicateInput = z.infer<typeof tripDuplicateSchema>;
 export type TripTemplateSnapshot = z.infer<typeof tripTemplateSnapshotSchema>;
 export type TripDay = z.infer<typeof tripDaySchema>;
 export type TripDayUpdateInput = z.infer<typeof tripDayUpdateSchema>;
@@ -415,3 +485,54 @@ export const signInSchema = z.object({
 
 export type PlannerSession = z.infer<typeof plannerSessionSchema>;
 export type SignInInput = z.infer<typeof signInSchema>;
+
+// ---------------------------------------------------------------------------
+// Public, read-only view of a shared trip (ADR 0005)
+// ---------------------------------------------------------------------------
+
+/**
+ * What an unauthenticated reader of a share link may see. It is built by an
+ * allow-list in `getSharedTrip` — never by spreading a `Trip` — so a field
+ * added to `Trip` later is private until someone names it here on purpose.
+ * Deliberately absent: owner, every id, version, share fields, the trip note,
+ * and all expenses.
+ */
+export interface SharedTripView {
+  title: string;
+  destinationSlug: string;
+  startDate: string | null;
+  endDate: string | null;
+  durationDays: number;
+  partySize: number;
+  travelStyle: Trip['travelStyle'];
+  pace: Trip['pace'];
+  planningStatus: PlanningStatus;
+  visibility: 'unlisted' | 'public';
+  days: Array<{
+    dayNumber: number;
+    title: string | null;
+    date: string | null;
+    activities: Array<{
+      order: number;
+      title: string;
+      placeSlug: string | null;
+      startTime: string | null;
+      endTime: string | null;
+      category: TripActivity['category'];
+      note: string | null;
+    }>;
+  }>;
+  budget: { currency: 'VND'; targetTotalVnd: number | null; estimatedTotalVnd: number };
+  attribution: {
+    templateTitle: TripTemplateSnapshot['title'];
+    story: { slug: string; title: TripTemplateSnapshot['title'] } | null;
+    clonedAt: string;
+  } | null;
+}
+
+/** What the share endpoints return to the owner. */
+export interface ShareState {
+  visibility: Visibility;
+  shareToken: string | null;
+  shareTokenCreatedAt: string | null;
+}

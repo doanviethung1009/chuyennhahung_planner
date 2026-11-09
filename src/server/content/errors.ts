@@ -16,7 +16,8 @@ export type ContentErrorCode =
   | 'invalid_reference'
   | 'invalid_state'
   | 'precondition_required'
-  | 'version_conflict';
+  | 'version_conflict'
+  | 'rate_limited';
 
 const STATUS_BY_CODE: Record<ContentErrorCode, number> = {
   bad_request: 400,
@@ -31,6 +32,7 @@ const STATUS_BY_CODE: Record<ContentErrorCode, number> = {
   invalid_state: 409,
   precondition_required: 428,
   version_conflict: 412,
+  rate_limited: 429,
 };
 
 export interface FieldIssue {
@@ -42,13 +44,21 @@ export class ContentError extends Error {
   readonly code: ContentErrorCode;
   readonly status: number;
   readonly issues: FieldIssue[];
+  /** Set only for `rate_limited`; becomes the `Retry-After` header. */
+  readonly retryAfterSeconds: number | null;
 
-  constructor(code: ContentErrorCode, message: string, issues: FieldIssue[] = []) {
+  constructor(
+    code: ContentErrorCode,
+    message: string,
+    issues: FieldIssue[] = [],
+    retryAfterSeconds: number | null = null,
+  ) {
     super(message);
     this.name = 'ContentError';
     this.code = code;
     this.status = STATUS_BY_CODE[code];
     this.issues = issues;
+    this.retryAfterSeconds = retryAfterSeconds;
   }
 }
 
@@ -119,5 +129,16 @@ export function versionConflict(
   return new ContentError(
     'version_conflict',
     `${entity} has moved on: you edited version ${expected}, the stored version is ${actual} — re-read it and retry`,
+  );
+}
+
+/** Too many requests from one client. `retryAfterSeconds` is an integer >= 1. */
+export function rateLimited(retryAfterSeconds: number): ContentError {
+  const seconds = Math.max(1, Math.ceil(retryAfterSeconds));
+  return new ContentError(
+    'rate_limited',
+    'too many requests — try again shortly',
+    [],
+    seconds,
   );
 }
