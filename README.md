@@ -15,7 +15,7 @@ planning entry point.
 | Styling | Tailwind CSS v4, CSS-first `@theme` tokens |
 | i18n | `next-intl` 4 — VI default unprefixed, EN at `/en`, localized pathnames |
 | Content | Typed seed data in `src/content/**` |
-| Tests | Vitest 3 |
+| Tests | Vitest 5 |
 
 ## Getting started
 
@@ -42,8 +42,8 @@ CI reads the same file, so the two cannot drift apart.
 - The `magic-string` override that Node 20.14 needed has been removed —
   `@tailwindcss/node` now gets the 1.x it declares, which is ESM-only and needs
   Node's native `require()` of ES modules.
-- Vitest is still on 3.x. Node 24 makes Vitest 4/5 *possible*; the upgrade itself
-  has not been done.
+- Vitest is on 5.x, which needs Node ≥ 22.12 — another reason the 20.14 pin had to
+  go.
 
 ## Documentation
 

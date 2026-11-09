@@ -18,7 +18,7 @@ and budgeting — while the Planner *UI* is still a later phase; see
 | i18n | `next-intl` 4, VI unprefixed, EN at `/en` | [`src/i18n/`](../src/i18n) |
 | Styling | Tailwind v4, CSS-first `@theme` tokens | [`src/app/globals.css`](../src/app/globals.css) |
 | Content | Typed TypeScript seed data, no CMS | [`src/content/`](../src/content) |
-| Tests | Vitest 3 on Node 24 (4/5 now possible, not yet upgraded) | [`tests/`](../tests) |
+| Tests | Vitest 5 on Node 24 | [`tests/`](../tests) |
 | Persistence | **None.** No database, no API route, no server action | — |
 
 There is no backend. Every page is a static artefact produced at build time from

@@ -138,5 +138,7 @@ to look. Real enforcement needs GitHub Pro or a public repository, and then
 branch-protection on `main` requiring the `verify` job.
 
 Still not wired up, and worth adding when CI can be made required: secret scanning and a
-dependency scan. `npm ci` currently reports 20 advisories (9 moderate, 9 high,
-2 critical), which nothing in the pipeline fails on yet.
+dependency scan. `npm audit --omit=dev` is clean; the full audit still reports 17
+dev-only advisories (8 moderate, 9 high, no critical), which nothing in the pipeline
+fails on yet. Do **not** run `npm audit fix --force`: it would downgrade
+`eslint-config-next` to 15.x, out of step with Next 16.
