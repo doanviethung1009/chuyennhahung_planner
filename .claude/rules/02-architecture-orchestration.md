@@ -10,9 +10,11 @@ secrets and user impact:
 | Class | Meaning | Handling |
 |---|---|---|
 | **S** | Tiny, single-file, no contract change | Inline triage. **Spawn nothing.** |
-| **M** | Single module | `system-architect` writes a short Task Contract → one implementer → `qc` |
-| **L** | Cross-layer | Architect + the implementers actually affected → `qc`; `security` if a trust boundary moves |
-| **XL** | Security-sensitive or large | Architect deep review + implementers + `qc` + **`security` (mandatory)** + human approval at risky boundaries |
+| **M** | Single module | `system-architect` writes a short Task Contract → one implementer |
+| **L** | Cross-layer | Architect + the implementers actually affected; *recommend* `security` if a trust boundary moves |
+| **XL** | Security-sensitive or large | Architect deep review + implementers + human approval at risky boundaries; *recommend* `qc` and `security` |
+
+No class spawns `qc` or `security` automatically — see §4.
 
 Over-classifying is as wrong as under-classifying — it burns the user's credits.
 
@@ -50,18 +52,35 @@ parallelizing when scopes overlap.
 > Planner *UI* work the dependency order is already satisfied: the contract exists,
 > so `frontend-engineer` can start against it.
 
-## 4. Review gates
-`qc` validates changed behaviour and regressions. `security` reviews auth, data,
-secret and external-input changes, and **every XL task**. Both are independent and
-read-only, and **both can return BLOCKED — which stops the work, it is not advisory**.
+## 4. Reviews run on demand only
+`qc` validates changed behaviour and regressions; `security` reviews auth, data,
+secret and external-input changes. **Neither is a step of the flow.** No skill, agent
+or main session spawns them on its own initiative, whatever the S/M/L/XL class.
 
-Maximum **two** review/fix cycles. Then escalate to the user instead of looping.
+They run only when the user asks:
+
+| Trigger | Runs |
+|---|---|
+| `/qc-check [scope]` | `qc` on the current diff or the named feature |
+| `/sec-check [scope]` | `security` on the current diff or the named feature |
+| The user asks in words ("chạy qc", "check security cho feature X") | the named reviewer |
+
+Until the user calls them, report each as **NOT RUN** — never as PASS. When the
+triage finds a reason for a review (an XL task, a moved trust boundary, a new
+dependency, a migration), say so in the final report as a **recommendation** with the
+command to run, and stop there.
+
+Once called, both are independent and read-only, and **both can return BLOCKED —
+which stops the work, it is not advisory**. Maximum **two** review/fix cycles, then
+escalate to the user instead of looping. The deterministic checks
+(`typecheck`, `lint`, `test`) are not reviews: they always run.
 
 ## 5. Verify, then report
 Run the project's real scripts (`.claude/rules/01-global-engineering.md` §6) — note
 that `npm run test` includes `tests/docs.test.ts`, so a missing Vietnamese twin or an
 unregistered document fails the suite. Then return a concise release summary: changed
-files · each check PASS/FAIL/NOT RUN · security verdict · remaining issues · rollback
+files · each check PASS/FAIL/NOT RUN · `qc` and `security` verdicts (NOT RUN unless the
+user called them, plus any recommendation to run them) · remaining issues · rollback
 guidance · next action.
 
 ## 6. Git last, and never unilaterally

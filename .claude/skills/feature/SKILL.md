@@ -1,6 +1,6 @@
 ---
 name: feature
-description: Route a new feature through architecture triage, scoped implementation, QC, security and git readiness. The recommended entry point for any non-trivial change.
+description: Route a new feature through architecture triage, scoped implementation, checks, documentation and git readiness. The recommended entry point for any non-trivial change.
 ---
 
 Given request: $ARGUMENTS
@@ -19,10 +19,10 @@ Given request: $ARGUMENTS
    `messages/*.json`; **`backend-engineer`** for `src/app/api/**`, server actions
    and persistence. Sequential if file sets overlap. No full agent team for a
    small change.
-5. Run the real checks: `npm run typecheck`, `npm run lint`, `npm run test`. Use
-   **`qc`** to review changed behaviour (M and above) and **`security`** for
-   trust-boundary changes or any XL task. Maximum two fix/review loops, then
-   escalate to the user.
+5. Run the real checks: `npm run typecheck`, `npm run lint`, `npm run test`. Do
+   **not** spawn `qc` or `security` — they run only when the user calls
+   `/qc-check` or `/sec-check`. If the change warrants one (M and above for `qc`;
+   a trust-boundary change or any XL task for `security`), recommend it in step 8.
 6. Ask **`git-controller`** for a read-only diff assessment. Do **not** commit,
    push, merge or deploy without explicit user approval.
 7. **Ship the documentation with the code** (CLAUDE.md rules 10–12): the feature
@@ -33,7 +33,8 @@ Given request: $ARGUMENTS
    `tests/docs.test.ts` fails on a missing twin or an unregistered document, so this
    is part of step 5, not an afterthought. See `.claude/rules/07-documentation.md`.
 8. Summarize: changed files, each check as PASS / FAIL / NOT RUN with its real
-   output, security verdict, remaining issues, rollback note, next action.
+   output, `qc` / `security` as NOT RUN with any recommendation to run them,
+   remaining issues, rollback note, next action.
 
 **Phase guard:** the Planner backend has shipped, so a Planner request is ordinary
 work against an existing contract (`docs/adr/0002-planner-core.md`). Stop at step 2

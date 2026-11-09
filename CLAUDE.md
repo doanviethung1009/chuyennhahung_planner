@@ -26,25 +26,29 @@ one that covers what you are about to do:
 | File | Read it before |
 |---|---|
 | `.claude/rules/01-global-engineering.md` | anything — evidence, no-invention and verification rules |
-| `.claude/rules/02-architecture-orchestration.md` | any code change: S/M/L/XL triage, Task Contracts, review gates |
+| `.claude/rules/02-architecture-orchestration.md` | any code change: S/M/L/XL triage, Task Contracts, on-demand reviews |
 | `.claude/rules/03-project-chuyen-nha-hung.md` | touching this product: stack, i18n, routes, tokens, a11y, phases |
 | `.claude/rules/04-responsibilities.md` | delegating: who owns which files, who can block |
 | `.claude/rules/05-git-governance.md` | any git operation, commit message or PR |
-| `.claude/rules/06-token-optimization.md` | deciding how many agents to spawn and how much to read |
+| `.claude/rules/06-token-optimization.md` | deciding how many agents to spawn, which model, and how much to read |
 | `.claude/rules/07-documentation.md` | adding or changing anything under `docs/` |
 
 ## Agent roster
 Route work to the agent that owns the files.
 
-| Agent | Mode | Owns |
-|---|---|---|
-| `system-architect` | designs | Route topology, data contracts, ADRs in `docs/adr/`, `docs/architecture.*`, Task Contracts |
-| `backend-engineer` | implements | `src/app/api/**`, `src/server/**`, server actions, persistence, validation, caching |
-| `frontend-engineer` | implements | `src/app/**` markup, `src/components/**`, `globals.css` tokens, `messages/*.json` |
-| `explorer` | read-only | Cheap, narrow file/symbol location |
-| `qc` | read-only | Independent verification — PASS / BLOCKED / NOT VERIFIED |
-| `security` | read-only | Auth, secrets, injection, privacy — PASS / PASS_WITH_WARNINGS / BLOCKED |
-| `git-controller` | read-only | Diff, branch and PR readiness; proposes commit and PR text |
+| Agent | Model | Mode | Owns |
+|---|---|---|---|
+| `system-architect` | sonnet | designs | Route topology, data contracts, ADRs in `docs/adr/`, `docs/architecture.*`, Task Contracts |
+| `backend-engineer` | sonnet | implements | `src/app/api/**`, `src/server/**`, server actions, persistence, validation, caching |
+| `frontend-engineer` | sonnet | implements | `src/app/**` markup, `src/components/**`, `globals.css` tokens, `messages/*.json` |
+| `explorer` | haiku | read-only | Cheap, narrow file/symbol location |
+| `qc` | sonnet | read-only, **on demand** | Independent verification — PASS / BLOCKED / NOT VERIFIED |
+| `security` | sonnet | read-only, **on demand** | Auth, secrets, injection, privacy — PASS / PASS_WITH_WARNINGS / BLOCKED |
+| `git-controller` | haiku | read-only | Diff, branch and PR readiness; proposes commit and PR text |
+
+`opus` is used only by explicit per-call override (`model: opus`) for a genuinely hard
+decision — an XL design or an ADR with a real trade-off. Detail:
+`.claude/rules/06-token-optimization.md`.
 
 Rules for each live in `.claude/agents/<name>.md` and are binding on that agent.
 
@@ -113,11 +117,16 @@ and spend the user's credits accordingly.
 
 - **S** (tiny) — inline triage, implement directly, **spawn no agents**.
 - **M** (single module) — `system-architect` writes a short Task Contract → one
-  implementer → `qc`.
-- **L** (cross-layer) — architect + the implementers actually affected → `qc`;
-  `security` if a trust boundary moves.
-- **XL** (security-sensitive or large) — architect + implementers + `qc` +
-  **`security` (mandatory)** + human approval at risky boundaries.
+  implementer.
+- **L** (cross-layer) — architect + the implementers actually affected.
+- **XL** (security-sensitive or large) — architect + implementers + human approval
+  at risky boundaries.
+
+**`qc` and `security` never run as part of the flow.** They run only when the user
+asks for them — `/qc-check`, `/sec-check`, or in words ("chạy qc", "check security").
+Until then each is reported as **NOT RUN**, and where the triage says a review is
+warranted (a trust boundary moved, an XL task) the report *recommends* it instead of
+spawning it.
 
 For M and above the architect produces a Task Contract (goal, scope IN/OUT, evidence,
 touched files, acceptance tests, risks, owner, rollback, and who writes the feature
@@ -126,8 +135,9 @@ session can resume from the repository. Material design decisions get an ADR fro
 `docs/adr/_template.md`, in both languages, registered in `docs/adr/README.*`.
 
 Implement in dependency order: shared contracts first, backend where one is required,
-frontend once the contract is stable. `qc` and `security` are independent and
-read-only, and **a BLOCKED verdict stops the work**. Cap at **two** review/fix cycles,
+frontend once the contract is stable. When the user does call `qc` or `security`,
+they are independent and read-only, and **a BLOCKED verdict stops the work**. Cap at
+**two** review/fix cycles,
 then escalate to the user.
 
 Detail: `.claude/rules/02-architecture-orchestration.md`.
@@ -190,7 +200,8 @@ Layout, the full list of what the test enforces, and who owns which document:
 
 ## Skills
 Entry points: **`/feature`** (the recommended one for any non-trivial change),
-`/architecture-review`, `/bugfix`, `/git-review`, `/release-check` (user-invoked only).
+`/architecture-review`, `/bugfix`, `/git-review`. User-invoked only: `/qc-check`,
+`/sec-check`, `/release-check`.
 
 Diagrams go in the document itself as a Mermaid block, in both language twins, so they
 stay reviewable in the diff and need no extra tooling to open.
