@@ -33,7 +33,7 @@ Ký hiệu: ✅ có bằng chứng · ❌ chưa đạt · ⏳ NOT RUN · — kh�
 | 02 Travel Content System | ✅ | ✅ | ✅ ADR 0001 | — | ⏳ | ⏳ | ⏳ | ⏳ | **Chưa deploy** |
 | 03 Travel Planner Core | ✅ #11, #13, #20 | ✅ | ✅ ADR 0002, 0004 | — | ⏳ | ⏳ | ⏳ | ⏳ | **Chưa deploy** |
 | 04 Interactive Planner UI | ❌ Partial | — | — | ⏳ | ⏳ | — | ⏳ | ⏳ | Chưa xong code |
-| 05 Story → Planner (hiện tại) | ✅ #23, #27 | ✅ | ✅ ADR 0005 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | **Chưa deploy** |
+| 05 Story → Planner (hiện tại) | ✅ #23, #27 | ✅ | ✅ ADR 0005 | ✅ 2026-11-10 (local) | ⏳ | ⏳ | ⏳ | ⏳ | **Chưa deploy** |
 | 07 Admin Portal, CMS & RBAC | ❌ chỉ có ADR 0006 (#25) | — | ⏳ ADR Proposed | — | — | — | — | — | Chưa bắt đầu |
 | 06 AI, Affiliate & Optimization | ❌ | — | — | — | — | — | — | — | Chưa bắt đầu |
 | 08 Media & Analytics | ❌ | — | — | — | — | — | — | — | Chưa bắt đầu |

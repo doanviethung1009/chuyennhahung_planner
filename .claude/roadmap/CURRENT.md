@@ -27,20 +27,27 @@ Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
 Kiểm tra: xem PR của branch này (typecheck, lint, test chạy lại khi cập nhật).
 CI trên `main` @ `124868e`: **success** (typecheck, lint, test, build).
 
-## Tiêu chí đóng Phase 05 (chưa đạt)
+## Tiêu chí đóng Phase 05 (còn 2, 3)
 
 1. **Kiểm thủ công trên trình duyệt** — luồng ẩn danh → tùy chỉnh → lưu → đăng nhập →
    khôi phục nháp → lưu trip → share → mở link ở cửa sổ riêng tư; 375/768/1280px.
-   Contract tiêu chí 16. Trạng thái: **NOT RUN** (không có bằng chứng trong repo).
+   Contract tiêu chí 16. Trạng thái: ✅ **đạt** — 2026-11-10, dev server local, tài khoản
+   test. Story → `/tao-chuyen-di` → lưu ẩn danh → `/dang-nhap?returnTo=…` → đăng nhập →
+   nháp được khôi phục → lưu → `/chuyen-di-cua-toi/[id]` (có ghi nguồn story) → bật
+   "unlisted" → `/chia-se/[token]` mở không cookie: 200, `noindex`, `no-referrer`; token
+   sai → 404. 375/768/1280px: một `<h1>`, không tràn ngang. **Tìm và sửa một lỗi:** ô
+   ngân sách có `step={100000}` nên trình duyệt chặn gửi với giá trị mặc định 750000 —
+   đổi thành `step={1}` (`src/components/planner/trip-setup-form.tsx`). Chưa kiểm: bản EN,
+   cửa sổ riêng tư thật (dùng curl không cookie thay thế).
 2. **`/sec-check`** — public read không xác thực, xử lý token, rate limiter, open
    redirect. Contract khuyến nghị "strongly". Trạng thái: **NOT RUN** (theo bằng chứng có).
 3. **`/qc-check`** — phase XL. Trạng thái: **NOT RUN** (theo bằng chứng có).
-4. **Test cho các bảo đảm độc lập của clone** (nêu trong addendum của
-   contract): trip đã clone không đổi khi template bị sửa/rút; không chia sẻ object
-   giữa template và clone; purge trip không đụng template.
+4. **Test cho các bảo đảm độc lập của clone:** ✅ `tests/planner-clone-independence.test.ts`
+   — trip không đổi khi template bị sửa/rút/xóa; không chia sẻ object (template đóng
+   băng sâu, sửa tại chỗ hai chiều); purge trip không đụng template và vẫn clone lại được.
 5. **Đồng bộ tài liệu đã cũ:** ✅ xong. `CLAUDE.md` quy tắc 6 sửa ở PR #24; contract đã
    ghi `State: IMPLEMENTED (merged PR #23)`; `.claude/rules/03` §6 sửa ở branch này.
-   Còn lại: contract → `DONE` khi 1–4 xong (P05-5).
+   Còn lại: contract → `DONE` khi 2–3 xong hoặc được chủ nhà chấp nhận rủi ro (P05-5).
 
 Khi 1–5 xong (hoặc chủ nhà chấp nhận rủi ro bằng văn bản cho mục 2–3), chuyển Phase 05
 sang `Done` trong `PHASES.md` và mở Phase 07 ở file này.

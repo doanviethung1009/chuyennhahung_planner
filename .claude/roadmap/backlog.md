@@ -11,11 +11,11 @@ lại; mục bỏ đi được gạch và ghi lý do, không xóa. Sắp theo th
 
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
-| P05-1 | Kiểm thủ công luồng đầy đủ trên trình duyệt, 3 khổ màn hình | main session | — |
+| ~~P05-1~~ | ~~Kiểm thủ công luồng đầy đủ trên trình duyệt, 3 khổ màn hình~~ — xong 2026-11-10, sửa lỗi `step` ô ngân sách | main session | — |
 | P05-2 | `/sec-check` cho share token, public read, rate limiter, `returnTo` | user gọi `security` | — |
 | P05-3 | `/qc-check` theo tiêu chí contract | user gọi `qc` | — |
-| P05-4 | Test độc lập clone: template sửa/rút không đổi trip; không chia sẻ object; purge không đụng template | backend-engineer | — |
-| P05-5 | Contract `follow-hung-footsteps` → `State: DONE` sau P05-1..4 | system-architect | P05-1..4 |
+| ~~P05-4~~ | ~~Test độc lập clone~~ — xong: `tests/planner-clone-independence.test.ts` | backend-engineer | — |
+| P05-5 | Contract `follow-hung-footsteps` → `State: DONE` sau P05-2, P05-3 | system-architect | P05-2, P05-3 |
 | ~~P05-6~~ | ~~Sửa đoạn đã cũ: CLAUDE.md quy tắc 6 và rules/03 §6~~ — xong: CLAUDE.md ở PR #24, rules/03 §6 ở branch deploy-checklist | system-architect | — |
 
 ## Phase 07 — Admin Portal, CMS & RBAC (P1, ngay sau 05)
