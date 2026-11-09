@@ -12,7 +12,7 @@ Phải có ADR — không phải tuỳ chọn — cho các việc sau:
 - bỏ hoặc đổi đích các redirect tour vĩnh viễn trong `next.config.ts`
 - thay đổi topology route hoặc bản đồ pathname bản địa hoá
 - mở phase backend Planner (model dữ liệu và hợp đồng gửi form trước đã) — đã làm trong [0002](0002-planner-core.vi.md); một phase *tiếp theo*, như giao diện Planner hay gợi ý AI, cần ADR riêng
-- thêm một framework, thư viện state, ORM hay hệ CSS
+- thêm một framework, thư viện state, ORM hay hệ CSS, hoặc nâng major một thư viện validate input từ bên ngoài — xem [0003](0003-zod-4.vi.md)
 - bật dò locale theo Accept-Language
 - thay nội dung seed có type bằng một CMS hoặc database
 
@@ -28,3 +28,4 @@ thì cần một ADR ở đây.
 |---|---|---|
 | [0001](0001-travel-content-system.vi.md) | Travel Content System: thực thể có type nằm sau một interface store, chưa có database, validation bằng `zod`, auth admin mặc định đóng | Đã chấp nhận |
 | [0002](0002-planner-core.vi.md) | Lõi Planner: bốn collection trip chuẩn hoá, chủ sở hữu trip thật với phân quyền theo đối tượng, bản clone template độc lập, ngân sách số nguyên đồng kèm ranh giới BigInt, tương tranh bằng `If-Match` | Đã chấp nhận |
+| [0003](0003-zod-4.vi.md) | Nâng `zod` lên 4.x để xoá GHSA-mrhx-c7xc-m3w5 thay vì rào nó sau cap body; di trú hai chỗ gọi deprecated, đã kiểm hành vi không đổi | Đã chấp nhận |
