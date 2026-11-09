@@ -16,9 +16,9 @@ lives in `docs/` and is bilingual and test-enforced — see CLAUDE.md "Documenta
 | i18n | `next-intl` `^4.14.9`, localized pathnames, `localePrefix: 'as-needed'` |
 | Validation | `zod` `^4.6.7` — on the trust boundary for both API surfaces. Use `z.iso.*` and `z.ZodType`; the 3.x spellings (`z.string().datetime()`, `z.ZodTypeAny`) are deprecated. See `docs/adr/0003-zod-4.md` |
 | Package manager | npm (`package-lock.json`) |
-| Node | v20.14.0 locally |
+| Node | **24.22.2 LTS**, pinned in `.nvmrc` — the single source for local `nvm use` and CI's `node-version-file`. `engines.node` is `>=24` |
 | Python 3 | 3.13.7 — **required** for the `PreToolUse` git guard hook and `tests/git-guard.test.ts` |
-| Tests | Vitest `^3.2.7` — Node 20.14 is below Vite 7's 20.19 floor, so Vitest 4/5 **cannot** run here |
+| Tests | Vitest `^3.2.7`. Node 24 now permits Vitest 4/5 (they need Vite 7/8 and Node ≥ 20.19); **not yet upgraded** — that is the path to the remaining dev-only advisories |
 | CI | `.github/workflows/ci.yml` — typecheck, lint, test, build on every PR into `main`. **Advisory only:** required checks need branch protection, unavailable while the repo is private on GitHub Free |
 | Local git guards | `.githooks/pre-commit` + `pre-push` refuse commits/pushes that move `main`; opt in per clone with `git config core.hooksPath .githooks` |
 | Deployment | No deploy workflow. `NEXT_PUBLIC_SITE_URL` must be set at **build** time |

@@ -36,13 +36,14 @@ npm run dev
 
 ### Node version
 
-Requires Node **≥ 20.9**. Two notes about the current `20.14` on this machine:
+Requires **Node 24 LTS**, pinned in [`.nvmrc`](.nvmrc). Run `nvm use` in the repo;
+CI reads the same file, so the two cannot drift apart.
 
-- `package.json` pins `magic-string` to `^0.30.17` via `overrides`, because
-  `@tailwindcss/node` `require()`s it and Node below 20.19 / 22.12 cannot
-  `require()` an ES module. **Remove that override once Node is ≥ 20.19.**
-- Vitest is held at 3.x for the same reason — Vitest 4/5 need Vite 7/8, which
-  require Node ≥ 20.19.
+- The `magic-string` override that Node 20.14 needed has been removed —
+  `@tailwindcss/node` now gets the 1.x it declares, which is ESM-only and needs
+  Node's native `require()` of ES modules.
+- Vitest is still on 3.x. Node 24 makes Vitest 4/5 *possible*; the upgrade itself
+  has not been done.
 
 ## Documentation
 
