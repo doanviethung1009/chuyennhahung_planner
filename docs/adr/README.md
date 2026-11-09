@@ -30,3 +30,4 @@ ADR here.
 | [0003](0003-zod-4.md) | Upgrade `zod` to 4.x to remove GHSA-mrhx-c7xc-m3w5 rather than fence it behind the request body cap; two deprecated call sites migrated, behaviour verified unchanged | Accepted |
 | [0004](0004-planner-identity.md) | Planner identity: an `HttpOnly` session cookie exchanged for the existing access token, behind one `resolveIdentity` seam, with CSRF as the explicit cost | Accepted |
 | [0005](0005-trip-sharing-and-story-cloning.md) | Trip sharing and story cloning: unguessable capability share links with a read-only sanitised projection, planning status separate from lifecycle, server-derived attribution, in-memory rate limiting | Accepted |
+| [0006](0006-unified-identity-and-roles.md) | Unified identity and roles: `role` on the one user model, a pure `can(identity, action, resource)`, `ADMIN_API_TOKEN` demoted to a service principal that never reaches a browser, templates and trips kept apart | Proposed |

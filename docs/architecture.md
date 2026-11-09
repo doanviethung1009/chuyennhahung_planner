@@ -264,6 +264,19 @@ Deliberately absent, and not to be scaffolded early:
 - **SQL.** Both stores are single-process. Multi-instance deployment is the
   trigger; the target schema and its indexes are already written down in
   [ADR 0002](adr/0002-planner-core.md#the-sql-shape-this-becomes).
+- **Phase 06 — Admin Portal & CMS (announced, not started).** Nothing below is
+  built or to be scaffolded early; each item needs its decision recorded first.
+  Design direction: [ADR 0006](adr/0006-unified-identity-and-roles.md) (Proposed).
+  Backlog of dependencies and decisions:
+  - **Identity provider** — keep the operator-issued token plus session, or adopt Auth.js / hosted; decides signup, reset, MFA for `admin`. Own ADR.
+  - **Role model** — `member` / `editor` / `admin` on the one user model, a pure `can(identity, action, resource)`, `ADMIN_API_TOKEN` demoted to a service principal.
+  - **Admin session and CSRF hardening** — shorter lifetimes per role; `requireSameOrigin` becomes load-bearing for admin mutations; the token never reaches a Client Component (`tests/client-boundary.test.ts`).
+  - **Audit log** — who changed which template or role, and any support read of a trip.
+  - **SQL and multi-instance** — the admin portal makes a second writer to the stores likely; the JSON stores and the per-process rate limiter do not survive more than one instance.
+  - **Rate-limit store** — admin sign-in throttling needs a shared store once there is more than one process.
+  - **CMS editing of templates** — through the content store only; versioning prior template revisions versus relying on cloned snapshots is undecided (clones are already independent, so history is optional).
+  - **Template/trip boundary** — templates in the content store, trips in the planner store, linked only by the `sourceTemplate` value copy.
+  - **Untested guarantees to close first** — see the gaps listed in ADR 0006 and the clone-independence gaps in the report for Prompt 05.
 - **Clickable video cards.** We hold no per-video URLs, so cards are
   presentational. Making them clickable means adding a URL field to
   `VideoReview` and updating `tests/content.test.ts`.
