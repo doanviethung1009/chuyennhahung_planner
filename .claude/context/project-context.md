@@ -15,7 +15,7 @@ lives in `docs/` and is bilingual and test-enforced — see CLAUDE.md "Documenta
 | Styling | Tailwind CSS `^4.3.5` — CSS-first `@theme` tokens in `src/app/globals.css` |
 | i18n | `next-intl` `^4.14.9`, localized pathnames, `localePrefix: 'as-needed'` |
 | Validation | `zod` `^4.6.7` — on the trust boundary for both API surfaces. Use `z.iso.*` and `z.ZodType`; the 3.x spellings (`z.string().datetime()`, `z.ZodTypeAny`) are deprecated. See `docs/adr/0003-zod-4.md` |
-| Package manager | npm (`package-lock.json`) |
+| Package manager | npm 11 (`package-lock.json`). Install scripts are an allowlist: `allowScripts` in `package.json`, pinned to `pkg@version`, so a version bump of an approved package needs re-approval. Review before approving — it is a supply-chain boundary |
 | Node | **24.22.2 LTS**, pinned in `.nvmrc` — the single source for local `nvm use` and CI's `node-version-file`. `engines.node` is `>=24` |
 | Python 3 | 3.13.7 — **required** for the `PreToolUse` git guard hook and `tests/git-guard.test.ts` |
 | Tests | Vitest `^3.2.7`. Node 24 now permits Vitest 4/5 (they need Vite 7/8 and Node ≥ 20.19); **not yet upgraded** — that is the path to the remaining dev-only advisories |
