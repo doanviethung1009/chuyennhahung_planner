@@ -50,6 +50,15 @@ export function createMemoryDocumentStore<T>(initial: T): DocumentStore<T> {
  *
  * `normalize` fills in collections a hand-edited or older file is missing, so a
  * partial document reads back as a complete one instead of throwing.
+ *
+ * The parsed document is cached in memory after the first read and replaced
+ * only once a write has reached disk, so a read costs a `structuredClone`
+ * instead of a file read plus `JSON.parse`. That relies on the same
+ * one-process rule as above: this process is the only writer, so the cache
+ * cannot go stale. A hand-edit of the file while the server runs is not picked
+ * up — restart after editing. Both reads and writes clone, exactly like the
+ * memory store, because the repositories mutate what they read in place and a
+ * failed transaction must not leave its half-applied change in the cache.
  */
 export function createJsonDocumentStore<T>(
   filePath: string,
@@ -57,6 +66,7 @@ export function createJsonDocumentStore<T>(
 ): DocumentStore<T> {
   const absolutePath = resolve(filePath);
   let queue: Promise<unknown> = Promise.resolve();
+  let cached: T | undefined;
 
   function enqueue<R>(task: () => Promise<R>): Promise<R> {
     const run = queue.then(task, task);
@@ -82,14 +92,23 @@ export function createJsonDocumentStore<T>(
 
   return {
     read() {
-      return enqueue(readFromDisk);
+      return enqueue(async () => {
+        if (cached === undefined) cached = await readFromDisk();
+        return structuredClone(cached);
+      });
     },
     write(next) {
       return enqueue(async () => {
         await mkdir(dirname(absolutePath), { recursive: true });
         const temp = `${absolutePath}.${process.pid}.${Date.now()}.tmp`;
-        await writeFile(temp, `${JSON.stringify(next, null, 2)}\n`, 'utf8');
+        const body = `${JSON.stringify(next, null, 2)}\n`;
+        await writeFile(temp, body, 'utf8');
         await rename(temp, absolutePath);
+        // Only after the rename, so a failed write leaves the cache matching
+        // disk. Parsed from the bytes just written — not cloned from `next` —
+        // so the cache is exactly what a cold read would return (JSON drops
+        // `undefined` keys and turns a Date into a string; a clone would not).
+        cached = normalize(JSON.parse(body) as Partial<T>);
       });
     },
   };
