@@ -370,3 +370,48 @@ export type TripExpense = z.infer<typeof tripExpenseSchema>;
 export type TripExpenseCreateInput = z.infer<typeof tripExpenseCreateSchema>;
 export type TripExpenseUpdateInput = z.infer<typeof tripExpenseUpdateSchema>;
 export type TripListQuery = z.infer<typeof tripListQuerySchema>;
+
+// ---------------------------------------------------------------------------
+// Browser sessions (ADR 0004)
+// ---------------------------------------------------------------------------
+
+/**
+ * Session lifetime, on two axes. Both are single constants on purpose — the
+ * owner left the exact numbers open, and changing them is a one-line edit.
+ */
+export const SESSION_ABSOLUTE_DAYS = 14;
+export const SESSION_IDLE_DAYS = 7;
+
+/**
+ * How stale `lastSeenAt` may get before a read bothers to update it. Idle
+ * expiry needs the field to move, but writing on *every* request would turn
+ * each GET into a store write and serialise the whole API behind it, so the
+ * update is throttled. The cost is that idle expiry is accurate to the hour,
+ * which is far finer than the 7-day window it enforces.
+ */
+export const SESSION_TOUCH_INTERVAL_MINUTES = 60;
+
+/**
+ * A session row. The cookie carries an opaque random token; what is stored is
+ * its SHA-256 digest, exactly as with `PlannerUser.tokenHash`, so a leaked
+ * store yields no usable session.
+ */
+export const plannerSessionSchema = z.object({
+  id: plannerIdSchema,
+  tokenHash: z.string().length(64),
+  /** → `plannerUsers.id`. */
+  userId: plannerIdSchema,
+  createdAt: timestampSchema,
+  /** Moved forward at most once per `SESSION_TOUCH_INTERVAL_MINUTES`. */
+  lastSeenAt: timestampSchema,
+  /** Absolute end of life, fixed at sign-in and never extended. */
+  expiresAt: timestampSchema,
+});
+
+/** Sign-in exchanges the access token the operator issued for a cookie. */
+export const signInSchema = z.object({
+  accessToken: z.string().trim().min(32).max(256),
+});
+
+export type PlannerSession = z.infer<typeof plannerSessionSchema>;
+export type SignInInput = z.infer<typeof signInSchema>;

@@ -116,6 +116,33 @@ curl -s -X POST http://localhost:3000/api/admin/planner/users \
 curl -s http://localhost:3000/api/planner -H "authorization: Bearer <accessToken>"
 ```
 
+Trình duyệt không dùng trực tiếp token đó — nó đăng nhập một lần và nhận một
+cookie `HttpOnly` ([ADR 0004](adr/0004-planner-identity.vi.md)). Với curl thì
+dùng cookie jar:
+
+```bash
+# Đăng nhập. Cookie vào jar; JavaScript không bao giờ đọc được nó.
+curl -s -c jar.txt -X POST http://localhost:3000/api/planner/session \
+  -H 'content-type: application/json' \
+  -d '{"accessToken":"<accessToken>"}'
+
+# Đọc thì không cần gì thêm.
+curl -s -b jar.txt http://localhost:3000/api/planner
+
+# Request có thay đổi dữ liệu phải nêu Origin cùng origin — đó là luật CSRF mà
+# cookie bắt buộc, và request cookie thiếu nó sẽ bị từ chối 403.
+curl -s -b jar.txt -X POST http://localhost:3000/api/planner \
+  -H 'origin: http://localhost:3000' -H 'content-type: application/json' \
+  -d '{"source":"blank","title":"Đà Lạt 3 ngày","destinationSlug":"da-lat","durationDays":3,"partySize":2,"budget":{"targetTotalVnd":5000000}}'
+
+# Đăng xuất.
+curl -s -b jar.txt -X DELETE http://localhost:3000/api/planner/session \
+  -H 'origin: http://localhost:3000'
+```
+
+Một session sống 14 ngày, hoặc 7 ngày nếu không dùng. `rotate-token` đăng xuất
+người đi chơi khỏi mọi nơi.
+
 Sửa một trip đang có thì cần version lấy từ `ETag` của nó:
 
 ```bash

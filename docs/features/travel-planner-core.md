@@ -21,8 +21,22 @@ the API and the domain rules underneath it.
 No page routes. The feature is an API surface, so nothing is added to the
 localized pathname map.
 
-Traveller endpoints — `Authorization: Bearer <planner access token>`. The owner
-comes from the token, never from the payload or the query string.
+Sign-in — no credential needed to call it; it is how you get one
+([ADR 0004](../adr/0004-planner-identity.md)).
+
+| Method | Path | What it does |
+|---|---|---|
+| `POST` | `/api/planner/session` | Exchanges an access token for an `HttpOnly` session cookie |
+| `DELETE` | `/api/planner/session` | Signs out: deletes the session row and clears the cookie |
+
+Traveller endpoints — authenticated by that **session cookie**, or by
+`Authorization: Bearer <planner access token>` for curl, scripts and tests. The
+owner comes from the credential, never from the payload or the query string.
+
+Every **mutating** request must also state a same-origin `Origin` or
+`Sec-Fetch-Site`, and a cookie-authenticated one must state one at all —
+otherwise `403 forbidden`. That is the cost of cookies being sent automatically;
+see *How it works*.
 
 | Method | Path | What it does |
 |---|---|---|
@@ -67,6 +81,7 @@ are in [`schemas.ts`](../../src/server/planner/schemas.ts) — every type is
 | Collection | Becomes | Key fields |
 |---|---|---|
 | `users` | `planner_users` | `handle`, `displayName`, `tokenHash` (SHA-256, never returned) |
+| `sessions` | `planner_sessions` | `userId`, `tokenHash` (SHA-256 of the opaque cookie value), `createdAt`, `lastSeenAt`, `expiresAt` |
 | `trips` | `trips` | `ownerId`, `destinationSlug`, `startDate`, `durationDays`, `partySize`, `budget.targetTotalVnd`, `status`, `sourceTemplate`, `version` |
 | `tripDays` | `trip_days` | `tripId`, `dayNumber` (1..n), `date` (derived), `title`, `note` |
 | `tripActivities` | `trip_activities` | `tripId`, `dayId`, `order` (0..m), `placeSlug`, `title`, `estimatedCostVnd`, `costScope`, `category` |
@@ -85,7 +100,12 @@ Fields that carry real weight:
 - **`activityId` on an expense** is what links a payment to the thing it paid
   for, and therefore what stops an activity and its expense being counted twice.
 - **`version`** is the optimistic-lock counter for the whole trip.
-- **`tokenHash`** must never appear in a response. A test asserts that.
+- **`tokenHash`** must never appear in a response — on a user *or* a session. A
+  test asserts that, and a second asserts the session's cookie value never
+  appears in the store or in a response body either.
+- **`expiresAt` and `lastSeenAt`** are the two axes a session dies on: 14 days
+  absolute, 7 days idle. `SESSION_ABSOLUTE_DAYS` and `SESSION_IDLE_DAYS` are
+  single constants, because the owner left the exact numbers open.
 
 Money is integer đồng everywhere, capped at 10^12 by the content system's
 `vndSchema`. Nothing here needs the owner's real data; the one operational
@@ -97,10 +117,37 @@ Server only — route handlers and a repository, no client code and no component
 
 A request enters through
 [`plannerRoute`](../../src/server/planner/http.ts), which resolves the process-wide
-repository, turns the bearer token into a `PlannerIdentity`, and maps any thrown
-`ContentError` to its status. Authentication is therefore not something an
-individual route can forget. The handler receives the owner's id and passes it
-into every repository call.
+repository, turns the request's credential into a `PlannerIdentity`, enforces the
+same-origin rule, and maps any thrown `ContentError` to its status. All three
+happen there rather than in the handlers, so no individual route can forget any
+of them. The handler receives the owner's id and passes it into every repository
+call.
+
+**Two credentials, one identity.** `identify()` tries the session cookie first
+and falls back to `Authorization: Bearer` — the single `resolveIdentity` seam
+ADR 0004 is built around. A browser signs in once at
+`POST /api/planner/session`, which exchanges the operator-issued access token for
+an opaque cookie token whose *digest* is stored, exactly as `tokenHash` works for
+users. The access token remains the root credential: the cookie is a revocable,
+expiring handle on it. A session dies at 14 days absolute or 7 days idle,
+whichever comes first, and is swept when it is next touched or on the next
+sign-in. `lastSeenAt` is written at most hourly, because updating it on every
+request would make each read a store write and serialise the API behind it.
+Rotating a user's token deletes that user's sessions, which makes
+`rotate-token` the "sign me out everywhere" control. A *stale* cookie falls
+through to the bearer path so a script is not broken by a leftover cookie; an
+*expired* one says so, because it resolved and a reason is more useful than
+silence.
+
+**CSRF is the price of the cookie.** A bearer token is only ever attached
+deliberately; a cookie is attached by the browser to any request to our origin,
+including one another site caused. So every mutating request is refused with 403
+if it states a cross-site origin, and a cookie-authenticated one is refused if it
+states no origin at all — a browser always does on a non-GET. Sign-in is covered
+by the same rule, since a cross-site POST there could otherwise hand a victim's
+browser a session belonging to the attacker. `SameSite=Lax` is a second line, not
+this one: it is browser behaviour, and the server does not assume the client
+enforces it.
 
 [`PlannerRepository`](../../src/server/planner/repository.ts) owns all the rules.
 Reads and writes go through `requireOwnedTrip`, which throws **404 for another
@@ -153,7 +200,7 @@ a raw `bigint` can neither throw nor silently become a string.
 | [`src/server/persistence/json-store.ts`](../../src/server/persistence/json-store.ts) | Generic document store — atomic write, in-process write queue. Shared with the content store |
 | [`src/server/planner/schemas.ts`](../../src/server/planner/schemas.ts) | Validators and the types inferred from them |
 | [`src/server/planner/store.ts`](../../src/server/planner/store.ts) | `PlannerData` and its memory/JSON-file stores |
-| [`src/server/planner/auth.ts`](../../src/server/planner/auth.ts) | Token issue, hashing, constant-time resolution to an owner |
+| [`src/server/planner/auth.ts`](../../src/server/planner/auth.ts) | Token and session issue, hashing, cookie parsing, constant-time resolution to an owner |
 | [`src/server/planner/catalog.ts`](../../src/server/planner/catalog.ts) | Read-only window onto destinations, places and approved templates |
 | [`src/server/planner/budget.ts`](../../src/server/planner/budget.ts) | Budget computation — pure functions over rows |
 | [`src/server/planner/money.ts`](../../src/server/planner/money.ts) | Integer-đồng rules and the BigInt/JSON boundary |
@@ -161,6 +208,7 @@ a raw `bigint` can neither throw nor silently become a string.
 | [`src/server/planner/http.ts`](../../src/server/planner/http.ts) | Route wrappers, `ETag`/`If-Match`, response envelope |
 | [`src/server/planner/instance.ts`](../../src/server/planner/instance.ts) | The process-wide repository |
 | [`src/app/api/planner/**`](../../src/app/api/planner) | Traveller route handlers |
+| [`src/app/api/planner/session/route.ts`](../../src/app/api/planner/session/route.ts) | Sign-in and sign-out |
 | [`src/app/api/admin/planner/users/**`](../../src/app/api/admin/planner/users) | Operator route handlers — provisioning |
 | [`src/app/api/admin/planner/integrity/route.ts`](../../src/app/api/admin/planner/integrity/route.ts) | Operator route handler — the integrity sweep |
 
@@ -171,7 +219,7 @@ signatures unchanged.
 
 ## Tests
 
-87 tests across five files, all green.
+115 tests across seven files, all green.
 
 | File | What it actually asserts |
 |---|---|
@@ -179,6 +227,8 @@ signatures unchanged.
 | [`planner-budget.test.ts`](../../tests/planner-budget.test.ts) | `per_person` scaled once and re-scaled when the party changes; estimate and actual never summed; a settled activity dropped from the projection; a 0₫ expense still settling; by-category, by-day and trip-level splits; and the money boundary — `bigint`, digit-string and number inputs, refusal of values a double cannot hold exactly, `jsonSafe` over a nested `bigint`, and overflow-checked arithmetic |
 | [`planner-acceptance.test.ts`](../../tests/planner-acceptance.test.ts) | The demo scenario end to end (Đà Lạt, 3 ngày 2 đêm, 2 người, 5.000.000₫, lãng mạn); cloning the **real seeded** `da-lat-3-ngay-lang-man` template; proof the template is byte-identical after the clone is moved, deleted from and repriced; and a reload through a real JSON file where a fresh repository sees every row |
 | [`planner-api.test.ts`](../../tests/planner-api.test.ts) | The real route handlers: 401 paths, the admin token explicitly unable to read any trip, 422 with field paths, the full activity→reorder→expense→budget flow, 428 without `If-Match`, 412 on a stale version, 400 on a malformed one, 404 isolation per verb, the archive/restore/purge sequence, and the sweep being operator-only |
+| [`planner-session.test.ts`](../../tests/planner-session.test.ts) | The session layer at domain level: sign-in and the identity it produces, only the digest stored and the cookie value absent from the store, a separate session per sign-in so a second device is independent, an absolute expiry that using the session does not extend, idle expiry inside the absolute window, the throttled `lastSeenAt` write, idempotent sign-out, rotation and user deletion killing sessions while leaving another traveller's alone, a stale cookie falling through to the bearer token, an expired one reporting itself, other cookies on the request ignored, and the four session integrity checks |
+| [`planner-session-api.test.ts`](../../tests/planner-session-api.test.ts) | The HTTP half: `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/` and `Max-Age` on the cookie, the token absent from the response body, sign-out clearing it with `Max-Age=0`, 401 setting no cookie, and the same-origin rule — a cookie mutation with no origin refused, cross-site `Origin` and `Sec-Fetch-Site` refused with nothing applied, both same-origin forms allowed, the bearer path still working without an origin but still refused cross-site, and a cross-site sign-in refused |
 | [`planner-integrity.test.ts`](../../tests/planner-integrity.test.ts) | One broken invariant per test, applied by writing straight to the store so the repository is bypassed exactly as a hand edit would bypass it: unknown owner and destination, a wrong `endDate`, archived/`archivedAt` disagreement, a missing day and a numbering gap, a day dated off the trip calendar, an order gap and a duplicated order, a withdrawn place, rows homed to another trip, orphans in all three child collections, an expense whose day contradicts its activity, duplicate ids and handles, a malformed token digest — plus a test asserting the sweep leaks no title, label, note or amount, and one asserting an edited or withdrawn template is reported as staleness rather than damage |
 
 Deliberately untested: rate limiting (there is none yet), and multi-process write
@@ -194,10 +244,21 @@ known limitation rather than a behaviour.
   deployment is the trigger to pick SQL — the shape is already written down in
   [ADR 0002](../adr/0002-planner-core.md#the-sql-shape-this-becomes), including
   the indexes.
-- **Identity is interim.** No self-service signup, no password reset, no session
-  expiry, no rate limiting on token attempts. An operator provisions every
-  traveller by hand through the admin API, and a lost token can only be rotated,
-  not recovered. A real session or identity provider needs its own ADR.
+- **Identity is interim, and deliberately not an identity system.** Sessions
+  exist ([ADR 0004](../adr/0004-planner-identity.md)) but there is no public
+  signup, no password reset, no OAuth and no MFA. An operator provisions every
+  traveller by hand, and a lost access token can only be rotated, not recovered.
+  Adding any of that is the next ADR; `resolveIdentity` is the one seam it
+  replaces.
+- **No rate limiting on sign-in attempts.** `POST /api/planner/session` can be
+  called as often as a caller likes. The access token is 48 random bytes, so
+  guessing it is not the realistic threat, but a brute-force attempt also costs
+  us nothing to absorb, which is worth fixing before the Planner faces the public.
+- **No "your active sessions" view.** A traveller cannot see or revoke one
+  device; the only revocation is `rotate-token`, which signs out everywhere.
+- **`Secure` follows the request's scheme** so a plain-http dev server works. In
+  production the site is https, so the flag is set — but a deployment that
+  terminated TLS and forwarded http without telling Next would silently drop it.
 - **The integrity sweep detects, it does not repair.** `GET
   /api/admin/planner/integrity` names every broken invariant it finds, and fixing
   one is still a manual edit or a follow-up change. Nothing runs it on a

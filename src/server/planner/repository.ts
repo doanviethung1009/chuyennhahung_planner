@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import {
+  ContentError,
   invalidReference,
   invalidState,
   notFound,
@@ -9,13 +10,28 @@ import {
 } from '@/server/content/errors';
 import type { IntegrityIssue } from '@/server/content/repository';
 import type { CostCategory, PlaceCategory } from '@/server/content/schemas';
-import { authorizePlannerUser, hashAccessToken, issueAccessToken, type PlannerIdentity } from './auth';
+import {
+  authorizePlannerUser,
+  findSessionByToken,
+  findUserByAccessToken,
+  hashAccessToken,
+  hashSessionToken,
+  issueAccessToken,
+  issueSessionToken,
+  sessionExpired,
+  sessionTokenFromRequest,
+  type PlannerIdentity,
+} from './auth';
 import { computeTripBudget, type TripBudgetSummary } from './budget';
 import type { PlannerCatalog } from './catalog';
 import type { PlannerData, PlannerStore } from './store';
 import {
   ACTIVITIES_PER_DAY_LIMIT,
+  SESSION_ABSOLUTE_DAYS,
+  SESSION_IDLE_DAYS,
+  SESSION_TOUCH_INTERVAL_MINUTES,
   type PlannerReorderInput,
+  type PlannerSession,
   type PlannerUser,
   type PlannerUserCreateInput,
   type PublicPlannerUser,
@@ -82,6 +98,13 @@ export interface IssuedPlannerUser {
   accessToken: string;
 }
 
+export interface IssuedSession {
+  user: PublicPlannerUser;
+  /** The opaque cookie value. Only its digest is stored. */
+  token: string;
+  expiresAt: string;
+}
+
 export class PlannerRepository {
   private readonly store: PlannerStore;
   private readonly catalog: PlannerCatalog;
@@ -130,10 +153,110 @@ export class PlannerRepository {
   // Identity and users
   // -------------------------------------------------------------------------
 
-  /** Resolves the bearer token on a request to a planner user, or throws 401. */
+  /**
+   * Resolves a request to an identity — the one seam ADR 0004 §3 is built
+   * around. The session cookie is tried first, then the bearer token.
+   *
+   * A cookie that resolves to nothing is not fatal: it falls through to the
+   * bearer path, so a stale cookie left in a browser profile does not stop a
+   * script that presents a valid token. An *expired* session is different — it
+   * resolved, so saying 401 with a reason is more useful than pretending it was
+   * never there — and it is swept on the way out.
+   */
   async identify(request: Request): Promise<PlannerIdentity> {
+    const presented = sessionTokenFromRequest(request);
     const data = await this.snapshot();
+
+    if (presented) {
+      const session = findSessionByToken(data.sessions, presented);
+      if (session) {
+        const now = this.now();
+        if (sessionIsExpired(session, now)) {
+          await this.dropSession(session.id);
+          throw sessionExpired();
+        }
+
+        const user = data.users.find((candidate) => candidate.id === session.userId);
+        if (user) {
+          if (sessionNeedsTouch(session, now)) await this.touchSession(session.id, now);
+          return { userId: user.id, handle: user.handle, source: 'cookie' };
+        }
+        // The user is gone, so the session means nothing. Drop it and let the
+        // bearer path decide.
+        await this.dropSession(session.id);
+      }
+    }
+
     return authorizePlannerUser(request, data.users);
+  }
+
+  /**
+   * Exchanges an access token for a browser session. The access token stays the
+   * root credential — this adds a revocable, expiring handle on it, it does not
+   * replace it.
+   *
+   * A new sign-in always issues a *new* session rather than extending an
+   * existing one, so a second device does not silently inherit the first
+   * device's remaining lifetime. Expired rows are swept while we are here,
+   * which is the only sweep this store needs.
+   */
+  signIn(accessToken: string): Promise<IssuedSession> {
+    return this.transaction((data) => {
+      const user = findUserByAccessToken(data.users, accessToken);
+      if (!user) {
+        throw new ContentError('unauthorized', 'that access token is not valid');
+      }
+
+      const now = this.now();
+      const at = now.toISOString();
+      const token = issueSessionToken();
+      const session: PlannerSession = {
+        id: this.newId('ses'),
+        tokenHash: hashSessionToken(token),
+        userId: user.id,
+        createdAt: at,
+        lastSeenAt: at,
+        expiresAt: new Date(now.getTime() + SESSION_ABSOLUTE_DAYS * DAY_MS).toISOString(),
+      };
+
+      data.sessions = data.sessions.filter(
+        (candidate) => !sessionIsExpired(candidate, now),
+      );
+      data.sessions.push(session);
+
+      return { user: toPublicUser(user), token, expiresAt: session.expiresAt };
+    });
+  }
+
+  /**
+   * Ends the session the request carries. Idempotent: signing out twice, or
+   * with no cookie at all, succeeds — a client retrying a sign-out must not get
+   * an error for having already succeeded.
+   */
+  signOut(request: Request): Promise<void> {
+    const presented = sessionTokenFromRequest(request);
+    return this.transaction((data) => {
+      if (!presented) return;
+      const session = findSessionByToken(data.sessions, presented);
+      if (session) {
+        data.sessions = data.sessions.filter(
+          (candidate) => candidate.id !== session.id,
+        );
+      }
+    });
+  }
+
+  private dropSession(sessionId: string): Promise<void> {
+    return this.transaction((data) => {
+      data.sessions = data.sessions.filter((session) => session.id !== sessionId);
+    });
+  }
+
+  private touchSession(sessionId: string, now: Date): Promise<void> {
+    return this.transaction((data) => {
+      const session = data.sessions.find((candidate) => candidate.id === sessionId);
+      if (session) session.lastSeenAt = now.toISOString();
+    });
   }
 
   async listUsers(): Promise<PublicPlannerUser[]> {
@@ -178,6 +301,9 @@ export class PlannerRepository {
         updatedAt: this.timestamp(),
       };
       data.users[index] = next;
+      // Rotation is the "sign me out everywhere" control (ADR 0004 §5): the old
+      // token is dead, and so is every session that was opened with it.
+      data.sessions = data.sessions.filter((session) => session.userId !== userId);
       return { user: toPublicUser(next), accessToken };
     });
   }
@@ -195,6 +321,7 @@ export class PlannerRepository {
         );
       }
       data.users.splice(index, 1);
+      data.sessions = data.sessions.filter((session) => session.userId !== userId);
     });
   }
 
@@ -1064,6 +1191,7 @@ export class PlannerRepository {
       data.tripActivities.map((activity) => [activity.id, activity]),
     );
 
+    reportDuplicates('planner session', data.sessions, (row) => row.id, report);
     reportDuplicates('planner user', data.users, (user) => user.id, report);
     reportDuplicates('planner user', data.users, (user) => user.handle, report, 'handle');
     reportDuplicates('trip', data.trips, (trip) => trip.id, report);
@@ -1076,6 +1204,26 @@ export class PlannerRepository {
       if (!/^[0-9a-f]{64}$/.test(user.tokenHash)) {
         // Reported as a shape problem; the value itself is never echoed.
         report('planner user', user.id, 'tokenHash is not a 64-character SHA-256 digest');
+      }
+    }
+
+    // --- sessions ------------------------------------------------------------
+    const sweepNow = this.now();
+    for (const session of data.sessions) {
+      if (!userIds.has(session.userId)) {
+        report('planner session', session.id, `unknown user "${session.userId}"`);
+      }
+      if (!/^[0-9a-f]{64}$/.test(session.tokenHash)) {
+        report(
+          'planner session',
+          session.id,
+          'tokenHash is not a 64-character SHA-256 digest',
+        );
+      }
+      // Expired rows are swept on the next sign-in, so finding one here means
+      // nobody has signed in since it lapsed — harmless, but worth seeing.
+      if (sessionIsExpired(session, sweepNow)) {
+        report('planner session', session.id, 'has expired and has not been swept');
       }
     }
 
@@ -1352,6 +1500,26 @@ function dayDate(startDate: string | null, dayNumber: number): string | null {
 
 function endDateFor(startDate: string | null, durationDays: number): string | null {
   return startDate === null ? null : addDays(startDate, durationDays - 1);
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Expiry on two axes (ADR 0004 §5): an absolute end of life fixed at sign-in,
+ * and an idle window since the session was last used. Either one ends it.
+ */
+function sessionIsExpired(session: PlannerSession, now: Date): boolean {
+  const nowMs = now.getTime();
+  if (nowMs >= Date.parse(session.expiresAt)) return true;
+  return nowMs >= Date.parse(session.lastSeenAt) + SESSION_IDLE_DAYS * DAY_MS;
+}
+
+/** Throttles the `lastSeenAt` write so a read is not usually a write. */
+function sessionNeedsTouch(session: PlannerSession, now: Date): boolean {
+  return (
+    now.getTime() - Date.parse(session.lastSeenAt) >=
+    SESSION_TOUCH_INTERVAL_MINUTES * 60_000
+  );
 }
 
 /** Renders a nullable id or date for an issue message, without quoting noise. */

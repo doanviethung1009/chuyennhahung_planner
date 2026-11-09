@@ -19,13 +19,18 @@ export const FROZEN_NOW = '2026-03-01T08:00:00.000Z';
  * ids (`trip_1`, `day_1`, `act_1`, …), so a test can name the row it means.
  */
 export function makePlanner(
-  options: { catalog?: PlannerCatalog; store?: PlannerStore } = {},
+  options: {
+    catalog?: PlannerCatalog;
+    store?: PlannerStore;
+    /** Pass a movable clock to test anything time-dependent, such as expiry. */
+    now?: () => Date;
+  } = {},
 ): PlannerRepository {
   const counters = new Map<string, number>();
   return new PlannerRepository({
     store: options.store ?? createMemoryPlannerStore(),
     catalog: options.catalog ?? fakeCatalog(),
-    now: () => new Date(FROZEN_NOW),
+    now: options.now ?? (() => new Date(FROZEN_NOW)),
     newId: (prefix) => {
       const next = (counters.get(prefix) ?? 0) + 1;
       counters.set(prefix, next);
@@ -38,6 +43,24 @@ export function makePlanner(
  * A planner wired to the **real** seeded content system, so the template clone
  * is exercised against the committed Đà Lạt template rather than a stand-in.
  */
+/** A clock the test advances by hand. */
+export function makeClock(start = FROZEN_NOW): {
+  now: () => Date;
+  advanceDays: (days: number) => void;
+  advanceMinutes: (minutes: number) => void;
+} {
+  let current = Date.parse(start);
+  return {
+    now: () => new Date(current),
+    advanceDays: (days) => {
+      current += days * 24 * 60 * 60 * 1000;
+    },
+    advanceMinutes: (minutes) => {
+      current += minutes * 60 * 1000;
+    },
+  };
+}
+
 export async function makeSeededPlanner(
   store?: PlannerStore,
 ): Promise<{ planner: PlannerRepository; content: TravelContentRepository }> {

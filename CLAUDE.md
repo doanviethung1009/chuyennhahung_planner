@@ -82,8 +82,11 @@ and `docs/usage.*` belongs to whoever changed how the app is run or operated.
    expenses, budgeting ([ADR 0002](docs/adr/0002-planner-core.md)). `/plan-your-trip`
    is still the contact-only content page: wiring it up is frontend work that has not
    started, and a submit button with nothing behind it is a dead control (rule 4).
-   Still deliberately absent, and not to be scaffolded early: the Planner map, AI
-   suggestions, a real identity provider, and SQL. Each needs its own ADR —
+   Browser sign-in exists: an `HttpOnly` session cookie exchanged for the access
+   token, behind one `resolveIdentity` seam ([ADR 0004](docs/adr/0004-planner-identity.md)),
+   so the UI has a credential to build on. Still deliberately absent, and not to be
+   scaffolded early: the Planner map, AI suggestions, a **real identity provider**
+   (public signup, password reset, OAuth, MFA), and SQL. Each needs its own ADR —
    see [Phases](docs/architecture.md#phases).
 7. **Definition of done** is `typecheck`, `lint` and `test` passing *and the output
    stated*. Report what actually happened — if something fails or was skipped, say so.
