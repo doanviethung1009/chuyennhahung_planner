@@ -133,6 +133,12 @@ Tiền ở cả hai đều là số nguyên đồng, chặn trên ở 10^12 — 
 thực, không bao giờ là đơn vị nhỏ. Các tổng dẫn xuất được tính lại khi đọc, không
 bao giờ được lưu.
 
+Store JSON (`src/server/persistence/json-store.ts`) giữ tài liệu đã parse trong bộ
+nhớ sau lần đọc đầu và chỉ thay khi một lần ghi đã xuống đĩa, nên mỗi lần đọc là một
+`structuredClone` thay vì đọc file rồi `JSON.parse`. Điều này dựa trên cùng quy tắc
+một-process: sửa tay file khi server đang chạy sẽ không được thấy cho tới khi khởi
+động lại (`tests/json-store.test.ts`).
+
 ## Ranh giới module
 
 Hướng phụ thuộc là một chiều. Tầng dưới không bao giờ gọi lên tầng trên.
@@ -243,6 +249,15 @@ flowchart LR
 - **Trang riêng tư** (`/sign-in`, `/my-trips`, `/my-trips/[id]`,
   `/trip-setup/[template]`) là `noindex` và không có trong sitemap; `/shared/[token]` là
   `noindex` trừ khi trip là `public`, và gửi `Referrer-Policy: no-referrer`.
+- **Mọi response đều có security header** từ `next.config.ts` (`securityHeaders`):
+  `X-Frame-Options: DENY` cùng CSP `frame-ancestors 'none'`, `base-uri`/`form-action
+  'self'`, `object-src 'none'`, `nosniff`, `Referrer-Policy:
+  strict-origin-when-cross-origin`, `Permissions-Policy` tắt camera/micro/vị trí/thanh
+  toán, và HSTS. Cố ý chưa có `script-src`: bootstrap inline của Next và JSON-LD sẽ cần
+  nonce theo từng request, khiến mọi trang thành dynamic — việc đó cần quyết định riêng
+  (`tests/security-headers.test.ts`). Header trong config đè header do route tự đặt,
+  nên các bề mặt chia sẻ (`/api/shared/*`, `/chia-se/*`, `/en/shared/*`) khai lại
+  `Referrer-Policy: no-referrer` ở một rule sau.
 
 ## Các phase
 

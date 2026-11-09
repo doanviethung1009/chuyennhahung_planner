@@ -105,7 +105,8 @@ The owner opened the Planner backend phase and it shipped: `src/app/api/planner/
 contract** — twin, mirrored headings, single h1, translation link, index registration,
 resolving links) · `tests/design-tokens.test.ts` · `tests/routing.test.ts` ·
 `tests/content.test.ts` · `tests/map.test.ts` · `tests/travel-content-{api,auth,schemas,
-repository,acceptance}.test.ts` (+ `travel-content-helpers.ts`).
+repository,acceptance}.test.ts` (+ `travel-content-helpers.ts`) · `tests/json-store.test.ts`
+(store cache) · `tests/security-headers.test.ts` (site-wide headers).
 
 ## Sensitive data and regulated boundaries
 `ADMIN_API_TOKEN` guards the admin API — never log it, echo it or commit it. `.env*`

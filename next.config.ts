@@ -3,9 +3,44 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin();
 
+/**
+ * Sent on every response. Deliberately no `script-src`/`style-src` CSP yet:
+ * Next's inline bootstrap and the JSON-LD block would need per-request nonces,
+ * which forces dynamic rendering on every page — a decision of its own. The
+ * directives below restrict framing, plugins, `<base>` and form targets, and
+ * cannot break a script. The share surfaces get `no-referrer` instead — see
+ * `headers()` below.
+ */
+export const securityHeaders = [
+  {
+    key: 'Content-Security-Policy',
+    value: "frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'",
+  },
+  { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()' },
+  // Ignored by browsers over plain HTTP, so harmless in development.
+  { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
+];
+
+const noReferrer = { key: 'Referrer-Policy', value: 'no-referrer' };
+
+/** Every path that carries a share token: the API and both localized pages. */
+export const sharePaths = ['/api/shared/:path*', '/chia-se/:path*', '/en/shared/:path*'];
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  async headers() {
+    return [
+      { source: '/:path*', headers: securityHeaders },
+      // A config header replaces one a route sets itself, and the last matching
+      // rule wins, so the share surfaces restate their stricter policy here
+      // (ADR 0005: a share token must never leak through `Referer`).
+      ...sharePaths.map((source) => ({ source, headers: [noReferrer] })),
+    ];
+  },
   images: {
     remotePatterns: [{ protocol: 'https', hostname: 'images.unsplash.com' }],
   },

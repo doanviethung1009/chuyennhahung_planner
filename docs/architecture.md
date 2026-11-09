@@ -131,6 +131,12 @@ and backup profiles.
 Money in both is an integer count of đồng, capped at 10^12 — never a float,
 never a minor unit. Derived totals are recomputed on read, never stored.
 
+The JSON store (`src/server/persistence/json-store.ts`) keeps the parsed document
+in memory after the first read and replaces it only once a write has reached disk,
+so a read is a `structuredClone` rather than a file read plus `JSON.parse`. This
+rests on the same single-process rule: a hand-edit of the file while the server is
+running is not seen until restart (`tests/json-store.test.ts`).
+
 ## Module boundaries
 
 The dependency direction is one-way. Nothing below reaches upward.
@@ -242,6 +248,16 @@ flowchart LR
 - **Private pages** (`/sign-in`, `/my-trips`, `/my-trips/[id]`, `/trip-setup/[template]`)
   are `noindex` and excluded from the sitemap; `/shared/[token]` is `noindex` unless
   the trip is `public`, and sends `Referrer-Policy: no-referrer`.
+- **Every response carries security headers** from `next.config.ts`
+  (`securityHeaders`): `X-Frame-Options: DENY` with CSP `frame-ancestors 'none'`,
+  `base-uri`/`form-action 'self'`, `object-src 'none'`, `nosniff`,
+  `Referrer-Policy: strict-origin-when-cross-origin`, a `Permissions-Policy` that
+  turns off camera/microphone/geolocation/payment, and HSTS. There is deliberately
+  no `script-src`: Next's inline bootstrap and JSON-LD would need per-request
+  nonces, which makes every page dynamic — that needs its own decision
+  (`tests/security-headers.test.ts`). A config header replaces one a route sets
+  itself, so the share surfaces (`/api/shared/*`, `/chia-se/*`, `/en/shared/*`)
+  restate `Referrer-Policy: no-referrer` in a later rule.
 
 ## Phases
 
