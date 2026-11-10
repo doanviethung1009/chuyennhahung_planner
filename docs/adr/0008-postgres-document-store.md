@@ -1,6 +1,6 @@
-# ADR 0007 — PostgreSQL as the shared document store, the step before normalised tables
+# ADR 0008 — PostgreSQL as the shared document store, the step before normalised tables
 
-🇻🇳 Bản tiếng Việt: [0007-postgres-document-store.vi.md](0007-postgres-document-store.vi.md)
+🇻🇳 Bản tiếng Việt: [0008-postgres-document-store.vi.md](0008-postgres-document-store.vi.md)
 
 - **Status:** Accepted — approved by the owner on 2026-11-11
 - **Date:** 2026-11-11

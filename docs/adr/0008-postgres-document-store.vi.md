@@ -1,6 +1,6 @@
-# ADR 0007 — PostgreSQL làm document store dùng chung, bước đệm trước các bảng chuẩn hoá
+# ADR 0008 — PostgreSQL làm document store dùng chung, bước đệm trước các bảng chuẩn hoá
 
-🇬🇧 English version: [0007-postgres-document-store.md](0007-postgres-document-store.md)
+🇬🇧 English version: [0008-postgres-document-store.md](0008-postgres-document-store.md)
 
 - **Trạng thái:** Đã chấp nhận — chủ sản phẩm duyệt ngày 2026-11-11
 - **Ngày:** 2026-11-11
