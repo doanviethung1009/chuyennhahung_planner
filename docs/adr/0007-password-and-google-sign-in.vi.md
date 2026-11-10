@@ -25,13 +25,17 @@ ngoài phạm vi, và nói mỗi thứ cần một quyết định riêng. Nay c
 cách đăng nhập:
 
 1. **Tài khoản do chủ dự án tạo**, đăng nhập bằng email và mật khẩu.
-2. **Tài khoản Google**, đăng nhập bằng nút "Đăng nhập bằng Google".
+2. **Tài khoản Google**, đăng nhập bằng nút "Đăng nhập bằng Google" — và chủ
+   dự án đã quyết định **khách hàng đăng nhập bằng tài khoản Google lần đầu sẽ
+   được tạo tài khoản ngay lúc đó**.
 
-Đã biết: Planner vẫn dành cho nhân viên Nhà Hưng trước (Bối cảnh ADR 0004);
-chưa có dịch vụ gửi email nên không gửi được gì cho người dùng; chưa có OAuth
-client của Google. Chưa biết: khách hàng có bao giờ tự phục vụ không, nhân viên
-dùng Google Workspace với tên miền công ty hay Gmail cá nhân, và tài khoản
-`admin` (ADR 0006) có bắt buộc MFA không.
+Câu trả lời thứ hai thay đổi phạm vi mà ADR 0004 đã viết cho. ADR 0004 chọn
+"nhân viên trước, khách hàng có thể sau"; nay khách hàng tự phục vụ, và chỉ qua
+Google. Đã biết: chưa có dịch vụ gửi email nên không gửi được gì cho người dùng,
+đó là lý do tự phục vụ đi qua Google (Google đã xác minh địa chỉ) chứ không qua
+form đăng ký mật khẩu; chưa có OAuth client của Google. Chưa biết: sẽ có bao
+nhiêu khách hàng, nhân viên dùng Google Workspace với tên miền công ty hay Gmail
+cá nhân, và tài khoản `admin` (ADR 0006) có bắt buộc MFA không.
 
 ## Quyết định
 
@@ -42,10 +46,15 @@ dùng Google Workspace với tên miền công ty hay Gmail cá nhân, và tài 
    `requireOwnedTrip` và mọi phương thức repository bên dưới không đổi. Đăng
    nhập thành công bằng bất kỳ cách nào cũng luôn cấp một session mới.
 
-2. **Không có đăng ký công khai; Google không bao giờ tạo tài khoản.** Một tài
-   khoản chỉ tồn tại vì operator đã tạo nó. Google đăng nhập được vào tài khoản
-   đã có; không tạo được tài khoản mới. Đây là phạm vi "nhân viên trước" của chủ
-   dự án, và nghĩa là người lạ có tài khoản Google không nhận được gì.
+2. **Google là cách tự đăng ký duy nhất.** Lần đăng nhập Google đầu tiên có
+   email đã xác minh không khớp tài khoản nào thì **tạo một tài khoản mới** —
+   tài khoản người đi chơi thường (`role: member` khi ADR 0006 có hiệu lực),
+   không có mật khẩu và không có quyền vào chuyến đi của người khác. Tài khoản
+   mật khẩu vẫn chỉ do operator tạo; không có form đăng ký mật khẩu, vì không có
+   dịch vụ gửi email thì không xác minh được địa chỉ cũng không cho đặt lại mật
+   khẩu được. Đăng nhập Google có email khớp với tài khoản do operator tạo thì
+   liên kết vào tài khoản đó chứ không tạo bản trùng, nên nhân viên vẫn chỉ có
+   một tài khoản.
 
 3. **Access token vẫn giữ.** Nó vẫn là credential cho script, curl và test
    (`Authorization: Bearer`) và vẫn chạy ở `POST /api/planner/session`. Form
@@ -55,7 +64,7 @@ dùng Google Workspace với tên miền công ty hay Gmail cá nhân, và tài 
 
 ### Mô hình dữ liệu
 
-`PlannerUser` thêm bốn trường **tuỳ chọn**, thiếu thì đọc là `null`, nên file
+`PlannerUser` thêm năm trường **tuỳ chọn**, thiếu thì đọc là `null`, nên file
 `.data/planner.json` hiện có vẫn nạp nguyên vẹn (mở rộng trước, thu gọn sau):
 
 | Trường | Kiểu | Ý nghĩa |
@@ -64,6 +73,12 @@ dùng Google Workspace với tên miền công ty hay Gmail cá nhân, và tài 
 | `passwordHash` | `string \| null` | `scrypt$<N>$<r>$<p>$<salt b64url>$<hash b64url>`. Null nghĩa là người dùng này không đăng nhập bằng mật khẩu. |
 | `mustChangePassword` | `boolean` | True với mật khẩu tạm do operator cấp; bị xoá khi người dùng đổi mật khẩu lần đầu. |
 | `googleSub` | `string \| null` | Id chủ thể ổn định của Google (`sub`), duy nhất giữa các người dùng. Được ghi lần đầu người dùng đăng nhập bằng Google. |
+| `createdVia` | `'operator' \| 'google'` | Tài khoản được tạo bằng cách nào; thiếu thì đọc là `operator`. Giúp operator phân biệt nhân viên với khách tự đăng ký cho tới khi có vai trò của ADR 0006. |
+
+Tài khoản do Google tạo lấy `displayName` từ claim `name` (cắt còn 80 ký tự,
+không có thì dùng phần trước `@` của email) và `handle` suy từ phần trước `@`
+của email, chuyển thành slug, trùng thì thêm một chuỗi ngẫu nhiên ngắn. Cả hai
+đều không phải credential, và người dùng có thể đổi tên hiển thị sau.
 
 `publicPlannerUserSchema` vẫn bỏ mọi credential: `passwordHash` và `googleSub`
 không bao giờ được trả về; `email` được trả cho chính người dùng và cho
@@ -116,7 +131,7 @@ Google đã công bố, chỉ dùng `fetch` và `node:crypto`.
   `safeReturnTo` hiện có (`src/lib/return-to.ts`), tạo một dòng `oauthAttempts`
   với `state`, `nonce` và PKCE `code_verifier` ngẫu nhiên, đặt cookie 10 phút
   `HttpOnly; Secure; SameSite=Lax; Path=/api/planner/oauth` chứa `state` gốc, rồi
-  trả `302` sang Google với `scope=openid email`, `code_challenge_method=S256`,
+  trả `302` sang Google với `scope=openid email profile`, `code_challenge_method=S256`,
   `prompt=select_account`.
 - `GET /api/planner/oauth/google/callback` yêu cầu `state` trên query trùng với
   cookie và khớp một lượt chưa hết hạn (lượt đó bị tiêu thụ dù kết quả ra sao —
@@ -127,10 +142,24 @@ Google đã công bố, chỉ dùng `fetch` và `node:crypto`.
   bằng client id, `exp` còn hạn, `nonce` khớp, và `email_verified` là `true`. Mọi
   lỗi đều chuyển về `/sign-in` đã bản địa hoá với một mã lỗi thô; chi tiết chỉ ghi
   vào log server, không bao giờ hiện lên trang.
-- **Khớp tài khoản:** trước hết theo `googleSub`. Nếu không người dùng nào có
-  `sub` đó, khớp theo `email` đã xác minh bằng đúng `email` của một người dùng
-  chưa có `googleSub` — rồi ghi `sub` lại, nên từ đó liên kết theo id ổn định của
-  Google chứ không theo địa chỉ. Không khớp là `account_not_found`; không tạo gì.
+- **Khớp hoặc tạo tài khoản**, theo thứ tự sau, trong một transaction của
+  store để hai lần đăng nhập đầu đồng thời không tạo ra hai tài khoản:
+  1. người dùng có `googleSub` bằng `sub` — đăng nhập;
+  2. nếu không, người dùng có `email` bằng email đã xác minh và chưa có
+     `googleSub` — ghi `sub` vào, rồi đăng nhập. Từ đó liên kết theo id ổn định
+     của Google chứ không theo địa chỉ;
+  3. nếu không, người dùng có email đó nhưng `googleSub` là một `sub` *khác* —
+     từ chối với `account_conflict` (Google đã gán lại địa chỉ; operator phải
+     xem xét);
+  4. nếu không, **tạo** người dùng với `email`, `googleSub`,
+     `createdVia: 'google'`, không mật khẩu, rồi đăng nhập.
+- **Giới hạn đăng ký:** việc tạo tài khoản có limiter riêng theo IP (3 tài
+  khoản mới mỗi giờ) bên cạnh `signInLimiter`, vì mỗi lần tạo làm phình một tài
+  liệu JSON duy nhất. Giống các limiter khác, nó nằm trong bộ nhớ và theo từng
+  tiến trình.
+- **Công tắc tắt đăng ký:** nếu `GOOGLE_SIGNUP_ENABLED` là `false`, bước 4 bị
+  bỏ qua và kết quả là `account_not_found` — chủ dự án đóng tự phục vụ mà không
+  cần deploy code mới. Mặc định là `true`.
 - **Huỷ liên kết:** `DELETE /api/admin/planner/users/:userId/google` xoá
   `googleSub` và xoá mọi session của người dùng đó.
 - **Cấu hình:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, và redirect URI suy
@@ -156,12 +185,12 @@ sequenceDiagram
   S-->>B: 201 + Set-Cookie planner_session
   B->>S: GET /api/planner/oauth/google/start
   S-->>B: 302 sang Google + cookie state
-  B->>G: đồng ý (openid email)
+  B->>G: đồng ý (openid email profile)
   G-->>B: 302 callback?code&state
   B->>S: GET /api/planner/oauth/google/callback
   S->>G: code + code_verifier + secret
   G-->>S: id_token
-  S->>S: kiểm chữ ký, iss, aud, exp, nonce, email_verified; khớp sub hoặc email
+  S->>S: kiểm chữ ký, iss, aud, exp, nonce, email_verified; khớp, liên kết hoặc tạo người dùng
   S-->>B: 302 returnTo + Set-Cookie planner_session
 ```
 
@@ -177,11 +206,12 @@ trả lời và cũng không chặn nó.
 
 | Phương án | Ủng hộ | Phản đối |
 |---|---|---|
-| **A (chọn)** — mật khẩu scrypt và OIDC + PKCE tự viết, cả hai cấp session của ADR 0004 | Không thêm dependency; một mô hình session, một câu chuyện CSRF, code `ownerId` không đổi; chạy được khi chưa cấu hình Google; bề mặt nhỏ, dễ kiểm | Ta tự lo lưu mật khẩu, giới hạn tần suất và các kiểm tra OIDC (`state`, `nonce`, PKCE, chữ ký, claim) — loại code dễ sai tinh vi và cần test kỹ |
+| **A (chọn)** — mật khẩu scrypt cho tài khoản do operator tạo, OIDC + PKCE tự viết cho Google kèm tự đăng ký ở lần đăng nhập đầu, cả hai cấp session của ADR 0004 | Không thêm dependency; khách hàng tự phục vụ mà không cần form mật khẩu hay dịch vụ gửi email; một mô hình session, một câu chuyện CSRF, code `ownerId` không đổi; chạy được khi chưa cấu hình Google | Ta tự lo lưu mật khẩu, giới hạn tần suất và các kiểm tra OIDC (`state`, `nonce`, PKCE, chữ ký, claim); bất kỳ ai có tài khoản Google giờ đều tạo được dòng trong store |
+| A′ — như A, nhưng Google chỉ liên kết tài khoản operator đã tạo | Không có đăng ký mở; store chỉ phình khi operator thao tác | Khách hàng hoàn toàn không tự phục vụ được, trái với điều chủ dự án yêu cầu |
 | B — Auth.js (NextAuth) với provider Credentials + Google | Xử lý OAuth được kiểm duyệt rộng rãi; sau này thêm provider dễ | Framework mới (tự nó đã cần ADR); mô hình session và cookie riêng phải ánh xạ sang `plannerSessions`/`ownerId` hoặc thay thế chúng; provider Credentials cũng không hash mật khẩu hộ ta |
 | C — nhà cung cấp hosted (Clerk, Auth0, Firebase Auth) | MFA, đặt lại mật khẩu và email có sẵn | Nhà cung cấp trả phí giữ danh tính nhân viên cho một công cụ nội bộ vài người dùng; khoá chặt vào đúng đường ráp ADR 0004 đã giữ mỏng; phải đi lại toàn bộ đường session |
 | D — chỉ Google, không mật khẩu | Ít code nhất; không lưu mật khẩu | Nhân viên không có tài khoản Google, hoặc máy đang đăng nhập tài khoản khác, bị khoá ngoài mà không có đường dự phòng |
-| E — mật khẩu kèm tự đăng ký công khai | Khách hàng tự phục vụ được | Chưa ai yêu cầu; cần xác minh email và đặt lại mật khẩu, mà cả hai cần dịch vụ gửi email chưa tồn tại |
+| E — mật khẩu kèm tự đăng ký công khai | Khách hàng không có tài khoản Google cũng tự phục vụ được | Cần xác minh email và đặt lại mật khẩu, mà cả hai cần dịch vụ gửi email chưa tồn tại; Google đã xác minh địa chỉ thay ta |
 
 Phương án về nhì là **B**, và lý do nó thua: nó mang vào một hệ session thứ hai
 phải hoà giải với hệ ADR 0004 vừa ship, để tiết kiệm phần lớn là đoạn xử lý
@@ -192,7 +222,8 @@ phục vụ với nhiều provider, B là hướng đi, và quyết định 1 gi
 ## Hệ quả
 
 **Dễ hơn.** Nhân viên đăng nhập bằng thứ họ nhớ được, hoặc bằng tài khoản Google
-đã có sẵn trên điện thoại. Operator không còn phải cầm bí mật bearer sống lâu
+đã có sẵn trên điện thoại, còn khách hàng bắt đầu lên kế hoạch chỉ với một cú
+nhấn mà không cần operator. Operator không còn phải cầm bí mật bearer sống lâu
 thay người khác, và quên mật khẩu là một lần đặt lại chứ không phải xoay vòng
 token. Đường token, mọi test và mọi ví dụ curl vẫn chạy.
 
@@ -210,10 +241,23 @@ token. Đường token, mọi test và mọi ví dụ curl vẫn chạy.
 - **Chi phí mỗi lần đăng nhập:** scrypt ở `N=2^17` dùng khoảng 128 MB và vài chục
   mili giây mỗi lần thử. Đăng nhập đồng thời nhân con số đó lên; các limiter là thứ
   giữ nó trong giới hạn, và chúng theo từng tiến trình.
+- **Đăng ký mở là một bề mặt tấn công và chi phí mới.** Ai có tài khoản Google
+  cũng tạo được tài khoản, và mỗi tài khoản là một dòng trong một tài liệu JSON
+  được đọc ở mọi request. Limiter đăng ký theo từng tiến trình và dựa trên địa
+  chỉ có thể giả mạo (ADR 0005), nên nó làm chậm một script vụng chứ không chặn
+  được kẻ quyết tâm; chốt chặn thật là `GOOGLE_SIGNUP_ENABLED=false` và, về sau,
+  SQL. Người tự đăng ký chỉ tạo và đọc được chuyến đi của chính họ — `ownerId` là
+  thứ giữ cho việc đó vô hại.
+- **Dữ liệu cá nhân của khách hàng, không chỉ của nhân viên.** Tên và email của
+  khách tự đăng ký được lưu lại, kéo theo nghĩa vụ theo quy định bảo vệ dữ liệu
+  cá nhân của Việt Nam (Nghị định 13/2023/NĐ-CP): thông báo về quyền riêng tư khi
+  đăng ký, mục đích sử dụng được nêu rõ, và cách để yêu cầu xoá tài khoản. ADR này
+  không thiết kế các phần đó; nó đánh dấu chúng là điều kiện trước khi bật đăng
+  ký trên production.
 - **Liên kết theo email tin vào `email_verified` của Google** và vào việc operator
-  gõ đúng địa chỉ. Gõ sai thì không liên kết ai (an toàn); địa chỉ thuộc về người
-  khác thì sẽ liên kết họ (không an toàn) — nên giao diện operator phải hiện email
-  rõ ràng, và có chức năng huỷ liên kết.
+  gõ đúng địa chỉ. Gõ sai thì không liên kết ai (an toàn — khách chỉ được tạo một
+  tài khoản mới); địa chỉ thuộc về người khác thì sẽ liên kết họ (không an toàn) —
+  nên giao diện operator phải hiện email rõ ràng, và có chức năng huỷ liên kết.
 - **Phụ thuộc ra ngoài:** đăng nhập Google cần server gọi được token endpoint và
   JWKS của Google. Nếu không gọi được, đăng nhập Google lỗi còn đăng nhập mật khẩu
   vẫn chạy.
@@ -248,7 +292,11 @@ Code, sau khi ADR được chấp nhận (backend-engineer, rồi frontend-engin
   xoá các session khác; đặt lại xoá mọi session; từ chối `state` không khớp,
   `state` dùng lại, lượt hết hạn, sai `aud`, sai `iss`, token hết hạn, sai chữ ký,
   sai `nonce`, `email_verified: false`; khớp theo `sub`, liên kết theo email,
-  không khớp thì không tạo người dùng; route Google trả 404 khi chưa cấu hình;
+  không khớp thì tạo người dùng `member` với `createdVia: 'google'` và không mật
+  khẩu, lần đăng nhập thứ hai dùng lại tài khoản đó, hai lần đăng nhập đầu đồng
+  thời chỉ tạo một người dùng, handle trùng được thêm hậu tố, `sub` xung đột →
+  `account_conflict`, limiter đăng ký, và `GOOGLE_SIGNUP_ENABLED=false` →
+  `account_not_found`; route Google trả 404 khi chưa cấu hình;
   đường bearer không đổi; client-boundary vẫn pass.
 
 Tài liệu cần cập nhật trong cùng thay đổi: tài liệu tính năng
@@ -266,3 +314,5 @@ Cần chủ dự án quyết:
 3. Nhân viên có dùng Google Workspace với tên miền công ty không? Nếu có, đăng
    nhập Google có thể bắt buộc thêm tên miền đó (claim `hd`) — một dòng giới hạn.
 4. Tài khoản `admin` có bắt buộc MFA không (đang mở trong ADR 0006).
+5. Thông báo quyền riêng tư cho khách đăng ký bằng Google, và cách khách yêu cầu
+   xoá tài khoản — cần có trước khi bật đăng ký trên production.

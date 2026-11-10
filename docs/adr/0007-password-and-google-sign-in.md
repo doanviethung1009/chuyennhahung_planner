@@ -25,13 +25,18 @@ passwords, OAuth and MFA out of scope deliberately, and said each needs its own
 decision. The owner has now asked for two ways to sign in:
 
 1. **Accounts the owner creates**, signed in with an email and a password.
-2. **Google accounts**, signed in with "Sign in with Google".
+2. **Google accounts**, signed in with "Sign in with Google" — and the owner
+   has decided that **a customer who signs in with a Google account for the
+   first time gets an account created on the spot**.
 
-What is known: the Planner is still for Nhà Hưng's own staff first (ADR 0004
-Context); there is no email sender, so nothing can be mailed to a user; there
-is no Google OAuth client yet. What is not known: whether customers will ever
-self-serve, whether staff use Google Workspace on a company domain or personal
-Gmail, and whether `admin` accounts (ADR 0006) will require MFA.
+That second answer changes the scope ADR 0004 was written for. ADR 0004 chose
+"staff first, customers possibly later"; customers now self-serve, through
+Google only. What is known: there is no email sender, so nothing can be mailed
+to a user, which is why self-service goes through Google (Google has already
+verified the address) and not through a password signup form; there is no
+Google OAuth client yet. What is not known: how many customers to expect,
+whether staff use Google Workspace on a company domain or personal Gmail, and
+whether `admin` accounts (ADR 0006) will require MFA.
 
 ## Decision
 
@@ -42,10 +47,14 @@ Gmail, and whether `admin` accounts (ADR 0006) will require MFA.
    `requireOwnedTrip` and every repository method below them are untouched.
    A successful sign-in by any method always issues a new session.
 
-2. **No public signup; Google never creates an account.** An account exists
-   only because an operator created it. Google can sign in to an account that
-   already exists; it cannot make one. This is the owner's "staff first" scope,
-   and it means a stranger with a Google account gets nothing.
+2. **Google is the only self-service signup.** A first Google sign-in whose
+   verified email matches no account **creates one** — a plain traveller
+   account (`role: member` once ADR 0006 lands), with no password and no access
+   to anyone else's trips. Password accounts are still created only by an
+   operator; there is no password signup form, because without an email sender
+   we could neither verify the address nor offer a reset. A Google sign-in whose
+   email matches an operator-created account links to it instead of creating a
+   duplicate, so staff keep one account.
 
 3. **The access token stays.** It remains the credential for scripts, curl and
    tests (`Authorization: Bearer`) and keeps working at
@@ -55,7 +64,7 @@ Gmail, and whether `admin` accounts (ADR 0006) will require MFA.
 
 ### Data model
 
-`PlannerUser` gains four **optional** fields, read as `null` when absent, so an
+`PlannerUser` gains five **optional** fields, read as `null` when absent, so an
 existing `.data/planner.json` loads unchanged (expand, then contract):
 
 | Field | Type | Meaning |
@@ -64,6 +73,13 @@ existing `.data/planner.json` loads unchanged (expand, then contract):
 | `passwordHash` | `string \| null` | `scrypt$<N>$<r>$<p>$<salt b64url>$<hash b64url>`. Null means password sign-in is off for this user. |
 | `mustChangePassword` | `boolean` | True for an operator-issued temporary password; cleared by the user's first password change. |
 | `googleSub` | `string \| null` | Google's stable subject id (`sub`), unique across users. Set the first time the user signs in with Google. |
+| `createdVia` | `'operator' \| 'google'` | How the account came to exist; absent reads as `operator`. Lets the operator tell staff from self-registered customers until ADR 0006 roles exist. |
+
+An account created by Google gets `displayName` from the `name` claim (trimmed
+to 80 characters, falling back to the email's local part) and a `handle`
+derived from the email's local part, slugified and suffixed with a short random
+string on collision. Neither is a credential, and the user can change the
+display name later.
 
 `publicPlannerUserSchema` keeps omitting every credential: `passwordHash` and
 `googleSub` are never returned; `email` is returned to the user themself and to
@@ -115,7 +131,7 @@ documented endpoints, using `fetch` and `node:crypto` only.
   existing `safeReturnTo` (`src/lib/return-to.ts`), creates an `oauthAttempts`
   row with a random `state`, `nonce` and PKCE `code_verifier`, sets a 10-minute
   `HttpOnly; Secure; SameSite=Lax; Path=/api/planner/oauth` cookie carrying the
-  raw `state`, and answers `302` to Google with `scope=openid email`,
+  raw `state`, and answers `302` to Google with `scope=openid email profile`,
   `code_challenge_method=S256`, `prompt=select_account`.
 - `GET /api/planner/oauth/google/callback` requires the `state` in the query to
   equal the cookie's and to resolve to an unexpired attempt (the attempt is
@@ -127,10 +143,23 @@ documented endpoints, using `fetch` and `node:crypto` only.
   id, `exp` is in the future, `nonce` matches, and `email_verified` is `true`.
   Any failure redirects to the localized `/sign-in` with a coarse error code;
   details go to the server log, never to the page.
-- **Matching an account:** first by `googleSub`. If no user has that `sub`, by
-  the verified `email` equal to a user's `email` whose `googleSub` is still null —
-  and then `sub` is stored, so from then on the link follows Google's stable id,
-  not the address. No match is `account_not_found`; nothing is created.
+- **Matching or creating an account**, in this order, inside one store
+  transaction so two concurrent first sign-ins cannot create two accounts:
+  1. a user whose `googleSub` equals `sub` — sign in;
+  2. else a user whose `email` equals the verified email and whose `googleSub`
+     is still null — store `sub` on it, then sign in. From then on the link
+     follows Google's stable id, not the address;
+  3. else a user with that email whose `googleSub` is a *different* `sub` —
+     refuse with `account_conflict` (Google reassigned the address; an operator
+     must look);
+  4. else **create** a user with `email`, `googleSub`, `createdVia: 'google'`,
+     no password, and sign in.
+- **Signup throttle:** account creation has its own per-IP limiter (3 new
+  accounts per hour) on top of `signInLimiter`, because every creation grows the
+  single JSON document. Like the others it is in-memory and per-process.
+- **Optional allow-list:** if `GOOGLE_SIGNUP_ENABLED` is `false`, step 4 is
+  skipped and the result is `account_not_found` — the owner can close
+  self-service without a deploy of new code. It defaults to `true`.
 - **Unlinking:** `DELETE /api/admin/planner/users/:userId/google` clears
   `googleSub` and deletes that user's sessions.
 - **Configuration:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and the redirect
@@ -156,12 +185,12 @@ sequenceDiagram
   S-->>B: 201 + Set-Cookie planner_session
   B->>S: GET /api/planner/oauth/google/start
   S-->>B: 302 to Google + state cookie
-  B->>G: consent (openid email)
+  B->>G: consent (openid email profile)
   G-->>B: 302 callback?code&state
   B->>S: GET /api/planner/oauth/google/callback
   S->>G: code + code_verifier + secret
   G-->>S: id_token
-  S->>S: verify signature, iss, aud, exp, nonce, email_verified; match sub or email
+  S->>S: verify signature, iss, aud, exp, nonce, email_verified; match, link or create user
   S-->>B: 302 returnTo + Set-Cookie planner_session
 ```
 
@@ -177,11 +206,12 @@ not answer it and does not block it.
 
 | Option | For | Against |
 |---|---|---|
-| **A (chosen)** — scrypt passwords and hand-written OIDC + PKCE, both issuing the ADR 0004 session | No new dependency; one session model, one CSRF story, `ownerId` code untouched; works without Google configured; small, auditable surface | We own password storage, throttling and the OIDC checks (`state`, `nonce`, PKCE, signature, claims) — code that is easy to get subtly wrong and needs thorough tests |
+| **A (chosen)** — scrypt passwords for operator-created accounts, hand-written OIDC + PKCE for Google with sign-up on first sign-in, both issuing the ADR 0004 session | No new dependency; customers self-serve without a password form or an email sender; one session model, one CSRF story, `ownerId` code untouched; works without Google configured | We own password storage, throttling and the OIDC checks (`state`, `nonce`, PKCE, signature, claims); anyone with a Google account can now create rows in our store |
+| A′ — as A, but Google only links accounts an operator already created | No open signup; the store only grows when an operator acts | Customers cannot self-serve at all, which is what the owner asked for |
 | B — Auth.js (NextAuth) with Credentials + Google providers | Widely reviewed OAuth handling; more providers later for free | New framework (ADR-gated by itself); its own session and cookie model would have to be mapped onto `plannerSessions`/`ownerId` or replace them; its Credentials provider does not hash passwords for us anyway |
 | C — a hosted provider (Clerk, Auth0, Firebase Auth) | MFA, reset and email for free | A paid vendor holding staff identity for an internal tool used by a handful of people; lock-in on the seam ADR 0004 kept thin; re-plumbs every session |
 | D — Google only, no passwords | Least code; no password store | Staff without a Google account, or a device signed in to a different one, are locked out with no fallback |
-| E — passwords with public self-signup | Customers could self-serve | Nobody asked for it yet; needs email verification and reset, which need an email sender that does not exist |
+| E — passwords with public self-signup | Customers without a Google account could self-serve too | Needs email verification and reset, which need an email sender that does not exist; Google already verifies the address for us |
 
 The runner-up is **B**, and the reason it lost: it brings a second session
 system that has to be reconciled with the one ADR 0004 just shipped, for a
@@ -193,7 +223,8 @@ rows.
 ## Consequences
 
 **Easier.** Staff sign in with something they can remember or with the Google
-account already on their phone. Operators stop handling long-lived bearer
+account already on their phone, and customers start planning with one click
+and no operator involved. Operators stop handling long-lived bearer
 secrets for people, and a lost password is a reset rather than a token
 rotation. The token path, every test and every curl example keep working.
 
@@ -211,10 +242,24 @@ rotation. The token path, every test and every curl example keep working.
 - **Cost per sign-in:** scrypt at `N=2^17` uses about 128 MB and tens of
   milliseconds per attempt. Concurrent sign-ins multiply that; the limiters are
   what keep it bounded, and they are per-process.
+- **Open signup is a new attack and cost surface.** Anyone with a Google
+  account can create an account, and every account is a row in one JSON
+  document read on every request. The signup limiter is per-process and keyed
+  on a spoofable address (ADR 0005), so it slows a careless script, not a
+  determined one; the real backstop is `GOOGLE_SIGNUP_ENABLED=false` and,
+  eventually, SQL. A self-registered user can only create and read their own
+  trips — `ownerId` is what keeps that harmless.
+- **Customers' personal data, not only staff's.** Self-registered customers'
+  names and emails are stored, which brings obligations under Vietnam's
+  personal-data rules (Decree 13/2023/ND-CP): a privacy notice at sign-up, a
+  stated purpose, and a way to have the account deleted. This ADR does not
+  design those; it flags them as a precondition for turning signup on in
+  production.
 - **Email-based linking trusts Google's `email_verified`** and the operator
-  typing the right address. A mistyped address links nobody (safe); an address
-  that belongs to someone else would link them (unsafe) — so the operator UI
-  must show the email clearly, and unlinking exists.
+  typing the right address. A mistyped address links nobody (safe — the
+  customer just gets a new account); an address that belongs to someone else
+  would link them (unsafe) — so the operator UI must show the email clearly,
+  and unlinking exists.
 - **Outbound dependency:** Google sign-in needs the server to reach Google's
   token and JWKS endpoints. If they are unreachable, Google sign-in fails and
   password sign-in still works.
@@ -249,7 +294,11 @@ Code, once this is accepted (backend-engineer, then frontend-engineer):
   change password kills other sessions; reset kills all sessions; `state`
   mismatch, reused `state`, expired attempt, wrong `aud`, wrong `iss`, expired
   token, bad signature, wrong `nonce`, `email_verified: false` all refused;
-  match by `sub`, link by email, no match → no user created; Google routes 404
+  match by `sub`, link by email, no match → a `member` user created with
+  `createdVia: 'google'` and no password, a second sign-in reuses it, two
+  concurrent first sign-ins create one user, handle collision gets a suffix,
+  conflicting `sub` → `account_conflict`, signup limiter, and
+  `GOOGLE_SIGNUP_ENABLED=false` → `account_not_found`; Google routes 404
   when unconfigured; bearer path unchanged; client-boundary still passing.
 
 Documents to update in the same change: the feature document
@@ -268,3 +317,6 @@ Needs the owner's input:
 3. Do staff use Google Workspace on a company domain? If so, Google sign-in can
    additionally require that domain (`hd` claim) — a one-line restriction.
 4. Whether `admin` accounts require MFA (open in ADR 0006).
+5. A privacy notice for customers who sign up with Google, and how a customer
+   asks for their account to be deleted — needed before signup is on in
+   production.
