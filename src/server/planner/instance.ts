@@ -1,7 +1,9 @@
 import { getRepository } from '@/server/content/instance';
 import { createContentCatalog } from './catalog';
 import { PlannerRepository } from './repository';
-import { createJsonPlannerStore } from './store';
+import { createPostgresPlannerStore } from '@/server/persistence/postgres-planner-store';
+import { createPostgresPool } from '@/server/persistence/postgres-pool';
+import { createJsonPlannerStore, type PlannerStore } from './store';
 
 /**
  * The process-wide Planner repository used by route handlers.
@@ -17,14 +19,23 @@ import { createJsonPlannerStore } from './store';
  */
 const DEFAULT_STORE_PATH = '.data/planner.json';
 
+function selectStore(): PlannerStore {
+  const databaseUrl = process.env.DATABASE_URL?.trim();
+  if (databaseUrl) {
+    // The pool connects lazily, so an unreachable database is reported per
+    // request as a 503 rather than failing the build of this singleton.
+    return createPostgresPlannerStore(createPostgresPool(databaseUrl));
+  }
+  return createJsonPlannerStore(process.env.PLANNER_STORE?.trim() || DEFAULT_STORE_PATH);
+}
+
 let instance: Promise<PlannerRepository> | null = null;
 
 async function build(): Promise<PlannerRepository> {
-  const storePath = process.env.PLANNER_STORE?.trim() || DEFAULT_STORE_PATH;
   const content = await getRepository();
 
   return new PlannerRepository({
-    store: createJsonPlannerStore(storePath),
+    store: selectStore(),
     catalog: createContentCatalog(content),
   });
 }

@@ -23,6 +23,7 @@ New features start from [`_template.md`](_template.md) /
 | SEO and metadata | [seo-and-metadata.md](seo-and-metadata.md) | Canonicals, `hreflang`, sitemap, JSON-LD |
 | Follow Hưng's footsteps | [follow-hung-footsteps.md](follow-hung-footsteps.md) | Story itinerary, trip setup, sign-in, My Trips, read-only share links |
 | Travel Planner core | [travel-planner-core.md](travel-planner-core.md) | `/api/planner` — trips, days, activities, expenses, budget, template clone |
+| Planner on PostgreSQL | [planner-postgres-persistence.md](planner-postgres-persistence.md) | `DATABASE_URL` store, advisory-lock transaction, migrations, import and export |
 
 ## Phases not yet open
 

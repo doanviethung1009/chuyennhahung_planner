@@ -193,15 +193,15 @@ export class PlannerRepository {
   // -------------------------------------------------------------------------
 
   /**
-   * Read, mutate, write — with every pair serialised behind one promise chain.
-   * A throw inside `mutate` abandons the whole change: nothing is written, so a
-   * failed validation can never leave half an activity behind.
+   * Read, mutate, write — one atomic unit owned by the store (ADR 0008 §2), so
+   * the same code is serialised in-process on the JSON store and across
+   * processes on Postgres. A throw inside `mutate` abandons the whole change:
+   * nothing is written, so a failed validation can never leave half an activity
+   * behind. The local queue stays as extra in-process serialisation.
    */
   private transaction<T>(mutate: (data: PlannerData) => Promise<T> | T): Promise<T> {
     const run = async (): Promise<T> => {
-      const data = withTripDefaults(await this.store.read());
-      const result = await mutate(data);
-      await this.store.write(data);
+      const result = await this.store.transact((data) => mutate(withTripDefaults(data)));
       this.shareIndex = null;
       this.shareIndexGeneration += 1;
       return result;

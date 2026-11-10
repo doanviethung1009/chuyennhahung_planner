@@ -18,7 +18,8 @@ export type ContentErrorCode =
   | 'invalid_state'
   | 'precondition_required'
   | 'version_conflict'
-  | 'rate_limited';
+  | 'rate_limited'
+  | 'service_unavailable';
 
 const STATUS_BY_CODE: Record<ContentErrorCode, number> = {
   bad_request: 400,
@@ -35,6 +36,7 @@ const STATUS_BY_CODE: Record<ContentErrorCode, number> = {
   precondition_required: 428,
   version_conflict: 412,
   rate_limited: 429,
+  service_unavailable: 503,
 };
 
 export interface FieldIssue {

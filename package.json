@@ -10,12 +10,16 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "db:migrate": "vite-node -c vitest.config.ts scripts/db-migrate.ts",
+    "planner:import": "vite-node -c vitest.config.ts scripts/planner-import.ts",
+    "planner:export": "vite-node -c vitest.config.ts scripts/planner-export.ts",
     "verify:ui": "node scripts/screenshots.mjs",
     "covers": "node scripts/generate-covers.mjs"
   },
   "dependencies": {
     "next": "^16.4.5",
     "next-intl": "^4.14.9",
+    "pg": "^8.23.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "zod": "^4.6.7"
@@ -23,6 +27,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.5",
     "@types/node": "^24.19.2",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.1",
     "eslint": "^9.39.1",
