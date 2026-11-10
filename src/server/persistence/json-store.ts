@@ -2,7 +2,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 
 /**
- * One document, two methods. Persistence sits behind this interface so that
+ * One document, three methods. Persistence sits behind this interface so that
  * swapping in SQL later is a new adapter and nothing else — the repositories
  * above it hold every invariant and never learn where the bytes live
  * (`docs/adr/0001-travel-content-system.md` §1).
@@ -16,6 +16,30 @@ import { dirname, resolve } from 'node:path';
 export interface DocumentStore<T> {
   read(): Promise<T>;
   write(next: T): Promise<void>;
+  /**
+   * Atomic read-modify-write. `mutate` receives a private copy of the document
+   * and edits it in place; once it resolves, that copy is written and its
+   * result returned. If `mutate` throws (or the write fails), nothing is
+   * written and the error propagates. Transactions on one store never overlap.
+   *
+   * The memory and JSON stores serialise on an in-process queue, which is safe
+   * for one Node process only; a shared store makes this atomic across
+   * instances (`docs/adr/0008-postgres-document-store.md` §3).
+   */
+  transact<R>(mutate: (data: T) => Promise<R> | R): Promise<R>;
+}
+
+/**
+ * A promise chain that runs tasks one at a time. A rejected task does not
+ * wedge the chain: the next task still runs.
+ */
+function createSerialQueue() {
+  let tail: Promise<unknown> = Promise.resolve();
+  return function enqueue<R>(task: () => Promise<R>): Promise<R> {
+    const run = tail.then(task, task);
+    tail = run.catch(() => undefined);
+    return run;
+  };
 }
 
 /**
@@ -25,6 +49,7 @@ export interface DocumentStore<T> {
  */
 export function createMemoryDocumentStore<T>(initial: T): DocumentStore<T> {
   let current = structuredClone(initial);
+  const enqueue = createSerialQueue();
 
   return {
     async read() {
@@ -32,6 +57,14 @@ export function createMemoryDocumentStore<T>(initial: T): DocumentStore<T> {
     },
     async write(next) {
       current = structuredClone(next);
+    },
+    transact(mutate) {
+      return enqueue(async () => {
+        const draft = structuredClone(current);
+        const result = await mutate(draft);
+        current = structuredClone(draft);
+        return result;
+      });
     },
   };
 }
@@ -65,16 +98,10 @@ export function createJsonDocumentStore<T>(
   normalize: (parsed: Partial<T>) => T,
 ): DocumentStore<T> {
   const absolutePath = resolve(filePath);
-  let queue: Promise<unknown> = Promise.resolve();
+  // Reads, writes and transactions share one queue, so a read never observes
+  // a transaction half-way and a failed task does not wedge the ones after it.
+  const enqueue = createSerialQueue();
   let cached: T | undefined;
-
-  function enqueue<R>(task: () => Promise<R>): Promise<R> {
-    const run = queue.then(task, task);
-    // Keep the chain alive even if one task rejects, so a failed write does not
-    // wedge every later write behind it.
-    queue = run.catch(() => undefined);
-    return run;
-  }
 
   async function readFromDisk(): Promise<T> {
     try {
@@ -90,25 +117,41 @@ export function createJsonDocumentStore<T>(
     }
   }
 
+  // These two run only inside `enqueue` and never enqueue themselves, so
+  // `transact` can call both without deadlocking on its own task.
+  async function readUnlocked(): Promise<T> {
+    if (cached === undefined) cached = await readFromDisk();
+    return structuredClone(cached);
+  }
+
+  async function writeUnlocked(next: T): Promise<void> {
+    await mkdir(dirname(absolutePath), { recursive: true });
+    const temp = `${absolutePath}.${process.pid}.${Date.now()}.tmp`;
+    const body = `${JSON.stringify(next, null, 2)}\n`;
+    await writeFile(temp, body, 'utf8');
+    await rename(temp, absolutePath);
+    // Only after the rename, so a failed write leaves the cache matching
+    // disk. Parsed from the bytes just written — not cloned from `next` —
+    // so the cache is exactly what a cold read would return (JSON drops
+    // `undefined` keys and turns a Date into a string; a clone would not).
+    cached = normalize(JSON.parse(body) as Partial<T>);
+  }
+
   return {
     read() {
-      return enqueue(async () => {
-        if (cached === undefined) cached = await readFromDisk();
-        return structuredClone(cached);
-      });
+      return enqueue(readUnlocked);
     },
     write(next) {
+      return enqueue(() => writeUnlocked(next));
+    },
+    transact(mutate) {
       return enqueue(async () => {
-        await mkdir(dirname(absolutePath), { recursive: true });
-        const temp = `${absolutePath}.${process.pid}.${Date.now()}.tmp`;
-        const body = `${JSON.stringify(next, null, 2)}\n`;
-        await writeFile(temp, body, 'utf8');
-        await rename(temp, absolutePath);
-        // Only after the rename, so a failed write leaves the cache matching
-        // disk. Parsed from the bytes just written — not cloned from `next` —
-        // so the cache is exactly what a cold read would return (JSON drops
-        // `undefined` keys and turns a Date into a string; a clone would not).
-        cached = normalize(JSON.parse(body) as Partial<T>);
+        // `readUnlocked` hands out a clone, so a throw in `mutate` leaves the
+        // cache untouched and nothing reaches disk.
+        const draft = await readUnlocked();
+        const result = await mutate(draft);
+        await writeUnlocked(draft);
+        return result;
       });
     },
   };

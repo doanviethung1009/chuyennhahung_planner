@@ -13,7 +13,7 @@ import type {
 
 /**
  * The whole content set, as one document. Persistence is deliberately behind
- * the two-method `DocumentStore` interface: swapping in SQL later is a new
+ * the `DocumentStore` interface: swapping in SQL later is a new
  * adapter and nothing else (see `docs/adr/0001-travel-content-system.md` §1).
  */
 export interface ContentData {

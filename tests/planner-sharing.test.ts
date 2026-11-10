@@ -566,6 +566,7 @@ describe('share index (W3)', () => {
         return inner.read();
       },
       write: (next: Parameters<typeof inner.write>[0]) => inner.write(next),
+      transact: inner.transact,
     };
     return { store, counter };
   }
