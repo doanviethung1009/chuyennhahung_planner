@@ -5,6 +5,12 @@
  * the effective limit, and the key comes from a forwarded header the client can
  * spoof. It is a speed bump against token guessing, not an authorisation
  * control — the 256-bit share token is what actually stops enumeration.
+ *
+ * Because the per-client key can be forged, nothing whose cost matters relies
+ * on it alone (ADR 0007): Google signups also pass a global bucket, in-flight
+ * Google attempts have a global ceiling (`MAX_LIVE_OAUTH_ATTEMPTS`), password
+ * hashing has a concurrency gate (`password.ts`), and password guesses are
+ * also counted per account.
  */
 
 export type RateLimitResult = { ok: true } | { ok: false; retryAfterSeconds: number };
@@ -105,6 +111,30 @@ export function clientKey(headers: Pick<Headers, 'get'>): string {
 export const shareReadLimiter = createRateLimiter({ limit: 60, windowMs: 60_000 });
 /** Sign-in attempts: 10 per minute per client. A separate bucket. */
 export const signInLimiter = createRateLimiter({ limit: 10, windowMs: 60_000 });
+/**
+ * Password attempts against one account: 5 per 15 minutes, keyed by the
+ * normalised email (ADR 0007). Slows guessing from many addresses; it
+ * throttles and never locks, so it cannot be used to lock staff out.
+ */
+export const signInAccountLimiter = createRateLimiter({ limit: 5, windowMs: 15 * 60_000 });
+/** Accounts created by a first Google sign-in: 3 per hour per client. */
+export const signupLimiter = createRateLimiter({ limit: 3, windowMs: 60 * 60_000 });
+/**
+ * The same, across all clients: 30 per hour. `signupLimiter` keys on a
+ * forgeable header, so this global bucket is what bounds account creation
+ * when the header is rotated. Checked with `GLOBAL_KEY`.
+ */
+export const signupGlobalLimiter = createRateLimiter({ limit: 30, windowMs: 60 * 60_000 });
+export const GLOBAL_KEY = 'all';
+
+/**
+ * Whether one more Google signup may go ahead for this client. The per-client
+ * bucket is asked first, so a client already over its own limit does not use
+ * up the global one.
+ */
+export function allowSignup(key: string): boolean {
+  return signupLimiter.check(key).ok && signupGlobalLimiter.check(GLOBAL_KEY).ok;
+}
 
 /**
  * For the `/shared/[token]` page, which has no Request: pass `await headers()`.

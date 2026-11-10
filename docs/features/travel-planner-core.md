@@ -18,16 +18,28 @@ the API and the domain rules underneath it.
 
 ## Routes
 
-No page routes. The feature is an API surface, so nothing is added to the
-localized pathname map.
+The core is an API surface. The pages built on it live in other feature
+documents; the two that belong to sign-in are `/sign-in` (`/dang-nhap`) and,
+since [ADR 0007](../adr/0007-password-and-google-sign-in.md), the
+change-password page `/account/password` (`/doi-mat-khau`).
 
 Sign-in — no credential needed to call it; it is how you get one
-([ADR 0004](../adr/0004-planner-identity.md)).
+([ADR 0004](../adr/0004-planner-identity.md), [ADR 0007](../adr/0007-password-and-google-sign-in.md)).
 
 | Method | Path | What it does |
 |---|---|---|
-| `POST` | `/api/planner/session` | Exchanges an access token for an `HttpOnly` session cookie |
+| `POST` | `/api/planner/session` | Body `{ accessToken }` or `{ email, password }`; sets an `HttpOnly` session cookie and says whether a temporary password must be changed |
 | `DELETE` | `/api/planner/session` | Signs out: deletes the session row and clears the cookie |
+| `GET` | `/api/planner/oauth/google/start` | Starts Google sign-in: records a one-use attempt, sets the `state` cookie, redirects to Google. With `intent=link` and a session it starts linking Google to that account instead. 404 when Google is not configured |
+| `GET` | `/api/planner/oauth/google/callback` | Google's redirect back: checks `state`, exchanges the code with PKCE, verifies the `id_token`, then matches the account by `sub`, creates one, or — for an `intent=link` attempt — links Google to the signed-in user who started it. Every outcome is a 302 |
+| `POST` | `/api/planner/password` | Changes the signed-in user's password; ends their other sessions |
+
+Operator endpoints added by ADR 0007 (bearer `ADMIN_API_TOKEN`):
+`POST /api/admin/planner/users` accepts an optional `email` and then also
+returns a one-time `temporaryPassword`;
+`POST /api/admin/planner/users/:userId/reset-password` issues a new one and ends
+every session; `DELETE /api/admin/planner/users/:userId/google` removes the
+Google link.
 
 Traveller endpoints — authenticated by that **session cookie**, or by
 `Authorization: Bearer <planner access token>` for curl, scripts and tests. The
@@ -36,7 +48,9 @@ owner comes from the credential, never from the payload or the query string.
 Every **mutating** request must also state a same-origin `Origin` or
 `Sec-Fetch-Site`, and a cookie-authenticated one must state one at all —
 otherwise `403 forbidden`. That is the cost of cookies being sent automatically;
-see *How it works*.
+see *How it works*. A session opened with an operator-issued temporary password
+gets `403 password_change_required` from every route except "who am I",
+sign-out and the password change.
 
 | Method | Path | What it does |
 |---|---|---|
@@ -80,8 +94,9 @@ are in [`schemas.ts`](../../src/server/planner/schemas.ts) — every type is
 
 | Collection | Becomes | Key fields |
 |---|---|---|
-| `users` | `planner_users` | `handle`, `displayName`, `tokenHash` (SHA-256, never returned) |
-| `sessions` | `planner_sessions` | `userId`, `tokenHash` (SHA-256 of the opaque cookie value), `createdAt`, `lastSeenAt`, `expiresAt` |
+| `users` | `planner_users` | `handle`, `displayName`, `tokenHash` (SHA-256, never returned); since ADR 0007, optional `email`, `passwordHash` (scrypt, never returned), `mustChangePassword`, `googleSub` (never returned), `createdVia` |
+| `sessions` | `planner_sessions` | `userId`, `tokenHash` (SHA-256 of the opaque cookie value), `createdAt`, `lastSeenAt`, `expiresAt`, `method` (`token` / `password` / `google`) |
+| `oauthAttempts` | `oauth_attempts` | `stateHash`, `nonce`, `codeVerifier`, `returnTo`, `locale`, `expiresAt` — a ten-minute, one-use Google sign-in in flight |
 | `trips` | `trips` | `ownerId`, `destinationSlug`, `startDate`, `durationDays`, `partySize`, `budget.targetTotalVnd`, `status`, `sourceTemplate`, `version` |
 | `tripDays` | `trip_days` | `tripId`, `dayNumber` (1..n), `date` (derived), `title`, `note` |
 | `tripActivities` | `trip_activities` | `tripId`, `dayId`, `order` (0..m), `placeSlug`, `title`, `estimatedCostVnd`, `costScope`, `category` |
@@ -106,6 +121,10 @@ Fields that carry real weight:
 - **`expiresAt` and `lastSeenAt`** are the two axes a session dies on: 14 days
   absolute, 7 days idle. `SESSION_ABSOLUTE_DAYS` and `SESSION_IDLE_DAYS` are
   single constants, because the owner left the exact numbers open.
+- **`email` is personal data**, and since Google sign-in creates accounts it is
+  customers' as well as staff's. A user response carries `email` and the
+  derived `hasPassword` / `hasGoogle`, never `passwordHash` or `googleSub`; the
+  integrity sweep reports a shared email by user id, never by value.
 
 Money is integer đồng everywhere, capped at 10^12 by the content system's
 `vndSchema`. Nothing here needs the owner's real data; the one operational
@@ -138,6 +157,33 @@ Rotating a user's token deletes that user's sessions, which makes
 through to the bearer path so a script is not broken by a leftover cookie; an
 *expired* one says so, because it resolved and a reason is more useful than
 silence.
+
+**Passwords (ADR 0007).** An operator who creates a user with an email gets a
+temporary password back, once; only its scrypt hash (`N=2^17, r=8, p=1`,
+parameters stored in the hash) is kept. Signing in with it opens a `password`
+session that `plannerRoute` holds behind `password_change_required` until the
+user changes it. Unknown email, no password and wrong password answer the same
+401, and an unknown email still runs scrypt against a dummy hash so the timing
+matches. scrypt runs outside the store's write queue; the transaction then
+re-checks that the verified hash is still the stored one. A per-email limiter
+(5 per 15 minutes) sits beside the per-IP one; it slows, never locks.
+
+**Google (ADR 0007).** Hand-written OpenID Connect with PKCE: `start` stores the
+`nonce` and verifier under the digest of a random `state`, which also goes into
+an `HttpOnly` cookie scoped to `/api/planner/oauth`; `callback` consumes the
+attempt before anything else, requires the query `state` to equal the cookie,
+exchanges the code server to server, and verifies the `id_token` signature
+against Google's cached JWKS plus `iss`, `aud`, `exp`, `iat`, `nonce` and
+`email_verified`. The account is matched by `googleSub`; an email that already
+belongs to an account is refused with `link_required` and **never linked** — an
+operator-typed address was never verified; otherwise — unless
+`GOOGLE_SIGNUP_ENABLED=false` or a signup limiter (3 an hour per IP, 30 an hour
+overall) says no — it is created with `createdVia: 'google'` and no password, all
+in one transaction. Linking is explicit: a signed-in user follows "Link your
+Google account" on the change-password page (`start?intent=link`), and the
+callback links only while the browser is still signed in as that user and the
+Google `sub` is nobody else's. At most 500 Google attempts are in flight at once,
+whoever claims to send them.
 
 **CSRF is the price of the cookie.** A bearer token is only ever attached
 deliberately; a cookie is attached by the browser to any request to our origin,
@@ -208,7 +254,12 @@ a raw `bigint` can neither throw nor silently become a string.
 | [`src/server/planner/http.ts`](../../src/server/planner/http.ts) | Route wrappers, `ETag`/`If-Match`, response envelope |
 | [`src/server/planner/instance.ts`](../../src/server/planner/instance.ts) | The process-wide repository |
 | [`src/app/api/planner/**`](../../src/app/api/planner) | Traveller route handlers |
-| [`src/app/api/planner/session/route.ts`](../../src/app/api/planner/session/route.ts) | Sign-in and sign-out |
+| [`src/app/api/planner/session/route.ts`](../../src/app/api/planner/session/route.ts) | Sign-in (token or password) and sign-out |
+| [`src/server/planner/password.ts`](../../src/server/planner/password.ts) | scrypt hashing, verification, dummy hash, temporary passwords |
+| [`src/server/planner/google.ts`](../../src/server/planner/google.ts) | Google configuration, authorize URL, code exchange, JWKS cache, `id_token` verification |
+| [`src/server/planner/google-http.ts`](../../src/server/planner/google-http.ts) | The `state` cookie and the redirects of the two Google routes |
+| [`src/app/api/planner/oauth/google/**`](../../src/app/api/planner/oauth/google) | Google `start` and `callback` |
+| [`src/app/api/planner/password/route.ts`](../../src/app/api/planner/password/route.ts) | Change password |
 | [`src/app/api/admin/planner/users/**`](../../src/app/api/admin/planner/users) | Operator route handlers — provisioning |
 | [`src/app/api/admin/planner/integrity/route.ts`](../../src/app/api/admin/planner/integrity/route.ts) | Operator route handler — the integrity sweep |
 
@@ -219,7 +270,7 @@ signatures unchanged.
 
 ## Tests
 
-115 tests across seven files, all green.
+163 tests across nine files, all green (the two ADR 0007 files add 48).
 
 | File | What it actually asserts |
 |---|---|
@@ -229,11 +280,15 @@ signatures unchanged.
 | [`planner-api.test.ts`](../../tests/planner-api.test.ts) | The real route handlers: 401 paths, the admin token explicitly unable to read any trip, 422 with field paths, the full activity→reorder→expense→budget flow, 428 without `If-Match`, 412 on a stale version, 400 on a malformed one, 404 isolation per verb, the archive/restore/purge sequence, and the sweep being operator-only |
 | [`planner-session.test.ts`](../../tests/planner-session.test.ts) | The session layer at domain level: sign-in and the identity it produces, only the digest stored and the cookie value absent from the store, a separate session per sign-in so a second device is independent, an absolute expiry that using the session does not extend, idle expiry inside the absolute window, the throttled `lastSeenAt` write, idempotent sign-out, rotation and user deletion killing sessions while leaving another traveller's alone, a stale cookie falling through to the bearer token, an expired one reporting itself, other cookies on the request ignored, and the four session integrity checks |
 | [`planner-session-api.test.ts`](../../tests/planner-session-api.test.ts) | The HTTP half: `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/` and `Max-Age` on the cookie, the token absent from the response body, sign-out clearing it with `Max-Age=0`, 401 setting no cookie, and the same-origin rule — a cookie mutation with no origin refused, cross-site `Origin` and `Sec-Fetch-Site` refused with nothing applied, both same-origin forms allowed, the bearer path still working without an origin but still refused cross-site, and a cross-site sign-in refused |
+| [`planner-password.test.ts`](../../tests/planner-password.test.ts) | scrypt round-trip, per-hash salt, stored parameters, upgrade of a weak hash, malformed and memory-hungry hashes refused; temporary password only with an email; duplicate email refused without echoing it; the same 401 for unknown email, no password and wrong password; the change gate, change keeping this session and ending others, reset ending all; the credential integrity checks; and over HTTP the 403 gate, a cross-site change refused, a short password 422, the per-account limiter at the sixth guess from six addresses, and the operator reset |
+| [`planner-google.test.ts`](../../tests/planner-google.test.ts) | Configuration off unless both secrets are set; the RFC 7636 PKCE vector; `id_token` accepted, keys cached, and refused for another key, an unknown `kid`, wrong `iss`/`aud`/`nonce`, expiry, future `iat`, no `sub`, unverified email, `alg: none` and garbage; account creation, reuse, `link_required` for an email match with nothing changed, explicit linking and its two conflicts, the 500-attempt ceiling, conflict, signup closed or throttled, a race creating one account, handle collisions; one-use `state`; and over HTTP against a fake Google: 404 when unconfigured, the authorize redirect and cookie, a new customer signed in and returned, an email match sent back with `link_required`, a signed-in user linking and then signing in with Google, linking refused without a session or from another one, a forged and a replayed `state`, cancelled and unverified codes, signup off, and an off-site `returnTo` ignored |
 | [`planner-integrity.test.ts`](../../tests/planner-integrity.test.ts) | One broken invariant per test, applied by writing straight to the store so the repository is bypassed exactly as a hand edit would bypass it: unknown owner and destination, a wrong `endDate`, archived/`archivedAt` disagreement, a missing day and a numbering gap, a day dated off the trip calendar, an order gap and a duplicated order, a withdrawn place, rows homed to another trip, orphans in all three child collections, an expense whose day contradicts its activity, duplicate ids and handles, a malformed token digest — plus a test asserting the sweep leaks no title, label, note or amount, and one asserting an edited or withdrawn template is reported as staleness rather than damage |
 
-Deliberately untested: rate limiting (there is none yet), and multi-process write
-contention — the JSON store cannot survive it and the tests would be asserting a
-known limitation rather than a behaviour.
+Deliberately untested: multi-process write contention — the JSON store cannot
+survive it and the tests would be asserting a known limitation rather than a
+behaviour — and the real Google endpoints: the tests run against a fake Google
+with a locally generated RSA key, so a change on Google's side is caught only by
+signing in for real.
 
 ## Limits and open questions
 
@@ -244,16 +299,22 @@ known limitation rather than a behaviour.
   deployment is the trigger to pick SQL — the shape is already written down in
   [ADR 0002](../adr/0002-planner-core.md#the-sql-shape-this-becomes), including
   the indexes.
-- **Identity is interim, and deliberately not an identity system.** Sessions
-  exist ([ADR 0004](../adr/0004-planner-identity.md)) but there is no public
-  signup, no password reset, no OAuth and no MFA. An operator provisions every
-  traveller by hand, and a lost access token can only be rotated, not recovered.
-  Adding any of that is the next ADR; `resolveIdentity` is the one seam it
-  replaces.
-- **No rate limiting on sign-in attempts.** `POST /api/planner/session` can be
-  called as often as a caller likes. The access token is 48 random bytes, so
-  guessing it is not the realistic threat, but a brute-force attempt also costs
-  us nothing to absorb, which is worth fixing before the Planner faces the public.
+- **Identity is self-managed, not an identity provider.** Sessions
+  ([ADR 0004](../adr/0004-planner-identity.md)), passwords and Google sign-in
+  ([ADR 0007](../adr/0007-password-and-google-sign-in.md)) exist; there is no
+  self-service password reset (no email sender), no password signup and no MFA.
+  Open signup through Google means anyone with a Google account can add a row
+  to a single JSON document; `GOOGLE_SIGNUP_ENABLED=false` closes it.
+- **Owner input still needed before signup is on in production:** a privacy
+  notice for customers who sign up with Google and a way to ask for an account
+  to be deleted (Vietnam's Decree 13/2023), and the Google OAuth client itself.
+- **Rate limiting is per process.** Sign-in (10/min per IP), password guesses
+  (5 per 15 minutes per email) and Google signups (3/hour per IP) are counted in
+  memory, keyed on a spoofable forwarded address; a multi-instance deployment
+  multiplies them. Because that key can be forged, signups also pass a global
+  bucket (30/hour), Google attempts have a global ceiling (500 in flight), and
+  scrypt — about 128 MB each — runs at most 4 at once with 32 waiting, then
+  answers 429.
 - **No "your active sessions" view.** A traveller cannot see or revoke one
   device; the only revocation is `rotate-token`, which signs out everywhere.
 - **`Secure` follows the request's scheme** so a plain-http dev server works. In

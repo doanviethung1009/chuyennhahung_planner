@@ -54,6 +54,12 @@ export interface PlannerIdentity {
   userId: string;
   handle: string;
   source: CredentialSource;
+  /**
+   * True for a session opened with an operator-issued temporary password that
+   * has not been changed yet (ADR 0007). `plannerRoute` refuses every route
+   * that has not opted in to serving such a session.
+   */
+  passwordChangeRequired?: boolean;
 }
 
 /** The session cookie's name. Opaque value; no payload, no claims. */

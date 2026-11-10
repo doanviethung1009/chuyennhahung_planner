@@ -74,6 +74,7 @@ trong [`src/i18n/routing.ts`](../src/i18n/routing.ts):
 | `/about` | `/ve-nha-hung` | `/en/about` |
 | `/trip-setup/[template]` | `/tao-chuyen-di/[template]` | `/en/trip-setup/[template]` |
 | `/sign-in` | `/dang-nhap` | `/en/sign-in` |
+| `/account/password` | `/doi-mat-khau` | `/en/account/password` |
 | `/my-trips` | `/chuyen-di-cua-toi` | `/en/my-trips` |
 | `/my-trips/[id]` | `/chuyen-di-cua-toi/[id]` | `/en/my-trips/[id]` |
 | `/shared/[token]` | `/chia-se/[token]` | `/en/shared/[token]` |
@@ -246,7 +247,7 @@ flowchart LR
   `src/server/rate-limit.ts`: trong bộ nhớ, theo từng
   tiến trình, nên cùng điều kiện đa-instance với SQL, và khóa client chỉ đáng tin bằng
   proxy đặt `x-forwarded-for`.
-- **Trang riêng tư** (`/sign-in`, `/my-trips`, `/my-trips/[id]`,
+- **Trang riêng tư** (`/sign-in`, `/account/password`, `/my-trips`, `/my-trips/[id]`,
   `/trip-setup/[template]`) là `noindex` và không có trong sitemap; `/shared/[token]` là
   `noindex` trừ khi trip là `public`, và gửi `Referrer-Policy: no-referrer`.
 - **Mọi response đều có security header** từ `next.config.ts` (`securityHeaders`):
@@ -270,12 +271,14 @@ Những thứ vắng mặt có chủ đích, và không được dựng sớm:
   clone template. `/thiet-ke-chuyen-di` vẫn là trang nội dung chỉ có liên hệ —
   nối nó vào API là việc của frontend và chưa bắt đầu.
 - **Map và gợi ý AI cho Planner.** Cố ý hoãn lại theo đề bài đã mở phase Planner.
-- **Một nhà cung cấp danh tính thật.** Auth của Planner là access token cấp cho
-  từng người đi chơi bởi người vận hành, và trình duyệt đổi nó lấy một session
-  cookie `HttpOnly` có hạn ([ADR 0004](adr/0004-planner-identity.vi.md)). Thế là
-  đủ cho nhân viên dùng và cố ý không phải một hệ danh tính: không có đăng ký
-  công khai, không đặt lại mật khẩu, không OAuth, không MFA. Thêm những thứ đó là
-  ADR tiếp theo, và `resolveIdentity` là đường ráp duy nhất nó phải thay.
+- **Một nhà cung cấp danh tính hosted.** Đăng nhập Planner do ta tự quản: access
+  token do người vận hành cấp, email kèm mật khẩu hash bằng scrypt, hoặc Google
+  qua OIDC + PKCE tự viết, tạo tài khoản ở lần đăng nhập đầu, hoặc chỉ được liên
+  kết vào tài khoản có sẵn bởi chính chủ đã đăng nhập, không bao giờ theo email — cả ba cùng cho ra một session cookie `HttpOnly` có hạn
+  ([ADR 0004](adr/0004-planner-identity.vi.md),
+  [ADR 0007](adr/0007-password-and-google-sign-in.vi.md)). Vẫn chưa có: tự đặt lại
+  mật khẩu (chưa có dịch vụ gửi email), đăng ký bằng mật khẩu và MFA. Một provider
+  hosted hay Auth.js sẽ thay `identify` và các dòng session, không gì bên dưới.
 - **SQL.** Cả hai store chỉ an toàn trong một process. Triển khai nhiều instance
   là mốc phải chuyển; schema đích và các index đã được ghi sẵn trong
   [ADR 0002](adr/0002-planner-core.vi.md#hình-dạng-sql-mà-cấu-trúc-này-sẽ-thành).
@@ -283,7 +286,7 @@ Những thứ vắng mặt có chủ đích, và không được dựng sớm:
   dưới được dựng hay dựng sớm; mỗi mục cần ghi quyết định trước. Hướng thiết kế:
   [ADR 0006](adr/0006-unified-identity-and-roles.vi.md) (Đề xuất). Backlog phụ
   thuộc và quyết định:
-  - **Nhà cung cấp danh tính** — giữ token do người vận hành cấp cộng session, hay dùng Auth.js / hosted; quyết định đăng ký, đặt lại mật khẩu, MFA cho `admin`. ADR riêng.
+  - **Nhà cung cấp danh tính** — các cách đăng nhập đã được quyết ([ADR 0007](adr/0007-password-and-google-sign-in.vi.md): mật khẩu và Google); còn mở là tự đặt lại mật khẩu (cần dịch vụ gửi email) và MFA cho `admin`.
   - **Mô hình vai trò** — `member` / `editor` / `admin` trên một mô hình user, hàm thuần `can(identity, action, resource)`, `ADMIN_API_TOKEN` hạ thành service principal.
   - **Củng cố session admin và CSRF** — thời hạn ngắn hơn theo vai trò; `requireSameOrigin` thành chốt chịu lực cho mutation admin; token không bao giờ tới Client Component (`tests/client-boundary.test.ts`).
   - **Audit log** — ai đổi template hay vai trò nào, và mọi lần đọc trip để hỗ trợ.

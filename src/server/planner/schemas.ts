@@ -90,9 +90,27 @@ export const budgetSchema = z.object({
 // Planner users — the owner of a trip
 // ---------------------------------------------------------------------------
 
+/**
+ * Email as stored and compared: trimmed and lower-cased, nothing else (dots in
+ * a Gmail address are kept — ADR 0007, data model).
+ */
+export const emailSchema = z
+  .string()
+  .trim()
+  .max(254)
+  .pipe(z.email())
+  .transform((value) => value.toLowerCase());
+
+/** NIST SP 800-63B: length only, any characters, no composition rules. */
+export const PASSWORD_MIN_LENGTH = 12;
+export const PASSWORD_MAX_LENGTH = 128;
+export const passwordSchema = z.string().min(PASSWORD_MIN_LENGTH).max(PASSWORD_MAX_LENGTH);
+
 export const plannerUserCreateSchema = z.object({
   handle: slugSchema,
   displayName: z.string().trim().min(2).max(80),
+  /** When given, a temporary password is issued with the user (ADR 0007). */
+  email: emailSchema.optional(),
 });
 
 /**
@@ -106,10 +124,26 @@ export const plannerUserSchema = z.object({
   tokenHash: z.string().length(64),
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
+  // --- ADR 0007. All optional: a file written before it loads unchanged. ---
+  /** Lower-cased; unique across users. */
+  email: z.string().max(254).nullable().optional(),
+  /** `scrypt$N$r$p$salt$hash`. Absent or null: password sign-in is off. */
+  passwordHash: z.string().nullable().optional(),
+  /** Set by an operator-issued temporary password; cleared by a change. */
+  mustChangePassword: z.boolean().optional(),
+  /** Google's stable subject id; unique across users. */
+  googleSub: z.string().max(255).nullable().optional(),
+  /** Absent reads as `operator`. */
+  createdVia: z.enum(['operator', 'google']).optional(),
 });
 
-/** What the API is allowed to return: everything except the digest. */
-export const publicPlannerUserSchema = plannerUserSchema.omit({ tokenHash: true });
+/**
+ * What the API is allowed to return: no credential and no credential
+ * identifier. `hasPassword` / `hasGoogle` say *whether* one exists.
+ */
+export const publicPlannerUserSchema = plannerUserSchema
+  .omit({ tokenHash: true, passwordHash: true, googleSub: true })
+  .extend({ hasPassword: z.boolean(), hasGoogle: z.boolean() });
 
 // ---------------------------------------------------------------------------
 // Trips
@@ -476,15 +510,69 @@ export const plannerSessionSchema = z.object({
   lastSeenAt: timestampSchema,
   /** Absolute end of life, fixed at sign-in and never extended. */
   expiresAt: timestampSchema,
+  /**
+   * How the session was opened (ADR 0007). Absent reads as `token`. Only a
+   * `password` session is held behind the temporary-password gate.
+   */
+  method: z.enum(['token', 'password', 'google']).optional(),
 });
 
-/** Sign-in exchanges the access token the operator issued for a cookie. */
-export const signInSchema = z.object({
-  accessToken: z.string().trim().min(32).max(256),
+/**
+ * Sign-in body: the access token the operator issued, or an email and a
+ * password. Strict, so the two shapes cannot be mixed.
+ */
+export const signInSchema = z.union([
+  z.object({ accessToken: z.string().trim().min(32).max(256) }).strict(),
+  z
+    .object({
+      email: emailSchema,
+      // Not `passwordSchema`: a too-short guess must get the same 401 as a
+      // wrong one, not a 422 that says something about the account.
+      password: z.string().min(1).max(PASSWORD_MAX_LENGTH),
+    })
+    .strict(),
+]);
+
+export const passwordChangeSchema = z
+  .object({
+    currentPassword: z.string().min(1).max(PASSWORD_MAX_LENGTH),
+    newPassword: passwordSchema,
+  })
+  .strict();
+
+/**
+ * An in-flight Google sign-in (ADR 0007). The cookie carries the raw `state`;
+ * only its digest is stored. One use, ten minutes.
+ */
+export const oauthAttemptSchema = z.object({
+  id: plannerIdSchema,
+  stateHash: z.string().length(64),
+  nonce: z.string().min(16).max(128),
+  codeVerifier: z.string().min(43).max(128),
+  returnTo: z.string().max(300),
+  locale: z.enum(['vi', 'en']),
+  /**
+   * Set when a signed-in user started the flow to *link* Google to their own
+   * account, rather than to sign in. Linking is never inferred from an email.
+   */
+  linkUserId: plannerIdSchema.optional(),
+  createdAt: timestampSchema,
+  expiresAt: timestampSchema,
 });
+
+export const OAUTH_ATTEMPT_MINUTES = 10;
+/**
+ * Ceiling on in-flight Google attempts across all clients. Each start writes a
+ * row, and the per-client limiter keys on a spoofable header, so this is what
+ * actually bounds the store's growth.
+ */
+export const MAX_LIVE_OAUTH_ATTEMPTS = 500;
 
 export type PlannerSession = z.infer<typeof plannerSessionSchema>;
+export type SessionMethod = NonNullable<PlannerSession['method']>;
 export type SignInInput = z.infer<typeof signInSchema>;
+export type PasswordChangeInput = z.infer<typeof passwordChangeSchema>;
+export type OAuthAttempt = z.infer<typeof oauthAttemptSchema>;
 
 // ---------------------------------------------------------------------------
 // Public, read-only view of a shared trip (ADR 0005)
