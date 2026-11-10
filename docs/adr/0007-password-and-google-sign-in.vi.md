@@ -2,7 +2,7 @@
 
 🇬🇧 English: [0007-password-and-google-sign-in.md](0007-password-and-google-sign-in.md)
 
-- **Trạng thái:** Proposed (đề xuất) — chờ chủ dự án chấp nhận. Chưa viết code nào dựa trên ADR này trước đó.
+- **Trạng thái:** Accepted (đã chấp nhận) — chủ dự án chấp nhận ngày 2026-11-10; phần triển khai nằm trong cùng PR
 - **Ngày:** 2026-11-10
 - **Người sở hữu:** system-architect
 - **Ảnh hưởng:** `src/server/planner/auth.ts`, `src/server/planner/schemas.ts`, `src/server/planner/repository.ts`, `src/server/planner/http.ts`, `src/server/rate-limit.ts`, `src/app/api/planner/session/**`, `src/app/api/planner/oauth/**` (mới), `src/app/api/admin/planner/users/**`, `src/components/planner/sign-in-form.tsx`, `src/app/[locale]/sign-in/page.tsx`, `messages/*.json`
@@ -52,9 +52,12 @@ cá nhân, và tài khoản `admin` (ADR 0006) có bắt buộc MFA không.
    không có mật khẩu và không có quyền vào chuyến đi của người khác. Tài khoản
    mật khẩu vẫn chỉ do operator tạo; không có form đăng ký mật khẩu, vì không có
    dịch vụ gửi email thì không xác minh được địa chỉ cũng không cho đặt lại mật
-   khẩu được. Đăng nhập Google có email khớp với tài khoản do operator tạo thì
-   liên kết vào tài khoản đó chứ không tạo bản trùng, nên nhân viên vẫn chỉ có
-   một tài khoản.
+   khẩu được. Đăng nhập Google có email khớp với một tài khoản đã có thì **không
+   liên kết vào tài khoản đó và cũng không tạo bản trùng**: bị từ chối với
+   `link_required`, và chủ tài khoản tự liên kết Google từ một phiên đã đăng
+   nhập (xem *Đăng nhập Google*). Email do operator gõ chưa từng được xác minh,
+   nên khớp theo nó sẽ trao tài khoản cho ai đang giữ địa chỉ đó. *(Sửa ngày
+   2026-11-10 sau security review; bản nháp đầu liên kết theo email.)*
 
 3. **Access token vẫn giữ.** Nó vẫn là credential cho script, curl và test
    (`Authorization: Bearer`) và vẫn chạy ở `POST /api/planner/session`. Form
@@ -146,17 +149,32 @@ Google đã công bố, chỉ dùng `fetch` và `node:crypto`.
   store để hai lần đăng nhập đầu đồng thời không tạo ra hai tài khoản:
   1. người dùng có `googleSub` bằng `sub` — đăng nhập;
   2. nếu không, người dùng có `email` bằng email đã xác minh và chưa có
-     `googleSub` — ghi `sub` vào, rồi đăng nhập. Từ đó liên kết theo id ổn định
-     của Google chứ không theo địa chỉ;
+     `googleSub` — từ chối với `link_required`, không đăng nhập ai, không đổi
+     gì;
   3. nếu không, người dùng có email đó nhưng `googleSub` là một `sub` *khác* —
      từ chối với `account_conflict` (Google đã gán lại địa chỉ; operator phải
      xem xét);
   4. nếu không, **tạo** người dùng với `email`, `googleSub`,
      `createdVia: 'google'`, không mật khẩu, rồi đăng nhập.
+- **Liên kết phải chủ động.** Người dùng đã đăng nhập (phiên cookie, đã đổi
+  mật khẩu tạm) mở trang đổi mật khẩu và bấm "Liên kết tài khoản Google":
+  `GET /api/planner/oauth/google/start?intent=link` ghi id người dùng vào lượt.
+  Callback chỉ liên kết khi trình duyệt *vẫn* đăng nhập đúng người đó, `sub`
+  của Google chưa thuộc về ai khác, và người dùng chưa có `sub` nào khác; rồi
+  quay về trang tài khoản với `?google=linked` (hoặc mã lỗi) và giữ nguyên
+  phiên hiện có. Email Google không cần trùng email tài khoản — mục đích là
+  chứng minh kiểm soát được cả hai. Từ đó đăng nhập theo `sub` ổn định của
+  Google chứ không theo địa chỉ.
 - **Giới hạn đăng ký:** việc tạo tài khoản có limiter riêng theo IP (3 tài
   khoản mới mỗi giờ) bên cạnh `signInLimiter`, vì mỗi lần tạo làm phình một tài
-  liệu JSON duy nhất. Giống các limiter khác, nó nằm trong bộ nhớ và theo từng
-  tiến trình.
+  liệu JSON duy nhất — và vì khoá theo IP lấy từ một header giả được, còn có
+  thêm một bucket **toàn cục** 30 tài khoản mới mỗi giờ. Giống các limiter
+  khác, nó nằm trong bộ nhớ và theo từng tiến trình.
+- **Khối lượng việc có trần, dù client tự nhận là ai.** Tối đa
+  `MAX_LIVE_OAUTH_ATTEMPTS` (500) lượt Google đang chờ trên mọi client; vượt
+  quá thì `start` trả `rate_limited` và không ghi gì. scrypt chạy sau một cổng
+  giới hạn đồng thời — 4 lần cùng lúc (khoảng 512 MB), 32 lần chờ, rồi `429` —
+  nên địa chỉ giả không thể làm cạn bộ nhớ.
 - **Công tắc tắt đăng ký:** nếu `GOOGLE_SIGNUP_ENABLED` là `false`, bước 4 bị
   bỏ qua và kết quả là `account_not_found` — chủ dự án đóng tự phục vụ mà không
   cần deploy code mới. Mặc định là `true`.
@@ -190,7 +208,7 @@ sequenceDiagram
   B->>S: GET /api/planner/oauth/google/callback
   S->>G: code + code_verifier + secret
   G-->>S: id_token
-  S->>S: kiểm chữ ký, iss, aud, exp, nonce, email_verified; khớp, liên kết hoặc tạo người dùng
+  S->>S: kiểm chữ ký, iss, aud, exp, nonce, email_verified; khớp theo sub hoặc tạo người dùng
   S-->>B: 302 returnTo + Set-Cookie planner_session
 ```
 
@@ -254,10 +272,11 @@ token. Đường token, mọi test và mọi ví dụ curl vẫn chạy.
   đăng ký, mục đích sử dụng được nêu rõ, và cách để yêu cầu xoá tài khoản. ADR này
   không thiết kế các phần đó; nó đánh dấu chúng là điều kiện trước khi bật đăng
   ký trên production.
-- **Liên kết theo email tin vào `email_verified` của Google** và vào việc operator
-  gõ đúng địa chỉ. Gõ sai thì không liên kết ai (an toàn — khách chỉ được tạo một
-  tài khoản mới); địa chỉ thuộc về người khác thì sẽ liên kết họ (không an toàn) —
-  nên giao diện operator phải hiện email rõ ràng, và có chức năng huỷ liên kết.
+- **Không liên kết theo email.** Nhân viên muốn dùng thêm Google phải thêm một
+  bước — đăng nhập bằng mật khẩu, rồi liên kết Google — đổi lại tài khoản
+  không bao giờ bị trao cho người lạ vì operator gõ nhầm địa chỉ hay địa chỉ bị
+  tái sử dụng. Khách có email mà operator đã dùng sẽ thấy `link_required` thay
+  vì một tài khoản mới.
 - **Phụ thuộc ra ngoài:** đăng nhập Google cần server gọi được token endpoint và
   JWKS của Google. Nếu không gọi được, đăng nhập Google lỗi còn đăng nhập mật khẩu
   vẫn chạy.
@@ -291,7 +310,10 @@ Code, sau khi ADR được chấp nhận (backend-engineer, rồi frontend-engin
   có mật khẩu và sai mật khẩu; limiter theo email; cổng mật khẩu tạm; đổi mật khẩu
   xoá các session khác; đặt lại xoá mọi session; từ chối `state` không khớp,
   `state` dùng lại, lượt hết hạn, sai `aud`, sai `iss`, token hết hạn, sai chữ ký,
-  sai `nonce`, `email_verified: false`; khớp theo `sub`, liên kết theo email,
+  sai `nonce`, `email_verified: false`; khớp theo `sub`, email khớp →
+  `link_required` và không đổi gì, liên kết chủ động từ một phiên (và bị từ
+  chối khi là phiên khác, `sub` đã thuộc người khác hoặc `sub` thứ hai), trần
+  lượt đang chờ, bucket đăng ký toàn cục, cổng đồng thời của scrypt,
   không khớp thì tạo người dùng `member` với `createdVia: 'google'` và không mật
   khẩu, lần đăng nhập thứ hai dùng lại tài khoản đó, hai lần đăng nhập đầu đồng
   thời chỉ tạo một người dùng, handle trùng được thêm hậu tố, `sub` xung đột →

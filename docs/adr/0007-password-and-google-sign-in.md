@@ -2,7 +2,7 @@
 
 🇻🇳 Bản tiếng Việt: [0007-password-and-google-sign-in.vi.md](0007-password-and-google-sign-in.vi.md)
 
-- **Status:** Proposed — awaiting the owner's acceptance. No code is written against it before then.
+- **Status:** Accepted — the owner accepted it on 2026-11-10; implementation follows in the same PR
 - **Date:** 2026-11-10
 - **Owner:** system-architect
 - **Affects:** `src/server/planner/auth.ts`, `src/server/planner/schemas.ts`, `src/server/planner/repository.ts`, `src/server/planner/http.ts`, `src/server/rate-limit.ts`, `src/app/api/planner/session/**`, `src/app/api/planner/oauth/**` (new), `src/app/api/admin/planner/users/**`, `src/components/planner/sign-in-form.tsx`, `src/app/[locale]/sign-in/page.tsx`, `messages/*.json`
@@ -53,8 +53,12 @@ whether `admin` accounts (ADR 0006) will require MFA.
    to anyone else's trips. Password accounts are still created only by an
    operator; there is no password signup form, because without an email sender
    we could neither verify the address nor offer a reset. A Google sign-in whose
-   email matches an operator-created account links to it instead of creating a
-   duplicate, so staff keep one account.
+   email matches an existing account **does not link to it and does not create
+   a duplicate**: it is refused with `link_required`, and the account's owner
+   links Google from a signed-in session instead (see *Google sign-in*). An
+   email an operator typed was never verified, so matching on it would hand the
+   account to whoever controls that address. *(Amended on 2026-11-10 after the
+   security review; the first draft linked by email.)*
 
 3. **The access token stays.** It remains the credential for scripts, curl and
    tests (`Authorization: Bearer`) and keeps working at
@@ -147,16 +151,33 @@ documented endpoints, using `fetch` and `node:crypto` only.
   transaction so two concurrent first sign-ins cannot create two accounts:
   1. a user whose `googleSub` equals `sub` — sign in;
   2. else a user whose `email` equals the verified email and whose `googleSub`
-     is still null — store `sub` on it, then sign in. From then on the link
-     follows Google's stable id, not the address;
+     is still null — refuse with `link_required`, sign nobody in, change
+     nothing;
   3. else a user with that email whose `googleSub` is a *different* `sub` —
      refuse with `account_conflict` (Google reassigned the address; an operator
      must look);
   4. else **create** a user with `email`, `googleSub`, `createdVia: 'google'`,
      no password, and sign in.
+- **Linking is explicit.** A signed-in user (cookie session, temporary
+  password already changed) opens the change-password page and follows
+  "Link your Google account": `GET /api/planner/oauth/google/start?intent=link`
+  records the user's id on the attempt. The callback links only if the browser
+  is *still* signed in as that same user, the Google `sub` belongs to nobody
+  else, and the user has no other `sub`; then it returns to the account page
+  with `?google=linked` (or the failure code) and keeps the existing session.
+  The Google email need not match the account's — proving control of both is
+  the point. From then on sign-in follows Google's stable `sub`, not the
+  address.
 - **Signup throttle:** account creation has its own per-IP limiter (3 new
   accounts per hour) on top of `signInLimiter`, because every creation grows the
-  single JSON document. Like the others it is in-memory and per-process.
+  single JSON document — and, because the per-IP key comes from a forgeable
+  header, a **global** bucket of 30 new accounts per hour as well. Like the
+  others it is in-memory and per-process.
+- **Bounded work whatever the client claims to be.** At most
+  `MAX_LIVE_OAUTH_ATTEMPTS` (500) Google attempts are in flight across all
+  clients; past it `start` answers `rate_limited` and writes nothing. scrypt
+  runs behind a concurrency gate — 4 derivations at once (about 512 MB), 32
+  waiting, then `429` — so forged addresses cannot exhaust memory.
 - **Optional allow-list:** if `GOOGLE_SIGNUP_ENABLED` is `false`, step 4 is
   skipped and the result is `account_not_found` — the owner can close
   self-service without a deploy of new code. It defaults to `true`.
@@ -190,7 +211,7 @@ sequenceDiagram
   B->>S: GET /api/planner/oauth/google/callback
   S->>G: code + code_verifier + secret
   G-->>S: id_token
-  S->>S: verify signature, iss, aud, exp, nonce, email_verified; match, link or create user
+  S->>S: verify signature, iss, aud, exp, nonce, email_verified; match by sub or create user
   S-->>B: 302 returnTo + Set-Cookie planner_session
 ```
 
@@ -255,11 +276,11 @@ rotation. The token path, every test and every curl example keep working.
   stated purpose, and a way to have the account deleted. This ADR does not
   design those; it flags them as a precondition for turning signup on in
   production.
-- **Email-based linking trusts Google's `email_verified`** and the operator
-  typing the right address. A mistyped address links nobody (safe — the
-  customer just gets a new account); an address that belongs to someone else
-  would link them (unsafe) — so the operator UI must show the email clearly,
-  and unlinking exists.
+- **No linking by email.** Staff who also want Google take one extra step —
+  sign in with the password, then link Google — in exchange for an account that
+  a mistyped or recycled operator-entered address can never hand to a
+  stranger. A customer whose email an operator already used sees
+  `link_required` instead of a new account.
 - **Outbound dependency:** Google sign-in needs the server to reach Google's
   token and JWKS endpoints. If they are unreachable, Google sign-in fails and
   password sign-in still works.
@@ -294,7 +315,10 @@ Code, once this is accepted (backend-engineer, then frontend-engineer):
   change password kills other sessions; reset kills all sessions; `state`
   mismatch, reused `state`, expired attempt, wrong `aud`, wrong `iss`, expired
   token, bad signature, wrong `nonce`, `email_verified: false` all refused;
-  match by `sub`, link by email, no match → a `member` user created with
+  match by `sub`, email match → `link_required` with nothing changed, explicit
+  link from a session (and refused for another session, a taken `sub` or a
+  second `sub`), in-flight attempt ceiling, global signup bucket, scrypt
+  concurrency gate, no match → a `member` user created with
   `createdVia: 'google'` and no password, a second sign-in reuses it, two
   concurrent first sign-ins create one user, handle collision gets a suffix,
   conflicting `sub` → `account_conflict`, signup limiter, and

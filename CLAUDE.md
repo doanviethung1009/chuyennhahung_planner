@@ -66,9 +66,10 @@ change writes its document.
    focus, real `<button>`/`<a>`, ≥44px targets, meaningful `alt`.
 6. **The Planner UI is the open phase; the backend already shipped** (API —
    [ADR 0002](docs/adr/0002-planner-core.md); browser session cookie —
-   [ADR 0004](docs/adr/0004-planner-identity.md)). `/plan-your-trip` is still
-   contact-only. Not to be scaffolded without its own ADR: the Planner map, AI
-   suggestions, a **real identity provider**, SQL.
+   [ADR 0004](docs/adr/0004-planner-identity.md); password and Google sign-in —
+   [ADR 0007](docs/adr/0007-password-and-google-sign-in.md)). `/plan-your-trip` is
+   still contact-only. Not to be scaffolded without its own ADR: the Planner map,
+   AI suggestions, a **hosted identity provider** (or Auth.js), MFA, SQL.
 7. **Definition of done** is `typecheck`, `lint` and `test` passing *and the output
    stated*. Never write PASS for a check you did not run — write NOT RUN.
 8. Seed content is realistic; where it needs the owner's real data (handles, phones,
