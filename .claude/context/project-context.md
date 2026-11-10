@@ -70,6 +70,7 @@ The owner opened the Planner backend phase and it shipped: `src/app/api/planner/
 | Module | Role |
 |---|---|
 | `src/server/planner/auth.ts` | **A principal per traveller**: a `plannerUsers` row holding a SHA-256 digest of a 48-byte token, returned once at provisioning. Every trip carries an `ownerId` and every read and write is filtered by it. |
+| `src/server/planner/password.ts`, `google.ts`, `google-http.ts` | ADR 0007: scrypt passwords (temporary password → forced change), Google OIDC + PKCE (`/api/planner/oauth/google/{start,callback}`), match by `googleSub` → email match refused (`link_required`) → create; linking only explicit from a session (`start?intent=link`). Global caps: 500 live OAuth attempts, 30 signups/h, scrypt 4 active/32 waiting. Env `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_SIGNUP_ENABLED`, `GOOGLE_REDIRECT_URI`; routes 404 when unset |
 | `src/server/planner/repository.ts` | Trips, days, activities, expenses; `identify(request)` throws 401 without a valid token |
 | `src/server/planner/schemas.ts` | Validation schemas for trip input |
 | `src/server/planner/budget.ts`, `money.ts` | Target budget vs estimated/actual cost; integer-safe money |
@@ -85,9 +86,10 @@ The owner opened the Planner backend phase and it shipped: `src/app/api/planner/
 > traveller-owned trip data with a principal per traveller. They share the error
 > envelope and `parseJsonBody` from `src/server/content/http.ts`.
 
-> **Still absent, and not to be scaffolded without an ADR:** the Planner **UI**
-> (`/plan-your-trip` is still the contact-only content page), the Planner map, AI
-> suggestions, a real identity provider, and SQL. See `docs/architecture.md#phases`.
+> **Still absent, and not to be scaffolded without an ADR:** a full Planner trip
+> editor (`/plan-your-trip` is still the contact-only content page), the Planner
+> map, AI suggestions, a hosted identity provider / Auth.js, MFA, and SQL. See
+> `docs/architecture.md#phases`.
 
 ## Other critical modules
 | Path | Role |
@@ -106,12 +108,16 @@ contract** — twin, mirrored headings, single h1, translation link, index regis
 resolving links) · `tests/design-tokens.test.ts` · `tests/routing.test.ts` ·
 `tests/content.test.ts` · `tests/map.test.ts` · `tests/travel-content-{api,auth,schemas,
 repository,acceptance}.test.ts` (+ `travel-content-helpers.ts`) · `tests/json-store.test.ts`
-(store cache) · `tests/security-headers.test.ts` (site-wide headers).
+(store cache) · `tests/planner-password.test.ts`, `tests/planner-google.test.ts` (ADR 0007 sign-in) · `tests/security-headers.test.ts` (site-wide headers).
 
 ## Sensitive data and regulated boundaries
 `ADMIN_API_TOKEN` guards the admin API — never log it, echo it or commit it. `.env*`
-reads are denied in `.claude/settings.json`. No end-user accounts, no payments, no PII
-store. The `.data/` JSON store holds content, not personal data.
+reads are denied in `.claude/settings.json`. **End-user accounts exist (ADR 0007)**:
+`.data/planner.json` holds emails and names (personal data, including customers who
+signed up with Google), scrypt password hashes and Google subject ids next to token
+and session digests — never log, return or commit them. `GOOGLE_CLIENT_SECRET` is a
+server secret like `ADMIN_API_TOKEN`. No payments. The content store holds content,
+not personal data.
 
 **Owner data still needed** (do not invent plausible-looking values): real social
 handles, phone numbers and booking email.

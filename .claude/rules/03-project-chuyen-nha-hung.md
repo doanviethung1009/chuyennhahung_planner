@@ -87,7 +87,7 @@ cloning. Designed in `docs/adr/0002-planner-core.md`.
 |---|---|
 | Planner **UI** (beyond ADR 0005) | ADR 0005 shipped story-to-trip cloning, `/sign-in`, `/my-trips`, read-only `/my-trips/[id]` and `/shared/[token]`. Still absent: an in-browser editor for days/activities/expenses, and `/plan-your-trip` is still the contact-only content page (mailto, Zalo, Messenger). A submit button with nothing behind it is a dead control — rule 4. |
 | Planner map, AI suggestions | Deliberately deferred by the brief that opened the phase |
-| A real identity provider | An operator-provisioned per-traveller token, exchanged for an expiring `HttpOnly` session cookie (ADR 0004). No signup, no password reset, no OAuth, no MFA. Roles are designed in ADR 0006 (Proposed, Phase 07). |
+| A hosted identity provider | Sign-in is self-managed: access token, email + scrypt password, or Google OIDC + PKCE (signup on first Google sign-in), all issuing the ADR 0004 session (ADR 0007). No self-service password reset, no password signup, no MFA, no Auth.js. Roles are designed in ADR 0006 (Proposed, Phase 07). |
 | SQL | Both stores are single-process. Multi-instance deployment is the trigger. |
 
 > Two separate systems, one HTTP vocabulary. The **Travel Content System** (26 handlers

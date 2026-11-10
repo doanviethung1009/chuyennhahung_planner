@@ -74,6 +74,7 @@ folders. The visible URL per locale is defined once, in
 | `/about` | `/ve-nha-hung` | `/en/about` |
 | `/trip-setup/[template]` | `/tao-chuyen-di/[template]` | `/en/trip-setup/[template]` |
 | `/sign-in` | `/dang-nhap` | `/en/sign-in` |
+| `/account/password` | `/doi-mat-khau` | `/en/account/password` |
 | `/my-trips` | `/chuyen-di-cua-toi` | `/en/my-trips` |
 | `/my-trips/[id]` | `/chuyen-di-cua-toi/[id]` | `/en/my-trips/[id]` |
 | `/shared/[token]` | `/chia-se/[token]` | `/en/shared/[token]` |
@@ -245,7 +246,7 @@ flowchart LR
   `src/server/rate-limit.ts`: in-memory and
   per-process, so it shares SQL's multi-instance trigger, and its client key is only
   as trustworthy as the proxy that sets `x-forwarded-for`.
-- **Private pages** (`/sign-in`, `/my-trips`, `/my-trips/[id]`, `/trip-setup/[template]`)
+- **Private pages** (`/sign-in`, `/account/password`, `/my-trips`, `/my-trips/[id]`, `/trip-setup/[template]`)
   are `noindex` and excluded from the sitemap; `/shared/[token]` is `noindex` unless
   the trip is `public`, and sends `Referrer-Policy: no-referrer`.
 - **Every response carries security headers** from `next.config.ts`
@@ -271,22 +272,24 @@ Deliberately absent, and not to be scaffolded early:
   wiring it to the API is frontend-owned work and has not started.
 - **Planner map and AI suggestions.** Deliberately deferred by the brief that
   opened the Planner phase.
-- **A real identity provider.** Planner auth is an operator-provisioned
-  per-traveller access token, which a browser exchanges for an expiring
-  `HttpOnly` session cookie ([ADR 0004](adr/0004-planner-identity.md)). That is
-  enough for staff use and is deliberately not an identity system: there is no
-  public signup, no password reset, no OAuth and no MFA. Adding those is the next
-  ADR, and `resolveIdentity` is the single seam it would replace.
+- **A hosted identity provider.** Planner sign-in is self-managed: an
+  operator-issued access token, an email and scrypt-hashed password, or Google
+  through hand-written OIDC + PKCE that creates an account on first sign-in, or
+  is linked to an existing one only by its signed-in owner, never by email — all three producing the same expiring `HttpOnly` session
+  cookie ([ADR 0004](adr/0004-planner-identity.md),
+  [ADR 0007](adr/0007-password-and-google-sign-in.md)). Still absent: self-service
+  password reset (no email sender), password signup and MFA. A hosted provider
+  or Auth.js would replace `identify` and the session rows, nothing below them.
 - **SQL.** Both stores are single-process. Multi-instance deployment is the
   trigger; the target schema and its indexes are already written down in
   [ADR 0002](adr/0002-planner-core.md#the-sql-shape-this-becomes). The path there is
-  decided in [ADR 0007](adr/0007-postgres-document-store.md): the documents move
+  decided in [ADR 0008](adr/0008-postgres-document-store.md): the documents move
   into Postgres as JSONB rows first, normalised tables second. Accepted; not built yet.
 - **Phase 07 — Admin Portal, CMS & RBAC (announced, not started).** Nothing below is
   built or to be scaffolded early; each item needs its decision recorded first.
   Design direction: [ADR 0006](adr/0006-unified-identity-and-roles.md) (Proposed).
   Backlog of dependencies and decisions:
-  - **Identity provider** — keep the operator-issued token plus session, or adopt Auth.js / hosted; decides signup, reset, MFA for `admin`. Own ADR.
+  - **Identity provider** — sign-in methods are decided ([ADR 0007](adr/0007-password-and-google-sign-in.md): password and Google); still open are self-service reset (needs an email sender) and MFA for `admin`.
   - **Role model** — `member` / `editor` / `admin` on the one user model, a pure `can(identity, action, resource)`, `ADMIN_API_TOKEN` demoted to a service principal.
   - **Admin session and CSRF hardening** — shorter lifetimes per role; `requireSameOrigin` becomes load-bearing for admin mutations; the token never reaches a Client Component (`tests/client-boundary.test.ts`).
   - **Audit log** — who changed which template or role, and any support read of a trip.

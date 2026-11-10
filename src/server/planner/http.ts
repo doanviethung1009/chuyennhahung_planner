@@ -203,11 +203,21 @@ type PlannerHandler = (
 export async function plannerRoute(
   request: Request,
   handler: PlannerHandler,
+  options: { allowPendingPasswordChange?: boolean } = {},
 ): Promise<NextResponse> {
   try {
     const repository = await getPlannerRepository();
     const identity = await repository.identify(request);
     requireSameOrigin(request, identity.source);
+    // The temporary-password gate (ADR 0007): a session opened with an
+    // operator-issued password reaches nothing but "who am I", sign-out and
+    // the change itself until the password is changed.
+    if (identity.passwordChangeRequired && !options.allowPendingPasswordChange) {
+      throw new ContentError(
+        'password_change_required',
+        'change the temporary password at POST /api/planner/password first',
+      );
+    }
     return await handler(identity, repository);
   } catch (error) {
     return toErrorResponse(error);

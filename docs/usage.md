@@ -33,6 +33,9 @@ closed.
 | `TRAVEL_CONTENT_STORE` | `.data/travel-content.json` | Where the content store lives |
 | `TRAVEL_CONTENT_AUTOSEED` | `true` | Set `false` to skip seeding demo content on first use |
 | `PLANNER_STORE` | `.data/planner.json` | Where Planner trips live. Separate file from the content store by design |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | *unset* | Google sign-in ([ADR 0007](adr/0007-password-and-google-sign-in.md)). Both required; without them the Google routes answer 404 and the button is hidden. Server-only — never `NEXT_PUBLIC_*` |
+| `GOOGLE_SIGNUP_ENABLED` | `true` | `false` stops a first Google sign-in from creating an account; existing accounts still sign in |
+| `GOOGLE_REDIRECT_URI` | *derived* | Override for the callback URL; otherwise `NEXT_PUBLIC_SITE_URL` (or the request origin) + `/api/planner/oauth/google/callback`. Must match Google Cloud Console exactly |
 
 `.data/` is gitignored. Nothing in it is seeded for the Planner — see
 *Provision a Planner traveller* below.
@@ -97,8 +100,11 @@ not stop a merge — a human still has to look.
 
 ### Provision a Planner traveller
 
-The Planner has no signup. Every traveller is provisioned by an operator, and the
-access token is shown **once** — if it is lost, rotate it; it cannot be read back.
+Staff accounts are provisioned by an operator; the access token is shown
+**once** — if it is lost, rotate it; it cannot be read back. Customers can also
+create their own account by signing in with Google (see below). Add an `email`
+and the response also carries a `temporaryPassword`, shown once; the person signs
+in at `/dang-nhap` with it and is sent to `/doi-mat-khau` to choose their own.
 
 ```bash
 # 1. A real secret, at least 32 characters, or every admin route answers 503.
@@ -140,6 +146,32 @@ curl -s -b jar.txt -X DELETE http://localhost:3000/api/planner/session \
 
 A session lasts 14 days, or 7 days without use. `rotate-token` signs the
 traveller out everywhere.
+
+Password and Google ([ADR 0007](adr/0007-password-and-google-sign-in.md)):
+
+```bash
+# Create a staff account with an email: keep `temporaryPassword` (shown once).
+curl -s -X POST http://localhost:3000/api/admin/planner/users \
+  -H "authorization: Bearer $ADMIN_API_TOKEN" -H 'content-type: application/json' \
+  -d '{"handle":"lan-nguyen","displayName":"Lan Nguyễn","email":"lan@example.com"}'
+
+# Forgotten password: a new temporary one, and every session ends.
+curl -s -X POST http://localhost:3000/api/admin/planner/users/<userId>/reset-password \
+  -H "authorization: Bearer $ADMIN_API_TOKEN"
+
+# Remove a Google link.
+curl -s -X DELETE http://localhost:3000/api/admin/planner/users/<userId>/google \
+  -H "authorization: Bearer $ADMIN_API_TOKEN"
+```
+
+To turn Google on locally, create an OAuth client of type *Web application* in
+Google Cloud Console, register
+`http://localhost:3000/api/planner/oauth/google/callback` as a redirect URI, and
+set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env.local` (never
+committed). A first Google sign-in with an email no account has creates one.
+An email that already has an account is refused with `link_required` — Google is
+never linked by email. The person signs in with their password and follows
+"Link your Google account" on `/doi-mat-khau` instead.
 
 Mutating an existing trip needs the version from its `ETag`:
 
@@ -199,6 +231,13 @@ These are plausible defaults, **not verified**. Confirm each with the owner:
 3. **Site URL** — set `NEXT_PUBLIC_SITE_URL`; it drives canonicals, `hreflang`
    and the sitemap.
 4. **Photography** — swap the generated SVG covers for real photos.
+5. **Google sign-in** — create the Google OAuth client, register the production
+   redirect URI, and set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in the
+   deployment environment.
+6. **Privacy notice** — customers who sign up with Google have their name and
+   email stored; publish a privacy notice and a way to ask for deletion (Decree
+   13/2023) before signup is on in production, or set
+   `GOOGLE_SIGNUP_ENABLED=false` until then.
 
 ## Deploy
 

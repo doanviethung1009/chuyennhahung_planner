@@ -33,6 +33,9 @@ mọi biến dưới đây đều có mặc định dùng được, hoặc tự 
 | `TRAVEL_CONTENT_STORE` | `.data/travel-content.json` | Nơi content store nằm |
 | `TRAVEL_CONTENT_AUTOSEED` | `true` | Đặt `false` để bỏ qua seed nội dung demo ở lần dùng đầu |
 | `PLANNER_STORE` | `.data/planner.json` | Nơi trip của Planner nằm. Tách file khỏi content store một cách có chủ đích |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | *chưa đặt* | Đăng nhập Google ([ADR 0007](adr/0007-password-and-google-sign-in.vi.md)). Cần cả hai; thiếu thì các route Google trả 404 và nút bị ẩn. Chỉ phía server — không bao giờ là `NEXT_PUBLIC_*` |
+| `GOOGLE_SIGNUP_ENABLED` | `true` | `false` thì lần đăng nhập Google đầu tiên không tạo tài khoản; tài khoản đã có vẫn đăng nhập được |
+| `GOOGLE_REDIRECT_URI` | *suy ra* | Ghi đè URL callback; nếu không thì là `NEXT_PUBLIC_SITE_URL` (hoặc origin của request) + `/api/planner/oauth/google/callback`. Phải khớp đúng từng ký tự với Google Cloud Console |
 
 `.data/` đã được gitignore. Planner không seed gì trong đó — xem *Cấp tài khoản
 cho một người đi chơi trong Planner* bên dưới.
@@ -98,9 +101,11 @@ merge — vẫn phải có người xem.
 
 ### Cấp tài khoản cho một người đi chơi trong Planner
 
-Planner không có đăng ký. Mọi người đi chơi đều do người vận hành cấp tài khoản,
-và access token chỉ hiện ra **một lần** — nếu mất thì xoay vòng lại; không đọc
-lại được.
+Tài khoản nhân viên do người vận hành cấp; access token chỉ hiện ra **một lần**
+— nếu mất thì xoay vòng lại; không đọc lại được. Khách hàng cũng tự tạo được tài
+khoản bằng cách đăng nhập Google (xem bên dưới). Thêm `email` thì response có kèm
+`temporaryPassword`, chỉ hiện một lần; người đó đăng nhập ở `/dang-nhap` bằng mật
+khẩu này và được đưa tới `/doi-mat-khau` để tự đặt mật khẩu riêng.
 
 ```bash
 # 1. Một secret thật, tối thiểu 32 ký tự, nếu không mọi route admin trả 503.
@@ -142,6 +147,32 @@ curl -s -b jar.txt -X DELETE http://localhost:3000/api/planner/session \
 
 Một session sống 14 ngày, hoặc 7 ngày nếu không dùng. `rotate-token` đăng xuất
 người đi chơi khỏi mọi nơi.
+
+Mật khẩu và Google ([ADR 0007](adr/0007-password-and-google-sign-in.vi.md)):
+
+```bash
+# Tạo tài khoản nhân viên kèm email: giữ lại `temporaryPassword` (chỉ hiện một lần).
+curl -s -X POST http://localhost:3000/api/admin/planner/users \
+  -H "authorization: Bearer $ADMIN_API_TOKEN" -H 'content-type: application/json' \
+  -d '{"handle":"lan-nguyen","displayName":"Lan Nguyễn","email":"lan@example.com"}'
+
+# Quên mật khẩu: cấp mật khẩu tạm mới, và mọi session kết thúc.
+curl -s -X POST http://localhost:3000/api/admin/planner/users/<userId>/reset-password \
+  -H "authorization: Bearer $ADMIN_API_TOKEN"
+
+# Gỡ liên kết Google.
+curl -s -X DELETE http://localhost:3000/api/admin/planner/users/<userId>/google \
+  -H "authorization: Bearer $ADMIN_API_TOKEN"
+```
+
+Để bật Google ở máy local, tạo một OAuth client loại *Web application* trên Google
+Cloud Console, đăng ký `http://localhost:3000/api/planner/oauth/google/callback`
+làm redirect URI, rồi đặt `GOOGLE_CLIENT_ID` và `GOOGLE_CLIENT_SECRET` trong
+`.env.local` (không bao giờ commit). Lần đăng nhập Google đầu tiên với email chưa
+có tài khoản sẽ tạo tài khoản mới.
+Email đã có tài khoản thì bị từ chối với `link_required` — Google không bao giờ
+được liên kết theo email. Người đó đăng nhập bằng mật khẩu rồi bấm "Liên kết tài
+khoản Google" ở `/doi-mat-khau`.
 
 Sửa một trip đang có thì cần version lấy từ `ETag` của nó:
 
@@ -203,6 +234,13 @@ làm đủ cả ba.
 3. **URL site** — đặt `NEXT_PUBLIC_SITE_URL`; nó quyết định canonical, `hreflang`
    và sitemap.
 4. **Ảnh** — thay tranh SVG sinh tự động bằng ảnh thật.
+5. **Đăng nhập Google** — tạo OAuth client của Google, đăng ký redirect URI của
+   production, và đặt `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` trong môi trường
+   triển khai.
+6. **Thông báo quyền riêng tư** — khách đăng ký bằng Google được lưu tên và email;
+   hãy đăng thông báo quyền riêng tư và cách yêu cầu xoá dữ liệu (Nghị định
+   13/2023) trước khi bật đăng ký trên production, hoặc đặt
+   `GOOGLE_SIGNUP_ENABLED=false` cho tới lúc đó.
 
 ## Deploy
 

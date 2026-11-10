@@ -4,6 +4,7 @@ import {
   type DocumentStore,
 } from '@/server/persistence/json-store';
 import type {
+  OAuthAttempt,
   PlannerSession,
   PlannerUser,
   Trip,
@@ -31,6 +32,8 @@ export interface PlannerData {
    * rows must never touch the user record.
    */
   sessions: PlannerSession[];
+  /** In-flight Google sign-ins (ADR 0007): ten-minute, one-use rows. */
+  oauthAttempts: OAuthAttempt[];
   trips: Trip[];
   tripDays: TripDay[];
   tripActivities: TripActivity[];
@@ -43,6 +46,7 @@ export function emptyPlannerData(): PlannerData {
   return {
     users: [],
     sessions: [],
+    oauthAttempts: [],
     trips: [],
     tripDays: [],
     tripActivities: [],
@@ -55,6 +59,7 @@ function normalize(partial: Partial<PlannerData>): PlannerData {
   return {
     users: partial.users ?? [],
     sessions: partial.sessions ?? [],
+    oauthAttempts: partial.oauthAttempts ?? [],
     trips: partial.trips ?? [],
     tripDays: partial.tripDays ?? [],
     tripActivities: partial.tripActivities ?? [],
