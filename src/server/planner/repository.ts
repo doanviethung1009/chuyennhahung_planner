@@ -8,6 +8,7 @@ import {
   slugConflict,
   versionConflict,
 } from '@/server/content/errors';
+import { userRole, type Role } from '@/server/identity/permissions';
 import type { IntegrityIssue } from '@/server/content/repository';
 import type { CostCategory, PlaceCategory } from '@/server/content/schemas';
 import {
@@ -250,6 +251,7 @@ export class PlannerRepository {
             userId: user.id,
             handle: user.handle,
             source: 'cookie',
+            role: userRole(user),
             ...(pending ? { passwordChangeRequired: true } : {}),
           };
         }
@@ -511,6 +513,7 @@ export class PlannerRepository {
         passwordHash: null,
         googleSub: identity.sub,
         createdVia: 'google',
+        role: 'member',
       };
       data.users.push(user);
       return { ok: true, session: this.openSession(data, user, 'google'), created: true };
@@ -619,6 +622,7 @@ export class PlannerRepository {
         tokenHash: hashAccessToken(accessToken),
         createdAt: at,
         updatedAt: at,
+        ...(input.role ? { role: input.role } : {}),
         ...(input.email
           ? { email: input.email, passwordHash, mustChangePassword: true, createdVia: 'operator' as const }
           : {}),
@@ -627,6 +631,23 @@ export class PlannerRepository {
       return temporaryPassword
         ? { user: toPublicUser(user), accessToken, temporaryPassword }
         : { user: toPublicUser(user), accessToken };
+    });
+  }
+
+  /**
+   * Sets a user's role. Idempotent: the same role again changes nothing, not
+   * even `updatedAt`. Sessions are not touched — `identify` reads the role per
+   * request, so the change applies at once.
+   */
+  setUserRole(userId: string, role: Role): Promise<PublicPlannerUser> {
+    return this.transaction((data) => {
+      const index = data.users.findIndex((user) => user.id === userId);
+      const existing = data.users[index];
+      if (index < 0 || !existing) throw notFound('planner user', userId);
+      if (userRole(existing) === role) return toPublicUser(existing);
+      const next: PlannerUser = { ...existing, role, updatedAt: this.timestamp() };
+      data.users[index] = next;
+      return toPublicUser(next);
     });
   }
 
@@ -2005,6 +2026,7 @@ function toPublicUser(user: PlannerUser): PublicPlannerUser {
     ...(rest as Omit<PublicPlannerUser, 'hasPassword' | 'hasGoogle'>),
     hasPassword: Boolean(user.passwordHash),
     hasGoogle: Boolean(user.googleSub),
+    role: userRole(user),
   };
 }
 

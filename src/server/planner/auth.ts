@@ -1,5 +1,6 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { ContentError } from '@/server/content/errors';
+import { userRole, type Role } from '@/server/identity/permissions';
 import type { PlannerUser } from './schemas';
 
 /**
@@ -54,6 +55,8 @@ export interface PlannerIdentity {
   userId: string;
   handle: string;
   source: CredentialSource;
+  /** Resolved from the user row on every request; absent reads as `member`. */
+  role: Role;
   /**
    * True for a session opened with an operator-issued temporary password that
    * has not been changed yet (ADR 0007). `plannerRoute` refuses every route
@@ -162,7 +165,7 @@ export function authorizePlannerUser(
 
   const found = findUserByAccessToken(users, presented);
   if (!found) throw unauthorized();
-  return { userId: found.id, handle: found.handle, source: 'bearer' };
+  return { userId: found.id, handle: found.handle, source: 'bearer', role: userRole(found) };
 }
 
 /**

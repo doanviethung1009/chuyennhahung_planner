@@ -56,7 +56,7 @@ describe('signing in', () => {
     expect(issued.token.length).toBeGreaterThanOrEqual(32);
 
     const identity = await planner.identify(withCookie(issued.token));
-    expect(identity).toEqual({ userId, handle: 'hung-tran', source: 'cookie' });
+    expect(identity).toEqual({ userId, handle: 'hung-tran', source: 'cookie', role: 'member' });
   });
 
   it('stores only the digest, never the cookie value', async () => {
@@ -228,7 +228,7 @@ describe('the cookie and the token coexist', () => {
 
     // A stale cookie in a browser profile must not break a script.
     const identity = await planner.identify(request);
-    expect(identity).toEqual({ userId, handle: 'hung-tran', source: 'bearer' });
+    expect(identity).toEqual({ userId, handle: 'hung-tran', source: 'bearer', role: 'member' });
   });
 
   it('reports an expired session rather than silently falling through', async () => {

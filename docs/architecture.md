@@ -287,7 +287,7 @@ Deliberately absent, and not to be scaffolded early:
   into Postgres as JSONB rows first, normalised tables second. Accepted; not built yet.
 - **Phase 07 — Admin Portal, CMS & RBAC (announced, not started).** Nothing below is
   built or to be scaffolded early; each item needs its decision recorded first.
-  Design direction: [ADR 0006](adr/0006-unified-identity-and-roles.md) (Proposed).
+  Design direction: [ADR 0006](adr/0006-unified-identity-and-roles.md) (Accepted 2026-11-11; migration steps 1–2 — `role`, `can`, admin-token bootstrap — are implemented, steps 3–4 remain Phase 07).
   Backlog of dependencies and decisions:
   - **Identity provider** — sign-in methods are decided ([ADR 0007](adr/0007-password-and-google-sign-in.md): password and Google); still open are self-service reset (needs an email sender) and MFA for `admin`.
   - **Role model** — `member` / `editor` / `admin` on the one user model, a pure `can(identity, action, resource)`, `ADMIN_API_TOKEN` demoted to a service principal.
