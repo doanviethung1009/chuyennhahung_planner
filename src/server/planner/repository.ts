@@ -195,7 +195,7 @@ export class PlannerRepository {
    * A throw inside `mutate` abandons the whole change: nothing is written, so a
    * failed validation can never leave half an activity behind.
    */
-  /** Read-modify-write, made atomic by the store (ADR 0007 §3). */
+  /** Read-modify-write, made atomic by the store (ADR 0008 §3). */
   private async transaction<T>(mutate: (data: PlannerData) => Promise<T> | T): Promise<T> {
     // `withTripDefaults` fills the draft in place, so the defaults are written.
     const result = await this.store.transact((data) => mutate(withTripDefaults(data)));

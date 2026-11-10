@@ -88,7 +88,7 @@ describe('createJsonDocumentStore', () => {
 
 /**
  * The `transact` contract, run against every in-process store. A later shared
- * store (ADR 0007 follow-up 2) is expected to pass the same cases.
+ * store (ADR 0008 follow-up 2) is expected to pass the same cases.
  */
 const stores: Array<[string, (initial: Doc) => Promise<DocumentStore<Doc>>]> = [
   ['memory', async (initial) => createMemoryDocumentStore(initial)],

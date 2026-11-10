@@ -24,7 +24,7 @@ export interface DocumentStore<T> {
    *
    * The memory and JSON stores serialise on an in-process queue, which is safe
    * for one Node process only; a shared store makes this atomic across
-   * instances (`docs/adr/0007-postgres-document-store.md` §3).
+   * instances (`docs/adr/0008-postgres-document-store.md` §3).
    */
   transact<R>(mutate: (data: T) => Promise<R> | R): Promise<R>;
 }

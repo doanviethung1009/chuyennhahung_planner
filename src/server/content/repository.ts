@@ -82,7 +82,7 @@ export class TravelContentRepository {
   // Transaction plumbing
   // -------------------------------------------------------------------------
 
-  /** Read-modify-write, made atomic by the store (ADR 0007 §3). */
+  /** Read-modify-write, made atomic by the store (ADR 0008 §3). */
   private transaction<T>(mutate: (data: ContentData) => Promise<T> | T): Promise<T> {
     return this.store.transact(mutate);
   }
