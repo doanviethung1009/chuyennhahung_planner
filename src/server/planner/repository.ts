@@ -23,15 +23,28 @@ import {
   type PlannerIdentity,
 } from './auth';
 import { computeTripBudget, type TripBudgetSummary } from './budget';
+import type { GoogleIdentity } from './google';
+import {
+  DEFAULT_SCRYPT_COST_LOG2,
+  dummyPasswordHash,
+  generateTemporaryPassword,
+  hashPassword,
+  parsePasswordHash,
+  verifyPassword,
+} from './password';
 import type { PlannerCatalog } from './catalog';
 import type { PlannerData, PlannerStore } from './store';
 import {
   ACTIVITIES_PER_DAY_LIMIT,
+  MAX_LIVE_OAUTH_ATTEMPTS,
+  OAUTH_ATTEMPT_MINUTES,
   SESSION_ABSOLUTE_DAYS,
   SESSION_IDLE_DAYS,
   SESSION_TOUCH_INTERVAL_MINUTES,
+  type OAuthAttempt,
   type PlannerReorderInput,
   type PlannerSession,
+  type SessionMethod,
   type PlannerUser,
   type PlannerUserCreateInput,
   SHARE_TOKEN_PATTERN,
@@ -82,6 +95,11 @@ export interface PlannerRepositoryOptions {
   now?: () => Date;
   /** Injected so tests get deterministic ids. */
   newId?: (prefix: string) => string;
+  /**
+   * log2 of scrypt's N for new password hashes. Production uses the OWASP
+   * baseline; tests pass a small value so a suite does not take minutes.
+   */
+  scryptCostLog2?: number;
 }
 
 /** A day with its activities attached, in order. */
@@ -110,11 +128,46 @@ export interface IssuedSession {
   expiresAt: string;
 }
 
+export interface IssuedTemporaryPassword {
+  user: PublicPlannerUser;
+  /** Shown exactly once. Only its scrypt hash is stored. */
+  temporaryPassword: string;
+}
+
+/** What `createUser` returns: the access token, and a password if an email was given. */
+export interface IssuedPlannerUserWithPassword extends IssuedPlannerUser {
+  temporaryPassword?: string;
+}
+
+/** A Google sign-in that did not resolve to an account (ADR 0007). */
+export type GoogleSignInResult =
+  | { ok: true; session: IssuedSession; created: boolean }
+  | {
+      ok: false;
+      reason: 'account_not_found' | 'account_conflict' | 'link_required' | 'rate_limited';
+    };
+
+/** Linking Google to a signed-in user's own account (ADR 0007). */
+export type GoogleLinkResult =
+  | { ok: true; user: PublicPlannerUser }
+  | { ok: false; reason: 'account_conflict' };
+
+export interface NewOAuthAttempt {
+  stateHash: string;
+  nonce: string;
+  codeVerifier: string;
+  returnTo: string;
+  locale: 'vi' | 'en';
+  /** Present when a signed-in user is linking Google, not signing in. */
+  linkUserId?: string;
+}
+
 export class PlannerRepository {
   private readonly store: PlannerStore;
   private readonly catalog: PlannerCatalog;
   private readonly now: () => Date;
   private readonly newId: (prefix: string) => string;
+  private readonly scryptCostLog2: number;
   /** Serialises read-modify-write pairs so two mutations cannot interleave. */
   private queue: Promise<unknown> = Promise.resolve();
   /**
@@ -132,6 +185,7 @@ export class PlannerRepository {
     this.catalog = options.catalog;
     this.now = options.now ?? (() => new Date());
     this.newId = options.newId ?? ((prefix) => `${prefix}_${randomUUID().slice(0, 8)}`);
+    this.scryptCostLog2 = options.scryptCostLog2 ?? DEFAULT_SCRYPT_COST_LOG2;
   }
 
   // -------------------------------------------------------------------------
@@ -195,7 +249,15 @@ export class PlannerRepository {
         const user = data.users.find((candidate) => candidate.id === session.userId);
         if (user) {
           if (sessionNeedsTouch(session, now)) await this.touchSession(session.id, now);
-          return { userId: user.id, handle: user.handle, source: 'cookie' };
+          // Only a session opened *with* the temporary password is held back
+          // (ADR 0007): the same user signing in with Google is not.
+          const pending = session.method === 'password' && user.mustChangePassword === true;
+          return {
+            userId: user.id,
+            handle: user.handle,
+            source: 'cookie',
+            ...(pending ? { passwordChangeRequired: true } : {}),
+          };
         }
         // The user is gone, so the session means nothing. Drop it and let the
         // bearer path decide.
@@ -223,24 +285,277 @@ export class PlannerRepository {
         throw new ContentError('unauthorized', 'that access token is not valid');
       }
 
-      const now = this.now();
-      const at = now.toISOString();
-      const token = issueSessionToken();
-      const session: PlannerSession = {
-        id: this.newId('ses'),
-        tokenHash: hashSessionToken(token),
-        userId: user.id,
-        createdAt: at,
-        lastSeenAt: at,
-        expiresAt: new Date(now.getTime() + SESSION_ABSOLUTE_DAYS * DAY_MS).toISOString(),
-      };
+      return this.openSession(data, user, 'token');
+    });
+  }
 
-      data.sessions = data.sessions.filter(
-        (candidate) => !sessionIsExpired(candidate, now),
+  /**
+   * Adds a session row for `user` inside a transaction the caller holds. A new
+   * sign-in always issues a *new* session rather than extending an existing
+   * one, and expired rows are swept while we are here.
+   */
+  private openSession(data: PlannerData, user: PlannerUser, method: SessionMethod): IssuedSession {
+    const now = this.now();
+    const at = now.toISOString();
+    const token = issueSessionToken();
+    const session: PlannerSession = {
+      id: this.newId('ses'),
+      tokenHash: hashSessionToken(token),
+      userId: user.id,
+      createdAt: at,
+      lastSeenAt: at,
+      expiresAt: new Date(now.getTime() + SESSION_ABSOLUTE_DAYS * DAY_MS).toISOString(),
+      method,
+    };
+
+    data.sessions = data.sessions.filter((candidate) => !sessionIsExpired(candidate, now));
+    data.sessions.push(session);
+
+    return { user: toPublicUser(user), token, expiresAt: session.expiresAt };
+  }
+
+  // -------------------------------------------------------------------------
+  // Passwords (ADR 0007)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Email + password sign-in. Every failure — unknown email, no password set,
+   * wrong password — is the same 401 with the same message, and an unknown
+   * email still pays for one scrypt run, so neither the answer nor its timing
+   * says whether an account exists.
+   *
+   * scrypt runs *outside* the store transaction (it is deliberately slow and
+   * must not hold the write queue); the transaction then re-checks that the
+   * hash it verified is still the stored one, so a password changed in between
+   * cannot be signed in with.
+   */
+  async signInWithPassword(email: string, password: string): Promise<IssuedSession> {
+    const refused = () => new ContentError('unauthorized', 'that email and password do not match');
+    const data = await this.snapshot();
+    const candidate = data.users.find((user) => user.email === email) ?? null;
+    const stored = candidate?.passwordHash ?? null;
+
+    const check = await verifyPassword(
+      password,
+      stored ?? dummyPasswordHash(this.scryptCostLog2),
+      this.scryptCostLog2,
+    );
+    if (!candidate || !stored || !check.ok) throw refused();
+
+    const upgraded = check.needsRehash ? await hashPassword(password, this.scryptCostLog2) : null;
+
+    return this.transaction((current) => {
+      const user = current.users.find((row) => row.id === candidate.id);
+      if (!user || user.passwordHash !== stored) throw refused();
+      if (upgraded) user.passwordHash = upgraded;
+      return this.openSession(current, user, 'password');
+    });
+  }
+
+  /**
+   * Changes the signed-in user's own password. Clears the temporary-password
+   * flag and ends every *other* session of that user; the one making the
+   * change stays signed in.
+   */
+  async changePassword(
+    request: Request,
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const data = await this.snapshot();
+    const user = data.users.find((row) => row.id === userId);
+    if (!user) throw new ContentError('unauthorized', 'this credential is not valid');
+    const stored = user.passwordHash ?? null;
+    if (!stored) {
+      throw invalidState('this account has no password; an operator can issue one');
+    }
+    const check = await verifyPassword(currentPassword, stored, this.scryptCostLog2);
+    if (!check.ok) {
+      throw new ContentError('validation_failed', 'the current password is not correct', [
+        { path: 'currentPassword', message: 'is not correct' },
+      ]);
+    }
+    if (currentPassword === newPassword) {
+      throw new ContentError('validation_failed', 'the new password must differ from the current one', [
+        { path: 'newPassword', message: 'must differ from the current password' },
+      ]);
+    }
+    const nextHash = await hashPassword(newPassword, this.scryptCostLog2);
+    const presented = sessionTokenFromRequest(request);
+
+    await this.transaction((current) => {
+      const row = current.users.find((candidate) => candidate.id === userId);
+      if (!row || row.passwordHash !== stored) {
+        throw invalidState('the password changed while this request was in flight — try again');
+      }
+      row.passwordHash = nextHash;
+      row.mustChangePassword = false;
+      row.updatedAt = this.timestamp();
+      const keep = presented ? findSessionByToken(current.sessions, presented) : null;
+      current.sessions = current.sessions.filter(
+        (session) => session.userId !== userId || session.id === keep?.id,
       );
-      data.sessions.push(session);
+    });
+  }
 
-      return { user: toPublicUser(user), token, expiresAt: session.expiresAt };
+  /**
+   * Operator reset: a new temporary password, shown once, and every session of
+   * that user ended — the same "sign out everywhere" as `rotate-token`.
+   */
+  async resetUserPassword(userId: string): Promise<IssuedTemporaryPassword> {
+    const temporaryPassword = generateTemporaryPassword();
+    const hash = await hashPassword(temporaryPassword, this.scryptCostLog2);
+    return this.transaction((data) => {
+      const user = data.users.find((row) => row.id === userId);
+      if (!user) throw notFound('planner user', userId);
+      if (!user.email) {
+        throw invalidState(`planner user "${userId}" has no email, so cannot sign in with a password`);
+      }
+      user.passwordHash = hash;
+      user.mustChangePassword = true;
+      user.updatedAt = this.timestamp();
+      data.sessions = data.sessions.filter((session) => session.userId !== userId);
+      return { user: toPublicUser(user), temporaryPassword };
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Google (ADR 0007)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Records an in-flight Google sign-in; sweeps expired ones on the way.
+   * Answers false — and writes nothing — when `MAX_LIVE_OAUTH_ATTEMPTS` are
+   * already in flight, so a flood of starts cannot grow the store without
+   * bound whatever address it claims to come from.
+   */
+  beginGoogleSignIn(attempt: NewOAuthAttempt): Promise<boolean> {
+    return this.transaction((data) => {
+      const now = this.now();
+      data.oauthAttempts = data.oauthAttempts.filter(
+        (row) => Date.parse(row.expiresAt) > now.getTime(),
+      );
+      if (data.oauthAttempts.length >= MAX_LIVE_OAUTH_ATTEMPTS) return false;
+      data.oauthAttempts.push({
+        id: this.newId('oau'),
+        ...attempt,
+        createdAt: now.toISOString(),
+        expiresAt: new Date(now.getTime() + OAUTH_ATTEMPT_MINUTES * 60_000).toISOString(),
+      });
+      return true;
+    });
+  }
+
+  /**
+   * Takes the attempt a `state` belongs to, **removing it whatever happens
+   * next** — a `state` is good for one callback only. Null if unknown or
+   * expired.
+   */
+  consumeGoogleAttempt(stateHash: string): Promise<OAuthAttempt | null> {
+    return this.transaction((data) => {
+      const now = this.now().getTime();
+      let found: OAuthAttempt | null = null;
+      for (const row of data.oauthAttempts) {
+        if (digestsMatch(row.stateHash, stateHash)) found = row;
+      }
+      data.oauthAttempts = data.oauthAttempts.filter(
+        (row) => row !== found && Date.parse(row.expiresAt) > now,
+      );
+      if (!found || Date.parse(found.expiresAt) <= now) return null;
+      return found;
+    });
+  }
+
+  /**
+   * Resolves a verified Google identity to an account, in one transaction so
+   * two concurrent first sign-ins cannot create two accounts:
+   * 1. a user with this `sub` — signed in; 2. else a user with this email —
+   * refused, `link_required` when it has no Google link yet and
+   * `account_conflict` when it is linked to another `sub`; 3. else a new
+   * account, if signup is enabled.
+   *
+   * Step 2 never links. An email an operator typed was never verified: a typo
+   * or a recycled address would otherwise hand the account, and its trips, to
+   * whoever controls that Google account. The owner links Google themselves
+   * from a signed-in session (`linkGoogle`).
+   */
+  signInWithGoogle(
+    identity: GoogleIdentity,
+    options: {
+      signupEnabled: boolean;
+      /**
+       * Asked only when an account would be *created*, so the signup limiter
+       * counts creations, not every Google sign-in.
+       */
+      allowSignup?: () => boolean;
+    },
+  ): Promise<GoogleSignInResult> {
+    return this.transaction((data): GoogleSignInResult => {
+      const bySub = data.users.find((user) => user.googleSub === identity.sub);
+      if (bySub) return { ok: true, session: this.openSession(data, bySub, 'google'), created: false };
+
+      const byEmail = data.users.find((user) => user.email === identity.email);
+      if (byEmail) {
+        return { ok: false, reason: byEmail.googleSub ? 'account_conflict' : 'link_required' };
+      }
+
+      if (!options.signupEnabled) return { ok: false, reason: 'account_not_found' };
+      if (options.allowSignup && !options.allowSignup()) return { ok: false, reason: 'rate_limited' };
+
+      const at = this.timestamp();
+      const user: PlannerUser = {
+        id: this.newId('usr'),
+        handle: uniqueHandle(identity.email, data.users),
+        displayName: displayNameFor(identity),
+        // A token is required by the schema; this one is never shown to
+        // anyone. An operator can rotate it if the user ever needs one.
+        tokenHash: hashAccessToken(issueAccessToken()),
+        createdAt: at,
+        updatedAt: at,
+        email: identity.email,
+        passwordHash: null,
+        googleSub: identity.sub,
+        createdVia: 'google',
+      };
+      data.users.push(user);
+      return { ok: true, session: this.openSession(data, user, 'google'), created: true };
+    });
+  }
+
+  /**
+   * Links a verified Google identity to `userId` — the user who started the
+   * flow from a signed-in session, re-checked by the callback. The Google
+   * email need not match the account's: proving control of both is the point.
+   * Refused if this Google account already belongs to someone else, or the
+   * user is already linked to a different one. Existing sessions survive.
+   */
+  linkGoogle(userId: string, identity: GoogleIdentity): Promise<GoogleLinkResult> {
+    return this.transaction((data): GoogleLinkResult => {
+      const user = data.users.find((row) => row.id === userId);
+      if (!user) throw notFound('planner user', userId);
+      const holder = data.users.find((row) => row.googleSub === identity.sub);
+      if (holder && holder.id !== userId) return { ok: false, reason: 'account_conflict' };
+      if (user.googleSub && user.googleSub !== identity.sub) {
+        return { ok: false, reason: 'account_conflict' };
+      }
+      if (user.googleSub !== identity.sub) {
+        user.googleSub = identity.sub;
+        user.updatedAt = this.timestamp();
+      }
+      return { ok: true, user: toPublicUser(user) };
+    });
+  }
+
+  /** Removes the Google link and ends that user's sessions. */
+  unlinkGoogle(userId: string): Promise<PublicPlannerUser> {
+    return this.transaction((data) => {
+      const user = data.users.find((row) => row.id === userId);
+      if (!user) throw notFound('planner user', userId);
+      user.googleSub = null;
+      user.updatedAt = this.timestamp();
+      data.sessions = data.sessions.filter((session) => session.userId !== userId);
+      return toPublicUser(user);
     });
   }
 
@@ -282,11 +597,24 @@ export class PlannerRepository {
       .map(toPublicUser);
   }
 
-  /** Provisions a traveller and issues their one and only access token. */
-  createUser(input: PlannerUserCreateInput): Promise<IssuedPlannerUser> {
+  /**
+   * Provisions a traveller and issues their one and only access token. With an
+   * email, a temporary password is issued too (ADR 0007), shown once, and the
+   * user must change it before using the Planner.
+   */
+  async createUser(input: PlannerUserCreateInput): Promise<IssuedPlannerUserWithPassword> {
+    const temporaryPassword = input.email ? generateTemporaryPassword() : null;
+    const passwordHash = temporaryPassword
+      ? await hashPassword(temporaryPassword, this.scryptCostLog2)
+      : null;
+
     return this.transaction((data) => {
       if (data.users.some((user) => user.handle === input.handle)) {
         throw slugConflict('planner user', input.handle);
+      }
+      if (input.email && data.users.some((user) => user.email === input.email)) {
+        // The address is not echoed back: it is personal data.
+        throw new ContentError('slug_conflict', 'another planner user already has that email');
       }
       const at = this.timestamp();
       const accessToken = issueAccessToken();
@@ -297,9 +625,14 @@ export class PlannerRepository {
         tokenHash: hashAccessToken(accessToken),
         createdAt: at,
         updatedAt: at,
+        ...(input.email
+          ? { email: input.email, passwordHash, mustChangePassword: true, createdVia: 'operator' as const }
+          : {}),
       };
       data.users.push(user);
-      return { user: toPublicUser(user), accessToken };
+      return temporaryPassword
+        ? { user: toPublicUser(user), accessToken, temporaryPassword }
+        : { user: toPublicUser(user), accessToken };
     });
   }
 
@@ -928,16 +1261,22 @@ export class PlannerRepository {
   async describeSession(
     request: Request,
     userId: string,
-  ): Promise<{ user: PublicPlannerUser; expiresAt: string | null }> {
+  ): Promise<{
+    user: PublicPlannerUser;
+    expiresAt: string | null;
+    passwordChangeRequired: boolean;
+  }> {
     const data = await this.snapshot();
     const user = data.users.find((candidate) => candidate.id === userId);
     if (!user) throw new ContentError('unauthorized', 'this credential is not valid');
 
     const presented = sessionTokenFromRequest(request);
-    const session = presented ? findSessionByToken(data.sessions, presented) : null;
+    const found = presented ? findSessionByToken(data.sessions, presented) : null;
+    const session = found && found.userId === userId ? found : null;
     return {
       user: toPublicUser(user),
-      expiresAt: session && session.userId === userId ? session.expiresAt : null,
+      expiresAt: session ? session.expiresAt : null,
+      passwordChangeRequired: session?.method === 'password' && user.mustChangePassword === true,
     };
   }
 
@@ -1428,10 +1767,37 @@ export class PlannerRepository {
     reportDuplicates('trip expense', data.tripExpenses, (e) => e.id, report);
 
     // --- users ---------------------------------------------------------------
+    // Email and Google ids are personal data or credential identifiers, so a
+    // clash is reported against the *user ids* involved, never by value.
+    const usersByEmail = new Map<string, string[]>();
+    const usersBySub = new Map<string, string[]>();
     for (const user of data.users) {
       if (!/^[0-9a-f]{64}$/.test(user.tokenHash)) {
         // Reported as a shape problem; the value itself is never echoed.
         report('planner user', user.id, 'tokenHash is not a 64-character SHA-256 digest');
+      }
+      if (user.passwordHash && !parsePasswordHash(user.passwordHash)) {
+        report('planner user', user.id, 'passwordHash is not a valid scrypt hash');
+      }
+      if (user.passwordHash && !user.email) {
+        report('planner user', user.id, 'has a password but no email to sign in with');
+      }
+      if (user.email) usersByEmail.set(user.email, [...(usersByEmail.get(user.email) ?? []), user.id]);
+      if (user.googleSub) {
+        usersBySub.set(user.googleSub, [...(usersBySub.get(user.googleSub) ?? []), user.id]);
+      }
+    }
+    for (const ids of usersByEmail.values()) {
+      if (ids.length > 1) for (const id of ids) report('planner user', id, 'shares its email with another user');
+    }
+    for (const ids of usersBySub.values()) {
+      if (ids.length > 1) for (const id of ids) report('planner user', id, 'shares its Google link with another user');
+    }
+
+    // --- Google sign-in attempts --------------------------------------------
+    for (const attempt of data.oauthAttempts) {
+      if (Date.parse(attempt.expiresAt) <= sweepNowMs(this.now())) {
+        report('oauth attempt', attempt.id, 'has expired and has not been swept');
       }
     }
 
@@ -1639,7 +2005,54 @@ export class PlannerRepository {
 function toPublicUser(user: PlannerUser): PublicPlannerUser {
   const rest = { ...user } as Partial<PlannerUser>;
   delete rest.tokenHash;
-  return rest as PublicPlannerUser;
+  delete rest.passwordHash;
+  delete rest.googleSub;
+  return {
+    ...(rest as Omit<PublicPlannerUser, 'hasPassword' | 'hasGoogle'>),
+    hasPassword: Boolean(user.passwordHash),
+    hasGoogle: Boolean(user.googleSub),
+  };
+}
+
+const sweepNowMs = (now: Date) => now.getTime();
+
+/** Constant-time comparison of two hex digests. */
+function digestsMatch(a: string, b: string): boolean {
+  const left = Buffer.from(a, 'hex');
+  const right = Buffer.from(b, 'hex');
+  return left.length === right.length && left.length > 0 && timingSafeEqual(left, right);
+}
+
+/**
+ * A handle for a self-registered user: the email's local part as a slug
+ * (`slugSchema`: lowercase words joined by single hyphens, 3–96 chars), with
+ * a short random suffix when taken. Not a credential — just a stable name.
+ */
+function uniqueHandle(email: string, users: readonly PlannerUser[]): string {
+  const local = email.split('@', 1)[0] ?? '';
+  let base = local
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80)
+    .replace(/-+$/g, '');
+  if (base.length < 3) base = `khach-${base}`.replace(/-+$/g, '');
+  if (base.length < 3) base = 'khach';
+  const taken = new Set(users.map((user) => user.handle));
+  if (!taken.has(base)) return base;
+  for (;;) {
+    const candidate = `${base}-${randomBytes(3).toString('hex')}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+}
+
+function displayNameFor(identity: GoogleIdentity): string {
+  const fromName = identity.name?.trim().slice(0, 80) ?? '';
+  if (fromName.length >= 2) return fromName;
+  const local = (identity.email.split('@', 1)[0] ?? '').slice(0, 80);
+  return local.length >= 2 ? local : 'Khách';
 }
 
 // ---------------------------------------------------------------------------

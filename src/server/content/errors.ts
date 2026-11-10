@@ -10,6 +10,7 @@ export type ContentErrorCode =
   | 'validation_failed'
   | 'unauthorized'
   | 'forbidden'
+  | 'password_change_required'
   | 'admin_auth_unconfigured'
   | 'not_found'
   | 'slug_conflict'
@@ -25,6 +26,7 @@ const STATUS_BY_CODE: Record<ContentErrorCode, number> = {
   validation_failed: 422,
   unauthorized: 401,
   forbidden: 403,
+  password_change_required: 403,
   admin_auth_unconfigured: 503,
   not_found: 404,
   slug_conflict: 409,

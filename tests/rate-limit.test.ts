@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clientKey, createRateLimiter } from '../src/server/rate-limit';
+import { allowSignup, clientKey, createRateLimiter } from '../src/server/rate-limit';
 
 function clock(start = 1_000_000) {
   let t = start;
@@ -85,5 +85,14 @@ describe('clientKey', () => {
   });
   it('caps the key length', () => {
     expect(clientKey(h({ 'x-forwarded-for': 'x'.repeat(500) })).length).toBeLessThanOrEqual(64);
+  });
+});
+
+describe('Google signup throttle', () => {
+  it('caps signups globally, however many addresses a client claims', () => {
+    // 30 distinct (forged) addresses each get their first signup …
+    for (let i = 0; i < 30; i += 1) expect(allowSignup(`10.0.0.${i}`)).toBe(true);
+    // … and the next one is refused by the global bucket, from a fresh address.
+    expect(allowSignup('10.0.1.1')).toBe(false);
   });
 });

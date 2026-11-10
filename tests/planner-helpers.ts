@@ -24,6 +24,8 @@ export function makePlanner(
     store?: PlannerStore;
     /** Pass a movable clock to test anything time-dependent, such as expiry. */
     now?: () => Date;
+    /** scrypt cost; tests default to a cheap 2^10 so the suite stays fast. */
+    scryptCostLog2?: number;
   } = {},
 ): PlannerRepository {
   const counters = new Map<string, number>();
@@ -31,6 +33,7 @@ export function makePlanner(
     store: options.store ?? createMemoryPlannerStore(),
     catalog: options.catalog ?? fakeCatalog(),
     now: options.now ?? (() => new Date(FROZEN_NOW)),
+    scryptCostLog2: options.scryptCostLog2 ?? 10,
     newId: (prefix) => {
       const next = (counters.get(prefix) ?? 0) + 1;
       counters.set(prefix, next);
