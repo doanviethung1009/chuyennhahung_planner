@@ -278,7 +278,9 @@ Những thứ vắng mặt có chủ đích, và không được dựng sớm:
   ADR tiếp theo, và `resolveIdentity` là đường ráp duy nhất nó phải thay.
 - **SQL.** Cả hai store chỉ an toàn trong một process. Triển khai nhiều instance
   là mốc phải chuyển; schema đích và các index đã được ghi sẵn trong
-  [ADR 0002](adr/0002-planner-core.vi.md#hình-dạng-sql-mà-cấu-trúc-này-sẽ-thành).
+  [ADR 0002](adr/0002-planner-core.vi.md#hình-dạng-sql-mà-cấu-trúc-này-sẽ-thành). Lộ trình
+  đã được quyết trong [ADR 0007](adr/0007-postgres-document-store.vi.md): các document
+  chuyển vào Postgres thành dòng JSONB trước, bảng chuẩn hoá sau. Đã chấp nhận; chưa dựng.
 - **Phase 07 — Admin Portal, CMS & RBAC (đã công bố, chưa bắt đầu).** Không mục nào bên
   dưới được dựng hay dựng sớm; mỗi mục cần ghi quyết định trước. Hướng thiết kế:
   [ADR 0006](adr/0006-unified-identity-and-roles.vi.md) (Đề xuất). Backlog phụ
