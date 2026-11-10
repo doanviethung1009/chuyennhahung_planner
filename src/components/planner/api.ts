@@ -48,6 +48,11 @@ export async function api<T = undefined>(path: string, options: Options = {}): P
     } catch {
       // Non-JSON error body: keep the generic code.
     }
+    // A temporary password is pending (ADR 0007): every Planner call but the
+    // change itself is refused, so send the browser to change it and come back.
+    if (response.status === 403 && code === 'password_change_required') {
+      goToChangePassword();
+    }
     const retry = Number(response.headers.get('retry-after'));
     throw new ApiError(response.status, code, Number.isFinite(retry) && retry > 0 ? retry : null);
   }
@@ -59,6 +64,18 @@ export async function api<T = undefined>(path: string, options: Options = {}): P
 export function signInUrl(locale: Locale): string {
   const returnTo = window.location.pathname + window.location.search;
   return `${getPathname({ href: '/sign-in', locale })}?returnTo=${encodeURIComponent(returnTo)}`;
+}
+
+/** Localized change-password URL that returns to `returnTo` afterwards. */
+export function changePasswordUrl(locale: Locale, returnTo: string): string {
+  return `${getPathname({ href: '/account/password', locale })}?returnTo=${encodeURIComponent(returnTo)}`;
+}
+
+function goToChangePassword(): void {
+  const { pathname, search } = window.location;
+  const locale: Locale = pathname === '/en' || pathname.startsWith('/en/') ? 'en' : 'vi';
+  // A full navigation on purpose: server-rendered state must be fresh.
+  window.location.assign(changePasswordUrl(locale, pathname + search));
 }
 
 export function goToSignIn(locale: Locale): void {

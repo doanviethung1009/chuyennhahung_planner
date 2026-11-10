@@ -24,6 +24,7 @@ export const pathnames = {
   '/plan-your-trip': { vi: '/thiet-ke-chuyen-di', en: '/plan-your-trip' },
   '/trip-setup/[template]': { vi: '/tao-chuyen-di/[template]', en: '/trip-setup/[template]' },
   '/sign-in': { vi: '/dang-nhap', en: '/sign-in' },
+  '/account/password': { vi: '/doi-mat-khau', en: '/account/password' },
   '/my-trips': { vi: '/chuyen-di-cua-toi', en: '/my-trips' },
   '/my-trips/[id]': { vi: '/chuyen-di-cua-toi/[id]', en: '/my-trips/[id]' },
   '/shared/[token]': { vi: '/chia-se/[token]', en: '/shared/[token]' },
