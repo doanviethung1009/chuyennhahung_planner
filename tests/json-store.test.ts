@@ -2,7 +2,11 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { createJsonDocumentStore } from '../src/server/persistence/json-store';
+import {
+  createJsonDocumentStore,
+  createMemoryDocumentStore,
+  type DocumentStore,
+} from '../src/server/persistence/json-store';
 
 interface Doc {
   items: string[];
@@ -79,5 +83,101 @@ describe('createJsonDocumentStore', () => {
 
     expect(await store.read()).toEqual({ items: ['kept'] });
     expect(JSON.parse(await readFile(file, 'utf8'))).toEqual({ items: ['kept'] });
+  });
+});
+
+/**
+ * The `transact` contract, run against every in-process store. A later shared
+ * store (ADR 0007 follow-up 2) is expected to pass the same cases.
+ */
+const stores: Array<[string, (initial: Doc) => Promise<DocumentStore<Doc>>]> = [
+  ['memory', async (initial) => createMemoryDocumentStore(initial)],
+  [
+    'json',
+    async (initial) => {
+      await writeFile(file, JSON.stringify(initial), 'utf8');
+      return createJsonDocumentStore<Doc>(file, normalize);
+    },
+  ],
+];
+
+describe.each(stores)('%s store transact', (kind, make) => {
+  it('writes the mutated draft and returns the result', async () => {
+    const store = await make({ items: ['a'] });
+    const result = await store.transact((data) => {
+      data.items.push('b');
+      return data.items.length;
+    });
+    expect(result).toBe(2);
+    expect(await store.read()).toEqual({ items: ['a', 'b'] });
+    if (kind === 'json') {
+      expect(JSON.parse(await readFile(file, 'utf8'))).toEqual({ items: ['a', 'b'] });
+    }
+  });
+
+  it('writes nothing when mutate throws, and keeps working afterwards', async () => {
+    const store = await make({ items: ['kept'] });
+    await expect(
+      store.transact(async (data) => {
+        data.items.push('half-applied');
+        await Promise.resolve();
+        throw new Error('validation failed');
+      }),
+    ).rejects.toThrow('validation failed');
+
+    expect(await store.read()).toEqual({ items: ['kept'] });
+    if (kind === 'json') {
+      expect(JSON.parse(await readFile(file, 'utf8'))).toEqual({ items: ['kept'] });
+    }
+    await store.transact((data) => void data.items.push('next'));
+    expect(await store.read()).toEqual({ items: ['kept', 'next'] });
+  });
+
+  it('never runs two transactions at once', async () => {
+    const store = await make({ items: [] });
+    let active = 0;
+    let maxActive = 0;
+    const order: string[] = [];
+    const slow = (tag: string) =>
+      store.transact(async (data) => {
+        active += 1;
+        maxActive = Math.max(maxActive, active);
+        order.push(`start ${tag}`);
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        data.items.push(tag);
+        order.push(`end ${tag}`);
+        active -= 1;
+      });
+
+    await Promise.all([slow('1'), slow('2'), slow('3')]);
+    expect(maxActive).toBe(1);
+    expect(order).toEqual(['start 1', 'end 1', 'start 2', 'end 2', 'start 3', 'end 3']);
+    expect(await store.read()).toEqual({ items: ['1', '2', '3'] });
+  });
+
+  it('loses no update under overlapping read-modify-write', async () => {
+    const store = await make({ items: [] });
+    await Promise.all(
+      Array.from({ length: 25 }, (_, i) =>
+        store.transact(async (data) => {
+          const seen = data.items.length;
+          await Promise.resolve();
+          data.items[seen] = String(i);
+        }),
+      ),
+    );
+    const { items } = await store.read();
+    expect(items).toHaveLength(25);
+    expect(new Set(items).size).toBe(25);
+  });
+
+  it('does not let a caller keep a reference into the store', async () => {
+    const store = await make({ items: ['a'] });
+    let leaked: Doc | undefined;
+    await store.transact((data) => {
+      leaked = data;
+    });
+    leaked!.items.push('mutated after commit');
+    expect(await store.read()).toEqual({ items: ['a'] });
   });
 });

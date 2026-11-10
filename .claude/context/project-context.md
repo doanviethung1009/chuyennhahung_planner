@@ -52,7 +52,7 @@ and a public read surface at `api/travel/**`. Designed in
 | Module | Role |
 |---|---|
 | `src/server/content/auth.ts` | Bearer `ADMIN_API_TOKEN`, min 32 chars, `timingSafeEqual`. **No user table — the token is the principal.** |
-| `src/server/content/store.ts` | Persistence behind a two-method `ContentStore`: the whole content set as one JSON document on disk. Swapping in SQL is a new adapter and nothing else. |
+| `src/server/content/store.ts` | Persistence behind `ContentStore` (`read`, `write`, `transact`): the whole content set as one JSON document on disk. Swapping in SQL is a new adapter and nothing else. |
 | `src/server/content/repository.ts` | Domain operations over the store |
 | `src/server/content/schemas.ts` | Validation schemas for every entity |
 | `src/server/content/http.ts`, `errors.ts` | Request/response shapes and the error taxonomy |
