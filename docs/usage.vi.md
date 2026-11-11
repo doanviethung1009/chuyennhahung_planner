@@ -39,6 +39,7 @@ mọi biến dưới đây đều có mặc định dùng được, hoặc tự 
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | *chưa đặt* | Đăng nhập Google ([ADR 0007](adr/0007-password-and-google-sign-in.vi.md)). Cần cả hai; thiếu thì các route Google trả 404 và nút bị ẩn. Chỉ phía server — không bao giờ là `NEXT_PUBLIC_*` |
 | `GOOGLE_SIGNUP_ENABLED` | `true` | `false` thì lần đăng nhập Google đầu tiên không tạo tài khoản; tài khoản đã có vẫn đăng nhập được |
 | `GOOGLE_REDIRECT_URI` | *suy ra* | Ghi đè URL callback; nếu không thì là `NEXT_PUBLIC_SITE_URL` (hoặc origin của request) + `/api/planner/oauth/google/callback`. Phải khớp đúng từng ký tự với Google Cloud Console |
+| `TRUST_PROXY_HEADERS` | *chưa đặt* | Chỉ đặt `true` khi đứng sau reverse proxy **ghi đè** `X-Forwarded-Proto` và `X-Forwarded-For` (xem *Deploy*). Cho cookie phiên và cookie OAuth lấy cờ `Secure` từ `X-Forwarded-Proto` |
 
 `.data/` đã được gitignore. Planner không seed gì trong đó — xem *Cấp tài khoản
 cho một người đi chơi trong Planner* bên dưới.
@@ -348,15 +349,86 @@ làm đủ cả ba.
 
 ## Deploy
 
-`npm run build` tạo ra một site prerender, nên host Next.js nào chạy được Node
-cũng dùng được (Node server sau nginx, container). API Planner là ngoại lệ của
-"không phụ thuộc dữ liệu lúc chạy": khi đặt `PLANNER_DATABASE_URL` nó cần một PostgreSQL
-truy cập được lúc chạy, và file mới trong `db/migrations/` được instance đầu tiên của phiên bản mới áp dụng
-dưới một advisory lock (vẫn có thể chạy `npm run db:migrate` trước khi deploy). Không đặt `PLANNER_DATABASE_URL` thì Planner dùng
-file JSON và app chỉ chạy được một tiến trình.
+`npm run build` tạo ra một site prerender kèm một Node server độc lập
+(`output: 'standalone'` trong `next.config.ts`), nên host nào chạy được Node cũng
+dùng được. API Planner là ngoại lệ của "không phụ thuộc dữ liệu lúc chạy": khi đặt
+`PLANNER_DATABASE_URL` nó cần một PostgreSQL truy cập được lúc chạy, và file mới
+trong `db/migrations/` được instance đầu tiên của phiên bản mới áp dụng dưới một
+advisory lock (vẫn có thể chạy `npm run db:migrate` trước khi deploy). Không đặt
+`PLANNER_DATABASE_URL` thì Planner dùng file JSON và app chỉ chạy được một tiến trình.
 `NEXT_PUBLIC_SITE_URL` phải được đặt lúc **build** — nó được nướng vào canonical,
 `hreflang` và sitemap. Đổi nội dung thì phải build lại; hiện chưa có CMS và chưa
 có đường revalidate.
+
+### Docker image
+
+`Dockerfile` (Node 24 Alpine, nhiều stage) có hai target:
+
+| Target | Nội dung | Dùng cho |
+|---|---|---|
+| `runner` (mặc định) | Server standalone, `.next/static`, `public/`, `db/migrations/`; chạy bằng user `node`, cổng 3000, healthcheck qua `GET /api/health` | App |
+| `tools` | Bản build đầy đủ kèm dev dependency | `npm run db:migrate`, `planner:import`, `planner:export` (cần `vite-node`) |
+
+```bash
+docker build --build-arg NEXT_PUBLIC_SITE_URL=https://chuyennhahung.vn -t chuyennhahung/app .
+docker build --build-arg NEXT_PUBLIC_SITE_URL=https://chuyennhahung.vn --target tools -t chuyennhahung/app-tools .
+```
+
+Thiếu `NEXT_PUBLIC_SITE_URL` thì build thất bại. Image không chứa secret và không
+chứa dữ liệu: `.data/` bị làm rỗng, nên content store nằm trên volume gắn vào
+`/app/.data` và được seed ở lần dùng đầu. `GET /api/health` trả
+`200 {"status":"ok"}` khi tiến trình còn phục vụ request; nó không chạm store nào,
+nên database sập sẽ hiện thành `503` của Planner chứ không thành vòng restart.
+
+### Stack tự host (Docker Compose + nginx)
+
+[`deploy/compose.app.yml`](../deploy/compose.app.yml) thêm service `app` vào một
+stack đã chạy `postgres` và `nginx`: mạng `edge` + `backend`, không publish cổng,
+volume tên `app-data` cho `.data/`, và service `tools` thuộc profile `tools`. Đặt
+bản checkout cạnh file compose của stack (hoặc đặt `APP_SRC`) rồi thêm vào `.env`
+của stack (mode 600, không bao giờ commit). `compose.yml` dưới đây là file compose
+của chính stack:
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://chuyennhahung.vn        # hoặc http://<host> trước khi có TLS
+PLANNER_DATABASE_URL=postgres://cnh_app:<password>@postgres:5432/cnh_planner
+ADMIN_API_TOKEN=<openssl rand -base64 36>
+TRUST_PROXY_HEADERS=true
+```
+
+```bash
+docker compose -f compose.yml -f compose.app.yml build app
+docker compose -f compose.yml -f compose.app.yml up -d app
+docker compose -f compose.yml -f compose.app.yml run --rm tools                 # db:migrate, không bắt buộc
+docker compose -f compose.yml -f compose.app.yml run --rm tools \
+  npm run planner:import -- /import/planner.json                                # ./import được mount chỉ đọc
+```
+
+Chạy **đúng một** replica `app`. Content store của Travel vẫn là file JSON trên
+volume và rate limiter nằm trong bộ nhớ tiến trình (bước 1 của ADR 0008 cho content
+chưa làm); replica thứ hai sẽ chia đôi cả hai. Trên host nhỏ (2 GB RAM) `next build`
+là lúc tốn bộ nhớ nhất — giữ swap, hoặc build ở máy khác rồi chuyển image bằng
+`docker save | docker load`.
+
+### Header của reverse proxy
+
+Gộp [`deploy/nginx-app.conf`](../deploy/nginx-app.conf) vào `location /` đang
+proxy tới `app:3000`. Hai header quan trọng:
+
+- `X-Forwarded-For $remote_addr` — **ghi đè**, không bao giờ dùng
+  `$proxy_add_x_forwarded_for`. Rate limiter lấy hop đầu tiên làm khóa, nên header
+  bị nối thêm sẽ cho client tự chọn bucket của mình. Nếu có proxy hay CDN khác đứng
+  trước nginx, khôi phục địa chỉ client ở đó bằng `real_ip_header` trước.
+- `X-Forwarded-Proto $scheme` — scheme của trình duyệt. Với
+  `TRUST_PROXY_HEADERS=true`, cookie phiên và cookie state của OAuth lấy cờ `Secure`
+  từ header này (`src/server/request-scheme.ts`). Server của chính Next cũng dựng
+  `request.url` từ header này, thêm một lý do để proxy tự đặt nó thay vì chuyển tiếp
+  giá trị của client. Qua `http://` thường, cookie không có `Secure` và trình duyệt
+  bỏ qua header HSTS; chuyển sang HTTPS trước khi người dùng thật đăng nhập.
+
+Sau proxy, `request.url` mang địa chỉ bind của server (`0.0.0.0:3000`) chứ không
+phải host công khai, nên kiểm tra same-origin của Planner chấp nhận thêm origin của
+`NEXT_PUBLIC_SITE_URL`. Hãy đặt đúng origin công khai.
 
 ## Khắc phục sự cố
 

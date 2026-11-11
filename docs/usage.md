@@ -39,6 +39,7 @@ closed.
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | *unset* | Google sign-in ([ADR 0007](adr/0007-password-and-google-sign-in.md)). Both required; without them the Google routes answer 404 and the button is hidden. Server-only — never `NEXT_PUBLIC_*` |
 | `GOOGLE_SIGNUP_ENABLED` | `true` | `false` stops a first Google sign-in from creating an account; existing accounts still sign in |
 | `GOOGLE_REDIRECT_URI` | *derived* | Override for the callback URL; otherwise `NEXT_PUBLIC_SITE_URL` (or the request origin) + `/api/planner/oauth/google/callback`. Must match Google Cloud Console exactly |
+| `TRUST_PROXY_HEADERS` | *unset* | `true` only behind a reverse proxy that **overwrites** `X-Forwarded-Proto` and `X-Forwarded-For` (see *Deploy*). Lets the session and OAuth cookies take `Secure` from `X-Forwarded-Proto` |
 
 `.data/` is gitignored. Nothing in it is seeded for the Planner — see
 *Provision a Planner traveller* below.
@@ -350,16 +351,89 @@ These are plausible defaults, **not verified**. Confirm each with the owner:
 
 ## Deploy
 
-`npm run build` emits a prerendered site, so any Node-capable Next.js host (a Node
-server behind nginx, a container) works. The Planner API is the exception to
-"no runtime data dependency": with `PLANNER_DATABASE_URL` set it needs a reachable
-PostgreSQL at runtime, and a new file in `db/migrations/` is applied by the
-first instance of the new version to start, under an advisory lock
-(`npm run db:migrate` remains available to do it ahead of the deploy). Without `PLANNER_DATABASE_URL` the Planner uses its JSON file and
-the app is single-process only.
+`npm run build` emits a prerendered site with a standalone Node server
+(`output: 'standalone'` in `next.config.ts`), so any Node-capable host works. The
+Planner API is the exception to "no runtime data dependency": with
+`PLANNER_DATABASE_URL` set it needs a reachable PostgreSQL at runtime, and a new
+file in `db/migrations/` is applied by the first instance of the new version to
+start, under an advisory lock (`npm run db:migrate` remains available to do it
+ahead of the deploy). Without `PLANNER_DATABASE_URL` the Planner uses its JSON
+file and the app is single-process only.
 `NEXT_PUBLIC_SITE_URL` must be set at **build** time — it is baked into
 canonicals, `hreflang` and the sitemap. Content changes require a rebuild;
 there is no CMS and no revalidation path yet.
+
+### Docker image
+
+The `Dockerfile` (Node 24 Alpine, multi-stage) has two targets:
+
+| Target | Contents | Use |
+|---|---|---|
+| `runner` (default) | The standalone server, `.next/static`, `public/`, `db/migrations/`; runs as `node`, port 3000, healthcheck on `GET /api/health` | The app |
+| `tools` | The full build with dev dependencies | `npm run db:migrate`, `planner:import`, `planner:export` (they need `vite-node`) |
+
+```bash
+docker build --build-arg NEXT_PUBLIC_SITE_URL=https://chuyennhahung.vn -t chuyennhahung/app .
+docker build --build-arg NEXT_PUBLIC_SITE_URL=https://chuyennhahung.vn --target tools -t chuyennhahung/app-tools .
+```
+
+The build fails without `NEXT_PUBLIC_SITE_URL`. The image contains no secret
+and no data: `.data/` is emptied, so the content store lives on a mounted
+volume at `/app/.data` and is seeded on first use. `GET /api/health` answers
+`200 {"status":"ok"}` while the process serves requests; it touches no store,
+so a database outage shows as Planner `503`s, not as a restart loop.
+
+### Self-hosted stack (Docker Compose + nginx)
+
+[`deploy/compose.app.yml`](../deploy/compose.app.yml) adds the `app` service to
+a stack that already runs `postgres` and `nginx`: networks `edge` + `backend`,
+no published port, a named volume `app-data` for `.data/`, and a `tools`
+service under the `tools` profile. Put the checkout next to the stack's compose
+file (or set `APP_SRC`) and add to the stack's `.env` (mode 600, never
+committed). `compose.yml` below stands for the stack's own compose file:
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://chuyennhahung.vn        # or http://<host> before TLS
+PLANNER_DATABASE_URL=postgres://cnh_app:<password>@postgres:5432/cnh_planner
+ADMIN_API_TOKEN=<openssl rand -base64 36>
+TRUST_PROXY_HEADERS=true
+```
+
+```bash
+docker compose -f compose.yml -f compose.app.yml build app
+docker compose -f compose.yml -f compose.app.yml up -d app
+docker compose -f compose.yml -f compose.app.yml run --rm tools                 # db:migrate, optional
+docker compose -f compose.yml -f compose.app.yml run --rm tools \
+  npm run planner:import -- /import/planner.json                                # ./import is mounted read-only
+```
+
+Run **exactly one** `app` replica. The Travel content store is still a JSON
+file on the volume and the rate limiters live in process memory (ADR 0008
+step 1 for content is not built); a second replica would split both. On a
+small host (2 GB RAM) `next build` is the memory peak — keep swap on, or build
+on another machine and move the image with `docker save | docker load`.
+
+### Reverse proxy headers
+
+Merge [`deploy/nginx-app.conf`](../deploy/nginx-app.conf) into the
+`location /` that proxies to `app:3000`. Two headers matter:
+
+- `X-Forwarded-For $remote_addr` — **overwrite**, never
+  `$proxy_add_x_forwarded_for`. The rate limiter keys on the first hop, so an
+  appended header would let a client pick its own bucket. If another proxy or
+  CDN sits in front of nginx, restore the client address there with
+  `real_ip_header` first.
+- `X-Forwarded-Proto $scheme` — the browser's scheme. With
+  `TRUST_PROXY_HEADERS=true` the session and OAuth state cookies take `Secure`
+  from it (`src/server/request-scheme.ts`). Next's own server also builds
+  `request.url` from this header, which is one more reason the proxy must set
+  it rather than pass a client value through. Over plain `http://` the cookies
+  are not `Secure` and the HSTS header is ignored by browsers; switch to HTTPS
+  before real users sign in.
+
+Behind a proxy, `request.url` carries the server's bind address
+(`0.0.0.0:3000`), not the public host, so the Planner's same-origin check also
+accepts the `NEXT_PUBLIC_SITE_URL` origin. Set it to the exact public origin.
 
 ## Troubleshooting
 

@@ -266,6 +266,13 @@ flowchart LR
   `src/server/rate-limit.ts`: trong bộ nhớ, theo từng
   tiến trình, nên cùng điều kiện đa-instance với SQL, và khóa client chỉ đáng tin bằng
   proxy đặt `x-forwarded-for`.
+- **Sau reverse proxy** (`src/server/request-scheme.ts`): cờ `Secure` của cookie
+  theo scheme của trình duyệt, chỉ đọc từ `X-Forwarded-Proto` khi
+  `TRUST_PROXY_HEADERS=true`; kiểm tra same-origin chấp nhận origin của chính
+  request hoặc origin của `NEXT_PUBLIC_SITE_URL`, vì khi đó `request.url` mang địa
+  chỉ bind. Proxy phải ghi đè cả hai header forwarded
+  ([usage → Deploy](usage.vi.md#deploy)). `GET /api/health` là probe liveness của
+  container và không đọc store nào.
 - **Trang riêng tư** (`/sign-in`, `/account/password`, `/my-trips`, `/my-trips/[id]`,
   `/trip-setup/[template]`) là `noindex` và không có trong sitemap; `/shared/[token]` là
   `noindex` trừ khi trip là `public`, và gửi `Referrer-Policy: no-referrer`.

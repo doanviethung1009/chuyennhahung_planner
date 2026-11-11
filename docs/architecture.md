@@ -265,6 +265,13 @@ flowchart LR
   `src/server/rate-limit.ts`: in-memory and
   per-process, so it shares SQL's multi-instance trigger, and its client key is only
   as trustworthy as the proxy that sets `x-forwarded-for`.
+- **Behind a reverse proxy** (`src/server/request-scheme.ts`): cookie `Secure`
+  follows the browser's scheme, read from `X-Forwarded-Proto` only with
+  `TRUST_PROXY_HEADERS=true`; the same-origin check accepts the request's own
+  origin or the `NEXT_PUBLIC_SITE_URL` origin, because `request.url` carries the
+  bind address there. The proxy must overwrite both forwarded headers
+  ([usage → Deploy](usage.md#deploy)). `GET /api/health` is the container liveness
+  probe and reads no store.
 - **Private pages** (`/sign-in`, `/account/password`, `/my-trips`, `/my-trips/[id]`, `/trip-setup/[template]`)
   are `noindex` and excluded from the sitemap; `/shared/[token]` is `noindex` unless
   the trip is `public`, and sends `Referrer-Policy: no-referrer`.
