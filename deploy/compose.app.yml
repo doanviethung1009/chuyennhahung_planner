@@ -1,0 +1,77 @@
+# The `app` service for the self-hosted stack (postgres + nginx).
+# Usage: docs/usage.md → Deploy. Use it as an extra compose file next to the
+# stack's own, so it joins the same project and its `edge` and `backend`
+# networks:
+#
+#   docker compose -f compose.yml -f compose.app.yml up -d app
+#
+# Every value comes from the stack's .env (mode 600, never committed):
+#   NEXT_PUBLIC_SITE_URL   public origin, e.g. http://192.168.100.140 — build-time
+#   PLANNER_DATABASE_URL   postgres://cnh_app:<password>@postgres:5432/cnh_planner
+#   ADMIN_API_TOKEN        ≥ 32 characters (openssl rand -base64 36)
+#   TRUST_PROXY_HEADERS    true — nginx overwrites X-Forwarded-Proto/-For
+#   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET   optional (Google sign-in)
+#   APP_SRC                path of the repository checkout (default ./app)
+
+services:
+  app:
+    image: chuyennhahung/app:${APP_IMAGE_TAG:-latest}
+    build:
+      context: ${APP_SRC:-./app}
+      target: runner
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?set NEXT_PUBLIC_SITE_URL in .env}
+    # ONE replica. The Travel content store is still a JSON file on the volume
+    # below and the rate limiter lives in process memory (ADR 0008 step 1 for
+    # content is not built). Never `--scale app=2` until both move to Postgres.
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+      PLANNER_DATABASE_URL: ${PLANNER_DATABASE_URL:?set PLANNER_DATABASE_URL in .env}
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:-}
+      TRUST_PROXY_HEADERS: ${TRUST_PROXY_HEADERS:-true}
+      DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-5}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_SIGNUP_ENABLED: ${GOOGLE_SIGNUP_ENABLED:-true}
+    volumes:
+      # Travel content store (.data/travel-content.json), seeded on first use.
+      - app-data:/app/.data
+    depends_on:
+      - postgres
+    networks:
+      - edge
+      - backend
+    # No published port: only nginx (on `edge`) reaches app:3000.
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+  # One-off scripts that need dev dependencies (vite-node). Never started by
+  # `up`; run with:
+  #   docker compose -f compose.yml -f compose.app.yml run --rm tools                     # db:migrate
+  #   docker compose -f compose.yml -f compose.app.yml run --rm tools npm run planner:import -- /import/planner.json
+  tools:
+    image: chuyennhahung/app-tools:${APP_IMAGE_TAG:-latest}
+    build:
+      context: ${APP_SRC:-./app}
+      target: tools
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?set NEXT_PUBLIC_SITE_URL in .env}
+    profiles: ["tools"]
+    environment:
+      PLANNER_DATABASE_URL: ${PLANNER_DATABASE_URL:?set PLANNER_DATABASE_URL in .env}
+    volumes:
+      # The import checks places against the same content store the app uses.
+      - app-data:/app/.data
+      - ./import:/import:ro
+    depends_on:
+      - postgres
+    networks:
+      - backend
+
+volumes:
+  app-data:

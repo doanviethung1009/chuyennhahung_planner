@@ -1,0 +1,21 @@
+# Keep the build context small and free of local state and secrets.
+.git
+.github
+.claude
+.next
+node_modules
+.data
+coverage
+screenshots
+out
+build
+*.pem
+.env
+.env*
+!.env.example
+npm-debug.log*
+.DS_Store
+tsconfig.tsbuildinfo
+Dockerfile
+.dockerignore
+deploy

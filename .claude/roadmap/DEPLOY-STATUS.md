@@ -57,12 +57,18 @@ phát hành. Trước khi bất kỳ phase nào lên G7/G8:
   store phải trỏ vào volume bền.
 - [ ] **D3 — Proxy tin cậy.** Rate limiter đọc `x-forwarded-for`; proxy phía trước phải
   ghi đè header này (`docs/architecture.md` → rủi ro rate limiter).
+  Cấu hình mẫu: `deploy/nginx-app.conf` (ghi đè `X-Forwarded-For`, đặt
+  `X-Forwarded-Proto`); chủ nhà còn phải gộp vào nginx trên VM.
 - [ ] **D4 — Sao lưu và rollback.** Lịch sao lưu file store; rollback = deploy lại commit
   trước + khôi phục bản sao lưu store.
 - [ ] **D5 — Dữ liệu thật của chủ nhà** (P09-3) trước production: handle, số điện thoại,
   email đặt tour.
 - [ ] **D6 — Workflow deploy** qua PR riêng; không deploy tay ngoài quy trình
   (CLAUDE.md: không deploy khi chưa được chủ nhà cho phép).
+  Đang làm (PR `feat/self-hosted-docker-deploy`): `Dockerfile` (target `runner` +
+  `tools`), `deploy/compose.app.yml` (một replica, volume `.data/`, mạng `edge` +
+  `backend`), `GET /api/health`. Chưa build image (máy dev không có Docker — NOT RUN),
+  chưa deploy lên VM.
 
 ## Checklist deploy cho một phase
 

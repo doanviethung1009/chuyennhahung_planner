@@ -31,6 +31,9 @@ export const sharePaths = ['/api/shared/:path*', '/chia-se/:path*', '/en/shared/
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // A self-contained server bundle for the Docker image (`Dockerfile`): only the
+  // traced runtime files, no dev dependencies. `next start` keeps working.
+  output: 'standalone',
   poweredByHeader: false,
   async headers() {
     return [
