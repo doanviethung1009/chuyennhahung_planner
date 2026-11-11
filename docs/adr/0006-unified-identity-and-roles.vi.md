@@ -2,8 +2,8 @@
 
 🇬🇧 English: [0006-unified-identity-and-roles.md](0006-unified-identity-and-roles.md)
 
-- **Trạng thái:** Proposed (đề xuất) — sẽ được chấp nhận khi Phase 07 (Admin Portal, CMS & RBAC) mở. Chưa viết code nào dựa trên ADR này trước đó.
-- **Ngày:** 2026-11-09
+- **Trạng thái:** Accepted (đã chấp nhận) — 2026-11-11. Thay đổi chấp nhận chỉ hiện thực bước migration 1–2 (`role` tùy chọn, bảng `can`, bootstrap và nâng quyền bằng admin token); bước 3–4 (route admin qua session, portal, audit store, bỏ việc trình duyệt dùng token) vẫn thuộc Phase 07 và không được dựng sớm. Hợp đồng: `.claude/contracts/admin-role-bootstrap.md`.
+- **Ngày:** 2026-11-09 (chấp nhận 2026-11-11)
 - **Người sở hữu:** system-architect
 
 ## Bối cảnh
@@ -85,6 +85,6 @@ Khó hơn: mọi route phải khai báo action và gọi `can`, nên cái giá l
 
 ## Việc tiếp theo
 
-- Chấp nhận ADR này khi Phase 07 mở; sau đó là Task Contract cho backend (module identity, `can`, audit store) trước mọi UI portal.
+- Đã chấp nhận 2026-11-11 chỉ cho bước 1–2. Với bước 3–4, khi Phase 07 mở: sau đó là Task Contract cho backend (module identity, `can`, audit store) trước mọi UI portal.
 - Mục Các phase trong `docs/architecture.md` và `.vi.md` mang backlog của Phase 07.
 - Cần chủ nhà quyết: chọn nhà cung cấp danh tính, ai là admin, có bắt buộc MFA cho `admin` không.

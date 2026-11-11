@@ -86,6 +86,8 @@ export const TABLES: readonly TableSpec[] = [
       col('mustChangePassword', 'must_change_password', 'bool', 'optional'),
       col('googleSub', 'google_sub', 'text', 'optional'),
       col('createdVia', 'created_via', 'text', 'optional'),
+      // ADR 0006; added by migration 0002.
+      col('role', 'role', 'text', 'optional'),
     ],
   },
   {

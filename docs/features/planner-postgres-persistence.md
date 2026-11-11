@@ -95,7 +95,7 @@ store can open — the rollback path. Operation is in
 | `src/server/planner/instance.ts` | Store selection by `DATABASE_URL` |
 | `src/server/planner/repository.ts` | `transaction` delegates to `store.transact` |
 | `src/server/content/errors.ts` | New code `service_unavailable` (503) |
-| `db/migrations/0001_planner.sql`, `db/rollback/0001_planner.sql` | Schema and its rollback |
+| `db/migrations/0001_planner.sql`, `db/migrations/0002_planner_user_role.sql`, `db/rollback/*.sql` | Schema (0002 adds the ADR 0006 `role` column) and the manual rollbacks |
 | `scripts/db-migrate.ts`, `scripts/planner-import.ts`, `scripts/planner-export.ts` | Thin entry points, run by `vite-node` |
 
 ## Tests

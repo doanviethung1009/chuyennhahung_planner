@@ -24,6 +24,7 @@ Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
 | Đi theo dấu chân nhà Hưng | [follow-hung-footsteps.vi.md](follow-hung-footsteps.vi.md) | Lịch trình trong story, thiết lập chuyến đi, đăng nhập, Chuyến đi của tôi, đường dẫn chia sẻ chỉ đọc |
 | Lõi Travel Planner | [travel-planner-core.vi.md](travel-planner-core.vi.md) | `/api/planner` — trip, ngày, activity, chi phí, ngân sách, clone template |
 | Planner trên PostgreSQL | [planner-postgres-persistence.vi.md](planner-postgres-persistence.vi.md) | Store theo `DATABASE_URL`, transaction khoá advisory, migration, import và export |
+| Vai trò admin | [admin-roles.vi.md](admin-roles.vi.md) | `role` trên user, `permissions.ts`, `PATCH /api/admin/planner/users/[userId]` để nâng admin đầu tiên |
 
 ## Các phase chưa mở
 

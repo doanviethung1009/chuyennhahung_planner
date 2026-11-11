@@ -89,7 +89,7 @@ vận hành ở [usage](../usage.vi.md#chạy-planner-trên-postgresql).
 | `src/server/planner/instance.ts` | Chọn store theo `DATABASE_URL` |
 | `src/server/planner/repository.ts` | `transaction` uỷ quyền cho `store.transact` |
 | `src/server/content/errors.ts` | Code mới `service_unavailable` (503) |
-| `db/migrations/0001_planner.sql`, `db/rollback/0001_planner.sql` | Schema và rollback của nó |
+| `db/migrations/0001_planner.sql`, `db/migrations/0002_planner_user_role.sql`, `db/rollback/*.sql` | Schema (0002 thêm cột `role` của ADR 0006) và các rollback chạy tay |
 | `scripts/db-migrate.ts`, `scripts/planner-import.ts`, `scripts/planner-export.ts` | Điểm vào mỏng, chạy bằng `vite-node` |
 
 ## Test

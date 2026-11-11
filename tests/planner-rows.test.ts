@@ -48,6 +48,12 @@ describe('row mapping', () => {
     expect(rowsToData(driverRows(data))).toEqual(data);
   });
 
+  it('round-trips a user role (ADR 0006), so promoting an admin survives the database', async () => {
+    const data = await scenarioData();
+    data.users[0] = { ...data.users[0]!, role: 'admin' };
+    expect(rowsToData(driverRows(data)).users[0]!.role).toBe('admin');
+  });
+
   it('keeps an optional field absent, and a nullable one null, on read-back', () => {
     const user = spec('planner_users');
     const row = {
@@ -62,9 +68,10 @@ describe('row mapping', () => {
       must_change_password: null,
       google_sub: null,
       created_via: null,
+      role: null,
     };
     const record = fromRow(user, row);
-    for (const key of ['email', 'passwordHash', 'mustChangePassword', 'googleSub', 'createdVia']) {
+    for (const key of ['email', 'passwordHash', 'mustChangePassword', 'googleSub', 'createdVia', 'role']) {
       expect(key in record, key).toBe(false);
     }
 

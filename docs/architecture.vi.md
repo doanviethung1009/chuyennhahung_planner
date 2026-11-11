@@ -302,7 +302,7 @@ Những thứ vắng mặt có chủ đích, và không được dựng sớm:
   từng method khi việc nạp toàn bộ Planner mỗi request trở nên chậm.
 - **Phase 07 — Admin Portal, CMS & RBAC (đã công bố, chưa bắt đầu).** Không mục nào bên
   dưới được dựng hay dựng sớm; mỗi mục cần ghi quyết định trước. Hướng thiết kế:
-  [ADR 0006](adr/0006-unified-identity-and-roles.vi.md) (Đề xuất). Backlog phụ
+  [ADR 0006](adr/0006-unified-identity-and-roles.vi.md) (Đã chấp nhận 2026-11-11; bước migration 1–2 — `role`, `can`, bootstrap bằng admin token — đã hiện thực, bước 3–4 vẫn thuộc Phase 07). Backlog phụ
   thuộc và quyết định:
   - **Nhà cung cấp danh tính** — các cách đăng nhập đã được quyết ([ADR 0007](adr/0007-password-and-google-sign-in.vi.md): mật khẩu và Google); còn mở là tự đặt lại mật khẩu (cần dịch vụ gửi email) và MFA cho `admin`.
   - **Mô hình vai trò** — `member` / `editor` / `admin` trên một mô hình user, hàm thuần `can(identity, action, resource)`, `ADMIN_API_TOKEN` hạ thành service principal.

@@ -154,6 +154,23 @@ curl -s -b jar.txt -X DELETE http://localhost:3000/api/planner/session \
 Một session sống 14 ngày, hoặc 7 ngày nếu không dùng. `rotate-token` đăng xuất
 người đi chơi khỏi mọi nơi.
 
+Vai trò ([ADR 0006](adr/0006-unified-identity-and-roles.vi.md)): `role` là
+`member` (mặc định), `editor` hoặc `admin`. Hiện chưa có gì áp dụng vai trò — chỉ
+ghi lại. Nâng admin đầu tiên bằng admin token; body là strict, nên key nào khác
+`role` đều bị từ chối với 422.
+
+```bash
+# Tạo thẳng một admin (`role` tùy chọn khi POST).
+curl -s -X POST http://localhost:3000/api/admin/planner/users \
+  -H "authorization: Bearer $ADMIN_API_TOKEN" -H 'content-type: application/json' \
+  -d '{"handle":"admin-hung","displayName":"Hưng","role":"admin"}'
+
+# Hoặc nâng một user có sẵn. Gọi lại an toàn; hạ vai trò cũng là lệnh này.
+curl -s -X PATCH http://localhost:3000/api/admin/planner/users/<userId> \
+  -H "authorization: Bearer $ADMIN_API_TOKEN" -H 'content-type: application/json' \
+  -d '{"role":"admin"}'
+```
+
 Mật khẩu và Google ([ADR 0007](adr/0007-password-and-google-sign-in.vi.md)):
 
 ```bash

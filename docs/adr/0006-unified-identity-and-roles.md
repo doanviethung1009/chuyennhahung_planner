@@ -2,8 +2,8 @@
 
 🇻🇳 Bản tiếng Việt: [0006-unified-identity-and-roles.vi.md](0006-unified-identity-and-roles.vi.md)
 
-- **Status:** Proposed — to be accepted when Phase 07 (Admin Portal, CMS & RBAC) opens. No code is written against it before then.
-- **Date:** 2026-11-09
+- **Status:** Accepted — 2026-11-11. Only migration steps 1–2 (optional `role`, the `can` map, admin-token bootstrap and promotion) are implemented in the accepting change; steps 3–4 (session-path admin routes, portal, audit store, removing browser use of the token) remain Phase 07 and are not to be scaffolded early. Contract: `.claude/contracts/admin-role-bootstrap.md`.
+- **Date:** 2026-11-09 (accepted 2026-11-11)
 - **Owner:** system-architect
 
 ## Context
@@ -85,6 +85,6 @@ Harder: every route must declare its action and call `can`, so the cost is a swe
 
 ## Follow-up
 
-- Accept this ADR when Phase 07 opens; then a Task Contract for the backend (identity module, `can`, audit store) before any portal UI.
+- Accepted 2026-11-11 for steps 1–2 only. For steps 3–4, when Phase 07 opens: a Task Contract for the backend (identity module, `can`, audit store) before any portal UI.
 - `docs/architecture.md` and `.vi.md` Phases carry the Phase 07 backlog.
 - Needs the owner: identity provider choice, who the admins are, whether MFA is required for `admin`.

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { roleSchema } from '@/server/identity/permissions';
 import {
   costCategorySchema,
   isoDateSchema,
@@ -106,12 +107,18 @@ export const PASSWORD_MIN_LENGTH = 12;
 export const PASSWORD_MAX_LENGTH = 128;
 export const passwordSchema = z.string().min(PASSWORD_MIN_LENGTH).max(PASSWORD_MAX_LENGTH);
 
+/** Strict, like the role PATCH: it can grant a role, so an unknown key is a 422. */
 export const plannerUserCreateSchema = z.object({
   handle: slugSchema,
   displayName: z.string().trim().min(2).max(80),
   /** When given, a temporary password is issued with the user (ADR 0007). */
   email: emailSchema.optional(),
-});
+  /** Defaults to `member` when absent (ADR 0006). */
+  role: roleSchema.optional(),
+}).strict();
+
+/** Strict: this route grants privilege, so an unknown key is a 422. */
+export const plannerUserRoleUpdateSchema = z.object({ role: roleSchema }).strict();
 
 /**
  * Stored shape. `tokenHash` is a SHA-256 digest of the access token — the token
@@ -135,6 +142,8 @@ export const plannerUserSchema = z.object({
   googleSub: z.string().max(255).nullable().optional(),
   /** Absent reads as `operator`. */
   createdVia: z.enum(['operator', 'google']).optional(),
+  // --- ADR 0006. Optional: absent reads as `member` via `userRole`. ---
+  role: roleSchema.optional(),
 });
 
 /**
@@ -143,7 +152,7 @@ export const plannerUserSchema = z.object({
  */
 export const publicPlannerUserSchema = plannerUserSchema
   .omit({ tokenHash: true, passwordHash: true, googleSub: true })
-  .extend({ hasPassword: z.boolean(), hasGoogle: z.boolean() });
+  .extend({ hasPassword: z.boolean(), hasGoogle: z.boolean(), role: roleSchema });
 
 // ---------------------------------------------------------------------------
 // Trips
@@ -452,6 +461,7 @@ export type CostScope = z.infer<typeof costScopeSchema>;
 export type TripStatus = z.infer<typeof tripStatusSchema>;
 export type TripBudget = z.infer<typeof budgetSchema>;
 export type PlannerUser = z.infer<typeof plannerUserSchema>;
+export type PlannerUserRoleUpdate = z.infer<typeof plannerUserRoleUpdateSchema>;
 export type PublicPlannerUser = z.infer<typeof publicPlannerUserSchema>;
 export type PlannerUserCreateInput = z.infer<typeof plannerUserCreateSchema>;
 export type Trip = z.infer<typeof tripSchema>;

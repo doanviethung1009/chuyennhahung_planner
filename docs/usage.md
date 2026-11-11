@@ -153,6 +153,23 @@ curl -s -b jar.txt -X DELETE http://localhost:3000/api/planner/session \
 A session lasts 14 days, or 7 days without use. `rotate-token` signs the
 traveller out everywhere.
 
+Roles ([ADR 0006](adr/0006-unified-identity-and-roles.md)): `role` is `member`
+(default), `editor` or `admin`. Nothing enforces a role yet — this only records
+it. Promote the first admin with the admin token; the body is strict, so any key
+other than `role` is refused with 422.
+
+```bash
+# Create someone directly as admin (optional `role` on POST).
+curl -s -X POST http://localhost:3000/api/admin/planner/users \
+  -H "authorization: Bearer $ADMIN_API_TOKEN" -H 'content-type: application/json' \
+  -d '{"handle":"admin-hung","displayName":"Hưng","role":"admin"}'
+
+# Or promote an existing user. Repeating it is safe; demotion is the same call.
+curl -s -X PATCH http://localhost:3000/api/admin/planner/users/<userId> \
+  -H "authorization: Bearer $ADMIN_API_TOKEN" -H 'content-type: application/json' \
+  -d '{"role":"admin"}'
+```
+
 Password and Google ([ADR 0007](adr/0007-password-and-google-sign-in.md)):
 
 ```bash
