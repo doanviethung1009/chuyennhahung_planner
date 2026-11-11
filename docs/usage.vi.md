@@ -214,7 +214,20 @@ danh sách endpoint đầy đủ.
 
 ### Đăng nhập với tư cách admin
 
-Cổng quản trị ở `/quan-tri` (`/en/admin`). Bootstrap admin đầu tiên một lần bằng service token, giữ lại `temporaryPassword` trong response (chỉ hiện một lần):
+Cổng quản trị ở `/quan-tri` (`/en/admin`). Cách đơn giản nhất để tạo admin đầu tiên là `admin:create`. Lệnh ghi thẳng vào kho mà app đang dùng — PostgreSQL khi đặt `PLANNER_DATABASE_URL`, nếu không thì tệp JSON — không cần `ADMIN_API_TOKEN`, không cần server đang chạy, và in ra một mật khẩu tạm ngẫu nhiên đúng một lần:
+
+```bash
+npm run admin:create -- --email you@example.com --name "Hưng"            # tuỳ chọn: --handle admin-hung
+```
+
+Trên stack đã deploy, chạy trong container `tools` với đúng các file `-f` của layout, để lệnh tới cùng database:
+
+```bash
+docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml run --rm tools \
+  npm run admin:create -- --email you@example.com --name "Hưng"
+```
+
+Hoặc dùng service token với server đang chạy, giữ lại `temporaryPassword` trong response (chỉ hiện một lần):
 
 ```bash
 curl -s -X POST http://localhost:3000/api/admin/planner/users \
