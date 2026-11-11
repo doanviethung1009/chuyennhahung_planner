@@ -1,13 +1,16 @@
-# The `app` service for the self-hosted stack (postgres + nginx).
+# The `app` service for the self-hosted stack (nginx on this VM, PostgreSQL on
+# a separate VM reached over the LAN with TLS verify-full — ADR 0009 §5).
 # Usage: docs/usage.md → Deploy. Use it as an extra compose file next to the
-# stack's own, so it joins the same project and its `edge` and `backend`
-# networks:
+# stack's own, so it joins the same project and its `edge` network:
 #
 #   docker compose -f compose.yml -f compose.app.yml up -d app
 #
 # Every value comes from the stack's .env (mode 600, never committed):
 #   NEXT_PUBLIC_SITE_URL   public origin, e.g. http://192.168.100.140 — build-time
-#   PLANNER_DATABASE_URL   postgres://cnh_app:<password>@postgres:5432/cnh_planner
+#   PLANNER_DATABASE_URL   postgres://cnh_app:<password>@<DB_IP>:5432/cnh_planner?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt
+#                          The CA that signed the DB server certificate (its SAN
+#                          must contain <DB_IP>) is mounted read-only from
+#                          /opt/chuyennhahung/secrets/pg-ca.crt on the host.
 #   ADMIN_API_TOKEN        ≥ 32 characters (openssl rand -base64 36)
 #   TRUST_PROXY_HEADERS    true — nginx overwrites X-Forwarded-Proto/-For
 #   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET   optional (Google sign-in)
@@ -37,11 +40,12 @@ services:
     volumes:
       # Travel content store (.data/travel-content.json), seeded on first use.
       - app-data:/app/.data
-    depends_on:
-      - postgres
+      # CA of the remote PostgreSQL server (sslrootcert in PLANNER_DATABASE_URL).
+      - /opt/chuyennhahung/secrets/pg-ca.crt:/run/secrets/pg-ca.crt:ro
+    # PostgreSQL is on another VM, so there is no `postgres` service to depend
+    # on; an unreachable database shows as Planner 503s, not a failed start.
     networks:
       - edge
-      - backend
     # No published port: only nginx (on `edge`) reaches app:3000.
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
@@ -68,10 +72,8 @@ services:
       # The import checks places against the same content store the app uses.
       - app-data:/app/.data
       - ./import:/import:ro
-    depends_on:
-      - postgres
-    networks:
-      - backend
+      - /opt/chuyennhahung/secrets/pg-ca.crt:/run/secrets/pg-ca.crt:ro
+    # Default bridge network: outbound to the DB VM only, nothing inbound.
 
 volumes:
   app-data:

@@ -227,8 +227,8 @@ CREATE ROLE planner LOGIN PASSWORD '<password>' NOSUPERUSER NOCREATEDB NOCREATER
 CREATE DATABASE planner OWNER planner;
 ```
 
-Keep port 5432 off the public interface (a private Docker network, not a
-published port). Because migrations run at startup, the app's role must be
+Keep port 5432 off every interface but the one the app reaches (see the TLS
+paragraph below for the separate-VM layout). Because migrations run at startup, the app's role must be
 able to create and alter tables: use one role that owns the database for both
 migrating and running. **Accepted risk (ADR 0009):** a leaked app credential or
 an injection bug in the app would also carry DDL rights. Splitting an owner role
@@ -242,14 +242,31 @@ without retrying, so a database that is down is not hammered. The old variable
 `DATABASE_URL` is ignored — a warning is logged if it is set without
 `PLANNER_DATABASE_URL`.
 
-The link to Postgres is unencrypted on the private Docker network, which is
-acceptable only while the database stays on the same host. If it ever moves to
-another machine, require TLS by adding `?sslmode=require` (or `verify-full`
-with the server's CA) to `PLANNER_DATABASE_URL`.
+**The database is on another machine, so the link uses TLS with full
+verification.** In the self-hosted layout PostgreSQL runs on its own VM and the
+app reaches it across the LAN (ADR 0009 §5, amended 2026-11-11). Add
+`?sslmode=verify-full&sslrootcert=<path to the CA>` to `PLANNER_DATABASE_URL`.
+The `pg` driver in use (8.23) treats `sslmode=require`, `prefer` and `verify-ca`
+as aliases for `verify-full`, so there is no "encrypted but unverified" mode to
+fall back on: the app must have the CA, and the server certificate must match
+the host in the URL. On the database VM:
+
+- a private CA, and a server certificate it signed whose **Subject Alternative
+  Name contains the DB VM's IP** (`IP:<DB_IP>`) — the URL uses the IP, so a
+  hostname-only certificate fails verification; `ssl = on` with
+  `ssl_cert_file` / `ssl_key_file` pointing at them;
+- in `pg_hba.conf`, one `hostssl cnh_planner cnh_app <APP_VM_IP>/32 scram-sha-256`
+  line for the app VM only, and no `host` line that would accept the same role
+  without TLS;
+- a firewall that opens 5432 to the app VM's IP and nobody else.
+
+Only the CA certificate (public) goes to the app VM; the server key never
+leaves the database VM. `tests/postgres-tls-url.test.ts` pins how the driver
+parses these parameters, without connecting.
 
 ```bash
 # The connection string is a secret: environment only, never committed or logged.
-export PLANNER_DATABASE_URL='postgres://planner:<password>@<db-host>:5432/planner'
+export PLANNER_DATABASE_URL='postgres://planner:<password>@<db-host>:5432/planner?sslmode=verify-full&sslrootcert=/path/to/pg-ca.crt'
 
 npm run db:migrate                       # optional: the app migrates itself at startup
 npm run planner:import -- planner.json   # once, to move an existing JSON file in
@@ -386,18 +403,30 @@ so a database outage shows as Planner `503`s, not as a restart loop.
 ### Self-hosted stack (Docker Compose + nginx)
 
 [`deploy/compose.app.yml`](../deploy/compose.app.yml) adds the `app` service to
-a stack that already runs `postgres` and `nginx`: networks `edge` + `backend`,
-no published port, a named volume `app-data` for `.data/`, and a `tools`
-service under the `tools` profile. Put the checkout next to the stack's compose
-file (or set `APP_SRC`) and add to the stack's `.env` (mode 600, never
-committed). `compose.yml` below stands for the stack's own compose file:
+a stack that already runs `nginx` on the app VM; PostgreSQL runs on a
+**separate VM** and is reached over the LAN with TLS `verify-full` (see
+[Run the Planner on PostgreSQL](#run-the-planner-on-postgresql) for the
+certificate, `pg_hba.conf` and firewall setup). The `app` service joins the
+`edge` network only, publishes no port, keeps `.data/` on a named volume
+`app-data`, and mounts the database CA read-only from
+`/opt/chuyennhahung/secrets/pg-ca.crt` at `/run/secrets/pg-ca.crt`; the `tools`
+service (profile `tools`) mounts the same CA. Copy the CA there first
+(`chmod 644`; it is a public certificate, not a secret). Put the checkout next
+to the stack's compose file (or set `APP_SRC`) and add to the stack's `.env`
+(mode 600, never committed). `compose.yml` below stands for the stack's own
+compose file:
 
 ```bash
 NEXT_PUBLIC_SITE_URL=https://chuyennhahung.vn        # or http://<host> before TLS
-PLANNER_DATABASE_URL=postgres://cnh_app:<password>@postgres:5432/cnh_planner
+PLANNER_DATABASE_URL=postgres://cnh_app:<password>@<DB_IP>:5432/cnh_planner?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt
 ADMIN_API_TOKEN=<openssl rand -base64 36>
 TRUST_PROXY_HEADERS=true
 ```
+
+A password with URL-reserved characters (`@`, `:`, `/`, `?`, `#`, `&`) must be
+percent-encoded in the URL. If the Planner answers `503` after start-up, check
+from the app VM that 5432 on the DB VM is reachable and that the certificate's
+SAN carries the IP used in the URL.
 
 ```bash
 docker compose -f compose.yml -f compose.app.yml build app

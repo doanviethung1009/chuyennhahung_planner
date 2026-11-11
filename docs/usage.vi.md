@@ -228,8 +228,8 @@ CREATE ROLE planner LOGIN PASSWORD '<password>' NOSUPERUSER NOCREATEDB NOCREATER
 CREATE DATABASE planner OWNER planner;
 ```
 
-Không mở cổng 5432 ra giao diện công khai (dùng mạng Docker riêng, không publish
-cổng). Vì migration chạy khi khởi động, role của app phải tạo và sửa được bảng:
+Chỉ mở cổng 5432 trên đúng giao diện mà app kết nối tới (xem đoạn về TLS bên dưới
+cho bố cục database ở VM riêng). Vì migration chạy khi khởi động, role của app phải tạo và sửa được bảng:
 dùng một role sở hữu database cho cả migrate lẫn chạy app. **Rủi ro đã chấp nhận
 (ADR 0009):** nếu credential của app bị lộ hoặc app dính lỗi injection, kẻ tấn
 công cũng có quyền DDL. Muốn tách một role chủ cho `npm run db:migrate` khỏi một
@@ -242,14 +242,29 @@ rồi trả `503`; các request trong 5 giây sau nhận luôn `503` đó mà kh
 để database đang chết không bị dội request. Biến cũ `DATABASE_URL` bị bỏ qua — app
 ghi cảnh báo nếu nó được đặt mà không có `PLANNER_DATABASE_URL`.
 
-Kết nối tới Postgres không mã hoá trên mạng Docker riêng, điều này chỉ chấp nhận
-được khi database còn nằm trên cùng máy. Nếu sau này database chuyển sang máy
-khác, hãy bắt buộc TLS bằng cách thêm `?sslmode=require` (hoặc `verify-full` kèm
-CA của server) vào `PLANNER_DATABASE_URL`.
+**Database nằm ở máy khác, nên kết nối dùng TLS có xác minh đầy đủ.** Trong bố
+cục tự host, PostgreSQL chạy trên VM riêng và app kết nối qua mạng LAN (ADR 0009 §5,
+sửa đổi 2026-11-11). Thêm `?sslmode=verify-full&sslrootcert=<đường dẫn tới CA>`
+vào `PLANNER_DATABASE_URL`. Driver `pg` đang dùng (8.23) coi `sslmode=require`,
+`prefer` và `verify-ca` là bí danh của `verify-full`, nên không có chế độ "mã hoá
+nhưng không xác minh" để lùi về: app phải có CA, và certificate của server phải
+khớp với host trong URL. Trên VM database:
+
+- một CA riêng, và một server certificate do CA đó ký, có **Subject Alternative
+  Name chứa IP của VM database** (`IP:<DB_IP>`) — URL dùng IP, nên certificate chỉ
+  có hostname sẽ không qua xác minh; `ssl = on` với `ssl_cert_file` /
+  `ssl_key_file` trỏ tới chúng;
+- trong `pg_hba.conf`, đúng một dòng `hostssl cnh_planner cnh_app <APP_VM_IP>/32 scram-sha-256`
+  cho VM app, và không có dòng `host` nào nhận cùng role mà không cần TLS;
+- firewall chỉ mở 5432 cho IP của VM app, không cho ai khác.
+
+Chỉ certificate của CA (công khai) được chép sang VM app; private key của server
+không bao giờ rời VM database. `tests/postgres-tls-url.test.ts` khoá cách driver
+đọc các tham số này, không cần kết nối.
 
 ```bash
 # Chuỗi kết nối là secret: chỉ qua biến môi trường, không commit, không log.
-export PLANNER_DATABASE_URL='postgres://planner:<password>@<db-host>:5432/planner'
+export PLANNER_DATABASE_URL='postgres://planner:<password>@<db-host>:5432/planner?sslmode=verify-full&sslrootcert=/path/to/pg-ca.crt'
 
 npm run db:migrate                       # tuỳ chọn: app tự migrate lúc khởi động
 npm run planner:import -- planner.json   # một lần, để chuyển file JSON hiện có vào
@@ -383,18 +398,29 @@ nên database sập sẽ hiện thành `503` của Planner chứ không thành v
 ### Stack tự host (Docker Compose + nginx)
 
 [`deploy/compose.app.yml`](../deploy/compose.app.yml) thêm service `app` vào một
-stack đã chạy `postgres` và `nginx`: mạng `edge` + `backend`, không publish cổng,
-volume tên `app-data` cho `.data/`, và service `tools` thuộc profile `tools`. Đặt
-bản checkout cạnh file compose của stack (hoặc đặt `APP_SRC`) rồi thêm vào `.env`
-của stack (mode 600, không bao giờ commit). `compose.yml` dưới đây là file compose
-của chính stack:
+stack đã chạy `nginx` trên VM app; PostgreSQL chạy trên **một VM riêng** và được
+kết nối qua mạng LAN bằng TLS `verify-full` (xem
+[Chạy Planner trên PostgreSQL](#chạy-planner-trên-postgresql) để thiết lập
+certificate, `pg_hba.conf` và firewall). Service `app` chỉ vào mạng `edge`, không
+publish cổng, giữ `.data/` trên volume tên `app-data`, và mount CA của database
+chỉ đọc từ `/opt/chuyennhahung/secrets/pg-ca.crt` vào `/run/secrets/pg-ca.crt`;
+service `tools` (profile `tools`) mount cùng CA đó. Chép CA vào đó trước
+(`chmod 644`; đây là certificate công khai, không phải secret). Đặt bản checkout
+cạnh file compose của stack (hoặc đặt `APP_SRC`) rồi thêm vào `.env` của stack
+(mode 600, không bao giờ commit). `compose.yml` dưới đây là file compose của chính
+stack:
 
 ```bash
 NEXT_PUBLIC_SITE_URL=https://chuyennhahung.vn        # hoặc http://<host> trước khi có TLS
-PLANNER_DATABASE_URL=postgres://cnh_app:<password>@postgres:5432/cnh_planner
+PLANNER_DATABASE_URL=postgres://cnh_app:<password>@<DB_IP>:5432/cnh_planner?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt
 ADMIN_API_TOKEN=<openssl rand -base64 36>
 TRUST_PROXY_HEADERS=true
 ```
+
+Mật khẩu có ký tự dành riêng của URL (`@`, `:`, `/`, `?`, `#`, `&`) phải được
+percent-encode trong URL. Nếu Planner trả `503` sau khi khởi động, hãy kiểm tra từ
+VM app rằng cổng 5432 của VM database truy cập được và SAN của certificate có đúng
+IP dùng trong URL.
 
 ```bash
 docker compose -f compose.yml -f compose.app.yml build app

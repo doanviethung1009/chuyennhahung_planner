@@ -45,7 +45,9 @@ holds every invariant behind 65+ tests that run against an in-memory store.
 The owner has
 confirmed that the VM runs PostgreSQL 16 or 17 and that the app will reach it
 over a private Docker network on the same VM, so TLS is not required and port
-5432 is not published. What we do not know: the expected data volume (no
+5432 is not published. *(Amended 2026-11-11, after PR #36: PostgreSQL runs on a
+**separate VM** from the app, so the link crosses the LAN and TLS with
+`sslmode=verify-full` is required — see §5.)* What we do not know: the expected data volume (no
 production traffic yet).
 
 **Relation to [ADR 0008](0008-postgres-document-store.md).** ADR 0008, accepted
@@ -180,6 +182,15 @@ never with a bare `Number()`.
 - The credentials are a dedicated role that owns only the Planner tables (no
   superuser, no `CREATEDB`), supplied by environment, never committed. The
   database port is not published beyond the VM's private network.
+- *(Amended 2026-11-11.)* The database runs on its own VM, so the app reaches it
+  across the LAN and `PLANNER_DATABASE_URL` **must** carry
+  `sslmode=verify-full&sslrootcert=<CA>`. The installed `pg` 8.23 treats
+  `require`, `prefer` and `verify-ca` as `verify-full` anyway, so the operator
+  provides a CA and a server certificate whose SAN contains the database VM's
+  IP. On the database VM, `pg_hba.conf` admits the app role only through a
+  `hostssl` line for the app VM's IP, and a firewall opens 5432 to that IP
+  alone. The previous "private Docker network, no TLS" assumption no longer
+  holds. Setup: [usage → Run the Planner on PostgreSQL](../usage.md#run-the-planner-on-postgresql).
 
 ### 6. Moving the data, and moving it back
 
