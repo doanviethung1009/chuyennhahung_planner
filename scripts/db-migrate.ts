@@ -2,9 +2,9 @@ import { resolve } from 'node:path';
 import { readMigrationFiles, runMigrations } from '@/server/persistence/migrate';
 import { createPostgresPool } from '@/server/persistence/postgres-pool';
 
-const url = process.env.DATABASE_URL;
+const url = process.env.PLANNER_DATABASE_URL;
 if (!url) {
-  console.error('DATABASE_URL is not set.');
+  console.error('PLANNER_DATABASE_URL is not set.');
   process.exit(1);
 }
 

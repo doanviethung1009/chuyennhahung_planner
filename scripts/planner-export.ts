@@ -4,9 +4,9 @@ import { createPostgresPlannerStore } from '@/server/persistence/postgres-planne
 import { createPostgresPool } from '@/server/persistence/postgres-pool';
 
 const file = process.argv[2];
-const url = process.env.DATABASE_URL;
+const url = process.env.PLANNER_DATABASE_URL;
 if (!file || !url) {
-  console.error('usage: DATABASE_URL=... npm run planner:export -- <planner.json>');
+  console.error('usage: PLANNER_DATABASE_URL=... npm run planner:export -- <planner.json>');
   process.exit(1);
 }
 

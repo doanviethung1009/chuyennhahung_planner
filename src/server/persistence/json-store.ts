@@ -27,6 +27,14 @@ export interface DocumentStore<T> {
    * instances (`docs/adr/0008-postgres-document-store.md` §3).
    */
   transact<R>(mutate: (data: T) => Promise<R> | R): Promise<R>;
+  /**
+   * Optional change counter for stores shared between processes. Two calls
+   * return the same value only if no process committed in between, so anything
+   * derived from the data (the Planner's share-token index) can be rebuilt when
+   * it moves. The memory and JSON stores have one writer — this process — and
+   * omit it.
+   */
+  revision?(): Promise<string | number>;
 }
 
 /**

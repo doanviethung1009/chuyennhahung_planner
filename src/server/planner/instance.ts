@@ -1,6 +1,7 @@
 import { getRepository } from '@/server/content/instance';
 import { createContentCatalog } from './catalog';
 import { PlannerRepository } from './repository';
+import { migrateOnStartup } from '@/server/persistence/migrate';
 import { createPostgresPlannerStore } from '@/server/persistence/postgres-planner-store';
 import { createPostgresPool } from '@/server/persistence/postgres-pool';
 import { createJsonPlannerStore, type PlannerStore } from './store';
@@ -19,12 +20,23 @@ import { createJsonPlannerStore, type PlannerStore } from './store';
  */
 const DEFAULT_STORE_PATH = '.data/planner.json';
 
-function selectStore(): PlannerStore {
-  const databaseUrl = process.env.DATABASE_URL?.trim();
+async function selectStore(): Promise<PlannerStore> {
+  const databaseUrl = process.env.PLANNER_DATABASE_URL?.trim();
   if (databaseUrl) {
-    // The pool connects lazily, so an unreachable database is reported per
-    // request as a 503 rather than failing the build of this singleton.
-    return createPostgresPlannerStore(createPostgresPool(databaseUrl));
+    // The pool connects lazily, but migrations run here, before the first
+    // request is served (ADR 0008 §7): under a session advisory lock, so
+    // replicas starting together apply each file once. A failure is a 503 with
+    // no driver detail and the instance cache resets, so the next request
+    // retries. The app never falls back to the JSON file.
+    const pool = createPostgresPool(databaseUrl);
+    try {
+      await migrateOnStartup(pool);
+    } catch (error) {
+      // The next request builds a new pool; do not leak this one meanwhile.
+      await pool.end().catch(() => undefined);
+      throw error;
+    }
+    return createPostgresPlannerStore(pool);
   }
   return createJsonPlannerStore(process.env.PLANNER_STORE?.trim() || DEFAULT_STORE_PATH);
 }
@@ -35,7 +47,7 @@ async function build(): Promise<PlannerRepository> {
   const content = await getRepository();
 
   return new PlannerRepository({
-    store: selectStore(),
+    store: await selectStore(),
     catalog: createContentCatalog(content),
   });
 }

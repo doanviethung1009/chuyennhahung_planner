@@ -32,8 +32,8 @@ closed.
 | `ADMIN_API_TOKEN` | *unset* | Guards every admin route. Unset, or shorter than 32 chars, and they all answer `503` — never an open default |
 | `TRAVEL_CONTENT_STORE` | `.data/travel-content.json` | Where the content store lives |
 | `TRAVEL_CONTENT_AUTOSEED` | `true` | Set `false` to skip seeding demo content on first use |
-| `PLANNER_STORE` | `.data/planner.json` | Where Planner trips live. Separate file from the content store by design. Ignored when `DATABASE_URL` is set |
-| `DATABASE_URL` | *unset* | PostgreSQL connection string. Set: the Planner uses PostgreSQL and never falls back to the file ([ADR 0009](adr/0009-postgres-persistence.md)). A secret — environment only. See *Run the Planner on PostgreSQL* |
+| `PLANNER_STORE` | `.data/planner.json` | Where Planner trips live. Separate file from the content store by design. Ignored when `PLANNER_DATABASE_URL` is set |
+| `PLANNER_DATABASE_URL` | *unset* | PostgreSQL connection string. Set: the Planner uses PostgreSQL and never falls back to the file ([ADR 0009](adr/0009-postgres-persistence.md)). A secret — environment only. See *Run the Planner on PostgreSQL* |
 | `DATABASE_POOL_MAX` | `5` | Size of the per-process connection pool |
 | `TEST_DATABASE_URL` | *unset* | A scratch database for `tests/planner-postgres.integration.test.ts`. Unset: those tests are skipped |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | *unset* | Google sign-in ([ADR 0007](adr/0007-password-and-google-sign-in.md)). Both required; without them the Google routes answer 404 and the button is hidden. Server-only — never `NEXT_PUBLIC_*` |
@@ -64,7 +64,7 @@ Override deliberately with `--no-verify` if you ever really mean it.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint, flat config |
 | `npm run test` | Vitest, run-once |
-| `npm run db:migrate` | Applies `db/migrations/*.sql` to `DATABASE_URL`; idempotent, never run on app boot |
+| `npm run db:migrate` | Applies `db/migrations/*.sql` to `PLANNER_DATABASE_URL`; idempotent. Optional: the app runs the same code at startup |
 | `npm run planner:import -- <file>` | Loads a `planner.json` into an empty PostgreSQL Planner, validated, in one transaction |
 | `npm run planner:export -- <file>` | Writes the PostgreSQL Planner out as a `planner.json` (backup and rollback) |
 | `npm run verify:ui` | Screenshots 13 routes at 375/768/1440 into `screenshots/`, fails on horizontal overflow |
@@ -211,7 +211,7 @@ endpoint list.
 
 ### Run the Planner on PostgreSQL
 
-With `DATABASE_URL` set the Planner keeps its data in PostgreSQL 16 or 17
+With `PLANNER_DATABASE_URL` set the Planner keeps its data in PostgreSQL 16 or 17
 ([ADR 0009](adr/0009-postgres-persistence.md)); without it nothing changes — the
 JSON file in development, the memory store in tests. When it is set the app
 **never falls back** to the JSON file: if the database is down the Planner
@@ -235,18 +235,24 @@ give the app role `GRANT SELECT, INSERT, UPDATE, DELETE` on the Planner tables
 The link to Postgres is unencrypted on the private Docker network, which is
 acceptable only while the database stays on the same host. If it ever moves to
 another machine, require TLS by adding `?sslmode=require` (or `verify-full`
-with the server's CA) to `DATABASE_URL`.
+with the server's CA) to `PLANNER_DATABASE_URL`.
 
 ```bash
 # The connection string is a secret: environment only, never committed or logged.
-export DATABASE_URL='postgres://planner:<password>@<db-host>:5432/planner'
+export PLANNER_DATABASE_URL='postgres://planner:<password>@<db-host>:5432/planner'
 
-npm run db:migrate                       # explicit deploy step, never on app boot
+npm run db:migrate                       # optional: the app migrates itself at startup
 npm run planner:import -- planner.json   # once, to move an existing JSON file in
 npm run planner:export -- backup.json    # writes a planner.json the JSON store can open
 ```
 
-`db:migrate` applies the numbered files in `db/migrations/` in order, each in its
+The app applies pending migrations itself the first time it uses the database
+(before it serves a request), under a PostgreSQL advisory lock, so replicas that
+start together apply each file once. If that fails — the database is down, a
+file is bad or was edited after it ran — Planner routes answer `503` and the next
+request retries; the log line carries only an error code, so run
+`npm run db:migrate` to see the real message. `db:migrate` runs the same code by
+hand (CI, a first import) and applies the numbered files in `db/migrations/` in order, each in its
 own transaction, and records them in `schema_migrations`; running it again does
 nothing, and a file edited after it was applied is refused. The rollback for
 each migration is in `db/rollback/` and is applied by hand — it **drops the
@@ -255,15 +261,15 @@ tables**, so export first.
 `planner:import` validates every record, runs the Planner integrity check, and
 inserts everything in one transaction. It refuses to run if any Planner table
 already holds a row, and it leaves expired sessions behind. Do it with the app
-stopped, then start it with `DATABASE_URL` set. These three commands run through
+stopped, then start it with `PLANNER_DATABASE_URL` set. These three commands run through
 `vite-node` (a dependency of Vitest), so they need the dev dependencies installed
 — run them from a checkout or the build stage, not a `--omit=dev` runtime image.
 The import reads the content catalog to check places, so it needs the same
 `TRAVEL_CONTENT_STORE` as the app.
 
-**Backups.** Take both: `pg_dump --format=custom "$DATABASE_URL" > planner.dump`
+**Backups.** Take both: `pg_dump --format=custom "$PLANNER_DATABASE_URL" > planner.dump`
 (restore with `pg_restore`) and `npm run planner:export -- planner-$(date +%F).json`.
-The export doubles as the rollback path: unset `DATABASE_URL`, point
+The export doubles as the rollback path: unset `PLANNER_DATABASE_URL`, point
 `PLANNER_STORE` at the exported file, restart. Writes made after the last export
 are lost, so export first. Both files hold password hashes and token digests —
 keep them owner-readable only. The export script sets mode `0600` itself;
@@ -326,7 +332,7 @@ These are plausible defaults, **not verified**. Confirm each with the owner:
    deployment environment.
 6. **Planner database** — create the dedicated PostgreSQL role and database
    (see *Run the Planner on PostgreSQL*), keep the port private, store
-   `DATABASE_URL` as a secret, run `npm run db:migrate`, and import any existing
+   `PLANNER_DATABASE_URL` as a secret, optionally run `npm run db:migrate` (the app does it at startup), and import any existing
    `planner.json` once.
 7. **Privacy notice** — customers who sign up with Google have their name and
    email stored; publish a privacy notice and a way to ask for deletion (Decree
@@ -337,10 +343,10 @@ These are plausible defaults, **not verified**. Confirm each with the owner:
 
 `npm run build` emits a prerendered site, so any Node-capable Next.js host (a Node
 server behind nginx, a container) works. The Planner API is the exception to
-"no runtime data dependency": with `DATABASE_URL` set it needs a reachable
-PostgreSQL at runtime, and each deploy that ships a new file in `db/migrations/`
-needs `npm run db:migrate` **before** the new version starts (one step, run once —
-never from the app). Without `DATABASE_URL` the Planner uses its JSON file and
+"no runtime data dependency": with `PLANNER_DATABASE_URL` set it needs a reachable
+PostgreSQL at runtime, and a new file in `db/migrations/` is applied by the
+first instance of the new version to start, under an advisory lock
+(`npm run db:migrate` remains available to do it ahead of the deploy). Without `PLANNER_DATABASE_URL` the Planner uses its JSON file and
 the app is single-process only.
 `NEXT_PUBLIC_SITE_URL` must be set at **build** time — it is baked into
 canonicals, `hreflang` and the sitemap. Content changes require a rebuild;
@@ -353,8 +359,8 @@ there is no CMS and no revalidation path yet.
 | `require() of ES Module` from `@tailwindcss/node` | Running on a Node older than `.nvmrc` — run `nvm use` |
 | `npm warn EBADENGINE` on install | Same cause: a Node older than `.nvmrc`. Run `nvm use`, then `npm ci` |
 | `npm warn install-scripts … not yet covered by allowScripts` | A dependency with an install script is new, or an approved one changed version — approvals in `package.json` `allowScripts` are pinned to `pkg@version`. Check the package is the one you expect, then `npm install-scripts approve <pkg>` and commit the `package.json` change. Note that `--dry-run` writes anyway on npm 11.19 |
-| Planner routes answer `503 service_unavailable` | `DATABASE_URL` is set and the database is unreachable or refused the login — check the host, the role and that the migration ran. The app deliberately does not fall back to the JSON file |
-| `relation "trips" does not exist` | `npm run db:migrate` was not run against that database |
+| Planner routes answer `503 service_unavailable` | `PLANNER_DATABASE_URL` is set and the database is unreachable or refused the login — check the host, the role and run `npm run db:migrate` to see why the startup migration failed. The app deliberately does not fall back to the JSON file |
+| `relation "trips" does not exist` | The startup migration did not complete for that database — run `npm run db:migrate` and read its message |
 | A Vietnamese URL 404s | Pathname missing from `pathnames` in `routing.ts`, or the folder name does not match the internal pathname |
 | `MISSING_MESSAGE` at runtime | Key added to one catalogue only |
 | `npm run verify:ui` cannot launch | Chrome is not at the hard-coded macOS path in `scripts/screenshots.mjs` |

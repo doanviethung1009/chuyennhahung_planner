@@ -55,12 +55,18 @@ function fakePool(
   const params: unknown[][] = [];
   const released: Array<boolean | Error | undefined> = [];
   const tables = data ? rowsFor(data) : new Map();
+  // The database's `planner_revision`; tests bump it to play "another process".
+  const db = { revision: 7 };
   const client: PgClientLike = {
     async query(text, values) {
       log.push(text);
       params.push(values ?? []);
       const failure = fail(text);
       if (failure) throw failure;
+      if (text === 'SELECT revision FROM planner_revision') {
+        return { rows: [{ revision: String(db.revision) }] };
+      }
+      if (text.startsWith('UPDATE planner_revision')) db.revision += 1;
       const table = /FROM "([a-z_]+)"/.exec(text)?.[1];
       return { rows: table ? (tables.get(table) ?? []) : [] };
     },
@@ -69,7 +75,7 @@ function fakePool(
     },
   };
   const pool: PgPoolLike = { connect: async () => client };
-  return { pool, log, params, released };
+  return { pool, log, params, released, db, tables };
 }
 
 const sqlError = (code: string, message = 'driver detail') =>
@@ -83,8 +89,9 @@ describe('transact protocol', () => {
     expect(log[0]).toBe('BEGIN');
     expect(log[1]).toBe('SELECT pg_advisory_xact_lock($1)');
     expect(params[1]).toEqual([PLANNER_LOCK_KEY]);
-    expect(log.slice(2, 9).every((text) => text.startsWith('SELECT * FROM'))).toBe(true);
-    expect(log.slice(2, 9)).toHaveLength(7);
+    expect(log[2]).toBe('SELECT revision FROM planner_revision');
+    expect(log.slice(3, 10).every((text) => text.startsWith('SELECT * FROM'))).toBe(true);
+    expect(log.slice(3, 10)).toHaveLength(7);
     expect(log.at(-1)).toBe('COMMIT');
     expect(log.filter((text) => /^(INSERT|UPDATE|DELETE)/.test(text))).toEqual([]);
   });
@@ -96,8 +103,9 @@ describe('transact protocol', () => {
       doc.trips[0]!.title = 'Đổi tên';
     });
     const writes = log.filter((text) => /^(INSERT|UPDATE|DELETE)/.test(text));
-    expect(writes).toEqual(['UPDATE "trips" SET "title" = $2 WHERE "id" = $1']);
-    expect(log.at(-1)).toBe('COMMIT');
+    expect(writes).toEqual(['UPDATE "trips" SET "title" = $2 WHERE "id" = $1', 'UPDATE planner_revision SET revision = revision + 1']);
+    // The revision moves in the same transaction, after the writes.
+    expect(log.slice(-2)).toEqual(['UPDATE planner_revision SET revision = revision + 1', 'COMMIT']);
   });
 
   it('rolls back and writes nothing when the mutation throws, passing its error through', async () => {
@@ -120,6 +128,88 @@ describe('transact protocol', () => {
     expect(log[0]).toBe('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
     expect(log.at(-1)).toBe('COMMIT');
     expect(data.trips.length).toBeGreaterThan(0);
+  });
+});
+
+describe('revision-validated cache', () => {
+  const loads = (log: string[]) => log.filter((text) => text.startsWith('SELECT * FROM "planner_users"')).length;
+
+  it('serves a read from the cache while the revision is unchanged', async () => {
+    const { pool, log } = fakePool(await scenario());
+    const store = createPostgresPlannerStore(pool);
+    await store.read();
+    await store.read();
+    await store.read();
+    expect(loads(log)).toBe(1);
+    expect(log.filter((text) => text === 'SELECT revision FROM planner_revision')).toHaveLength(3);
+  });
+
+  it('reloads when another process moved the revision', async () => {
+    const { pool, log, db } = fakePool(await scenario());
+    const store = createPostgresPlannerStore(pool);
+    await store.read();
+    db.revision += 1;
+    await store.read();
+    expect(loads(log)).toBe(2);
+  });
+
+  it('never hands out a reference into the cache', async () => {
+    const { pool } = fakePool(await scenario());
+    const store = createPostgresPlannerStore(pool);
+    const first = await store.read();
+    const title = first.trips[0]!.title;
+    first.trips[0]!.title = 'mutated by a caller';
+    first.trips.length = 0;
+    const second = await store.read();
+    expect(second.trips[0]!.title).toBe(title);
+    expect(second).not.toBe(first);
+  });
+
+  it('lets a transaction reuse a current cache instead of reloading', async () => {
+    const { pool, log } = fakePool(await scenario());
+    const store = createPostgresPlannerStore(pool);
+    await store.read();
+    await store.transact(() => undefined);
+    expect(loads(log)).toBe(1);
+  });
+
+  it('bumps the revision on a committing write and drops the cache', async () => {
+    const { pool, log, db } = fakePool(await scenario());
+    const store = createPostgresPlannerStore(pool);
+    await store.read();
+    await store.transact((doc) => {
+      doc.trips[0]!.title = 'Đổi tên';
+    });
+    expect(db.revision).toBe(8);
+    await store.read();
+    expect(loads(log)).toBe(2);
+  });
+
+  it('does not bump the revision for a no-op transaction', async () => {
+    const { pool, db } = fakePool(await scenario());
+    await createPostgresPlannerStore(pool).transact(() => undefined);
+    expect(db.revision).toBe(7);
+  });
+
+  it('leaves the cache valid after a ROLLBACK, and the failed edit out of it', async () => {
+    const { pool, log, db } = fakePool(await scenario());
+    const store = createPostgresPlannerStore(pool);
+    const before = await store.read();
+    await expect(
+      store.transact((doc) => {
+        doc.trips.length = 0;
+        throw new Error('refused');
+      }),
+    ).rejects.toThrow('refused');
+    expect(db.revision).toBe(7);
+    expect(log.some((text) => text.startsWith('UPDATE planner_revision'))).toBe(false);
+    expect(await store.read()).toEqual(before);
+    expect(loads(log)).toBe(1);
+  });
+
+  it('reports the revision for the share index', async () => {
+    const { pool } = fakePool(await scenario());
+    expect(await createPostgresPlannerStore(pool).revision!()).toBe('7');
   });
 });
 
@@ -178,18 +268,18 @@ describe('failure mapping', () => {
   });
 });
 
-describe('selection by DATABASE_URL', () => {
-  const saved = process.env.DATABASE_URL;
+describe('selection by PLANNER_DATABASE_URL', () => {
+  const saved = process.env.PLANNER_DATABASE_URL;
   afterEach(() => {
-    if (saved === undefined) delete process.env.DATABASE_URL;
-    else process.env.DATABASE_URL = saved;
+    if (saved === undefined) delete process.env.PLANNER_DATABASE_URL;
+    else process.env.PLANNER_DATABASE_URL = saved;
     vi.resetModules();
   });
 
   it('answers 503 — and never falls back to the JSON file — when the database is down', async () => {
     vi.resetModules();
     // A closed local port: refused immediately, nothing leaves the machine.
-    process.env.DATABASE_URL = 'postgres://planner:hunter2-secret@127.0.0.1:1/planner';
+    process.env.PLANNER_DATABASE_URL = 'postgres://planner:hunter2-secret@127.0.0.1:1/planner';
     process.env.ADMIN_API_TOKEN = 'test-admin-token-at-least-32-chars-long';
     const route = await import('../src/app/api/admin/planner/users/route');
     const response = await route.GET(

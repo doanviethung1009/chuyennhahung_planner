@@ -10,8 +10,17 @@ import { planStatements, rowsToData, TABLES } from './planner-rows';
  * seven tables, run the repository's mutation on a clone, write only the diff,
  * commit. The lock is what makes two *processes* serialise the way the
  * in-process queue serialises two requests. `read` is a REPEATABLE READ,
- * READ ONLY transaction so the seven tables come from one snapshot. There is no
- * cache: with more than one process it would be stale by construction.
+ * READ ONLY transaction so the seven tables come from one snapshot.
+ *
+ * Per-instance cache, validated by revision (ADR 0009 §2): `planner_revision`
+ * is a counter every committing `transact` bumps under the lock. A read asks
+ * for it first and reloads the seven tables only when it differs from the
+ * cached one. The cache is tagged with the revision it was loaded at, so it is
+ * never "stale", only "behind" — and behind is detected. After a commit the
+ * cache is simply dropped rather than patched: what a fresh load returns (bigint
+ * and jsonb round-trips, column defaults) is not guaranteed to equal the
+ * mutated clone, and the next read pays one reload. A rollback changes nothing.
+ * Callers only ever get a `structuredClone`, never a reference into the cache.
  */
 
 /** Constant key of the Planner write lock. Arbitrary, but fixed forever. */
@@ -73,6 +82,22 @@ async function db<R>(task: () => Promise<R>): Promise<R> {
   }
 }
 
+interface Snapshot {
+  revision: string;
+  data: PlannerData;
+}
+
+const REVISION_QUERY = 'SELECT revision FROM planner_revision';
+
+async function loadRevision(client: PgClientLike): Promise<string> {
+  const result = await client.query(REVISION_QUERY);
+  const value = result.rows[0]?.revision;
+  if (value === undefined || value === null) {
+    throw new Error('planner_revision is empty — migration 0003 has not run');
+  }
+  return String(value);
+}
+
 async function loadAll(client: PgClientLike): Promise<PlannerData> {
   const rowsByTable: Record<string, Record<string, unknown>[]> = {};
   for (const spec of TABLES) {
@@ -84,6 +109,13 @@ async function loadAll(client: PgClientLike): Promise<PlannerData> {
 }
 
 export function createPostgresPlannerStore(pool: PgPoolLike): PlannerStore {
+  let cache: Snapshot | null = null;
+
+  /** Keep the newest snapshot; an older one from a racing request is ignored. */
+  function remember(snapshot: Snapshot): void {
+    if (cache === null || BigInt(snapshot.revision) >= BigInt(cache.revision)) cache = snapshot;
+  }
+
   async function withClient<R>(run: (client: PgClientLike) => Promise<R>): Promise<R> {
     const client = await db(() => pool.connect());
     let broken = false;
@@ -97,19 +129,33 @@ export function createPostgresPlannerStore(pool: PgPoolLike): PlannerStore {
     }
   }
 
+  /** Cached data when the database is still at its revision, else a fresh load. */
+  async function currentSnapshot(client: PgClientLike): Promise<Snapshot> {
+    const revision = await db(() => loadRevision(client));
+    if (cache !== null && cache.revision === revision) return cache;
+    const snapshot = { revision, data: await db(() => loadAll(client)) };
+    remember(snapshot);
+    return snapshot;
+  }
+
   return {
     read() {
       return withClient(async (client) => {
+        // One snapshot for the revision and the tables, so they agree.
         await db(() => client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY'));
         try {
-          const data = await db(() => loadAll(client));
+          const snapshot = await currentSnapshot(client);
           await db(() => client.query('COMMIT'));
-          return data;
+          return structuredClone(snapshot.data);
         } catch (error) {
           await rollback(client);
           throw error;
         }
       });
+    },
+
+    revision() {
+      return withClient((client) => db(() => loadRevision(client)));
     },
 
     async write(next) {
@@ -129,19 +175,30 @@ export function createPostgresPlannerStore(pool: PgPoolLike): PlannerStore {
         try {
           await db(() => client.query('BEGIN'));
           await db(() => client.query('SELECT pg_advisory_xact_lock($1)', [PLANNER_LOCK_KEY]));
-          const before = await db(() => loadAll(client));
-          const working = structuredClone(before);
+          // Under the lock nobody else commits, so this is exactly the state
+          // the diff below is taken against. It is never mutated: the
+          // mutation runs on a clone.
+          const before = await currentSnapshot(client);
+          const working = structuredClone(before.data);
 
           // Outside `db()`: a repository error (not_found, version_conflict…)
           // must reach the caller unchanged.
           const result = await mutate(working);
 
-          for (const statement of planStatements(before, working)) {
+          const statements = planStatements(before.data, working);
+          for (const statement of statements) {
             await db(() => client.query(statement.text, statement.values));
           }
+          // A no-op leaves the data, and so the revision, alone.
+          if (statements.length > 0) {
+            await db(() => client.query('UPDATE planner_revision SET revision = revision + 1'));
+          }
           await db(() => client.query('COMMIT'));
+          if (statements.length > 0) cache = null;
           return result;
         } catch (error) {
+          // The cache stays valid: it is tagged with the revision it was
+          // loaded at, and nothing was committed.
           await rollback(client);
           throw error;
         }

@@ -4,7 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { ContentError } from '../src/server/content/errors';
 import { PlannerRepository } from '../src/server/planner/repository';
-import { readMigrationFiles, runMigrations } from '../src/server/persistence/migrate';
+import { migrateOnStartup, readMigrationFiles, runMigrations } from '../src/server/persistence/migrate';
 import {
   exportPlannerDocument,
   importPlannerDocument,
@@ -62,6 +62,9 @@ describe.skipIf(!url)('Planner on PostgreSQL (TEST_DATABASE_URL)', () => {
   });
 
   beforeEach(async () => {
+    // Tests empty the tables behind the stores' backs; moving the revision is
+    // what tells every cached store so, exactly as a real commit would.
+    await pool.query('UPDATE planner_revision SET revision = revision + 1');
     await pool.query(
       'TRUNCATE trip_expenses, trip_activities, trip_days, trips, planner_oauth_attempts, planner_sessions, planner_users RESTART IDENTITY CASCADE',
     );
@@ -235,6 +238,58 @@ describe.skipIf(!url)('Planner on PostgreSQL (TEST_DATABASE_URL)', () => {
       expect((failure.reason as ContentError).status).toBe(409);
     });
 
+    it('a write through one store invalidates the cache of another', async () => {
+      const a = createPostgresPlannerStore(openPool());
+      const b = createPostgresPlannerStore(openPool());
+      expect((await a.read()).users).toEqual([]); // A now caches the empty state
+      await processLike(b).createUser({ handle: 'nguoi-moi', displayName: 'Người mới' });
+      expect((await a.read()).users.map((user) => user.handle)).toEqual(['nguoi-moi']);
+      expect(await a.revision!()).toBe(await b.revision!());
+    });
+
+    it('a cached store cannot lose an update made by another store', async () => {
+      const a = processLike(createPostgresPlannerStore(openPool()));
+      const b = processLike(createPostgresPlannerStore(openPool()));
+      const { userId } = await makeOwner(a);
+      const created = await a.createTrip(userId, daLatTripInput());
+      await b.getTrip(userId, created.trip.id); // both caches are warm
+      await a.addActivity(userId, created.trip.id, activityInput({ title: 'Từ A' }), created.trip.version);
+      // B's cache is behind; its write must be validated against the real state.
+      const stale = await b
+        .addActivity(userId, created.trip.id, activityInput({ title: 'Từ B' }), created.trip.version)
+        .catch((caught: unknown) => caught);
+      expect((stale as ContentError).status).toBe(412);
+      const { days } = await b.getTrip(userId, created.trip.id);
+      expect(days[0]!.activities.map((activity) => activity.title)).toEqual(['Từ A']);
+    });
+
+    it('a rolled-back transaction leaves the cache and the revision alone', async () => {
+      const revision = await store.revision!();
+      await store.read();
+      await expect(
+        store.transact((data) => {
+          data.users.push({
+            id: 'usr_r',
+            handle: 'roll-back',
+            displayName: 'Roll back',
+            tokenHash: 'b'.repeat(64),
+            createdAt: FROZEN_NOW,
+            updatedAt: FROZEN_NOW,
+          });
+          throw new Error('abandon');
+        }),
+      ).rejects.toThrow('abandon');
+      expect(await store.revision!()).toBe(revision);
+      expect((await store.read()).users).toEqual([]);
+    });
+
+    it('a cached read equals a cold read of the committed state', async () => {
+      await runScenario(repository());
+      const warm = await store.read();
+      const cold = await createPostgresPlannerStore(openPool()).read();
+      expect(warm).toEqual(cold);
+    });
+
     it('a failed transaction leaves nothing behind', async () => {
       await expect(
         store.transact(async (data) => {
@@ -269,6 +324,49 @@ describe.skipIf(!url)('Planner on PostgreSQL (TEST_DATABASE_URL)', () => {
     expect(error).toBeInstanceOf(ContentError);
     expect(error.status).toBe(409);
     expect((await store.read()).users).toHaveLength(1);
+  });
+
+  describe('startup migration', () => {
+    it('applies each file once when two replicas start together, and lets the app use the schema', async () => {
+      const fresh = `pgtest_${randomBytes(6).toString('hex')}`;
+      await admin.query(`CREATE SCHEMA ${fresh}`);
+      const first = createPostgresPool(url!, { options: `-c search_path=${fresh}`, max: 2 });
+      const second = createPostgresPool(url!, { options: `-c search_path=${fresh}`, max: 2 });
+      pools.push(first, second);
+      try {
+        const files = await readMigrationFiles('db/migrations');
+        const [one, two] = await Promise.all([
+          migrateOnStartup(first),
+          migrateOnStartup(second),
+        ]);
+        const names = files.map((file) => file.name);
+        // Exactly one of them applied each file; the other skipped it.
+        expect([...one.applied, ...two.applied].sort()).toEqual(names);
+        const recorded = await first.query('SELECT name FROM schema_migrations ORDER BY name');
+        expect(recorded.rows.map((row) => row.name)).toEqual(names);
+        const planner = processLike(createPostgresPlannerStore(first));
+        await planner.createUser({ handle: 'moi-khoi-dong', displayName: 'Mới khởi động' });
+      } finally {
+        await admin.query(`DROP SCHEMA ${fresh} CASCADE`);
+      }
+    });
+  });
+
+  describe('share links across replicas', () => {
+    it('a link created through one store resolves through another, and stops when revoked', async () => {
+      const a = processLike(createPostgresPlannerStore(openPool()));
+      const b = processLike(createPostgresPlannerStore(openPool()));
+      const { userId } = await makeOwner(a);
+      const created = await a.createTrip(userId, daLatTripInput());
+      await a.addActivity(userId, created.trip.id, activityInput(), created.trip.version);
+
+      expect(await b.getSharedTrip('x'.repeat(43))).toBeNull(); // B's index is built, empty
+      const { shareToken } = await a.setVisibility(userId, created.trip.id, 'unlisted');
+      expect(await b.getSharedTrip(shareToken!)).not.toBeNull();
+
+      await a.revokeShare(userId, created.trip.id);
+      expect(await b.getSharedTrip(shareToken!)).toBeNull();
+    });
   });
 
   describe('import and export', () => {

@@ -32,8 +32,8 @@ mọi biến dưới đây đều có mặc định dùng được, hoặc tự 
 | `ADMIN_API_TOKEN` | *chưa đặt* | Bảo vệ mọi route admin. Chưa đặt, hoặc ngắn hơn 32 ký tự, thì tất cả trả `503` — không bao giờ mở mặc định |
 | `TRAVEL_CONTENT_STORE` | `.data/travel-content.json` | Nơi content store nằm |
 | `TRAVEL_CONTENT_AUTOSEED` | `true` | Đặt `false` để bỏ qua seed nội dung demo ở lần dùng đầu |
-| `PLANNER_STORE` | `.data/planner.json` | Nơi trip của Planner nằm. Tách file khỏi content store một cách có chủ đích. Bị bỏ qua khi đã đặt `DATABASE_URL` |
-| `DATABASE_URL` | *chưa đặt* | Chuỗi kết nối PostgreSQL. Đã đặt: Planner dùng PostgreSQL và không bao giờ quay về file ([ADR 0009](adr/0009-postgres-persistence.vi.md)). Là secret — chỉ qua biến môi trường. Xem *Chạy Planner trên PostgreSQL* |
+| `PLANNER_STORE` | `.data/planner.json` | Nơi trip của Planner nằm. Tách file khỏi content store một cách có chủ đích. Bị bỏ qua khi đã đặt `PLANNER_DATABASE_URL` |
+| `PLANNER_DATABASE_URL` | *chưa đặt* | Chuỗi kết nối PostgreSQL. Đã đặt: Planner dùng PostgreSQL và không bao giờ quay về file ([ADR 0009](adr/0009-postgres-persistence.vi.md)). Là secret — chỉ qua biến môi trường. Xem *Chạy Planner trên PostgreSQL* |
 | `DATABASE_POOL_MAX` | `5` | Kích thước connection pool của mỗi tiến trình |
 | `TEST_DATABASE_URL` | *chưa đặt* | Database nháp cho `tests/planner-postgres.integration.test.ts`. Chưa đặt thì các test đó bị bỏ qua |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | *chưa đặt* | Đăng nhập Google ([ADR 0007](adr/0007-password-and-google-sign-in.vi.md)). Cần cả hai; thiếu thì các route Google trả 404 và nút bị ẩn. Chỉ phía server — không bao giờ là `NEXT_PUBLIC_*` |
@@ -64,7 +64,7 @@ cố ý thì ghi đè bằng `--no-verify`.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint, flat config |
 | `npm run test` | Vitest, chạy một lượt |
-| `npm run db:migrate` | Áp dụng `db/migrations/*.sql` vào `DATABASE_URL`; idempotent, không bao giờ chạy lúc app khởi động |
+| `npm run db:migrate` | Áp dụng `db/migrations/*.sql` vào `PLANNER_DATABASE_URL`; idempotent. Tuỳ chọn: app chạy cùng đoạn code đó lúc khởi động |
 | `npm run planner:import -- <file>` | Nạp một `planner.json` vào Planner PostgreSQL đang trống, có kiểm tra, trong một transaction |
 | `npm run planner:export -- <file>` | Ghi Planner PostgreSQL ra `planner.json` (sao lưu và rollback) |
 | `npm run verify:ui` | Chụp 13 route ở 375/768/1440 vào `screenshots/`, fail nếu tràn ngang |
@@ -212,7 +212,7 @@ danh sách endpoint đầy đủ.
 
 ### Chạy Planner trên PostgreSQL
 
-Khi đặt `DATABASE_URL`, Planner lưu dữ liệu trong PostgreSQL 16 hoặc 17
+Khi đặt `PLANNER_DATABASE_URL`, Planner lưu dữ liệu trong PostgreSQL 16 hoặc 17
 ([ADR 0009](adr/0009-postgres-persistence.vi.md)); không đặt thì không có gì đổi
 — file JSON khi phát triển, memory store khi test. Khi đã đặt, app **không bao
 giờ quay về** file JSON: database sập thì các route Planner trả
@@ -236,18 +236,23 @@ schema).
 Kết nối tới Postgres không mã hoá trên mạng Docker riêng, điều này chỉ chấp nhận
 được khi database còn nằm trên cùng máy. Nếu sau này database chuyển sang máy
 khác, hãy bắt buộc TLS bằng cách thêm `?sslmode=require` (hoặc `verify-full` kèm
-CA của server) vào `DATABASE_URL`.
+CA của server) vào `PLANNER_DATABASE_URL`.
 
 ```bash
 # Chuỗi kết nối là secret: chỉ qua biến môi trường, không commit, không log.
-export DATABASE_URL='postgres://planner:<password>@<db-host>:5432/planner'
+export PLANNER_DATABASE_URL='postgres://planner:<password>@<db-host>:5432/planner'
 
-npm run db:migrate                       # bước deploy tường minh, không bao giờ chạy lúc app khởi động
+npm run db:migrate                       # tuỳ chọn: app tự migrate lúc khởi động
 npm run planner:import -- planner.json   # một lần, để chuyển file JSON hiện có vào
 npm run planner:export -- backup.json    # ghi ra planner.json mà JSON store mở được
 ```
 
-`db:migrate` áp dụng lần lượt các file đánh số trong `db/migrations/`, mỗi file
+App tự áp dụng các migration còn thiếu ở lần đầu dùng database (trước khi phục vụ
+request nào), dưới một advisory lock của PostgreSQL, nên các replica khởi động
+cùng lúc chỉ áp dụng mỗi file một lần. Nếu thất bại — database tắt, file hỏng hoặc
+bị sửa sau khi đã chạy — route Planner trả `503` và request kế tiếp thử lại; dòng
+log chỉ có mã lỗi, nên chạy `npm run db:migrate` để xem thông báo thật.
+`db:migrate` chạy cùng đoạn code đó bằng tay (CI, lần import đầu) và áp dụng lần lượt các file đánh số trong `db/migrations/`, mỗi file
 trong một transaction riêng, và ghi vào `schema_migrations`; chạy lại thì không
 làm gì, và file bị sửa sau khi đã áp dụng sẽ bị từ chối. Rollback của từng
 migration nằm trong `db/rollback/` và được chạy tay — nó **xoá bảng**, nên phải
@@ -256,14 +261,14 @@ export trước.
 `planner:import` kiểm tra từng bản ghi, chạy kiểm tra toàn vẹn của Planner, rồi
 chèn tất cả trong một transaction. Nó từ chối chạy nếu bảng Planner nào đã có
 dòng, và bỏ lại các session đã hết hạn. Hãy làm khi app đang dừng, rồi khởi động
-app với `DATABASE_URL`. Ba lệnh này chạy qua `vite-node` (phụ thuộc của Vitest)
+app với `PLANNER_DATABASE_URL`. Ba lệnh này chạy qua `vite-node` (phụ thuộc của Vitest)
 nên cần cài dev dependencies — chạy từ bản checkout hoặc giai đoạn build, không
 phải image runtime `--omit=dev`. Import đọc catalog nội dung để kiểm tra place
 nên cần cùng `TRAVEL_CONTENT_STORE` với app.
 
-**Sao lưu.** Làm cả hai: `pg_dump --format=custom "$DATABASE_URL" > planner.dump`
+**Sao lưu.** Làm cả hai: `pg_dump --format=custom "$PLANNER_DATABASE_URL" > planner.dump`
 (khôi phục bằng `pg_restore`) và `npm run planner:export -- planner-$(date +%F).json`.
-Bản export cũng là đường rollback: bỏ `DATABASE_URL`, trỏ `PLANNER_STORE` vào file
+Bản export cũng là đường rollback: bỏ `PLANNER_DATABASE_URL`, trỏ `PLANNER_STORE` vào file
 đã export, khởi động lại. Những gì ghi sau lần export cuối sẽ mất, nên export
 trước. Cả hai file chứa hash mật khẩu và digest token — chỉ cho chủ sở hữu đọc.
 Script export tự đặt quyền `0600`; `pg_dump` thì không, nên chạy
@@ -326,8 +331,8 @@ làm đủ cả ba.
    production, và đặt `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` trong môi trường
    triển khai.
 6. **Database của Planner** — tạo role và database PostgreSQL riêng (xem *Chạy
-   Planner trên PostgreSQL*), giữ cổng ở mạng riêng, lưu `DATABASE_URL` như một
-   secret, chạy `npm run db:migrate`, và import `planner.json` hiện có một lần.
+   Planner trên PostgreSQL*), giữ cổng ở mạng riêng, lưu `PLANNER_DATABASE_URL` như một
+   secret, có thể chạy `npm run db:migrate` (app tự làm lúc khởi động), và import `planner.json` hiện có một lần.
 7. **Thông báo quyền riêng tư** — khách đăng ký bằng Google được lưu tên và email;
    hãy đăng thông báo quyền riêng tư và cách yêu cầu xoá dữ liệu (Nghị định
    13/2023) trước khi bật đăng ký trên production, hoặc đặt
@@ -337,10 +342,9 @@ làm đủ cả ba.
 
 `npm run build` tạo ra một site prerender, nên host Next.js nào chạy được Node
 cũng dùng được (Node server sau nginx, container). API Planner là ngoại lệ của
-"không phụ thuộc dữ liệu lúc chạy": khi đặt `DATABASE_URL` nó cần một PostgreSQL
-truy cập được lúc chạy, và mỗi lần deploy có thêm file mới trong `db/migrations/`
-phải chạy `npm run db:migrate` **trước** khi phiên bản mới khởi động (một bước,
-chạy một lần — không bao giờ từ app). Không đặt `DATABASE_URL` thì Planner dùng
+"không phụ thuộc dữ liệu lúc chạy": khi đặt `PLANNER_DATABASE_URL` nó cần một PostgreSQL
+truy cập được lúc chạy, và file mới trong `db/migrations/` được instance đầu tiên của phiên bản mới áp dụng
+dưới một advisory lock (vẫn có thể chạy `npm run db:migrate` trước khi deploy). Không đặt `PLANNER_DATABASE_URL` thì Planner dùng
 file JSON và app chỉ chạy được một tiến trình.
 `NEXT_PUBLIC_SITE_URL` phải được đặt lúc **build** — nó được nướng vào canonical,
 `hreflang` và sitemap. Đổi nội dung thì phải build lại; hiện chưa có CMS và chưa
@@ -353,8 +357,8 @@ có đường revalidate.
 | `require() of ES Module` từ `@tailwindcss/node` | Đang chạy Node cũ hơn `.nvmrc` — chạy `nvm use` |
 | `npm warn EBADENGINE` khi cài | Cùng nguyên nhân: Node cũ hơn `.nvmrc`. Chạy `nvm use`, rồi `npm ci` |
 | `npm warn install-scripts … not yet covered by allowScripts` | Có dependency mới mang install script, hoặc một package đã duyệt vừa đổi phiên bản — các phê duyệt trong `allowScripts` của `package.json` được ghim theo `pkg@version`. Kiểm tra đúng là package bạn mong đợi, rồi `npm install-scripts approve <pkg>` và commit thay đổi trong `package.json`. Lưu ý `--dry-run` vẫn ghi file ở npm 11.19 |
-| Route Planner trả `503 service_unavailable` | Đã đặt `DATABASE_URL` mà database không truy cập được hoặc từ chối đăng nhập — kiểm tra host, role và migration đã chạy chưa. App cố ý không quay về file JSON |
-| `relation "trips" does not exist` | Chưa chạy `npm run db:migrate` trên database đó |
+| Route Planner trả `503 service_unavailable` | Đã đặt `PLANNER_DATABASE_URL` mà database không truy cập được hoặc từ chối đăng nhập — kiểm tra host, role và chạy `npm run db:migrate` để xem vì sao migration lúc khởi động thất bại. App cố ý không quay về file JSON |
+| `relation "trips" does not exist` | Migration lúc khởi động chưa hoàn tất trên database đó — chạy `npm run db:migrate` và đọc thông báo của nó |
 | Một URL tiếng Việt trả 404 | Pathname chưa có trong `pathnames` ở `routing.ts`, hoặc tên thư mục không khớp pathname nội bộ |
 | `MISSING_MESSAGE` lúc chạy | Key chỉ được thêm vào một file messages |
 | `npm run verify:ui` không mở được browser | Chrome không nằm ở đường dẫn macOS hard-code trong `scripts/screenshots.mjs` |

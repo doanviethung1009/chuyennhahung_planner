@@ -1,8 +1,12 @@
-import { readdirSync } from 'node:fs';
+import { mkdtempSync, readdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { ContentError } from '../src/server/content/errors';
 import { describe, expect, it } from 'vitest';
 import {
   checksumOf,
   MIGRATION_FILE,
+  migrateOnStartup,
   readMigrationFiles,
   runMigrations,
   type MigrationFile,
@@ -63,6 +67,63 @@ describe('migration runner', () => {
     expect(log).toContain('ROLLBACK');
     expect(log).not.toContain('CREATE TABLE b ()');
     expect(log.filter((l) => l.startsWith('INSERT INTO schema_migrations'))).toHaveLength(0);
+  });
+
+  it('holds one session lock around the bootstrap and every file, then frees it', async () => {
+    const { pool, log } = fakeMigrationPool();
+    await runMigrations(pool, [file('0001_a.sql', 'CREATE TABLE a ()')]);
+    const lock = log.indexOf('SELECT pg_advisory_lock($1)');
+    const bootstrap = log.findIndex((l) => l.startsWith('CREATE TABLE IF NOT EXISTS schema_migrations'));
+    const unlock = log.indexOf('SELECT pg_advisory_unlock($1)');
+    expect(lock).toBe(0);
+    expect(bootstrap).toBeGreaterThan(lock);
+    expect(log.indexOf('BEGIN')).toBeGreaterThan(bootstrap);
+    expect(unlock).toBe(log.length - 1);
+  });
+
+  it('frees the lock when a file fails', async () => {
+    const { pool, log } = fakeMigrationPool({}, 'BROKEN');
+    await expect(runMigrations(pool, [file('0001_a.sql', 'BROKEN')])).rejects.toThrow();
+    expect(log.at(-1)).toBe('SELECT pg_advisory_unlock($1)');
+  });
+
+  it('destroys the connection if the unlock itself fails', async () => {
+    const released: unknown[] = [];
+    const pool: PgPoolLike = {
+      async connect() {
+        return {
+          async query(text: string) {
+            if (text.includes('pg_advisory_unlock')) throw new Error('gone');
+            return { rows: [] };
+          },
+          release(destroy) {
+            released.push(destroy);
+          },
+        };
+      },
+    };
+    await runMigrations(pool, []);
+    expect(released).toEqual([true]);
+  });
+
+  it('startup migration answers 503 with no driver detail, for a bad file and a dead database', async () => {
+    const secret = 'postgres://planner:hunter2@db.internal/planner';
+    const bad = fakeMigrationPool({}, 'BROKEN');
+    const dir = mkdtempSync(join(tmpdir(), 'mig-'));
+    writeFileSync(join(dir, '0001_x.sql'), 'BROKEN');
+    const error = (await migrateOnStartup(bad.pool, dir).catch((e: unknown) => e)) as ContentError;
+    expect(error).toBeInstanceOf(ContentError);
+    expect(error.status).toBe(503);
+    expect(error.code).toBe('service_unavailable');
+
+    const dead: PgPoolLike = {
+      connect: async () => {
+        throw Object.assign(new Error(`connect ECONNREFUSED ${secret}`), { code: 'ECONNREFUSED' });
+      },
+    };
+    const refused = (await migrateOnStartup(dead, dir).catch((e: unknown) => e)) as ContentError;
+    expect(refused.status).toBe(503);
+    expect(refused.message).not.toContain('hunter2');
   });
 
   it('reads only numbered .sql files, in order, from db/migrations', async () => {
