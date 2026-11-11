@@ -65,8 +65,6 @@ export class TravelContentRepository {
   private readonly newId: () => string;
   private readonly destinationSlugs: ReadonlySet<string>;
   private readonly itinerarySlugs: ReadonlySet<string>;
-  /** Serialises read-modify-write pairs so two mutations cannot interleave. */
-  private queue: Promise<unknown> = Promise.resolve();
 
   constructor(options: RepositoryOptions) {
     this.store = options.store;
@@ -84,16 +82,9 @@ export class TravelContentRepository {
   // Transaction plumbing
   // -------------------------------------------------------------------------
 
+  /** Read-modify-write, made atomic by the store (ADR 0008 §3). */
   private transaction<T>(mutate: (data: ContentData) => Promise<T> | T): Promise<T> {
-    const run = async (): Promise<T> => {
-      const data = await this.store.read();
-      const result = await mutate(data);
-      await this.store.write(data);
-      return result;
-    };
-    const chained = this.queue.then(run, run);
-    this.queue = chained.catch(() => undefined);
-    return chained;
+    return this.store.transact(mutate);
   }
 
   private timestamp(): string {

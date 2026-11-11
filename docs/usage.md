@@ -33,7 +33,7 @@ closed.
 | `TRAVEL_CONTENT_STORE` | `.data/travel-content.json` | Where the content store lives |
 | `TRAVEL_CONTENT_AUTOSEED` | `true` | Set `false` to skip seeding demo content on first use |
 | `PLANNER_STORE` | `.data/planner.json` | Where Planner trips live. Separate file from the content store by design. Ignored when `DATABASE_URL` is set |
-| `DATABASE_URL` | *unset* | PostgreSQL connection string. Set: the Planner uses PostgreSQL and never falls back to the file ([ADR 0008](adr/0008-postgres-persistence.md)). A secret — environment only. See *Run the Planner on PostgreSQL* |
+| `DATABASE_URL` | *unset* | PostgreSQL connection string. Set: the Planner uses PostgreSQL and never falls back to the file ([ADR 0009](adr/0009-postgres-persistence.md)). A secret — environment only. See *Run the Planner on PostgreSQL* |
 | `DATABASE_POOL_MAX` | `5` | Size of the per-process connection pool |
 | `TEST_DATABASE_URL` | *unset* | A scratch database for `tests/planner-postgres.integration.test.ts`. Unset: those tests are skipped |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | *unset* | Google sign-in ([ADR 0007](adr/0007-password-and-google-sign-in.md)). Both required; without them the Google routes answer 404 and the button is hidden. Server-only — never `NEXT_PUBLIC_*` |
@@ -195,7 +195,7 @@ endpoint list.
 ### Run the Planner on PostgreSQL
 
 With `DATABASE_URL` set the Planner keeps its data in PostgreSQL 16 or 17
-([ADR 0008](adr/0008-postgres-persistence.md)); without it nothing changes — the
+([ADR 0009](adr/0009-postgres-persistence.md)); without it nothing changes — the
 JSON file in development, the memory store in tests. When it is set the app
 **never falls back** to the JSON file: if the database is down the Planner
 routes answer `503 service_unavailable`.

@@ -3,7 +3,7 @@ import type { PlannerData, PlannerStore } from '@/server/planner/store';
 import { planStatements, rowsToData, TABLES } from './planner-rows';
 
 /**
- * The Planner on PostgreSQL (ADR 0008). One file of parameterised SQL over the
+ * The Planner on PostgreSQL (ADR 0009). One file of parameterised SQL over the
  * pure mapping and diff in `planner-rows.ts`.
  *
  * `transact` is one database transaction: take a global advisory lock, load the

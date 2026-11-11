@@ -12,7 +12,7 @@ import {
 import type { PlannerData } from '@/server/planner/store';
 
 /**
- * The pure half of the Postgres Planner store (ADR 0008 §2–§3): the table
+ * The pure half of the Postgres Planner store (ADR 0009 §2–§3): the table
  * layout, the record <-> row mapping, and the diff that turns "what the
  * repository changed" into the smallest set of INSERT / UPDATE / DELETE
  * statements. Nothing here touches a driver or a socket, so all of it is unit

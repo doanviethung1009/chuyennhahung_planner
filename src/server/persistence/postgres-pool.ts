@@ -1,7 +1,7 @@
 import pg from 'pg';
 
 /**
- * One small `pg` pool per process (ADR 0008 §4). The connection string comes
+ * One small `pg` pool per process (ADR 0009 §4). The connection string comes
  * from the environment and is handed straight to the driver — it is never
  * logged, echoed or put in an error message.
  */

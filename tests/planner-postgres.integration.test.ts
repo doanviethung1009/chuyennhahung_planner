@@ -24,7 +24,7 @@ import {
 import { runScenario, stable } from './planner-pg-fixtures';
 
 /**
- * The Postgres store against a real database (ADR 0008). Runs only when
+ * The Postgres store against a real database (ADR 0009). Runs only when
  * `TEST_DATABASE_URL` is set; without it the whole file is skipped and the
  * result must be reported as NOT RUN, never as passing.
  *

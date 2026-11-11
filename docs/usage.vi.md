@@ -33,7 +33,7 @@ mọi biến dưới đây đều có mặc định dùng được, hoặc tự 
 | `TRAVEL_CONTENT_STORE` | `.data/travel-content.json` | Nơi content store nằm |
 | `TRAVEL_CONTENT_AUTOSEED` | `true` | Đặt `false` để bỏ qua seed nội dung demo ở lần dùng đầu |
 | `PLANNER_STORE` | `.data/planner.json` | Nơi trip của Planner nằm. Tách file khỏi content store một cách có chủ đích. Bị bỏ qua khi đã đặt `DATABASE_URL` |
-| `DATABASE_URL` | *chưa đặt* | Chuỗi kết nối PostgreSQL. Đã đặt: Planner dùng PostgreSQL và không bao giờ quay về file ([ADR 0008](adr/0008-postgres-persistence.vi.md)). Là secret — chỉ qua biến môi trường. Xem *Chạy Planner trên PostgreSQL* |
+| `DATABASE_URL` | *chưa đặt* | Chuỗi kết nối PostgreSQL. Đã đặt: Planner dùng PostgreSQL và không bao giờ quay về file ([ADR 0009](adr/0009-postgres-persistence.vi.md)). Là secret — chỉ qua biến môi trường. Xem *Chạy Planner trên PostgreSQL* |
 | `DATABASE_POOL_MAX` | `5` | Kích thước connection pool của mỗi tiến trình |
 | `TEST_DATABASE_URL` | *chưa đặt* | Database nháp cho `tests/planner-postgres.integration.test.ts`. Chưa đặt thì các test đó bị bỏ qua |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | *chưa đặt* | Đăng nhập Google ([ADR 0007](adr/0007-password-and-google-sign-in.vi.md)). Cần cả hai; thiếu thì các route Google trả 404 và nút bị ẩn. Chỉ phía server — không bao giờ là `NEXT_PUBLIC_*` |
@@ -196,7 +196,7 @@ danh sách endpoint đầy đủ.
 ### Chạy Planner trên PostgreSQL
 
 Khi đặt `DATABASE_URL`, Planner lưu dữ liệu trong PostgreSQL 16 hoặc 17
-([ADR 0008](adr/0008-postgres-persistence.vi.md)); không đặt thì không có gì đổi
+([ADR 0009](adr/0009-postgres-persistence.vi.md)); không đặt thì không có gì đổi
 — file JSON khi phát triển, memory store khi test. Khi đã đặt, app **không bao
 giờ quay về** file JSON: database sập thì các route Planner trả
 `503 service_unavailable`.

@@ -19,12 +19,12 @@ activity, chi phí và ngân sách — còn *giao diện* Planner vẫn thuộc 
 | Styling | Tailwind v4, token `@theme` theo hướng CSS-first | [`src/app/globals.css`](../src/app/globals.css) |
 | Nội dung | Dữ liệu seed TypeScript có type, không CMS | [`src/content/`](../src/content) |
 | Test | Vitest 3 trên Node 24 (giờ đã nâng lên 4/5 được, nhưng chưa nâng) | [`tests/`](../tests) |
-| Lưu trữ | Planner: PostgreSQL khi có `DATABASE_URL` ([ADR 0008](adr/0008-postgres-persistence.vi.md)), nếu không thì file JSON; Travel content: file JSON | [`src/server/persistence/`](../src/server/persistence) |
+| Lưu trữ | Planner: PostgreSQL khi có `DATABASE_URL` ([ADR 0009](adr/0009-postgres-persistence.vi.md)), nếu không thì file JSON; Travel content: file JSON | [`src/server/persistence/`](../src/server/persistence) |
 
 Các trang công khai là tệp tĩnh sinh ra lúc build từ dữ liệu có type trong repo.
 Phía API — Travel Content System và Planner — chạy trên server Node, và ở
 production Planner cần thêm PostgreSQL
-([ADR 0008](adr/0008-postgres-persistence.vi.md)); không có `DATABASE_URL` thì nó
+([ADR 0009](adr/0009-postgres-persistence.vi.md)); không có `DATABASE_URL` thì nó
 dùng file JSON cho phát triển local, và chỉ do cấu hình quyết định.
 
 ## Đường đi của một request
@@ -123,7 +123,7 @@ giá trị hợp lý nhưng chưa được kiểm chứng.
 
 Bên cạnh nội dung seed này còn hai bộ dữ liệu **phía server**, mỗi bộ là một
 repository nằm trên một document store — file JSON, hoặc với Planner ở
-production là PostgreSQL ([ADR 0008](adr/0008-postgres-persistence.vi.md))
+production là PostgreSQL ([ADR 0009](adr/0009-postgres-persistence.vi.md))
 ([ADR 0001](adr/0001-travel-content-system.vi.md) §1,
 [ADR 0002](adr/0002-planner-core.vi.md) §1). Chúng là hai document riêng biệt một
 cách có chủ đích: nội dung biên tập và dữ liệu riêng tư của người đi chơi có yêu
@@ -144,7 +144,7 @@ nhớ sau lần đọc đầu và chỉ thay khi một lần ghi đã xuống đ
 một-process: sửa tay file khi server đang chạy sẽ không được thấy cho tới khi khởi
 động lại (`tests/json-store.test.ts`).
 
-Store PostgreSQL của Planner ([ADR 0008](adr/0008-postgres-persistence.vi.md))
+Store PostgreSQL của Planner ([ADR 0009](adr/0009-postgres-persistence.vi.md))
 giữ nguyên repository và chuyển transaction vào store: mọi store đều có
 `transact(mutate)`, và bản Postgres chạy nó theo thứ tự `BEGIN` →
 `pg_advisory_xact_lock` → nạp mọi bảng Planner → `mutate` → chỉ ghi các dòng đã
@@ -294,10 +294,12 @@ Những thứ vắng mặt có chủ đích, và không được dựng sớm:
   [ADR 0007](adr/0007-password-and-google-sign-in.vi.md)). Vẫn chưa có: tự đặt lại
   mật khẩu (chưa có dịch vụ gửi email), đăng ký bằng mật khẩu và MFA. Một provider
   hosted hay Auth.js sẽ thay `identify` và các dòng session, không gì bên dưới.
-- **SQL.** Planner chuyển sang PostgreSQL theo
-  [ADR 0008](adr/0008-postgres-persistence.vi.md) (đã chấp nhận). Còn mở: store
-  Travel content (JSON, một process), query SQL theo từng method khi việc nạp toàn
-  bộ Planner mỗi request trở nên chậm, và một store dùng chung cho rate limit.
+- **SQL.** Lộ trình đã được quyết trong
+  [ADR 0008](adr/0008-postgres-document-store.vi.md): các document chuyển vào
+  Postgres thành dòng JSONB trước, bảng chuẩn hoá sau. Với Planner, bước 2 được dựng
+  thẳng theo [ADR 0009](adr/0009-postgres-persistence.vi.md). Còn mở: store Travel
+  content và store rate limit dùng chung (ADR 0008, chưa dựng), và query SQL theo
+  từng method khi việc nạp toàn bộ Planner mỗi request trở nên chậm.
 - **Phase 07 — Admin Portal, CMS & RBAC (đã công bố, chưa bắt đầu).** Không mục nào bên
   dưới được dựng hay dựng sớm; mỗi mục cần ghi quyết định trước. Hướng thiết kế:
   [ADR 0006](adr/0006-unified-identity-and-roles.vi.md) (Đề xuất). Backlog phụ
@@ -306,7 +308,7 @@ Những thứ vắng mặt có chủ đích, và không được dựng sớm:
   - **Mô hình vai trò** — `member` / `editor` / `admin` trên một mô hình user, hàm thuần `can(identity, action, resource)`, `ADMIN_API_TOKEN` hạ thành service principal.
   - **Củng cố session admin và CSRF** — thời hạn ngắn hơn theo vai trò; `requireSameOrigin` thành chốt chịu lực cho mutation admin; token không bao giờ tới Client Component (`tests/client-boundary.test.ts`).
   - **Audit log** — ai đổi template hay vai trò nào, và mọi lần đọc trip để hỗ trợ.
-  - **SQL và nhiều instance** — admin portal khiến có người ghi thứ hai vào store; Planner đã lên PostgreSQL ([ADR 0008](adr/0008-postgres-persistence.vi.md)), nhưng store JSON của content và rate limiter theo process vẫn không sống nổi qua một instance.
+  - **SQL và nhiều instance** — admin portal khiến có người ghi thứ hai vào store; Planner đã lên PostgreSQL ([ADR 0009](adr/0009-postgres-persistence.vi.md)), nhưng store JSON của content và rate limiter theo process vẫn không sống nổi qua một instance.
   - **Store cho rate limit** — chặn đăng nhập admin cần store dùng chung khi có hơn một process.
   - **CMS sửa template** — chỉ qua content store; giữ các bản sửa cũ của template hay dựa vào snapshot đã clone là chưa quyết (clone vốn đã độc lập nên lịch sử là tuỳ chọn).
   - **Ranh giới template/trip** — template ở content store, trip ở planner store, chỉ nối bằng bản sao giá trị `sourceTemplate`.

@@ -1,4 +1,4 @@
--- 0001_planner — the Planner document as normalised tables (ADR 0008 §3).
+-- 0001_planner — the Planner document as normalised tables (ADR 0009 §3).
 -- Rollback: db/rollback/0001_planner.sql. Applied by `npm run db:migrate`,
 -- never on app boot. Unqualified names: they land in the connection's
 -- search_path schema (public by default).

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import type { PgPoolLike } from './postgres-planner-store';
 
 /**
- * The migration runner (ADR 0008 §4): numbered plain-SQL files applied in
+ * The migration runner (ADR 0009 §4): numbered plain-SQL files applied in
  * order, each in its own transaction together with its `schema_migrations`
  * row. An explicit deploy step — never run on app boot, so two starting
  * instances cannot race. An advisory lock stops two *runners* racing too.

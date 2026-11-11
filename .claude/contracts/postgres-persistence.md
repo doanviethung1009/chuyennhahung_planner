@@ -9,7 +9,7 @@
   503 when the DB is down; unique-violation → existing 409 semantics; tests;
   feature doc + architecture/usage docs.
 - Scope OUT: Travel Content System store; rate limiter; rewriting repository
-  methods as targeted SQL (ADR 0008 option C); Docker/compose files; creating
+  methods as targeted SQL (ADR 0009 option C); Docker/compose files; creating
   the DB role on the VM (owner action, documented in usage).
 - Evidence: `src/server/persistence/json-store.ts` (DocumentStore, memory + JSON
   stores, queue, cache); `src/server/planner/store.ts` (PlannerData, 7
@@ -21,7 +21,7 @@
 - Constraints / dependencies: new deps `pg` (runtime) and `@types/pg` (dev) only.
   No ORM, no query builder, no `pg-mem`. Every query parameterised. Migrations
   never run on app boot. Never fall back to JSON when `DATABASE_URL` is set.
-- Architecture decision: `docs/adr/0008-postgres-persistence.md` (Accepted
+- Architecture decision: `docs/adr/0009-postgres-persistence.md` (Accepted
   2026-11-11) — binding; deviations go back to the architect.
 - Interface contract:
   - `DocumentStore<T>` gains `transact<R>(mutate: (data: T) => Promise<R> | R): Promise<R>`.
@@ -42,7 +42,7 @@
     absent (not `null`) on read-back when the DB value is NULL *only* where the
     schema marks them `.optional()` — the round-trip must equal what the JSON
     store returns.
-  - Tables and constraints per ADR 0008 §3. Expense FK delete actions must match
+  - Tables and constraints per ADR 0009 §3. Expense FK delete actions must match
     current repository behaviour (find it, pin it with a test).
   - Selection: `DATABASE_URL` set → Postgres; else JSON at `PLANNER_STORE`.
     Connection failure → Planner routes answer 503 with the existing error
@@ -55,7 +55,7 @@
     check what is already installed (e.g. `vite-node` via vitest) or keep
     scripts in `.mjs`; the logic they call lives in `src/server/**` and is unit
     tested.
-- Tasks by owner: Architect — ADR 0008 (done), this contract, `docs/architecture.*`.
+- Tasks by owner: Architect — ADR 0009 (done), this contract, `docs/architecture.*`.
   BE — everything under Interface contract, tests, `docs/usage.*`, feature doc.
   FE — none. QC / Security — NOT RUN unless the user calls them; `/sec-check`
   recommended. Git — main session, only on user approval.

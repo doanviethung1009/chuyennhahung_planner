@@ -2,7 +2,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 
 /**
- * One document, two methods. Persistence sits behind this interface so that
+ * One document, three methods. Persistence sits behind this interface so that
  * swapping in SQL later is a new adapter and nothing else — the repositories
  * above it hold every invariant and never learn where the bytes live
  * (`docs/adr/0001-travel-content-system.md` §1).
@@ -17,25 +17,27 @@ export interface DocumentStore<T> {
   read(): Promise<T>;
   write(next: T): Promise<void>;
   /**
-   * One atomic read-modify-write (ADR 0008 §2). `mutate` receives a private
-   * copy of the document and may change it in place; when it returns, the
-   * change is persisted as a unit. If it throws — or the write fails — nothing
-   * is persisted and the error propagates. Calls are serialised: a second
-   * `transact` waits for the first, so two mutations cannot interleave. The
-   * Postgres store extends that guarantee across processes with a database
-   * lock; the memory and JSON stores hold it within one process.
+   * Atomic read-modify-write. `mutate` receives a private copy of the document
+   * and edits it in place; once it resolves, that copy is written and its
+   * result returned. If `mutate` throws (or the write fails), nothing is
+   * written and the error propagates. Transactions on one store never overlap.
+   *
+   * The memory and JSON stores serialise on an in-process queue, which is safe
+   * for one Node process only; a shared store makes this atomic across
+   * instances (`docs/adr/0008-postgres-document-store.md` §3).
    */
   transact<R>(mutate: (data: T) => Promise<R> | R): Promise<R>;
 }
 
-/** A promise chain that keeps running after one task rejects. */
-function createQueue(): <R>(task: () => Promise<R>) => Promise<R> {
-  let queue: Promise<unknown> = Promise.resolve();
-  return (task) => {
-    const run = queue.then(task, task);
-    // Keep the chain alive even if one task rejects, so a failed write does not
-    // wedge every later write behind it.
-    queue = run.catch(() => undefined);
+/**
+ * A promise chain that runs tasks one at a time. A rejected task does not
+ * wedge the chain: the next task still runs.
+ */
+function createSerialQueue() {
+  let tail: Promise<unknown> = Promise.resolve();
+  return function enqueue<R>(task: () => Promise<R>): Promise<R> {
+    const run = tail.then(task, task);
+    tail = run.catch(() => undefined);
     return run;
   };
 }
@@ -47,7 +49,7 @@ function createQueue(): <R>(task: () => Promise<R>) => Promise<R> {
  */
 export function createMemoryDocumentStore<T>(initial: T): DocumentStore<T> {
   let current = structuredClone(initial);
-  const enqueue = createQueue();
+  const enqueue = createSerialQueue();
 
   return {
     async read() {
@@ -60,7 +62,6 @@ export function createMemoryDocumentStore<T>(initial: T): DocumentStore<T> {
       return enqueue(async () => {
         const draft = structuredClone(current);
         const result = await mutate(draft);
-        // Only reached when `mutate` did not throw.
         current = structuredClone(draft);
         return result;
       });
@@ -97,7 +98,9 @@ export function createJsonDocumentStore<T>(
   normalize: (parsed: Partial<T>) => T,
 ): DocumentStore<T> {
   const absolutePath = resolve(filePath);
-  const enqueue = createQueue();
+  // Reads, writes and transactions share one queue, so a read never observes
+  // a transaction half-way and a failed task does not wedge the ones after it.
+  const enqueue = createSerialQueue();
   let cached: T | undefined;
 
   async function readFromDisk(): Promise<T> {
@@ -114,14 +117,14 @@ export function createJsonDocumentStore<T>(
     }
   }
 
-  // The two halves below never enqueue themselves, so `transact` can run both
-  // inside one queue slot without waiting on its own place in line.
-  async function load(): Promise<T> {
+  // These two run only inside `enqueue` and never enqueue themselves, so
+  // `transact` can call both without deadlocking on its own task.
+  async function readUnlocked(): Promise<T> {
     if (cached === undefined) cached = await readFromDisk();
     return structuredClone(cached);
   }
 
-  async function persist(next: T): Promise<void> {
+  async function writeUnlocked(next: T): Promise<void> {
     await mkdir(dirname(absolutePath), { recursive: true });
     const temp = `${absolutePath}.${process.pid}.${Date.now()}.tmp`;
     const body = `${JSON.stringify(next, null, 2)}\n`;
@@ -135,13 +138,19 @@ export function createJsonDocumentStore<T>(
   }
 
   return {
-    read: () => enqueue(load),
-    write: (next) => enqueue(() => persist(next)),
+    read() {
+      return enqueue(readUnlocked);
+    },
+    write(next) {
+      return enqueue(() => writeUnlocked(next));
+    },
     transact(mutate) {
       return enqueue(async () => {
-        const draft = await load();
+        // `readUnlocked` hands out a clone, so a throw in `mutate` leaves the
+        // cache untouched and nothing reaches disk.
+        const draft = await readUnlocked();
         const result = await mutate(draft);
-        await persist(draft);
+        await writeUnlocked(draft);
         return result;
       });
     },

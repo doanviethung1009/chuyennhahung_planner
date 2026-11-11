@@ -8,7 +8,7 @@ Planner — tài khoản, session, lượt đăng nhập Google, trip, ngày, ac
 phí — có thể lưu dữ liệu trong PostgreSQL thay vì một file JSON. Người đi chơi
 không thấy gì thay đổi; chủ nhà có dữ liệu sống sót khi chạy tiến trình thứ hai,
 được bảo vệ bằng ràng buộc của database, và sao lưu được bằng công cụ chuẩn.
-Quyết định ở [ADR 0008](../adr/0008-postgres-persistence.vi.md). Không đặt
+Quyết định ở [ADR 0009](../adr/0009-postgres-persistence.vi.md). Không đặt
 `DATABASE_URL` thì không có gì đổi: file JSON khi phát triển, memory store khi
 test.
 
@@ -121,7 +121,7 @@ vận hành ở [usage](../usage.vi.md#chạy-planner-trên-postgresql).
 
 - Mỗi request Planner nạp mọi dòng Planner, và một khoá toàn cục tuần tự hoá việc
   ghi. Ổn với vài nghìn trip; ngưỡng để chuyển các lệnh đọc nóng (`identify`,
-  `listTrips`, `getTrip`) sang truy vấn riêng là p95 trên khoảng 200 ms (ADR 0008).
+  `listTrips`, `getTrip`) sang truy vấn riêng là p95 trên khoảng 200 ms (ADR 0009).
 - Rate limiter và chỉ mục share-token vẫn theo từng tiến trình; chạy một instance.
 - Content store của Travel Content vẫn là file JSON.
 - Test tích hợp đã chạy trên PostgreSQL 14; máy của chủ nhà chạy 16 hoặc 17.

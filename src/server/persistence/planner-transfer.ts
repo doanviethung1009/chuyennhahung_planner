@@ -19,7 +19,7 @@ import {
 import type { PlannerCatalog } from '@/server/planner/catalog';
 
 /**
- * Moving the Planner document in and out of a store (ADR 0008 §6). Import is
+ * Moving the Planner document in and out of a store (ADR 0009 §6). Import is
  * how an existing `planner.json` reaches Postgres; export writes the database
  * back out as a file the JSON store can open — the rollback path and a
  * human-readable backup.

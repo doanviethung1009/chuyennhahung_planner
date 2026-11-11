@@ -1,6 +1,6 @@
-# ADR 0008 — Chuyển persistence của Planner sang PostgreSQL
+# ADR 0009 — Chuyển persistence của Planner sang PostgreSQL
 
-🇬🇧 English: [0008-postgres-persistence.md](0008-postgres-persistence.md)
+🇬🇧 English: [0009-postgres-persistence.md](0009-postgres-persistence.md)
 
 - **Trạng thái:** Accepted (đã chấp nhận) — chủ dự án chấp nhận ngày 2026-11-11; phần triển khai nằm trong cùng PR
 - **Ngày:** 2026-11-11
@@ -44,6 +44,17 @@ bất biến sau hơn 65 test chạy trên store trong bộ nhớ. Chủ dự á
 nhận VM chạy PostgreSQL 16 hoặc 17 và app sẽ kết nối qua một Docker network nội
 bộ trên cùng VM, nên không cần TLS và cổng 5432 không mở ra ngoài. Điều chưa
 biết: khối lượng dữ liệu dự kiến (chưa có traffic thật).
+
+**Quan hệ với [ADR 0008](0008-postgres-document-store.vi.md).** ADR 0008, được
+chấp nhận cùng ngày trên một branch song song, quyết định lộ trình: document JSONB
+trong Postgres trước, bảng chuẩn hoá sau. ADR này được viết với số 0008 trên branch
+riêng và đổi số khi hai bên gặp nhau. Nó làm **thẳng bước 2 cho Planner**; method
+`transact` mà nó dựa vào là bản ADR 0008 đã merge. ADR 0008 vẫn chi phối store
+Travel content, store rate limit dùng chung và việc chạy nhiều instance. Những chỗ
+hai ADR khác nhau với Planner — biến môi trường (`DATABASE_URL` ở đây,
+`PLANNER_DATABASE_URL` ở kia), migration là bước deploy ở đây so với chạy khi khởi
+động ở kia, và không có cache đọc ở đây — phải được thống nhất trước khi phần
+Planner của ADR 0008 được dựng.
 
 ## Quyết định
 

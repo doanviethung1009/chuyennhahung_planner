@@ -1,6 +1,6 @@
-# ADR 0008 — Planner persistence moves to PostgreSQL
+# ADR 0009 — Planner persistence moves to PostgreSQL
 
-🇻🇳 Bản tiếng Việt: [0008-postgres-persistence.vi.md](0008-postgres-persistence.vi.md)
+🇻🇳 Bản tiếng Việt: [0009-postgres-persistence.vi.md](0009-postgres-persistence.vi.md)
 
 - **Status:** Accepted — the owner accepted it on 2026-11-11; implementation follows in the same PR
 - **Date:** 2026-11-11
@@ -47,6 +47,17 @@ confirmed that the VM runs PostgreSQL 16 or 17 and that the app will reach it
 over a private Docker network on the same VM, so TLS is not required and port
 5432 is not published. What we do not know: the expected data volume (no
 production traffic yet).
+
+**Relation to [ADR 0008](0008-postgres-document-store.md).** ADR 0008, accepted
+the same day on a parallel branch, decides the path: JSONB documents in Postgres
+first, normalised tables second. This ADR was written as 0008 on its own branch
+and renumbered when both met. It takes **step 2 directly for the Planner**; the
+`transact` method it relies on is the one ADR 0008 already merged. ADR 0008 still
+governs the Travel content store, the shared rate-limit store and multi-instance
+operation. Where the two differ for the Planner — the environment variable
+(`DATABASE_URL` here, `PLANNER_DATABASE_URL` there), migrations as a deploy step
+here versus at startup there, and no read cache here — they must be reconciled
+before ADR 0008's Planner half is built.
 
 ## Decision
 

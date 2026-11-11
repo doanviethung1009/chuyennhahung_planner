@@ -19,12 +19,12 @@ and budgeting — while the Planner *UI* is still a later phase; see
 | Styling | Tailwind v4, CSS-first `@theme` tokens | [`src/app/globals.css`](../src/app/globals.css) |
 | Content | Typed TypeScript seed data, no CMS | [`src/content/`](../src/content) |
 | Tests | Vitest 3 on Node 24 (4/5 now possible, not yet upgraded) | [`tests/`](../tests) |
-| Persistence | Planner: PostgreSQL when `DATABASE_URL` is set ([ADR 0008](adr/0008-postgres-persistence.md)), else a JSON file; Travel content: JSON file | [`src/server/persistence/`](../src/server/persistence) |
+| Persistence | Planner: PostgreSQL when `DATABASE_URL` is set ([ADR 0009](adr/0009-postgres-persistence.md)), else a JSON file; Travel content: JSON file | [`src/server/persistence/`](../src/server/persistence) |
 
 Public pages are static artefacts produced at build time from typed content in
 the repository. The API side — the Travel Content System and the Planner — runs
 on the Node server, and in production the Planner also needs PostgreSQL
-([ADR 0008](adr/0008-postgres-persistence.md)); without `DATABASE_URL` it falls
+([ADR 0009](adr/0009-postgres-persistence.md)); without `DATABASE_URL` it falls
 back, by configuration only, to a JSON file for local development.
 
 ## Request path
@@ -121,7 +121,7 @@ are plausible defaults, not verified accounts.
 
 Two **server-side** data sets sit beside this seed content, each a repository
 over a document store — a JSON file, or for the Planner in production,
-PostgreSQL ([ADR 0008](adr/0008-postgres-persistence.md))
+PostgreSQL ([ADR 0009](adr/0009-postgres-persistence.md))
 ([ADR 0001](adr/0001-travel-content-system.md) §1,
 [ADR 0002](adr/0002-planner-core.md) §1). They are separate documents on purpose:
 editorial content and private traveller data have different privacy, retention
@@ -141,7 +141,7 @@ so a read is a `structuredClone` rather than a file read plus `JSON.parse`. This
 rests on the same single-process rule: a hand-edit of the file while the server is
 running is not seen until restart (`tests/json-store.test.ts`).
 
-The Planner's PostgreSQL store ([ADR 0008](adr/0008-postgres-persistence.md))
+The Planner's PostgreSQL store ([ADR 0009](adr/0009-postgres-persistence.md))
 keeps the repository unchanged and moves the transaction into the store:
 every store has `transact(mutate)`, and the Postgres one runs it as `BEGIN` →
 `pg_advisory_xact_lock` → load all Planner tables → `mutate` → write only the
@@ -294,10 +294,12 @@ Deliberately absent, and not to be scaffolded early:
   [ADR 0007](adr/0007-password-and-google-sign-in.md)). Still absent: self-service
   password reset (no email sender), password signup and MFA. A hosted provider
   or Auth.js would replace `identify` and the session rows, nothing below them.
-- **SQL.** The Planner moves to PostgreSQL in
-  [ADR 0008](adr/0008-postgres-persistence.md) (Accepted). Still open: the Travel
-  content store (JSON, single-process), per-method SQL queries once loading the
-  whole Planner per request becomes slow, and a shared rate-limit store.
+- **SQL.** The path is decided in
+  [ADR 0008](adr/0008-postgres-document-store.md): documents move into Postgres as
+  JSONB rows first, normalised tables second. For the Planner, step 2 is built
+  directly by [ADR 0009](adr/0009-postgres-persistence.md). Still open: the Travel
+  content store and the shared rate-limit store (ADR 0008, not built yet), and
+  per-method SQL queries once loading the whole Planner per request becomes slow.
 - **Phase 07 — Admin Portal, CMS & RBAC (announced, not started).** Nothing below is
   built or to be scaffolded early; each item needs its decision recorded first.
   Design direction: [ADR 0006](adr/0006-unified-identity-and-roles.md) (Proposed).
@@ -306,7 +308,7 @@ Deliberately absent, and not to be scaffolded early:
   - **Role model** — `member` / `editor` / `admin` on the one user model, a pure `can(identity, action, resource)`, `ADMIN_API_TOKEN` demoted to a service principal.
   - **Admin session and CSRF hardening** — shorter lifetimes per role; `requireSameOrigin` becomes load-bearing for admin mutations; the token never reaches a Client Component (`tests/client-boundary.test.ts`).
   - **Audit log** — who changed which template or role, and any support read of a trip.
-  - **SQL and multi-instance** — the admin portal makes a second writer to the stores likely; the Planner is on PostgreSQL ([ADR 0008](adr/0008-postgres-persistence.md)), but the content JSON store and the per-process rate limiter still do not survive more than one instance.
+  - **SQL and multi-instance** — the admin portal makes a second writer to the stores likely; the Planner is on PostgreSQL ([ADR 0009](adr/0009-postgres-persistence.md)), but the content JSON store and the per-process rate limiter still do not survive more than one instance.
   - **Rate-limit store** — admin sign-in throttling needs a shared store once there is more than one process.
   - **CMS editing of templates** — through the content store only; versioning prior template revisions versus relying on cloned snapshots is undecided (clones are already independent, so history is optional).
   - **Template/trip boundary** — templates in the content store, trips in the planner store, linked only by the `sourceTemplate` value copy.

@@ -8,7 +8,7 @@ The Planner — accounts, sessions, Google sign-in attempts, trips, days,
 activities and expenses — can keep its data in PostgreSQL instead of one JSON
 file. Travellers see no change; the owner gets data that survives a second
 process, is protected by database constraints, and can be backed up with
-standard tools. Decided in [ADR 0008](../adr/0008-postgres-persistence.md).
+standard tools. Decided in [ADR 0009](../adr/0009-postgres-persistence.md).
 Without `DATABASE_URL` nothing changes: the JSON file in development, the memory
 store in tests.
 
@@ -128,7 +128,7 @@ store can open — the rollback path. Operation is in
 - Every Planner request loads every Planner row, and one global lock serialises
   writes. Fine for a few thousand trips; the trigger to move hot reads
   (`identify`, `listTrips`, `getTrip`) onto targeted queries is a p95 above about
-  200 ms (ADR 0008).
+  200 ms (ADR 0009).
 - The rate limiter and the share-token index stay per process; run one instance.
 - The Travel Content store is still a JSON file.
 - The integration tests were run against PostgreSQL 14; the owner's VM runs 16 or

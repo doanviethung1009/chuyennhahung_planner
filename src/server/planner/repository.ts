@@ -168,8 +168,6 @@ export class PlannerRepository {
   private readonly now: () => Date;
   private readonly newId: (prefix: string) => string;
   private readonly scryptCostLog2: number;
-  /** Serialises read-modify-write pairs so two mutations cannot interleave. */
-  private queue: Promise<unknown> = Promise.resolve();
   /**
    * SHA-256 (hex) of every live share token → trip id, so resolving a share
    * link is one map lookup instead of re-hashing every trip on every
@@ -193,22 +191,18 @@ export class PlannerRepository {
   // -------------------------------------------------------------------------
 
   /**
-   * Read, mutate, write — one atomic unit owned by the store (ADR 0008 §2), so
-   * the same code is serialised in-process on the JSON store and across
-   * processes on Postgres. A throw inside `mutate` abandons the whole change:
-   * nothing is written, so a failed validation can never leave half an activity
-   * behind. The local queue stays as extra in-process serialisation.
+   * Read, mutate, write — with every pair serialised behind one promise chain.
+   * A throw inside `mutate` abandons the whole change: nothing is written, so a
+   * failed validation can never leave half an activity behind.
    */
-  private transaction<T>(mutate: (data: PlannerData) => Promise<T> | T): Promise<T> {
-    const run = async (): Promise<T> => {
-      const result = await this.store.transact((data) => mutate(withTripDefaults(data)));
-      this.shareIndex = null;
-      this.shareIndexGeneration += 1;
-      return result;
-    };
-    const chained = this.queue.then(run, run);
-    this.queue = chained.catch(() => undefined);
-    return chained;
+  /** Read-modify-write, made atomic by the store (ADR 0008 §3). */
+  private async transaction<T>(mutate: (data: PlannerData) => Promise<T> | T): Promise<T> {
+    // `withTripDefaults` fills the draft in place, so the defaults are written.
+    const result = await this.store.transact((data) => mutate(withTripDefaults(data)));
+    // Only after a successful write: a throw above leaves the index valid.
+    this.shareIndex = null;
+    this.shareIndexGeneration += 1;
+    return result;
   }
 
   private timestamp(): string {
