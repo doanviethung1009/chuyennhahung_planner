@@ -50,11 +50,12 @@ chấp nhận cùng ngày trên một branch song song, quyết định lộ tr�
 trong Postgres trước, bảng chuẩn hoá sau. ADR này được viết với số 0008 trên branch
 riêng và đổi số khi hai bên gặp nhau. Nó làm **thẳng bước 2 cho Planner**; method
 `transact` mà nó dựa vào là bản ADR 0008 đã merge. ADR 0008 vẫn chi phối store
-Travel content, store rate limit dùng chung và việc chạy nhiều instance. Những chỗ
-hai ADR khác nhau với Planner — biến môi trường (`DATABASE_URL` ở đây,
-`PLANNER_DATABASE_URL` ở kia), migration là bước deploy ở đây so với chạy khi khởi
-động ở kia, và không có cache đọc ở đây — phải được thống nhất trước khi phần
-Planner của ADR 0008 được dựng.
+Travel content, store rate limit dùng chung và việc chạy nhiều instance. *(Đã thống nhất
+2026-11-11.)* Ba điểm mà hai bản nháp khác nhau với Planner nay theo ADR 0008, vốn
+được chấp nhận trước và có kế hoạch chạy hai replica: biến là
+`PLANNER_DATABASE_URL` (§5), migration chạy khi khởi động dưới advisory lock (§4),
+và việc đọc dùng cache theo từng instance, kiểm bằng revision (§2). Planner bỏ qua
+bước 1 JSONB của ADR 0008 và đi thẳng tới các bảng này.
 
 ## Quyết định
 
@@ -95,8 +96,16 @@ Postgres store cài đặt như sau:
    `ROLLBACK`, khớp với quy tắc hiện tại: mutation thất bại thì không ghi gì.
 
 `read()` chạy cùng thao tác nạp trong transaction `REPEATABLE READ, READ ONLY`
-để bảy bảng đến từ cùng một snapshot nhất quán. Postgres store **không cache giữa
-các request**: khi có nhiều hơn một process, cache chắc chắn sẽ cũ.
+để bảy bảng đến từ cùng một snapshot nhất quán.
+
+**Cache theo từng instance, kiểm bằng revision (như ADR 0008 §4).** Một bảng một
+dòng `planner_revision` giữ một bộ đếm mà mỗi `transact` commit thành công tăng lên
+dưới khoá. `read()` hỏi bộ đếm trước; nếu bằng bộ đếm đang cache, nó trả bản sao
+của cache mà không nạp bảng nào. Nếu khác, nó nạp lại bảy bảng cùng bộ đếm trong
+một snapshot. `transact` cũng kiểm như vậy sau khi lấy khoá, nên store không đổi
+thì lần ghi cũng không phải nạp lại. Mọi thứ khác suy ra từ dữ liệu theo từng
+instance — chỉ mục share-token của repository — bị huỷ khi revision đổi, không chỉ
+khi ghi local, nên link tạo hay thu hồi ở replica này được tôn trọng ở replica kia.
 
 Nạp toàn bộ dữ liệu mỗi request là cái giá để giữ nguyên repository 2.300 dòng.
 Chấp nhận được khi Planner còn dưới khoảng vài nghìn trip; vượt mức đó, bước tiếp
@@ -145,16 +154,19 @@ driver về dưới dạng chuỗi và được chuyển đổi qua ranh giới 
   file SQL có tham số, và schema thuộc về migration, không thuộc về TypeScript.
 - **Migration:** các file SQL thuần đánh số trong
   `db/migrations/NNNN_slug.sql`, áp dụng theo thứ tự bằng một runner nhỏ ghi lại
-  từng file vào `schema_migrations` trong cùng transaction. Migration chạy như
-  một **bước deploy riêng** (`npm run db:migrate`), không bao giờ chạy khi app
-  khởi động, để hai instance cùng khởi động không tranh nhau migrate.
+  từng file vào `schema_migrations` trong cùng transaction. Như ADR 0008 §7, chúng
+  chạy **khi khởi động**, ở lần dùng store đầu tiên, dưới một session advisory
+  lock, nên các replica khởi động cùng lúc chỉ áp mỗi file một lần và không có
+  bước deploy nào bị quên. `npm run db:migrate` chạy cùng code đó bằng tay (CI,
+  lần import đầu).
 - Mọi query đều có tham số. SQL ghép chuỗi là lỗi.
 
 ### 5. Chọn store rõ ràng và an toàn khi lỗi
 
-- Có `DATABASE_URL` → Postgres store. Không có → JSON store tại `PLANNER_STORE`,
-  như hiện nay. Test luôn dùng memory store.
-- Nếu `DATABASE_URL` được đặt mà database không truy cập được, các route Planner
+- Có `PLANNER_DATABASE_URL` → Postgres store. Không có → JSON store tại
+  `PLANNER_STORE`, như hiện nay. Test luôn dùng memory store. (Tên biến theo
+  ADR 0008; `CONTENT_DATABASE_URL` sẽ chọn store content.)
+- Nếu `PLANNER_DATABASE_URL` được đặt mà database không truy cập được, các route Planner
   trả `503`. App **không bao giờ quay về** file JSON: quay về âm thầm sẽ tách dữ
   liệu thành hai store.
 - Thông tin đăng nhập là một role riêng chỉ sở hữu các bảng của Planner (không
@@ -238,7 +250,7 @@ phải thay thế cho A.
   đúng.
 - **Lỗi constraint là kiểu lỗi mới.** Lỗi unique-violation từ Postgres phải map
   về đúng `409` mà repository đang trả, không phải `500`.
-- **Đảo ngược** là script export cộng với bỏ `DATABASE_URL`; các lần ghi sau lần
+- **Đảo ngược** là script export cộng với bỏ `PLANNER_DATABASE_URL`; các lần ghi sau lần
   export cuối sẽ mất nếu không export trước.
 
 ## Việc kéo theo
@@ -250,7 +262,7 @@ phải thay thế cho A.
    cho diff chạy offline; integration test cho adapter sau `TEST_DATABASE_URL`).
 3. `docs/architecture.md` + `.vi.md`: thay dòng "Persistence: None" đã lỗi thời,
    mô tả cách chọn store và khoá.
-4. `docs/usage.md` + `.vi.md`: `DATABASE_URL`, `npm run db:migrate`, import
+4. `docs/usage.md` + `.vi.md`: `PLANNER_DATABASE_URL`, `npm run db:migrate`, import
    `planner.json` có sẵn, backup, và phụ thuộc runtime mới trong phần Deploy.
 5. Tài liệu feature `docs/features/planner-postgres-persistence.*` đi cùng thay
    đổi code.

@@ -1,8 +1,8 @@
 # Task Contract: PG-01 Planner persistence on PostgreSQL
 - Class: XL (persistence of real accounts; new runtime dependency; data migration)
 - Desired outcome / user impact: the Planner keeps its data in PostgreSQL on the
-  owner's VM (16/17, private Docker network, no TLS) when `DATABASE_URL` is set,
-  safely across processes, with DB-enforced integrity. Without `DATABASE_URL`
+  owner's VM (16/17, private Docker network, no TLS) when `PLANNER_DATABASE_URL` is set,
+  safely across processes, with DB-enforced integrity. Without `PLANNER_DATABASE_URL`
   nothing changes: JSON file in dev, memory store in tests. No API or UI change.
 - Scope IN: `transact` on `DocumentStore`; Postgres Planner store; migration
   0001; migrate / import / export scripts; store selection in `instance.ts`;
@@ -20,7 +20,7 @@
   `src/server/planner/money.ts` (VND boundary).
 - Constraints / dependencies: new deps `pg` (runtime) and `@types/pg` (dev) only.
   No ORM, no query builder, no `pg-mem`. Every query parameterised. Migrations
-  never run on app boot. Never fall back to JSON when `DATABASE_URL` is set.
+  never run on app boot. Never fall back to JSON when `PLANNER_DATABASE_URL` is set.
 - Architecture decision: `docs/adr/0009-postgres-persistence.md` (Accepted
   2026-11-11) — binding; deviations go back to the architect.
 - Interface contract:
@@ -44,7 +44,7 @@
     store returns.
   - Tables and constraints per ADR 0009 §3. Expense FK delete actions must match
     current repository behaviour (find it, pin it with a test).
-  - Selection: `DATABASE_URL` set → Postgres; else JSON at `PLANNER_STORE`.
+  - Selection: `PLANNER_DATABASE_URL` set → Postgres; else JSON at `PLANNER_STORE`.
     Connection failure → Planner routes answer 503 with the existing error
     envelope. Postgres unique violation (23505) surfaces as the repository's 409
     conflict error, never a 500.
@@ -81,11 +81,12 @@
   connection string in error messages); least-privilege role documented;
   string-built SQL is a defect; import runs integrity check before writing;
   the diff could drop rows — covered by tests 3–4.
-- Rollback approach: unset `DATABASE_URL` after `planner:export` to a JSON
+- Rollback approach: unset `PLANNER_DATABASE_URL` after `planner:export` to a JSON
   file pointed at by `PLANNER_STORE`; code revert is the PR revert.
 - Budget: one `backend-engineer` invocation (one follow-up allowed for fixes);
   stop if the contract needs a repository rewrite beyond `transaction`, or a new
   dependency beyond `pg` / `@types/pg` — report back instead.
+- Amended 2026-11-11 (reconciled with ADR 0008): `PLANNER_DATABASE_URL`; migrations at startup under a session advisory lock (supersedes "never on app boot" below); revision-validated cache (migration 0003); share index follows the store revision; CI runs the integration suite on `postgres:17`.
 - State: REVIEW (implemented 2026-11-11; checks pass; integration run on PG 14 only; qc/security NOT RUN)
 - Feature document owner: backend-engineer —
   `docs/features/planner-postgres-persistence.md` + `.vi.md`, registered in

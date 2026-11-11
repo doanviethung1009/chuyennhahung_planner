@@ -19,12 +19,12 @@ activity, chi phí và ngân sách — còn *giao diện* Planner vẫn thuộc 
 | Styling | Tailwind v4, token `@theme` theo hướng CSS-first | [`src/app/globals.css`](../src/app/globals.css) |
 | Nội dung | Dữ liệu seed TypeScript có type, không CMS | [`src/content/`](../src/content) |
 | Test | Vitest 3 trên Node 24 (giờ đã nâng lên 4/5 được, nhưng chưa nâng) | [`tests/`](../tests) |
-| Lưu trữ | Planner: PostgreSQL khi có `DATABASE_URL` ([ADR 0009](adr/0009-postgres-persistence.vi.md)), nếu không thì file JSON; Travel content: file JSON | [`src/server/persistence/`](../src/server/persistence) |
+| Lưu trữ | Planner: PostgreSQL khi có `PLANNER_DATABASE_URL` ([ADR 0009](adr/0009-postgres-persistence.vi.md)), nếu không thì file JSON; Travel content: file JSON | [`src/server/persistence/`](../src/server/persistence) |
 
 Các trang công khai là tệp tĩnh sinh ra lúc build từ dữ liệu có type trong repo.
 Phía API — Travel Content System và Planner — chạy trên server Node, và ở
 production Planner cần thêm PostgreSQL
-([ADR 0009](adr/0009-postgres-persistence.vi.md)); không có `DATABASE_URL` thì nó
+([ADR 0009](adr/0009-postgres-persistence.vi.md)); không có `PLANNER_DATABASE_URL` thì nó
 dùng file JSON cho phát triển local, và chỉ do cấu hình quyết định.
 
 ## Đường đi của một request
@@ -132,7 +132,7 @@ cầu riêng tư, lưu trữ và sao lưu khác nhau.
 | Store | File | Chứa gì | Hợp đồng |
 |---|---|---|---|
 | Travel content | `.data/travel-content.json` (`TRAVEL_CONTENT_STORE`) | place, story, collection, review, template | [travel-content-api.vi.md](travel-content-api.vi.md) |
-| Planner | PostgreSQL (`DATABASE_URL`), nếu không thì `.data/planner.json` (`PLANNER_STORE`) | planner user, session trình duyệt, trip, ngày, activity, chi phí | [features/travel-planner-core.vi.md](features/travel-planner-core.vi.md) |
+| Planner | PostgreSQL (`PLANNER_DATABASE_URL`), nếu không thì `.data/planner.json` (`PLANNER_STORE`) | planner user, session trình duyệt, trip, ngày, activity, chi phí | [features/travel-planner-core.vi.md](features/travel-planner-core.vi.md) |
 
 Tiền ở cả hai đều là số nguyên đồng, chặn trên ở 10^12 — không bao giờ là số
 thực, không bao giờ là đơn vị nhỏ. Các tổng dẫn xuất được tính lại khi đọc, không
@@ -147,13 +147,17 @@ một-process: sửa tay file khi server đang chạy sẽ không được thấ
 Store PostgreSQL của Planner ([ADR 0009](adr/0009-postgres-persistence.vi.md))
 giữ nguyên repository và chuyển transaction vào store: mọi store đều có
 `transact(mutate)`, và bản Postgres chạy nó theo thứ tự `BEGIN` →
-`pg_advisory_xact_lock` → nạp mọi bảng Planner → `mutate` → chỉ ghi các dòng đã
-đổi → `COMMIT`, nên các lần ghi được tuần tự hoá **giữa các process** và database
-bảo đảm foreign key cùng tính duy nhất của email, Google subject và share token.
-Nó không cache. Việc chọn store là rõ ràng: có `DATABASE_URL` nghĩa là Postgres,
-và database không truy cập được thì trả `503` — không bao giờ quay về file JSON.
-Thay đổi schema là các migration SQL đánh số trong `db/migrations/`, chạy bằng
-`npm run db:migrate` như một bước deploy, không bao giờ chạy khi khởi động.
+`pg_advisory_xact_lock` → nạp các bảng Planner (hoặc dùng lại cache) → `mutate` →
+chỉ ghi các dòng đã đổi → tăng `planner_revision` → `COMMIT`, nên các lần ghi được
+tuần tự hoá **giữa các process** và database bảo đảm foreign key cùng tính duy nhất
+của email, Google subject và share token. Mỗi instance cache snapshot gần nhất và
+dùng lại nó khi bộ đếm một dòng `planner_revision` chưa đổi, nên store không có ghi
+mới chỉ tốn một query nhỏ mỗi lần đọc; chỉ mục share-token của repository cũng theo
+revision đó, nên link tạo hay thu hồi ở replica này được tôn trọng ở replica kia.
+Việc chọn store là rõ ràng: có `PLANNER_DATABASE_URL` nghĩa là Postgres, và database
+không truy cập được thì trả `503` — không bao giờ quay về file JSON. Thay đổi schema
+là các migration SQL đánh số trong `db/migrations/`, chạy khi khởi động dưới một
+session advisory lock (ADR 0008 §7), hoặc chạy tay bằng `npm run db:migrate`.
 
 ## Ranh giới module
 

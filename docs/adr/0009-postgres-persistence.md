@@ -54,10 +54,12 @@ first, normalised tables second. This ADR was written as 0008 on its own branch
 and renumbered when both met. It takes **step 2 directly for the Planner**; the
 `transact` method it relies on is the one ADR 0008 already merged. ADR 0008 still
 governs the Travel content store, the shared rate-limit store and multi-instance
-operation. Where the two differ for the Planner — the environment variable
-(`DATABASE_URL` here, `PLANNER_DATABASE_URL` there), migrations as a deploy step
-here versus at startup there, and no read cache here — they must be reconciled
-before ADR 0008's Planner half is built.
+operation. *(Reconciled 2026-11-11.)* The three
+points where the drafts differed for the Planner now follow ADR 0008, which was
+accepted first and plans two app replicas: the variable is
+`PLANNER_DATABASE_URL` (§5), migrations run at startup under an advisory lock
+(§4), and reads use a per-instance cache validated by a revision (§2). The
+Planner skips ADR 0008's JSONB step 1 and goes straight to these tables.
 
 ## Decision
 
@@ -99,9 +101,17 @@ transact<R>(mutate: (data: T) => Promise<R> | R): Promise<R>;
    nothing.
 
 `read()` runs the same load in a `REPEATABLE READ, READ ONLY` transaction so the
-seven tables come from one consistent snapshot. The Postgres store keeps **no
-cross-request cache**: with more than one process, a cache would be stale by
-construction.
+seven tables come from one consistent snapshot.
+
+**Per-instance cache, validated by revision (as ADR 0008 §4).** A one-row table
+`planner_revision` holds a counter that every committing `transact` increments
+under the lock. `read()` first asks for that counter; if it equals the cached
+one, it returns a clone of the cache with no table load. Otherwise it reloads
+the seven tables and the counter in one snapshot. `transact` does the same
+check after taking the lock, so an unchanged store is not reloaded for a write
+either. Anything else derived per instance from the data — the repository's
+share-token index — is invalidated when the revision moves, not only on local
+writes, so a link created or revoked on one replica is honoured on the other.
 
 Loading everything on every request is the price of leaving the 2,300-line
 repository untouched. It is acceptable while the Planner holds, roughly, fewer
@@ -153,16 +163,18 @@ never with a bare `Number()`.
   migrations, not by TypeScript.
 - **Migrations:** numbered plain-SQL files in `db/migrations/NNNN_slug.sql`,
   applied in order by a small runner that records each one in
-  `schema_migrations` inside the same transaction. Migrations run as an
-  **explicit deploy step** (`npm run db:migrate`), never on app boot, so two
-  starting instances cannot race to migrate.
+  `schema_migrations` inside the same transaction. As in ADR 0008 §7 they run
+  **at startup**, on the store's first use, under a session advisory lock, so
+  replicas starting together apply each file once and nothing is forgotten in a
+  deploy. `npm run db:migrate` runs the same code by hand (CI, a first import).
 - Every query is parameterised. String-built SQL is a defect.
 
 ### 5. Selection is explicit and fails closed
 
-- `DATABASE_URL` set → the Postgres store. Unset → the JSON store at
-  `PLANNER_STORE`, as today. Tests use the memory store regardless.
-- If `DATABASE_URL` is set and the database is unreachable, Planner routes
+- `PLANNER_DATABASE_URL` set → the Postgres store. Unset → the JSON store at
+  `PLANNER_STORE`, as today. Tests use the memory store regardless. (The name
+  is ADR 0008's; `CONTENT_DATABASE_URL` will select the content store.)
+- If `PLANNER_DATABASE_URL` is set and the database is unreachable, Planner routes
   answer `503`. The app **never falls back** to the JSON file: a silent
   fallback would fork the data into two stores.
 - The credentials are a dedicated role that owns only the Planner tables (no
@@ -249,7 +261,7 @@ paths, not a replacement for A.
   plan, keeps both correct.
 - **Constraint errors are new failure modes.** A unique-violation from Postgres
   must map to the same `409` the repository already returns, not to a `500`.
-- **Reversal** is the export script plus unsetting `DATABASE_URL`; writes made
+- **Reversal** is the export script plus unsetting `PLANNER_DATABASE_URL`; writes made
   after the last export are lost unless exported first.
 
 ## Follow-up
@@ -262,7 +274,7 @@ paths, not a replacement for A.
    `TEST_DATABASE_URL`).
 3. `docs/architecture.md` + `.vi.md`: replace the stale "Persistence: None"
    row, describe the store selection and the lock.
-4. `docs/usage.md` + `.vi.md`: `DATABASE_URL`, `npm run db:migrate`, importing
+4. `docs/usage.md` + `.vi.md`: `PLANNER_DATABASE_URL`, `npm run db:migrate`, importing
    an existing `planner.json`, backups, and the Deploy section's new runtime
    dependency.
 5. Feature document `docs/features/planner-postgres-persistence.*` with the

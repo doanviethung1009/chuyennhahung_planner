@@ -42,6 +42,11 @@ ghi hiếm hơn đọc rất nhiều, và mọi bất biến nằm trong reposit
 document. Điều chưa biết: lưu lượng thật, và document Planner sẽ lớn tới đâu khi giao
 diện mở công khai.
 
+*(Bổ sung 2026-11-11: với Planner, bước 2 được làm thẳng theo
+[ADR 0009](0009-postgres-persistence.vi.md) — bảng chuẩn hoá, dùng tên biến,
+migration khi khởi động và cache kiểm bằng revision của ADR này. Bước 1 dưới đây
+giờ chỉ áp dụng cho store Travel content.)*
+
 ## Quyết định
 
 1. **Engine: PostgreSQL 17**, đúng bản đang chạy trên VM. Mỗi store một database —

@@ -19,12 +19,12 @@ and budgeting — while the Planner *UI* is still a later phase; see
 | Styling | Tailwind v4, CSS-first `@theme` tokens | [`src/app/globals.css`](../src/app/globals.css) |
 | Content | Typed TypeScript seed data, no CMS | [`src/content/`](../src/content) |
 | Tests | Vitest 3 on Node 24 (4/5 now possible, not yet upgraded) | [`tests/`](../tests) |
-| Persistence | Planner: PostgreSQL when `DATABASE_URL` is set ([ADR 0009](adr/0009-postgres-persistence.md)), else a JSON file; Travel content: JSON file | [`src/server/persistence/`](../src/server/persistence) |
+| Persistence | Planner: PostgreSQL when `PLANNER_DATABASE_URL` is set ([ADR 0009](adr/0009-postgres-persistence.md)), else a JSON file; Travel content: JSON file | [`src/server/persistence/`](../src/server/persistence) |
 
 Public pages are static artefacts produced at build time from typed content in
 the repository. The API side — the Travel Content System and the Planner — runs
 on the Node server, and in production the Planner also needs PostgreSQL
-([ADR 0009](adr/0009-postgres-persistence.md)); without `DATABASE_URL` it falls
+([ADR 0009](adr/0009-postgres-persistence.md)); without `PLANNER_DATABASE_URL` it falls
 back, by configuration only, to a JSON file for local development.
 
 ## Request path
@@ -130,7 +130,7 @@ and backup profiles.
 | Store | File | Holds | Contract |
 |---|---|---|---|
 | Travel content | `.data/travel-content.json` (`TRAVEL_CONTENT_STORE`) | places, stories, collections, reviews, templates | [travel-content-api.md](travel-content-api.md) |
-| Planner | PostgreSQL (`DATABASE_URL`), else `.data/planner.json` (`PLANNER_STORE`) | planner users, browser sessions, trips, trip days, trip activities, trip expenses | [features/travel-planner-core.md](features/travel-planner-core.md) |
+| Planner | PostgreSQL (`PLANNER_DATABASE_URL`), else `.data/planner.json` (`PLANNER_STORE`) | planner users, browser sessions, trips, trip days, trip activities, trip expenses | [features/travel-planner-core.md](features/travel-planner-core.md) |
 
 Money in both is an integer count of đồng, capped at 10^12 — never a float,
 never a minor unit. Derived totals are recomputed on read, never stored.
@@ -144,13 +144,18 @@ running is not seen until restart (`tests/json-store.test.ts`).
 The Planner's PostgreSQL store ([ADR 0009](adr/0009-postgres-persistence.md))
 keeps the repository unchanged and moves the transaction into the store:
 every store has `transact(mutate)`, and the Postgres one runs it as `BEGIN` →
-`pg_advisory_xact_lock` → load all Planner tables → `mutate` → write only the
-rows that changed → `COMMIT`, so writes are serialised **across processes** and
-the database enforces foreign keys and unique emails, Google subjects and share
-tokens. It keeps no cache. Store selection is explicit: `DATABASE_URL` set means
-Postgres, and an unreachable database answers `503` — it never falls back to
-the JSON file. Schema changes are numbered SQL migrations in `db/migrations/`,
-applied by `npm run db:migrate` as a deploy step, never on boot.
+`pg_advisory_xact_lock` → load the Planner tables (or reuse the cache) →
+`mutate` → write only the rows that changed → bump `planner_revision` →
+`COMMIT`, so writes are serialised **across processes** and the database
+enforces foreign keys and unique emails, Google subjects and share tokens.
+Each instance caches the last snapshot and reuses it while the one-row
+`planner_revision` counter is unchanged, so an idle store costs one small query
+per read; the repository's share-token index follows the same revision, so a
+link created or revoked on one replica is honoured on another. Store selection
+is explicit: `PLANNER_DATABASE_URL` set means Postgres, and an unreachable
+database answers `503` — it never falls back to the JSON file. Schema changes
+are numbered SQL migrations in `db/migrations/`, applied at startup under a
+session advisory lock (ADR 0008 §7), or by hand with `npm run db:migrate`.
 
 ## Module boundaries
 
