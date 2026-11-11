@@ -1,0 +1,40 @@
+# Task Contract: phase07-admin-portal-slice1 — Admin portal, slice 1 (user administration in the browser)
+- Class: **L** (cross-layer, privilege boundary; security-sensitive but no new dependency, no migration, no new secret -> L with `security` review recommended, not XL)
+- State: **implemented, awaiting review/PR** (ADR 0010 Accepted 2026-11-11; `qc` / `security` NOT RUN)
+- Desired outcome / user impact: the owner signs in at `/quan-tri` (VI) / `/en/admin` as a user with role `admin` and lists users, creates a user (handle, displayName, email, role) and sees the one-time temporaryPassword/accessToken, resets a password, changes a role. `curl` + `ADMIN_API_TOKEN` keeps working.
+- Scope IN:
+  - ADR 0010 accepted.
+  - Guard widening: `adminPlannerRoute` accepts service token OR cookie session with `can()`; opt-in per route (list, create, PATCH role, reset-password).
+  - Per-role session lifetime (admin idle 2 h / absolute 12 h), role from store each request.
+  - Repository guards: no self role-change / self reset by session principal; last-admin never removed (setUserRole, deleteUser).
+  - Admin mutation rate limit per userId.
+  - Page `/admin` (server component) + client forms + one-time secret display; noindex; sitemap/robots; `returnTo` allow-list; nav-free (no public link).
+  - Docs: ADR, feature doc, architecture, usage, project-context.
+- Scope OUT: content CMS, template editing, audit log, MFA, editor screens, rotate-token / DELETE / google-unlink / integrity from the browser, hosted IdP, self-service reset, SQL change, server actions, trip access of any kind, any new dependency.
+- Evidence: `src/server/planner/http.ts` (`adminPlannerRoute`, `requireSameOrigin`, `plannerRoute` gate); `src/server/planner/auth.ts` (`PlannerIdentity`, `SESSION_COOKIE`); `src/server/planner/repository.ts` (`identify` ~233, `setUserRole` ~644, `sessionIsExpired` ~2268); `src/server/planner/schemas.ts:496-497`; `src/server/identity/permissions.ts` (`can`, `ROLE_ACTIONS`); `src/app/api/admin/planner/users/**`; `src/lib/return-to.ts`; `src/i18n/routing.ts`; `src/server/rate-limit.ts`; `tests/client-boundary.test.ts`, `tests/planner-roles.test.ts`, `tests/planner-session-api.test.ts`.
+- Existing contracts to preserve: error envelope + `parseJsonBody` (`src/server/content/http.ts`); `/api/admin/planner/users*` request/response shapes unchanged for the token path; tour redirects; VI unprefixed.
+- Architecture decision / ADR: `docs/adr/0010-admin-portal-session-authorization.md` (Proposed).
+- Interface contract:
+  - `adminPlannerRoute(request, { action: Action, session?: boolean }, handler: (repo, principal) => ...)`, `principal = { kind: 'service' } | { kind: 'session', userId, role: 'admin' }`.
+  - Resolution: `Authorization` header present -> `authorizeAdmin` only; else cookie `identify` with `source === 'cookie'`, no `passwordChangeRequired`, `session === true` on the route, `can(...)`. Errors: 401 none, 403 not permitted / cross-site, 409 `conflict` lockout guards, 429 rate limit, `password_change_required`.
+  - Repository: `setUserRole(userId, role, actor?)`, `resetUserPassword(userId, actor?)`, `deleteUser` gain last-admin / self guards inside `transact`.
+  - Routing: `'/admin': { vi: '/quan-tri', en: '/admin' }`. Server helper `readAdminPageAccess(): Promise<'anonymous' | 'password-change' | 'forbidden' | { ok: true; handle: string }>` in `src/server/planner/admin-page.ts` for the page.
+- Touched files / ownership (disjoint):
+  - **backend-engineer:** `src/server/planner/http.ts`, `auth.ts`, `repository.ts`, `schemas.ts` (lifetime constants), new `src/server/planner/admin-page.ts`, `src/app/api/admin/planner/users/**`, `src/server/identity/permissions.ts` (comment only), `tests/planner-admin-session.test.ts` (new), extend `tests/planner-roles.test.ts`, `tests/planner-session.test.ts`, `tests/planner-api.test.ts`.
+  - **frontend-engineer:** `src/i18n/routing.ts`, `src/lib/return-to.ts`, `src/app/[locale]/admin/page.tsx`, `src/components/admin/**` (client forms, secret display), `messages/vi.json` + `en.json`, `src/app/sitemap.ts` (exclusion check), `src/app/robots.ts` (disallow `/quan-tri`, `/en/admin`), `next.config.ts` (X-Robots-Tag header for `/quan-tri`, `/en/admin`), tests `tests/routing.test.ts`, `tests/return-to.test.ts`, `tests/i18n.test.ts`, extend `tests/client-boundary.test.ts` only by adding cases.
+  - **architect (this contract):** ADR 0010, `docs/architecture.*`, `docs/usage.*`, `.claude/context/project-context.md`, README rows.
+- Sequence: (1) owner approves ADR 0010 -> architect flips status, updates architecture/usage. (2) backend: guard, repository guards, lifetimes, page-access helper, API tests. (3) frontend starts once the guard contract and `readAdminPageAccess` signature are merged (can stub against it earlier; not parallel on shared files). Frontend and backend file sets do not overlap.
+- Feature document owner: **frontend-engineer** writes `docs/features/admin-portal.md` + `.vi.md` (seven sections), registered in `docs/features/README.*`; backend supplies the API/guard facts in a PR comment. Architect updates `docs/architecture.*` (route table, Phase 07 backlog, guard contract) and `docs/usage.*` ("Sign in as admin" bootstrap). Mark `admin-roles` feature doc cross-link.
+- Acceptance criteria / tests:
+  - Matrix `tests/planner-admin-session.test.ts`: service token ok; admin cookie ok; member cookie 403; editor cookie 403; no credential 401; planner user's own bearer token on admin route 401/403; cookie mutation without Origin/Sec-Fetch-Site 403; cross-site 403; `passwordChangeRequired` admin blocked; demoted admin loses access on next request; expired admin session (2 h idle / 12 h absolute) rejected; member keeps 7/14 d.
+  - Guards: self-demote 409, self-reset 409, last-admin demote and delete 409 (token too), concurrent demotion of two admins leaves one; non-opted routes (rotate-token, DELETE, google, integrity) 401/403 for session.
+  - Responses `no-store`; list never includes hashes; create returns secret once.
+  - Rate limit 429 after 30/min per user.
+  - Page: noindex metadata, absent from sitemap, `/quan-tri` and `/en/admin` resolve, non-admin gets 404, anonymous redirects to sign-in with returnTo, `safeReturnTo('/quan-tri')` allowed, open-redirect cases still rejected.
+  - `tests/client-boundary.test.ts`, `tests/i18n.test.ts` (both locales), `tests/docs.test.ts` pass; `npm run typecheck`, `lint`, `test` output stated.
+- Security and migration risks: admin session is a high-value cookie; plain HTTP on LAN exposes password and cookie (dev only); any admin can mint/take over another admin until audit lands; per-process limiter; no MFA; guard bug affects both principals. No data migration (role already optional; lifetimes are code). Backward compatible for token callers.
+- Reviews: `qc` recommended (M and above). `security` **recommended** (trust-boundary change: new principal on privileged routes). Both user-invoked; state NOT RUN until called. Max two review/fix cycles, then escalate.
+- Rollback approach: revert the PR; remove the session branch from `adminPlannerRoute` and the `/admin` route/pathname. Token path and stored data are untouched; role data is additive. Interim kill switch if shipped: demote via token (`PATCH role`) or rotate the admin's token (ends sessions).
+- Budget: backend 1 invocation + 1 fix; frontend 1 + 1; qc/security 1 each on request. Stop on BLOCKED.
+- Open questions for the owner: see ADR 0010 Follow-up (lifetimes; 404 vs 403 for members; first admin identity; HTTP refusal in production; allow admin-to-admin password reset).
+- Architecture/usage doc updates needed: `docs/architecture.md` + `.vi.md` (route table `/admin`, Phase 07 backlog step 3 partial, guard contract, diagram); `docs/usage.md` + `.vi.md` ("Sign in as admin": create first admin with token, change temp password, `/quan-tri`); `.claude/context/project-context.md`; `docs/adr/README.*` (done, row 0010 Proposed).

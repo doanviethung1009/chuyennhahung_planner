@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 /** Lists travellers. Token digests are never part of the response. */
 export function GET(request: Request) {
-  return adminPlannerRoute(request, async (repository) => {
+  return adminPlannerRoute(request, { action: 'user:provision', session: true }, async (repository) => {
     const users = await repository.listUsers();
     return plannerJson({ users, count: users.length });
   });
@@ -19,7 +19,7 @@ export function GET(request: Request) {
  * stored. If it is lost, rotate it — it cannot be read back.
  */
 export function POST(request: Request) {
-  return adminPlannerRoute(request, async (repository) => {
+  return adminPlannerRoute(request, { action: 'user:provision', session: true }, async (repository) => {
     const input = await parseJsonBody(request, plannerUserCreateSchema);
     return plannerJson(await repository.createUser(input), 201);
   });

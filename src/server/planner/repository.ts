@@ -1,6 +1,7 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import {
   ContentError,
+  forbidden,
   invalidReference,
   invalidState,
   notFound,
@@ -39,6 +40,9 @@ import {
   ACTIVITIES_PER_DAY_LIMIT,
   MAX_LIVE_OAUTH_ATTEMPTS,
   OAUTH_ATTEMPT_MINUTES,
+  ADMIN_SESSION_ABSOLUTE_HOURS,
+  ADMIN_SESSION_IDLE_HOURS,
+  ADMIN_SESSION_TOUCH_INTERVAL_MINUTES,
   SESSION_ABSOLUTE_DAYS,
   SESSION_IDLE_DAYS,
   SESSION_TOUCH_INTERVAL_MINUTES,
@@ -238,14 +242,16 @@ export class PlannerRepository {
       const session = findSessionByToken(data.sessions, presented);
       if (session) {
         const now = this.now();
-        if (sessionIsExpired(session, now)) {
+        const user = data.users.find((candidate) => candidate.id === session.userId);
+        // The lifetime follows the role the user holds *now* (ADR 0010 §4).
+        const role = user ? userRole(user) : 'member';
+        if (sessionIsExpired(session, now, role)) {
           await this.dropSession(session.id);
           throw sessionExpired();
         }
 
-        const user = data.users.find((candidate) => candidate.id === session.userId);
         if (user) {
-          if (sessionNeedsTouch(session, now)) await this.touchSession(session.id, now);
+          if (sessionNeedsTouch(session, now, role)) await this.touchSession(session.id, now);
           // Only a session opened *with* the temporary password is held back
           // (ADR 0007): the same user signing in with Google is not.
           const pending = session.method === 'password' && user.mustChangePassword === true;
@@ -306,7 +312,9 @@ export class PlannerRepository {
       method,
     };
 
-    data.sessions = data.sessions.filter((candidate) => !sessionIsExpired(candidate, now));
+    data.sessions = data.sessions.filter(
+      (candidate) => !sessionIsExpired(candidate, now, roleOfSessionUser(data, candidate)),
+    );
     data.sessions.push(session);
 
     return { user: toPublicUser(user), token, expiresAt: session.expiresAt };
@@ -401,10 +409,17 @@ export class PlannerRepository {
    * Operator reset: a new temporary password, shown once, and every session of
    * that user ended — the same "sign out everywhere" as `rotate-token`.
    */
-  async resetUserPassword(userId: string): Promise<IssuedTemporaryPassword> {
+  async resetUserPassword(
+    userId: string,
+    actor?: AdminActor,
+  ): Promise<IssuedTemporaryPassword> {
+    // A session principal resets its own password through the change-password
+    // page, not here (ADR 0010 §6). Checked before the slow hash.
+    if (actor && actor.userId === userId) throw selfAdminAction('reset its own password');
     const temporaryPassword = generateTemporaryPassword();
     const hash = await hashPassword(temporaryPassword, this.scryptCostLog2);
     return this.transaction((data) => {
+      assertActorStillAdmin(data, actor);
       const user = data.users.find((row) => row.id === userId);
       if (!user) throw notFound('planner user', userId);
       if (!user.email) {
@@ -641,12 +656,19 @@ export class PlannerRepository {
    * even `updatedAt`. Sessions are not touched — `identify` reads the role per
    * request, so the change applies at once.
    */
-  setUserRole(userId: string, role: Role): Promise<PublicPlannerUser> {
+  setUserRole(userId: string, role: Role, actor?: AdminActor): Promise<PublicPlannerUser> {
+    if (actor && actor.userId === userId) {
+      return Promise.reject(selfAdminAction('change its own role'));
+    }
     return this.transaction((data) => {
+      assertActorStillAdmin(data, actor);
       const index = data.users.findIndex((user) => user.id === userId);
       const existing = data.users[index];
       if (index < 0 || !existing) throw notFound('planner user', userId);
       if (userRole(existing) === role) return toPublicUser(existing);
+      // Never leave the system without an admin — the service token is held to
+      // this too (ADR 0010 §6).
+      if (userRole(existing) === 'admin') assertAnotherAdminExists(data, userId, 'demote');
       const next: PlannerUser = { ...existing, role, updatedAt: this.timestamp() };
       data.users[index] = next;
       return toPublicUser(next);
@@ -678,7 +700,9 @@ export class PlannerRepository {
   deleteUser(userId: string): Promise<void> {
     return this.transaction((data) => {
       const index = data.users.findIndex((user) => user.id === userId);
-      if (index < 0) throw notFound('planner user', userId);
+      const target = data.users[index];
+      if (index < 0 || !target) throw notFound('planner user', userId);
+      if (userRole(target) === 'admin') assertAnotherAdminExists(data, userId, 'delete');
 
       const trips = data.trips.filter((trip) => trip.ownerId === userId).length;
       if (trips > 0) {
@@ -1839,7 +1863,7 @@ export class PlannerRepository {
       }
       // Expired rows are swept on the next sign-in, so finding one here means
       // nobody has signed in since it lapsed — harmless, but worth seeing.
-      if (sessionIsExpired(session, sweepNow)) {
+      if (sessionIsExpired(session, sweepNow, roleOfSessionUser(data, session))) {
         report('planner session', session.id, 'has expired and has not been swept');
       }
     }
@@ -2253,6 +2277,42 @@ function dayDate(startDate: string | null, dayNumber: number): string | null {
   return startDate === null ? null : addDays(startDate, dayNumber - 1);
 }
 
+/** The session principal behind an admin call; absent for the service token. */
+export interface AdminActor {
+  userId: string;
+}
+
+function selfAdminAction(what: string): ContentError {
+  return new ContentError(
+    'invalid_state',
+    `an admin session cannot ${what}; use the account password page or ask another admin`,
+  );
+}
+
+/**
+ * Re-checks, inside the transaction, that the acting session user still exists
+ * and is still an admin: the request-time check and the write are not atomic.
+ */
+function assertActorStillAdmin(data: PlannerData, actor: AdminActor | undefined): void {
+  if (!actor) return;
+  const user = data.users.find((candidate) => candidate.id === actor.userId);
+  if (!user || userRole(user) !== 'admin') {
+    throw forbidden('the acting account is no longer an admin');
+  }
+}
+
+function assertAnotherAdminExists(data: PlannerData, userId: string, verb: string): void {
+  const others = data.users.filter(
+    (candidate) => candidate.id !== userId && userRole(candidate) === 'admin',
+  ).length;
+  if (others === 0) {
+    throw new ContentError(
+      'invalid_state',
+      `cannot ${verb} the last admin: at least one admin must remain`,
+    );
+  }
+}
+
 function endDateFor(startDate: string | null, durationDays: number): string | null {
   return startDate === null ? null : addDays(startDate, durationDays - 1);
 }
@@ -2263,18 +2323,35 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * Expiry on two axes (ADR 0004 §5): an absolute end of life fixed at sign-in,
  * and an idle window since the session was last used. Either one ends it.
  */
-function sessionIsExpired(session: PlannerSession, now: Date): boolean {
+function sessionIsExpired(session: PlannerSession, now: Date, role: Role = 'member'): boolean {
   const nowMs = now.getTime();
+  if (role === 'admin') {
+    // Admin lifetime (ADR 0010 §4): absolute counted from sign-in, never longer
+    // than the stored expiry; idle window much shorter.
+    const absoluteEnd = Math.min(
+      Date.parse(session.expiresAt),
+      Date.parse(session.createdAt) + ADMIN_SESSION_ABSOLUTE_HOURS * HOUR_MS,
+    );
+    if (nowMs >= absoluteEnd) return true;
+    return nowMs >= Date.parse(session.lastSeenAt) + ADMIN_SESSION_IDLE_HOURS * HOUR_MS;
+  }
   if (nowMs >= Date.parse(session.expiresAt)) return true;
   return nowMs >= Date.parse(session.lastSeenAt) + SESSION_IDLE_DAYS * DAY_MS;
 }
 
+const HOUR_MS = 60 * 60 * 1000;
+
+/** The current role of the user a session belongs to; `member` if the user is gone. */
+function roleOfSessionUser(data: PlannerData, session: PlannerSession): Role {
+  const user = data.users.find((candidate) => candidate.id === session.userId);
+  return user ? userRole(user) : 'member';
+}
+
 /** Throttles the `lastSeenAt` write so a read is not usually a write. */
-function sessionNeedsTouch(session: PlannerSession, now: Date): boolean {
-  return (
-    now.getTime() - Date.parse(session.lastSeenAt) >=
-    SESSION_TOUCH_INTERVAL_MINUTES * 60_000
-  );
+function sessionNeedsTouch(session: PlannerSession, now: Date, role: Role = 'member'): boolean {
+  const minutes =
+    role === 'admin' ? ADMIN_SESSION_TOUCH_INTERVAL_MINUTES : SESSION_TOUCH_INTERVAL_MINUTES;
+  return now.getTime() - Date.parse(session.lastSeenAt) >= minutes * 60_000;
 }
 
 /** Renders a nullable id or date for an issue message, without quoting noise. */

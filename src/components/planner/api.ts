@@ -7,6 +7,8 @@ export class ApiError extends Error {
     readonly status: number,
     readonly code: string,
     readonly retryAfterSeconds: number | null,
+    /** Field paths named by a 422 `issues` list; the messages stay on the server. */
+    readonly issuePaths: string[] = [],
   ) {
     super(code);
     this.name = 'ApiError';
@@ -42,9 +44,11 @@ export async function api<T = undefined>(path: string, options: Options = {}): P
 
   if (!response.ok) {
     let code = 'error';
+    let issuePaths: string[] = [];
     try {
-      const data = (await response.json()) as { error?: { code?: string } };
+      const data = (await response.json()) as { error?: { code?: string; issues?: { path?: string }[] } };
       code = data.error?.code ?? code;
+      issuePaths = (data.error?.issues ?? []).flatMap((issue) => (typeof issue.path === 'string' ? [issue.path] : []));
     } catch {
       // Non-JSON error body: keep the generic code.
     }
@@ -54,7 +58,7 @@ export async function api<T = undefined>(path: string, options: Options = {}): P
       goToChangePassword();
     }
     const retry = Number(response.headers.get('retry-after'));
-    throw new ApiError(response.status, code, Number.isFinite(retry) && retry > 0 ? retry : null);
+    throw new ApiError(response.status, code, Number.isFinite(retry) && retry > 0 ? retry : null, issuePaths);
   }
 
   return (await response.json()) as T;

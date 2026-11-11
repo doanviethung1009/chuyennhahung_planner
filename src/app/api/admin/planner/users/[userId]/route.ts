@@ -13,10 +13,11 @@ export function PATCH(
   request: Request,
   context: { params: Promise<{ userId: string }> },
 ) {
-  return adminPlannerRoute(request, async (repository) => {
+  return adminPlannerRoute(request, { action: 'user:promote', session: true }, async (repository, principal) => {
     const { userId } = await context.params;
     const { role } = await parseJsonBody(request, plannerUserRoleUpdateSchema);
-    return plannerJson({ user: await repository.setUserRole(userId, role) });
+    const actor = principal.kind === 'session' ? { userId: principal.userId } : undefined;
+    return plannerJson({ user: await repository.setUserRole(userId, role, actor) });
   });
 }
 

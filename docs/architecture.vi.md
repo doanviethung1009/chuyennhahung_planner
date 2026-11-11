@@ -78,6 +78,7 @@ trong [`src/i18n/routing.ts`](../src/i18n/routing.ts):
 | `/trip-setup/[template]` | `/tao-chuyen-di/[template]` | `/en/trip-setup/[template]` |
 | `/sign-in` | `/dang-nhap` | `/en/sign-in` |
 | `/account/password` | `/doi-mat-khau` | `/en/account/password` |
+| `/admin` | `/quan-tri` | `/en/admin` |
 | `/my-trips` | `/chuyen-di-cua-toi` | `/en/my-trips` |
 | `/my-trips/[id]` | `/chuyen-di-cua-toi/[id]` | `/en/my-trips/[id]` |
 | `/shared/[token]` | `/chia-se/[token]` | `/en/shared/[token]` |
@@ -286,6 +287,19 @@ flowchart LR
   nên các bề mặt chia sẻ (`/api/shared/*`, `/chia-se/*`, `/en/shared/*`) khai lại
   `Referrer-Policy: no-referrer` ở một rule sau.
 
+## Guard của cổng quản trị
+
+[ADR 0010](adr/0010-admin-portal-session-authorization.vi.md) (Accepted). `/quan-tri` (`/en/admin`) là server component có `noindex`, không nằm trong sitemap và bị disallow trong `robots.ts`. Vai trò được thực thi: `can()` được gọi trong đường xử lý request, ở trang và ở API admin.
+
+`adminPlannerRoute` trong `src/server/planner/http.ts` xác định một trong **hai principal**:
+
+| Principal | Credential | Tới được |
+|---|---|---|
+| Service | `Authorization: Bearer ADMIN_API_TOKEN` (access token của chính user bị từ chối ở đây) | Mọi route admin |
+| Session | Session cookie, bằng chứng same-origin, role đọc lại từ store mỗi request, không còn mật khẩu tạm, `can(role, action)` | Chỉ route bật bằng `{ action, session: true }`: liệt kê, tạo, đổi role, reset mật khẩu |
+
+`adminPlannerRoute(request, handler)` không kèm options vẫn chỉ nhận token. Session admin sống idle 2 giờ / tuyệt đối 12 giờ theo role hiện tại. Guard chống tự khoá (session không tự đổi role hay tự reset; không bao giờ còn 0 admin; admin thao tác được kiểm tra lại trong transaction của repository) trả 409 `invalid_state`. Trang dùng `readAdminPageAccess()` -> `{ status: 'anonymous' | 'must-change-password' | 'not-admin' | 'admin', principal }`: chuyển sang đăng nhập, chuyển sang đổi mật khẩu, `notFound()`, render. Mutation bị giới hạn tốc độ theo user (trong bộ nhớ, theo process).
+
 ## Các phase
 
 Những thứ vắng mặt có chủ đích, và không được dựng sớm:
@@ -311,13 +325,16 @@ Những thứ vắng mặt có chủ đích, và không được dựng sớm:
   thẳng theo [ADR 0009](adr/0009-postgres-persistence.vi.md). Còn mở: store Travel
   content và store rate limit dùng chung (ADR 0008, chưa dựng), và query SQL theo
   từng method khi việc nạp toàn bộ Planner mỗi request trở nên chậm.
-- **Phase 07 — Admin Portal, CMS & RBAC (đã công bố, chưa bắt đầu).** Không mục nào bên
-  dưới được dựng hay dựng sớm; mỗi mục cần ghi quyết định trước. Hướng thiết kế:
-  [ADR 0006](adr/0006-unified-identity-and-roles.vi.md) (Đã chấp nhận 2026-11-11; bước migration 1–2 — `role`, `can`, bootstrap bằng admin token — đã hiện thực, bước 3–4 vẫn thuộc Phase 07). Backlog phụ
+- **Phase 07 — Admin Portal, CMS & RBAC (đang làm: lát cắt 1 đã ship).** Lát cắt 1 — cổng
+  quản lý user trên trình duyệt — đã dựng ([ADR 0010](adr/0010-admin-portal-session-authorization.vi.md),
+  [features/admin-portal.vi.md](features/admin-portal.vi.md)). Mọi mục còn lại bên dưới
+  chưa dựng và không được dựng sớm; mỗi mục cần ghi quyết định trước.
+  Còn lại sau lát cắt 1: CMS, audit log, MFA, màn hình editor, store rate limit dùng chung. Hướng thiết kế:
+  [ADR 0006](adr/0006-unified-identity-and-roles.vi.md) (Đã chấp nhận 2026-11-11; bước migration 1–2 — `role`, `can`, bootstrap bằng admin token — đã hiện thực, bước 3 — principal session trên route admin — đã xong một phần nhờ ADR 0010, bước 4 và phần còn lại vẫn thuộc Phase 07). Backlog phụ
   thuộc và quyết định:
   - **Nhà cung cấp danh tính** — các cách đăng nhập đã được quyết ([ADR 0007](adr/0007-password-and-google-sign-in.vi.md): mật khẩu và Google); còn mở là tự đặt lại mật khẩu (cần dịch vụ gửi email) và MFA cho `admin`.
-  - **Mô hình vai trò** — `member` / `editor` / `admin` trên một mô hình user, hàm thuần `can(identity, action, resource)`, `ADMIN_API_TOKEN` hạ thành service principal.
-  - **Củng cố session admin và CSRF** — thời hạn ngắn hơn theo vai trò; `requireSameOrigin` thành chốt chịu lực cho mutation admin; token không bao giờ tới Client Component (`tests/client-boundary.test.ts`).
+  - **Mô hình vai trò** — `member` / `editor` / `admin` trên một mô hình user, hàm thuần `can(identity, action, resource)`, `ADMIN_API_TOKEN` hạ thành service principal. Đã thực thi cho quản lý user từ lát cắt 1; `editor` chưa có màn hình.
+  - **Củng cố session admin và CSRF** — xong ở lát cắt 1 (thời hạn ngắn hơn theo vai trò; `requireSameOrigin` thành chốt chịu lực cho mutation admin; token không bao giờ tới Client Component (`tests/client-boundary.test.ts`)); MFA vẫn còn mở.
   - **Audit log** — ai đổi template hay vai trò nào, và mọi lần đọc trip để hỗ trợ.
   - **SQL và nhiều instance** — admin portal khiến có người ghi thứ hai vào store; Planner đã lên PostgreSQL ([ADR 0009](adr/0009-postgres-persistence.vi.md)), nhưng store JSON của content và rate limiter theo process vẫn không sống nổi qua một instance.
   - **Store cho rate limit** — chặn đăng nhập admin cần store dùng chung khi có hơn một process.

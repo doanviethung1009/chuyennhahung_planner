@@ -100,6 +100,12 @@ export function createMemoryDocumentStore<T>(initial: T): DocumentStore<T> {
  * up — restart after editing. Both reads and writes clone, exactly like the
  * memory store, because the repositories mutate what they read in place and a
  * failed transaction must not leave its half-applied change in the cache.
+ *
+ * The queue and the cache are kept per file path on `globalThis`, not per
+ * module instance: Next.js can load this module more than once in one process
+ * (a page's server bundle and a route handler's), and two caches of one file
+ * would each miss the other's writes — a session signed in by the API would be
+ * invisible to a server component (ADR 0010).
  */
 export function createJsonDocumentStore<T>(
   filePath: string,
@@ -108,8 +114,8 @@ export function createJsonDocumentStore<T>(
   const absolutePath = resolve(filePath);
   // Reads, writes and transactions share one queue, so a read never observes
   // a transaction half-way and a failed task does not wedge the ones after it.
-  const enqueue = createSerialQueue();
-  let cached: T | undefined;
+  const shared = sharedFileState(absolutePath);
+  const enqueue = shared.enqueue;
 
   async function readFromDisk(): Promise<T> {
     try {
@@ -128,8 +134,8 @@ export function createJsonDocumentStore<T>(
   // These two run only inside `enqueue` and never enqueue themselves, so
   // `transact` can call both without deadlocking on its own task.
   async function readUnlocked(): Promise<T> {
-    if (cached === undefined) cached = await readFromDisk();
-    return structuredClone(cached);
+    if (shared.cached === undefined) shared.cached = await readFromDisk();
+    return structuredClone(shared.cached as T);
   }
 
   async function writeUnlocked(next: T): Promise<void> {
@@ -142,7 +148,7 @@ export function createJsonDocumentStore<T>(
     // disk. Parsed from the bytes just written — not cloned from `next` —
     // so the cache is exactly what a cold read would return (JSON drops
     // `undefined` keys and turns a Date into a string; a clone would not).
-    cached = normalize(JSON.parse(body) as Partial<T>);
+    shared.cached = normalize(JSON.parse(body) as Partial<T>);
   }
 
   return {
@@ -163,6 +169,27 @@ export function createJsonDocumentStore<T>(
       });
     },
   };
+}
+
+type SharedFileState = {
+  enqueue: ReturnType<typeof createSerialQueue>;
+  cached: unknown;
+};
+
+const SHARED_KEY = Symbol.for('chuyennhahung.jsonDocumentStores');
+
+/** One queue and one cache per absolute path, for the whole process. */
+function sharedFileState(absolutePath: string): SharedFileState {
+  const holder = globalThis as typeof globalThis & {
+    [SHARED_KEY]?: Map<string, SharedFileState>;
+  };
+  const registry = (holder[SHARED_KEY] ??= new Map());
+  let state = registry.get(absolutePath);
+  if (!state) {
+    state = { enqueue: createSerialQueue(), cached: undefined };
+    registry.set(absolutePath, state);
+  }
+  return state;
 }
 
 function isMissingFile(error: unknown): boolean {

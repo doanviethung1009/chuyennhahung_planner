@@ -25,6 +25,7 @@ New features start from [`_template.md`](_template.md) /
 | Travel Planner core | [travel-planner-core.md](travel-planner-core.md) | `/api/planner` — trips, days, activities, expenses, budget, template clone |
 | Planner on PostgreSQL | [planner-postgres-persistence.md](planner-postgres-persistence.md) | `PLANNER_DATABASE_URL` store, advisory-lock transaction, migrations, import and export |
 | Admin roles | [admin-roles.md](admin-roles.md) | `role` on the user, `permissions.ts`, `PATCH /api/admin/planner/users/[userId]` to promote the first admin |
+| Admin portal | [admin-portal.md](admin-portal.md) | `/quan-tri` — admin-only user list, create, role change and password reset in the browser (ADR 0010) |
 
 ## Phases not yet open
 

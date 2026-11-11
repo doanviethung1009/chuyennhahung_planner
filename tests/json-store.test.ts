@@ -181,3 +181,22 @@ describe.each(stores)('%s store transact', (kind, make) => {
     expect(await store.read()).toEqual({ items: ['a'] });
   });
 });
+
+describe('createJsonDocumentStore across module instances', () => {
+  // Next.js can load the store module twice in one process (a page's server
+  // bundle and a route handler's). Both must see one cache, or a session the
+  // API writes is invisible to a server component (ADR 0010).
+  it('shares the cache per path, so a second module copy sees the first one’s writes', async () => {
+    const { vi } = await import('vitest');
+    const first = createJsonDocumentStore(file, normalize);
+    expect(await first.read()).toEqual({ items: [] }); // warm the cache
+
+    vi.resetModules();
+    const again = await import('../src/server/persistence/json-store');
+    const second = again.createJsonDocumentStore(file, normalize);
+    expect(await second.read()).toEqual({ items: [] });
+
+    await second.write({ items: ['written by the other copy'] });
+    expect(await first.read()).toEqual({ items: ['written by the other copy'] });
+  });
+});
