@@ -213,7 +213,20 @@ endpoint list.
 
 ### Sign in as admin
 
-The portal is at `/quan-tri` (`/en/admin`). Bootstrap the first admin once, with the service token, and keep the `temporaryPassword` from the response (shown once):
+The portal is at `/quan-tri` (`/en/admin`). The simplest way to create the first admin is `admin:create`. It writes straight to the store the app uses — PostgreSQL when `PLANNER_DATABASE_URL` is set, else the JSON file — needs no `ADMIN_API_TOKEN` and no running server, and prints a random temporary password once:
+
+```bash
+npm run admin:create -- --email you@example.com --name "Hưng"            # optional: --handle admin-hung
+```
+
+On the deployed stack, run it in the `tools` container with the same `-f` files as your layout, so it reaches the same database:
+
+```bash
+docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml run --rm tools \
+  npm run admin:create -- --email you@example.com --name "Hưng"
+```
+
+Or, with the service token against a running server, keep the `temporaryPassword` from the response (shown once):
 
 ```bash
 curl -s -X POST http://localhost:3000/api/admin/planner/users \

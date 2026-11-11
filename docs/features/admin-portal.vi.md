@@ -51,10 +51,11 @@ Route do kiến trúc sư định nghĩa; frontend thêm vào `src/i18n/routing.
 | `src/app/robots.ts`, `next.config.ts` | Loại khỏi công cụ tìm kiếm |
 | `messages/vi.json`, `messages/en.json` | Namespace `admin` |
 | `tests/admin-portal.test.ts` | Test bên dưới |
+| `scripts/admin-create.ts`, `src/server/planner/admin-bootstrap.ts` | `npm run admin:create`: tạo admin đầu tiên với mật khẩu tạm ngẫu nhiên, ghi thẳng vào kho |
 
 ## Test
 
-`tests/admin-portal.test.ts` kiểm tra mục route, danh sách `returnTo` (và từ chối các giá trị gần giống), `robots` disallow, mã nguồn sitemap không nhắc tới route, các luật `X-Robots-Tag` mà vẫn giữ nguyên redirect tour, và không file nào trong `src/components/admin` nhắc `ADMIN_API_TOKEN`, đọc `process.env`, import `src/server` hay dùng web storage. `tests/client-boundary.test.ts`, `tests/i18n.test.ts`, `tests/return-to.test.ts` và `tests/design-tokens.test.ts` phủ phần còn lại. Cổng ở server do `tests/planner-admin-session.test.ts` (backend) phủ. Chưa test: tương tác của island trên trình duyệt (dự án chưa có công cụ test DOM).
+`tests/admin-portal.test.ts` kiểm tra mục route, danh sách `returnTo` (và từ chối các giá trị gần giống), `robots` disallow, mã nguồn sitemap không nhắc tới route, các luật `X-Robots-Tag` mà vẫn giữ nguyên redirect tour, và không file nào trong `src/components/admin` nhắc `ADMIN_API_TOKEN`, đọc `process.env`, import `src/server` hay dùng web storage. `tests/client-boundary.test.ts`, `tests/i18n.test.ts`, `tests/return-to.test.ts` và `tests/design-tokens.test.ts` phủ phần còn lại. Cổng ở server do `tests/planner-admin-session.test.ts` (backend) phủ. Chưa test: tương tác của island trên trình duyệt (dự án chưa có công cụ test DOM). `admin:create` được kiểm bởi `tests/admin-bootstrap.test.ts`.
 
 ## Giới hạn và câu hỏi còn mở
 

@@ -50,10 +50,11 @@ The route is the architect's table entry; the frontend added it to `src/i18n/rou
 | `src/app/robots.ts`, `next.config.ts` | Crawler exclusion |
 | `messages/vi.json`, `messages/en.json` | `admin` namespace |
 | `tests/admin-portal.test.ts` | Tests below |
+| `scripts/admin-create.ts`, `src/server/planner/admin-bootstrap.ts` | `npm run admin:create`: first admin with a random temporary password, straight into the store |
 
 ## Tests
 
-`tests/admin-portal.test.ts` asserts the route entry, the `returnTo` allow-list (and near-miss rejections), `robots` disallow, the sitemap source never naming the route, the `X-Robots-Tag` rules with the tour redirects intact, and that no file in `src/components/admin` names `ADMIN_API_TOKEN`, reads `process.env`, imports `src/server` or touches web storage. `tests/client-boundary.test.ts`, `tests/i18n.test.ts`, `tests/return-to.test.ts` and `tests/design-tokens.test.ts` cover the rest. The server gate itself is covered by `tests/planner-admin-session.test.ts` (backend). Not tested: the island's interactions in a browser (no DOM test runner is installed).
+`tests/admin-portal.test.ts` asserts the route entry, the `returnTo` allow-list (and near-miss rejections), `robots` disallow, the sitemap source never naming the route, the `X-Robots-Tag` rules with the tour redirects intact, and that no file in `src/components/admin` names `ADMIN_API_TOKEN`, reads `process.env`, imports `src/server` or touches web storage. `tests/client-boundary.test.ts`, `tests/i18n.test.ts`, `tests/return-to.test.ts` and `tests/design-tokens.test.ts` cover the rest. The server gate itself is covered by `tests/planner-admin-session.test.ts` (backend); `admin:create` by `tests/admin-bootstrap.test.ts`. Not tested: the island's interactions in a browser (no DOM test runner is installed).
 
 ## Limits and open questions
 
