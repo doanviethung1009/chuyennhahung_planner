@@ -10,8 +10,9 @@ export function POST(
   request: Request,
   context: { params: Promise<{ userId: string }> },
 ) {
-  return adminPlannerRoute(request, async (repository) => {
+  return adminPlannerRoute(request, { action: 'user:provision', session: true }, async (repository, principal) => {
     const { userId } = await context.params;
-    return plannerJson(await repository.resetUserPassword(userId));
+    const actor = principal.kind === 'session' ? { userId: principal.userId } : undefined;
+    return plannerJson(await repository.resetUserPassword(userId, actor));
   });
 }

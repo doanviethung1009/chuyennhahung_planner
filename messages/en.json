@@ -428,5 +428,91 @@
     "basedOn": "This itinerary is based on the story",
     "limitedTitle": "Please try again shortly",
     "limitedBody": "There have been a lot of views from your network in a short time. Wait a moment and reload the page."
+  },
+  "admin": {
+    "metaTitle": "Admin",
+    "title": "User administration",
+    "description": "Create accounts, change roles and reissue passwords for Planner users. This page is for administrators only.",
+    "signedInAs": "Signed in as {handle}",
+    "signOut": "Sign out",
+    "signingOut": "Signing out…",
+    "roles": {
+      "member": "Member",
+      "editor": "Editor",
+      "admin": "Admin"
+    },
+    "users": {
+      "heading": "Users",
+      "caption": "Planner users",
+      "loading": "Loading users…",
+      "count": "{count, plural, one {# user} other {# users}}",
+      "empty": "There are no users yet.",
+      "colHandle": "Handle",
+      "colName": "Display name",
+      "colEmail": "Email",
+      "colRole": "Role",
+      "colCreated": "Created",
+      "colActions": "Actions",
+      "noEmail": "None",
+      "you": "You",
+      "roleSelect": "Role for {handle}",
+      "saveRole": "Save role",
+      "saving": "Saving…",
+      "selfNote": "You cannot change your own role or reset your own password.",
+      "reset": "Reset password",
+      "resetConfirm": "Reset the password for {handle}? All of their sessions will be signed out.",
+      "resetYes": "Yes, reset",
+      "resetNo": "Cancel",
+      "retry": "Reload the list"
+    },
+    "create": {
+      "heading": "Create a user",
+      "intro": "The temporary password and access token are shown once, right after you create the user.",
+      "handleLabel": "Handle",
+      "handleHint": "Lower-case letters, numbers and hyphens, at least 3 characters.",
+      "displayNameLabel": "Display name",
+      "emailLabel": "Email (optional)",
+      "emailHint": "An email is needed for them to sign in with a password.",
+      "roleLabel": "Role",
+      "submit": "Create user",
+      "submitting": "Creating…"
+    },
+    "secret": {
+      "heading": "Save this now: secrets for {handle}",
+      "warning": "The values below are shown once. Leave or reload this page and they are gone for good.",
+      "temporaryPassword": "Temporary password",
+      "accessToken": "Access token",
+      "copy": "Copy",
+      "copied": "Copied",
+      "copyFailed": "Your browser would not copy. Select the value and copy it by hand.",
+      "copyLabel": "Copy {name}",
+      "dismiss": "I have saved it"
+    },
+    "status": {
+      "loaded": "User list loaded.",
+      "created": "Created user {handle}.",
+      "roleSaved": "Changed the role of {handle} to {role}.",
+      "resetDone": "Reset the password for {handle}.",
+      "signedOutFailed": "We could not sign you out. Please try again."
+    },
+    "fields": {
+      "handle": "handle",
+      "displayName": "display name",
+      "email": "email",
+      "role": "role"
+    },
+    "errors": {
+      "unauthorized": "Your session has expired.",
+      "signInAgain": "Sign in again",
+      "forbidden": "This account does not have admin rights.",
+      "password_change_required": "Change your temporary password before you continue.",
+      "invalid_state": "Refused: you cannot change your own role, reset your own password or remove the last admin.",
+      "validation_failed": "Some details are not valid.",
+      "validation_fields": "Some details are not valid: {fields}.",
+      "rate_limited": "Too many actions. Wait about {seconds} seconds and try again.",
+      "not_found": "That user was not found. They may have been removed, so reload the list.",
+      "conflict": "A user with this handle or email already exists.",
+      "generic": "Something went wrong. Please try again in a moment."
+    }
   }
 }

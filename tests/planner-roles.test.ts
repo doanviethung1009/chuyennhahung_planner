@@ -167,7 +167,7 @@ describe('PATCH /api/admin/planner/users/[userId]', () => {
     expect((await response.json()).error.code).toBe('not_found');
   });
 
-  it('returns 401 with no token, a wrong token, or only a member session', async () => {
+  it('returns 401 with no token or a wrong token, and 403 for a member session', async () => {
     const { body } = await create('gate-target');
     const id = body.user.id as string;
     expect((await patch(id, { role: 'admin' }, null)).status).toBe(401);
@@ -182,7 +182,8 @@ describe('PATCH /api/admin/planner/users/[userId]', () => {
       }),
     );
     const cookie = sessionResponse.headers.get('set-cookie')!.split(';')[0]!.split('=')[1]!;
-    expect((await patch(id, { role: 'admin' }, null, cookie)).status).toBe(401);
+    // ADR 0010: a signed-in member is authenticated but not permitted.
+    expect((await patch(id, { role: 'admin' }, null, cookie)).status).toBe(403);
     // Nothing was promoted by any of the refused calls.
     const listed = (await (await routes.users.GET(req({ bearer: ADMIN_TOKEN }))).json()).users;
     expect(listed.find((u: { id: string }) => u.id === id).role).toBe('member');

@@ -77,6 +77,7 @@ folders. The visible URL per locale is defined once, in
 | `/trip-setup/[template]` | `/tao-chuyen-di/[template]` | `/en/trip-setup/[template]` |
 | `/sign-in` | `/dang-nhap` | `/en/sign-in` |
 | `/account/password` | `/doi-mat-khau` | `/en/account/password` |
+| `/admin` | `/quan-tri` | `/en/admin` |
 | `/my-trips` | `/chuyen-di-cua-toi` | `/en/my-trips` |
 | `/my-trips/[id]` | `/chuyen-di-cua-toi/[id]` | `/en/my-trips/[id]` |
 | `/shared/[token]` | `/chia-se/[token]` | `/en/shared/[token]` |
@@ -286,6 +287,19 @@ flowchart LR
   itself, so the share surfaces (`/api/shared/*`, `/chia-se/*`, `/en/shared/*`)
   restate `Referrer-Policy: no-referrer` in a later rule.
 
+## Admin portal guard
+
+[ADR 0010](adr/0010-admin-portal-session-authorization.md) (Accepted). `/quan-tri` (`/en/admin`) is a server component with `noindex`, absent from the sitemap and disallowed in `robots.ts`. Roles are enforced: `can()` is called in the request path, on pages and on the admin API.
+
+`adminPlannerRoute` in `src/server/planner/http.ts` resolves one of **two principals**:
+
+| Principal | Credential | Reaches |
+|---|---|---|
+| Service | `Authorization: Bearer ADMIN_API_TOKEN` (a user's own access token is refused here) | Every admin route |
+| Session | Cookie session, same-origin proof, role re-read from the store each request, no pending temporary password, `can(role, action)` | Only routes that opt in with `{ action, session: true }`: list, create, set role, reset password |
+
+`adminPlannerRoute(request, handler)` without options stays token-only. Admin sessions last idle 2 h / absolute 12 h by the current role. Lockout guards (no self role change or self reset by a session; never zero admins; acting admin re-checked in the repository transaction) answer 409 `invalid_state`. Pages use `readAdminPageAccess()` -> `{ status: 'anonymous' | 'must-change-password' | 'not-admin' | 'admin', principal }`: sign-in redirect, password-change redirect, `notFound()`, render. Mutations are rate-limited per user (in memory, per process).
+
 ## Phases
 
 Deliberately absent, and not to be scaffolded early:
@@ -312,13 +326,16 @@ Deliberately absent, and not to be scaffolded early:
   directly by [ADR 0009](adr/0009-postgres-persistence.md). Still open: the Travel
   content store and the shared rate-limit store (ADR 0008, not built yet), and
   per-method SQL queries once loading the whole Planner per request becomes slow.
-- **Phase 07 — Admin Portal, CMS & RBAC (announced, not started).** Nothing below is
+- **Phase 07 — Admin Portal, CMS & RBAC (in progress: slice 1 shipped).** Slice 1 — the
+  browser user-administration portal — is built ([ADR 0010](adr/0010-admin-portal-session-authorization.md),
+  [features/admin-portal.md](features/admin-portal.md)). Everything else below is not
   built or to be scaffolded early; each item needs its decision recorded first.
-  Design direction: [ADR 0006](adr/0006-unified-identity-and-roles.md) (Accepted 2026-11-11; migration steps 1–2 — `role`, `can`, admin-token bootstrap — are implemented, steps 3–4 remain Phase 07).
+  Remaining after slice 1: CMS, audit log, MFA, editor screens, a shared rate-limit store.
+  Design direction: [ADR 0006](adr/0006-unified-identity-and-roles.md) (Accepted 2026-11-11; migration steps 1–2 — `role`, `can`, admin-token bootstrap — are implemented, step 3 — session principals on admin routes — is partly done by ADR 0010, step 4 and the rest remain Phase 07).
   Backlog of dependencies and decisions:
   - **Identity provider** — sign-in methods are decided ([ADR 0007](adr/0007-password-and-google-sign-in.md): password and Google); still open are self-service reset (needs an email sender) and MFA for `admin`.
-  - **Role model** — `member` / `editor` / `admin` on the one user model, a pure `can(identity, action, resource)`, `ADMIN_API_TOKEN` demoted to a service principal.
-  - **Admin session and CSRF hardening** — shorter lifetimes per role; `requireSameOrigin` becomes load-bearing for admin mutations; the token never reaches a Client Component (`tests/client-boundary.test.ts`).
+  - **Role model** — `member` / `editor` / `admin` on the one user model, a pure `can(identity, action, resource)`, `ADMIN_API_TOKEN` demoted to a service principal. Enforced for user administration since slice 1; `editor` has no screen yet.
+  - **Admin session and CSRF hardening** — done in slice 1 (shorter lifetimes per role; `requireSameOrigin` becomes load-bearing for admin mutations; the token never reaches a Client Component (`tests/client-boundary.test.ts`)); MFA still open.
   - **Audit log** — who changed which template or role, and any support read of a trip.
   - **SQL and multi-instance** — the admin portal makes a second writer to the stores likely; the Planner is on PostgreSQL ([ADR 0009](adr/0009-postgres-persistence.md)), but the content JSON store and the per-process rate limiter still do not survive more than one instance.
   - **Rate-limit store** — admin sign-in throttling needs a shared store once there is more than one process.

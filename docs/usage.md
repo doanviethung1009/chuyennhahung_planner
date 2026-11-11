@@ -155,8 +155,9 @@ A session lasts 14 days, or 7 days without use. `rotate-token` signs the
 traveller out everywhere.
 
 Roles ([ADR 0006](adr/0006-unified-identity-and-roles.md)): `role` is `member`
-(default), `editor` or `admin`. Nothing enforces a role yet — this only records
-it. Promote the first admin with the admin token; the body is strict, so any key
+(default), `editor` or `admin`. Roles are enforced for user administration
+([ADR 0010](adr/0010-admin-portal-session-authorization.md)): an `admin` session may
+use the portal at `/quan-tri`; `editor` has no screen yet. Promote the first admin with the admin token; the body is strict, so any key
 other than `role` is refused with 422.
 
 ```bash
@@ -209,6 +210,24 @@ curl -s -X PATCH http://localhost:3000/api/planner/<id> \
 Without `If-Match` the answer is 428; with a stale version, 412. See
 [features/travel-planner-core.md](features/travel-planner-core.md) for the full
 endpoint list.
+
+### Sign in as admin
+
+The portal is at `/quan-tri` (`/en/admin`). Bootstrap the first admin once, with the service token, and keep the `temporaryPassword` from the response (shown once):
+
+```bash
+curl -s -X POST http://localhost:3000/api/admin/planner/users \
+  -H "authorization: Bearer $ADMIN_API_TOKEN" -H 'content-type: application/json' \
+  -d '{"handle":"admin-hung","displayName":"Hưng","email":"you@example.com","role":"admin"}'
+```
+
+1. Sign in at `/dang-nhap?returnTo=/quan-tri` with that email and the temporary password.
+2. You are sent to `/doi-mat-khau`: set a new password.
+3. Open `/quan-tri`. Admin sessions end after 2 h idle or 12 h absolute.
+
+On the dev VM over plain HTTP on its IP: `NEXT_PUBLIC_SITE_URL` must be the exact `http://<ip>` origin and is baked at build time, or admin mutations are refused. Cookies are not `Secure` over HTTP, so the admin password and cookie travel in clear text: LAN only, and switch to HTTPS before real users.
+
+Recovery: if the only admin is locked out, use the service token to reset the password (`POST .../users/<userId>/reset-password`) or to promote another user (`PATCH .../users/<userId>` with `{"role":"admin"}`).
 
 ### Run the Planner on PostgreSQL
 
@@ -516,6 +535,9 @@ accepts the `NEXT_PUBLIC_SITE_URL` origin. Set it to the exact public origin.
 | `npm warn install-scripts … not yet covered by allowScripts` | A dependency with an install script is new, or an approved one changed version — approvals in `package.json` `allowScripts` are pinned to `pkg@version`. Check the package is the one you expect, then `npm install-scripts approve <pkg>` and commit the `package.json` change. Note that `--dry-run` writes anyway on npm 11.19 |
 | Planner routes answer `503 service_unavailable` | `PLANNER_DATABASE_URL` is set and the database is unreachable or refused the login — check the host, the role and run `npm run db:migrate` to see why the startup migration failed. The app deliberately does not fall back to the JSON file |
 | `relation "trips" does not exist` | The startup migration did not complete for that database — run `npm run db:migrate` and read its message |
+| `/quan-tri` answers 404 for a signed-in user | By design: the account is not `admin`. Promote it with the service token; the role is read on every request |
+| An admin mutation answers `403 forbidden` | Origin mismatch: the page origin must equal `NEXT_PUBLIC_SITE_URL` exactly (scheme, host, port); it is baked at build time |
+| An admin mutation answers `409 invalid_state` | A self role change or self password reset, or the change would remove the last admin |
 | A Vietnamese URL 404s | Pathname missing from `pathnames` in `routing.ts`, or the folder name does not match the internal pathname |
 | `MISSING_MESSAGE` at runtime | Key added to one catalogue only |
 | `npm run verify:ui` cannot launch | Chrome is not at the hard-coded macOS path in `scripts/screenshots.mjs` |

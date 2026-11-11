@@ -29,6 +29,11 @@ const noReferrer = { key: 'Referrer-Policy', value: 'no-referrer' };
 /** Every path that carries a share token: the API and both localized pages. */
 export const sharePaths = ['/api/shared/:path*', '/chia-se/:path*', '/en/shared/:path*'];
 
+/** The admin portal (ADR 0010) is never indexed, in either locale. */
+export const adminPaths = ['/quan-tri/:path*', '/en/admin/:path*'];
+
+const noIndex = { key: 'X-Robots-Tag', value: 'noindex, nofollow' };
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   // A self-contained server bundle for the Docker image (`Dockerfile`): only the
@@ -42,6 +47,7 @@ const nextConfig: NextConfig = {
       // rule wins, so the share surfaces restate their stricter policy here
       // (ADR 0005: a share token must never leak through `Referer`).
       ...sharePaths.map((source) => ({ source, headers: [noReferrer] })),
+      ...adminPaths.map((source) => ({ source, headers: [noIndex] })),
     ];
   },
   images: {

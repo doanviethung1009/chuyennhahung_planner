@@ -29,6 +29,7 @@ export const pathnames = {
   '/my-trips/[id]': { vi: '/chuyen-di-cua-toi/[id]', en: '/my-trips/[id]' },
   '/shared/[token]': { vi: '/chia-se/[token]', en: '/shared/[token]' },
   '/reviews': { vi: '/goc-review', en: '/reviews' },
+  '/admin': { vi: '/quan-tri', en: '/admin' },
   '/about': { vi: '/ve-nha-hung', en: '/about' },
 } as const;
 

@@ -6,7 +6,7 @@ import { pathnames } from '@/i18n/routing';
  * `/shared/[token]` and `/sign-in` itself are deliberately absent: neither is
  * somewhere you "return" to after signing in.
  */
-const RETURNABLE = ['/my-trips', '/my-trips/[id]', '/trip-setup/[template]', '/account/password'] as const;
+const RETURNABLE = ['/my-trips', '/my-trips/[id]', '/trip-setup/[template]', '/account/password', '/admin'] as const;
 
 function toPattern(path: string): RegExp {
   const source = path

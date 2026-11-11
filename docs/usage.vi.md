@@ -156,8 +156,9 @@ Một session sống 14 ngày, hoặc 7 ngày nếu không dùng. `rotate-token`
 người đi chơi khỏi mọi nơi.
 
 Vai trò ([ADR 0006](adr/0006-unified-identity-and-roles.vi.md)): `role` là
-`member` (mặc định), `editor` hoặc `admin`. Hiện chưa có gì áp dụng vai trò — chỉ
-ghi lại. Nâng admin đầu tiên bằng admin token; body là strict, nên key nào khác
+`member` (mặc định), `editor` hoặc `admin`. Vai trò được thực thi cho việc quản lý user
+([ADR 0010](adr/0010-admin-portal-session-authorization.vi.md)): session `admin` dùng được
+cổng ở `/quan-tri`; `editor` chưa có màn hình. Nâng admin đầu tiên bằng admin token; body là strict, nên key nào khác
 `role` đều bị từ chối với 422.
 
 ```bash
@@ -210,6 +211,24 @@ curl -s -X PATCH http://localhost:3000/api/planner/<id> \
 Thiếu `If-Match` thì nhận 428; version lạc hậu thì 412. Xem
 [features/travel-planner-core.vi.md](features/travel-planner-core.vi.md) để có
 danh sách endpoint đầy đủ.
+
+### Đăng nhập với tư cách admin
+
+Cổng quản trị ở `/quan-tri` (`/en/admin`). Bootstrap admin đầu tiên một lần bằng service token, giữ lại `temporaryPassword` trong response (chỉ hiện một lần):
+
+```bash
+curl -s -X POST http://localhost:3000/api/admin/planner/users \
+  -H "authorization: Bearer $ADMIN_API_TOKEN" -H 'content-type: application/json' \
+  -d '{"handle":"admin-hung","displayName":"Hưng","email":"you@example.com","role":"admin"}'
+```
+
+1. Đăng nhập ở `/dang-nhap?returnTo=/quan-tri` bằng email đó và mật khẩu tạm.
+2. Bạn được chuyển sang `/doi-mat-khau`: đặt mật khẩu mới.
+3. Mở `/quan-tri`. Session admin hết hạn sau 2 giờ không dùng hoặc 12 giờ tuyệt đối.
+
+Trên VM dev chạy HTTP thuần qua IP: `NEXT_PUBLIC_SITE_URL` phải đúng origin `http://<ip>` và được nướng vào lúc build, nếu không mutation admin bị từ chối. Cookie không có `Secure` qua HTTP nên mật khẩu và cookie admin đi dạng rõ: chỉ dùng trong LAN, và chuyển sang HTTPS trước khi có người dùng thật.
+
+Khôi phục: nếu admin duy nhất bị khoá, dùng service token để reset mật khẩu (`POST .../users/<userId>/reset-password`) hoặc nâng quyền người khác (`PATCH .../users/<userId>` với `{"role":"admin"}`).
 
 ### Chạy Planner trên PostgreSQL
 
@@ -506,6 +525,9 @@ phải host công khai, nên kiểm tra same-origin của Planner chấp nhận 
 | `npm warn install-scripts … not yet covered by allowScripts` | Có dependency mới mang install script, hoặc một package đã duyệt vừa đổi phiên bản — các phê duyệt trong `allowScripts` của `package.json` được ghim theo `pkg@version`. Kiểm tra đúng là package bạn mong đợi, rồi `npm install-scripts approve <pkg>` và commit thay đổi trong `package.json`. Lưu ý `--dry-run` vẫn ghi file ở npm 11.19 |
 | Route Planner trả `503 service_unavailable` | Đã đặt `PLANNER_DATABASE_URL` mà database không truy cập được hoặc từ chối đăng nhập — kiểm tra host, role và chạy `npm run db:migrate` để xem vì sao migration lúc khởi động thất bại. App cố ý không quay về file JSON |
 | `relation "trips" does not exist` | Migration lúc khởi động chưa hoàn tất trên database đó — chạy `npm run db:migrate` và đọc thông báo của nó |
+| `/quan-tri` trả 404 cho người đã đăng nhập | Cố ý: tài khoản không phải `admin`. Nâng quyền bằng service token; role được đọc ở mỗi request |
+| Mutation admin trả `403 forbidden` | Lệch origin: origin của trang phải khớp chính xác `NEXT_PUBLIC_SITE_URL` (scheme, host, port); giá trị này được nướng lúc build |
+| Mutation admin trả `409 invalid_state` | Tự đổi role hoặc tự reset mật khẩu, hoặc thay đổi sẽ xoá admin cuối cùng |
 | Một URL tiếng Việt trả 404 | Pathname chưa có trong `pathnames` ở `routing.ts`, hoặc tên thư mục không khớp pathname nội bộ |
 | `MISSING_MESSAGE` lúc chạy | Key chỉ được thêm vào một file messages |
 | `npm run verify:ui` không mở được browser | Chrome không nằm ở đường dẫn macOS hard-code trong `scripts/screenshots.mjs` |

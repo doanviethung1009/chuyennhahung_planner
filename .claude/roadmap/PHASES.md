@@ -136,7 +136,7 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
   Phần Optimization không phụ thuộc 07.
 
 ## Phase 07 — Admin Portal, CMS & RBAC
-- **Trạng thái:** Designed. Thiết kế ở `docs/adr/0006-unified-identity-and-roles.md`
+- **Trạng thái:** In progress — lát cắt 1 (portal quản lý user, ADR 0010 Accepted 2026-11-11) đã hiện thực, chờ review/PR; còn CMS, audit log, MFA, màn hình editor, store rate limit dùng chung. Thiết kế gốc ở `docs/adr/0006-unified-identity-and-roles.md`
   (+ `.vi.md`), *Proposed*, merge ở PR #25. Nhãn cũ "Phase 06 (Admin Portal & CMS)" đã
   đổi thành Phase 07 (P07-R0). Còn chờ chủ nhà quyết định P07-D1.
 - **Phạm vi:** một user model với `role: member|editor|admin`; `can(identity, action)`

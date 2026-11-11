@@ -12,6 +12,8 @@ describe('safeReturnTo (open-redirect guard)', () => {
       '/tao-chuyen-di/da-lat-3-ngay-lang-man',
       '/en/trip-setup/da-lat-3-ngay-lang-man',
       '/tao-chuyen-di/da-lat-3-ngay-lang-man?x=1',
+      '/quan-tri',
+      '/en/admin',
     ]) {
       expect(safeReturnTo(ok), ok).toBe(ok);
     }
@@ -36,7 +38,7 @@ describe('safeReturnTo (open-redirect guard)', () => {
   });
 
   it('rejects unknown paths and routes that are not returnable', () => {
-    for (const bad of ['/admin', '/dang-nhap', '/chia-se/abc', '/stories', '/my-trips/a/b']) {
+    for (const bad of ['/admin/x', '/dang-nhap', '/chia-se/abc', '/stories', '/my-trips/a/b']) {
       expect(safeReturnTo(bad), bad).toBe('/my-trips');
     }
   });

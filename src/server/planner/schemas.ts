@@ -497,6 +497,16 @@ export const SESSION_ABSOLUTE_DAYS = 14;
 export const SESSION_IDLE_DAYS = 7;
 
 /**
+ * Shorter lifetimes for an `admin` session (ADR 0010 §4). Chosen by the user's
+ * *current* role each time the session is read, so demotion restores the
+ * member lifetime and promotion shortens it.
+ */
+export const ADMIN_SESSION_ABSOLUTE_HOURS = 12;
+export const ADMIN_SESSION_IDLE_HOURS = 2;
+/** Admin sessions refresh `lastSeenAt` more often so a 2 h idle window stays accurate. */
+export const ADMIN_SESSION_TOUCH_INTERVAL_MINUTES = 10;
+
+/**
  * How stale `lastSeenAt` may get before a read bothers to update it. Idle
  * expiry needs the field to move, but writing on *every* request would turn
  * each GET into a store write and serialise the whole API behind it, so the

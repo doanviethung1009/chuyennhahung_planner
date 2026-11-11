@@ -4,7 +4,14 @@ import { authorizeAdmin } from '@/server/content/auth';
 import { ContentError, forbidden } from '@/server/content/errors';
 import { toErrorResponse } from '@/server/content/http';
 import { jsonSafe } from './money';
-import { SESSION_COOKIE, type CredentialSource, type PlannerIdentity } from './auth';
+import { can, type Action, type Role } from '@/server/identity/permissions';
+import { createRateLimiter } from '@/server/rate-limit';
+import {
+  SESSION_COOKIE,
+  sessionTokenFromRequest,
+  type CredentialSource,
+  type PlannerIdentity,
+} from './auth';
 import { getPlannerRepository } from './instance';
 import type { PlannerRepository, TripView } from './repository';
 import { tripListQuerySchema } from './schemas';
@@ -245,28 +252,119 @@ export async function plannerSessionRoute(
   }
 }
 
+/** Who is behind an admin call (ADR 0010). */
+export type AdminPrincipal =
+  | { kind: 'service' }
+  | { kind: 'session'; userId: string; handle: string; role: Role };
+
 type AdminPlannerHandler = (
   repository: PlannerRepository,
+  principal: AdminPrincipal,
 ) => Promise<NextResponse> | NextResponse;
 
+export interface AdminRouteOptions {
+  /** The permission the route needs; checked with `can()` for every principal. */
+  action: Action;
+  /**
+   * Opt in to browser-session admins. Off by default: a route must name itself
+   * (ADR 0010 §2). Without it, only the service token passes.
+   */
+  session?: boolean;
+}
+
+/** Session admin mutations: 30 per minute per user (ADR 0010 §8). Per process. */
+export const adminSessionLimiter = createRateLimiter({ limit: 30, windowMs: 60_000 });
+
+const ADMIN_NO_STORE = (response: NextResponse): NextResponse => {
+  response.headers.set('cache-control', 'no-store');
+  return response;
+};
+
 /**
- * Wraps an admin route. Provisioning travellers is an operator action, so it
- * uses the existing `ADMIN_API_TOKEN` and fails closed exactly as the content
- * admin API does.
+ * Wraps an admin route. Provisioning travellers is an operator action.
  *
- * Note what this does *not* grant: the admin token can create, list, rotate and
- * remove travellers, and cannot read or edit a single trip. Trip access needs
- * the traveller's own token (ADR 0002 §3).
+ * Principal resolution (ADR 0010 §1), in order:
+ * 1. An `Authorization` header is present: only `ADMIN_API_TOKEN` is accepted.
+ *    A traveller's own access token is *not* an admin credential.
+ * 2. Otherwise, if the route opted in with `session: true`, the session cookie:
+ *    same-origin proof, role re-read from the store, no pending temporary
+ *    password, `can(role, action)`, then a per-user rate limit on mutations.
+ *
+ * The service token still cannot read or edit a trip (ADR 0002 §3).
+ * Calling with just a handler keeps the token-only behaviour of every route
+ * that has not opted in.
  */
 export async function adminPlannerRoute(
   request: Request,
   handler: AdminPlannerHandler,
+): Promise<NextResponse>;
+export async function adminPlannerRoute(
+  request: Request,
+  options: AdminRouteOptions,
+  handler: AdminPlannerHandler,
+): Promise<NextResponse>;
+export async function adminPlannerRoute(
+  request: Request,
+  second: AdminRouteOptions | AdminPlannerHandler,
+  third?: AdminPlannerHandler,
 ): Promise<NextResponse> {
+  const options: AdminRouteOptions =
+    typeof second === 'function' ? { action: 'user:provision' } : second;
+  const handler = typeof second === 'function' ? second : third;
   try {
-    authorizeAdmin(request);
+    if (!handler) throw new Error('adminPlannerRoute needs a handler');
+    const principal = await resolveAdminPrincipal(request, options);
     const repository = await getPlannerRepository();
-    return await handler(repository);
+    return ADMIN_NO_STORE(await handler(repository, principal));
   } catch (error) {
-    return toErrorResponse(error);
+    return ADMIN_NO_STORE(toErrorResponse(error));
   }
+}
+
+async function resolveAdminPrincipal(
+  request: Request,
+  options: AdminRouteOptions,
+): Promise<AdminPrincipal> {
+  // Present at all => the caller chose the token path; never fall through to a
+  // cookie, and never accept anything but the service token.
+  if (request.headers.get('authorization') !== null || !options.session) {
+    authorizeAdmin(request);
+    if (!can({ role: 'service' }, options.action)) throw forbidden('this action is not permitted');
+    return { kind: 'service' };
+  }
+
+  if (sessionTokenFromRequest(request) === null) {
+    authorizeAdmin(request); // throws the usual 401 / 503
+    throw new ContentError('unauthorized', 'sign in as an admin, or send the admin token');
+  }
+
+  // A cookie rides along on cross-site requests; prove origin before anything
+  // is read or written.
+  requireSameOrigin(request, 'cookie');
+  const repository = await getPlannerRepository();
+  const identity = await repository.identify(request);
+  if (identity.source !== 'cookie') {
+    throw new ContentError('unauthorized', 'a signed-in admin session is required');
+  }
+  if (identity.passwordChangeRequired) {
+    throw new ContentError(
+      'password_change_required',
+      'change the temporary password at POST /api/planner/password first',
+    );
+  }
+  if (!can({ role: identity.role }, options.action)) {
+    throw forbidden('this account is not permitted to do that');
+  }
+  if (!SAFE_METHODS.has(request.method.toUpperCase())) {
+    const verdict = adminSessionLimiter.check(identity.userId);
+    if (!verdict.ok) {
+      throw new ContentError(
+        'rate_limited',
+        'too many admin changes; wait a moment and try again',
+        [],
+        verdict.retryAfterSeconds,
+      );
+    }
+  }
+  return { kind: 'session', userId: identity.userId, handle: identity.handle, role: identity.role };
 }

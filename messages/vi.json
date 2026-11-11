@@ -428,5 +428,91 @@
     "basedOn": "Lịch trình này dựa trên câu chuyện",
     "limitedTitle": "Vui lòng thử lại sau",
     "limitedBody": "Có quá nhiều lượt xem từ mạng của bạn trong thời gian ngắn. Hãy đợi một chút rồi tải lại trang."
+  },
+  "admin": {
+    "metaTitle": "Quản trị",
+    "title": "Quản trị người dùng",
+    "description": "Tạo tài khoản, đổi vai trò và cấp lại mật khẩu cho người dùng Planner. Trang này chỉ dành cho quản trị viên.",
+    "signedInAs": "Đang đăng nhập là {handle}",
+    "signOut": "Đăng xuất",
+    "signingOut": "Đang đăng xuất…",
+    "roles": {
+      "member": "Thành viên",
+      "editor": "Biên tập viên",
+      "admin": "Quản trị viên"
+    },
+    "users": {
+      "heading": "Người dùng",
+      "caption": "Danh sách người dùng Planner",
+      "loading": "Đang tải danh sách…",
+      "count": "{count, plural, other {# người dùng}}",
+      "empty": "Chưa có người dùng nào.",
+      "colHandle": "Mã tài khoản",
+      "colName": "Tên hiển thị",
+      "colEmail": "Email",
+      "colRole": "Vai trò",
+      "colCreated": "Ngày tạo",
+      "colActions": "Thao tác",
+      "noEmail": "Chưa có",
+      "you": "Bạn",
+      "roleSelect": "Vai trò của {handle}",
+      "saveRole": "Lưu vai trò",
+      "saving": "Đang lưu…",
+      "selfNote": "Bạn không thể đổi vai trò hay cấp lại mật khẩu cho chính mình.",
+      "reset": "Cấp lại mật khẩu",
+      "resetConfirm": "Cấp lại mật khẩu cho {handle}? Mọi phiên đăng nhập của họ sẽ bị đăng xuất.",
+      "resetYes": "Có, cấp lại",
+      "resetNo": "Huỷ",
+      "retry": "Tải lại danh sách"
+    },
+    "create": {
+      "heading": "Tạo người dùng",
+      "intro": "Mật khẩu tạm và mã truy cập chỉ hiện một lần sau khi tạo.",
+      "handleLabel": "Mã tài khoản",
+      "handleHint": "Chữ thường, số và dấu gạch ngang, từ 3 ký tự.",
+      "displayNameLabel": "Tên hiển thị",
+      "emailLabel": "Email (không bắt buộc)",
+      "emailHint": "Cần có email để họ đăng nhập bằng mật khẩu.",
+      "roleLabel": "Vai trò",
+      "submit": "Tạo người dùng",
+      "submitting": "Đang tạo…"
+    },
+    "secret": {
+      "heading": "Lưu ngay bây giờ: bí mật của {handle}",
+      "warning": "Các giá trị dưới đây chỉ hiện một lần. Rời trang hoặc tải lại là mất, và bạn không thể xem lại.",
+      "temporaryPassword": "Mật khẩu tạm",
+      "accessToken": "Mã truy cập",
+      "copy": "Sao chép",
+      "copied": "Đã sao chép",
+      "copyFailed": "Trình duyệt không cho sao chép. Hãy chọn và sao chép bằng tay.",
+      "copyLabel": "Sao chép {name}",
+      "dismiss": "Tôi đã lưu lại"
+    },
+    "status": {
+      "loaded": "Đã tải danh sách người dùng.",
+      "created": "Đã tạo người dùng {handle}.",
+      "roleSaved": "Đã đổi vai trò của {handle} thành {role}.",
+      "resetDone": "Đã cấp lại mật khẩu cho {handle}.",
+      "signedOutFailed": "Chưa đăng xuất được. Hãy thử lại."
+    },
+    "fields": {
+      "handle": "mã tài khoản",
+      "displayName": "tên hiển thị",
+      "email": "email",
+      "role": "vai trò"
+    },
+    "errors": {
+      "unauthorized": "Phiên đăng nhập đã hết hạn.",
+      "signInAgain": "Đăng nhập lại",
+      "forbidden": "Tài khoản này không có quyền quản trị.",
+      "password_change_required": "Hãy đổi mật khẩu tạm trước khi tiếp tục.",
+      "invalid_state": "Thao tác bị từ chối: bạn không thể tự đổi vai trò, tự cấp lại mật khẩu hay gỡ quản trị viên cuối cùng.",
+      "validation_failed": "Thông tin chưa hợp lệ.",
+      "validation_fields": "Thông tin chưa hợp lệ ở: {fields}.",
+      "rate_limited": "Thao tác quá nhanh. Chờ khoảng {seconds} giây rồi thử lại.",
+      "not_found": "Không tìm thấy người dùng này. Có thể đã bị xoá, hãy tải lại danh sách.",
+      "conflict": "Mã tài khoản hoặc email này đã có người dùng.",
+      "generic": "Có lỗi xảy ra. Hãy thử lại sau ít phút."
+    }
   }
 }
