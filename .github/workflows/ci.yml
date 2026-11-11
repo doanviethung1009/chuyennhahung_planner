@@ -27,6 +27,25 @@ jobs:
   verify:
     runs-on: ubuntu-latest
 
+    # A throwaway database so tests/planner-postgres.integration.test.ts runs
+    # here instead of being skipped. The credentials only mean something inside
+    # this job's service container; the tests work in a schema they create and
+    # drop (ADR 0008 follow-up 3, ADR 0009).
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci-only-throwaway
+          POSTGRES_DB: planner_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d planner_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - uses: actions/checkout@v4
 
@@ -51,6 +70,8 @@ jobs:
       # ubuntu-latest, and the test skips itself if it ever is not.
       - name: test
         run: npm run test
+        env:
+          TEST_DATABASE_URL: postgres://ci:ci-only-throwaway@localhost:5432/planner_test
 
       - name: build
         run: npm run build

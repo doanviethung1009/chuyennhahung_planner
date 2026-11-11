@@ -178,6 +178,8 @@ export class PlannerRepository {
    */
   private shareIndex: Map<string, string> | null = null;
   private shareIndexGeneration = 0;
+  /** Store revision the index was built at, when the store reports one. */
+  private shareIndexRevision: string | number | null = null;
 
   constructor(options: PlannerRepositoryOptions) {
     this.store = options.store;
@@ -1259,7 +1261,10 @@ export class PlannerRepository {
   }
 
   private async loadShareIndex(): Promise<Map<string, string>> {
-    if (this.shareIndex) return this.shareIndex;
+    // A shared store can change under another process: compare its revision.
+    // Read before the snapshot, so the index is never tagged newer than its data.
+    const revision = (await this.store.revision?.()) ?? null;
+    if (this.shareIndex && revision === this.shareIndexRevision) return this.shareIndex;
 
     const generation = this.shareIndexGeneration;
     const data = await this.snapshot();
@@ -1268,7 +1273,10 @@ export class PlannerRepository {
       if (isShareable(trip)) index.set(shareTokenDigest(trip.shareToken), trip.id);
     }
     // A write landed while we were reading: use this index once, don't keep it.
-    if (generation === this.shareIndexGeneration) this.shareIndex = index;
+    if (generation === this.shareIndexGeneration) {
+      this.shareIndex = index;
+      this.shareIndexRevision = revision;
+    }
     return index;
   }
 

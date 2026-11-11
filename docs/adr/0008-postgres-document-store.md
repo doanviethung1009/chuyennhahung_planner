@@ -42,6 +42,11 @@ provisioned travellers), writes are rare compared with reads, and all invariants
 in the repositories, which operate on the whole document. What we do not know: real
 traffic, and how large the Planner document grows once the UI is public.
 
+*(Amended 2026-11-11: for the Planner, step 2 is taken directly by
+[ADR 0009](0009-postgres-persistence.md) — normalised tables, with this ADR's
+variable name, startup migrations and revision-validated cache. Step 1 below
+now applies to the Travel content store only.)*
+
 ## Decision
 
 1. **Engine: PostgreSQL 17**, the version already running on the VM. One database per
