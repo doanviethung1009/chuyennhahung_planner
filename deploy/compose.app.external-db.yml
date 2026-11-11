@@ -1,0 +1,24 @@
+# Overlay: PostgreSQL on a SEPARATE VM (the "microservice" layout, ADR 0009 §5).
+# Use with the stack's compose file and compose.app.yml — docs/usage.md → Deploy:
+#
+#   docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml up -d app
+#
+# The link crosses the LAN, so TLS with full verification is required. In the
+# stack's .env (mode 600, never committed):
+#   PLANNER_DATABASE_URL=postgres://cnh_app:<password>@<DB_IP>:5432/cnh_planner?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt
+#
+# Put the CA that signed the DB server certificate (its SAN must contain
+# <DB_IP>) at /opt/chuyennhahung/secrets/pg-ca.crt on the app VM BEFORE `up`:
+# a bind mount of a missing file makes Docker create a directory there. On the
+# DB VM: a `hostssl` pg_hba.conf line for the app VM's IP only, and 5432
+# firewalled to that IP. `app` and `tools` stay off any `backend` network; they
+# reach the DB VM through the default outbound route.
+
+services:
+  app:
+    volumes:
+      - /opt/chuyennhahung/secrets/pg-ca.crt:/run/secrets/pg-ca.crt:ro
+
+  tools:
+    volumes:
+      - /opt/chuyennhahung/secrets/pg-ca.crt:/run/secrets/pg-ca.crt:ro

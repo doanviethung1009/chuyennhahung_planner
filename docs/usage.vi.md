@@ -228,8 +228,8 @@ CREATE ROLE planner LOGIN PASSWORD '<password>' NOSUPERUSER NOCREATEDB NOCREATER
 CREATE DATABASE planner OWNER planner;
 ```
 
-Không mở cổng 5432 ra giao diện công khai (dùng mạng Docker riêng, không publish
-cổng). Vì migration chạy khi khởi động, role của app phải tạo và sửa được bảng:
+Chỉ mở cổng 5432 trên đúng giao diện mà app kết nối tới (xem đoạn về TLS bên dưới
+cho bố cục database ở VM riêng). Vì migration chạy khi khởi động, role của app phải tạo và sửa được bảng:
 dùng một role sở hữu database cho cả migrate lẫn chạy app. **Rủi ro đã chấp nhận
 (ADR 0009):** nếu credential của app bị lộ hoặc app dính lỗi injection, kẻ tấn
 công cũng có quyền DDL. Muốn tách một role chủ cho `npm run db:migrate` khỏi một
@@ -242,14 +242,30 @@ rồi trả `503`; các request trong 5 giây sau nhận luôn `503` đó mà kh
 để database đang chết không bị dội request. Biến cũ `DATABASE_URL` bị bỏ qua — app
 ghi cảnh báo nếu nó được đặt mà không có `PLANNER_DATABASE_URL`.
 
-Kết nối tới Postgres không mã hoá trên mạng Docker riêng, điều này chỉ chấp nhận
-được khi database còn nằm trên cùng máy. Nếu sau này database chuyển sang máy
-khác, hãy bắt buộc TLS bằng cách thêm `?sslmode=require` (hoặc `verify-full` kèm
-CA của server) vào `PLANNER_DATABASE_URL`.
+**Trong cùng một compose**, kết nối nằm trong mạng Docker riêng (service
+`postgres`, cổng không publish) và không cần TLS. **Khi database nằm ở máy khác,
+kết nối dùng TLS có xác minh đầy đủ**: app kết nối qua mạng LAN (ADR 0009 §5, sửa
+đổi 2026-11-11; cả hai bố cục ở [Deploy](#deploy)). Thêm `?sslmode=verify-full&sslrootcert=<đường dẫn tới CA>`
+vào `PLANNER_DATABASE_URL`. Driver `pg` đang dùng (8.23) coi `sslmode=require`,
+`prefer` và `verify-ca` là bí danh của `verify-full`, nên không có chế độ "mã hoá
+nhưng không xác minh" để lùi về: app phải có CA, và certificate của server phải
+khớp với host trong URL. Trên VM database:
+
+- một CA riêng, và một server certificate do CA đó ký, có **Subject Alternative
+  Name chứa IP của VM database** (`IP:<DB_IP>`) — URL dùng IP, nên certificate chỉ
+  có hostname sẽ không qua xác minh; `ssl = on` với `ssl_cert_file` /
+  `ssl_key_file` trỏ tới chúng;
+- trong `pg_hba.conf`, đúng một dòng `hostssl cnh_planner cnh_app <APP_VM_IP>/32 scram-sha-256`
+  cho VM app, và không có dòng `host` nào nhận cùng role mà không cần TLS;
+- firewall chỉ mở 5432 cho IP của VM app, không cho ai khác.
+
+Chỉ certificate của CA (công khai) được chép sang VM app; private key của server
+không bao giờ rời VM database. `tests/postgres-tls-url.test.ts` khoá cách driver
+đọc các tham số này, không cần kết nối.
 
 ```bash
 # Chuỗi kết nối là secret: chỉ qua biến môi trường, không commit, không log.
-export PLANNER_DATABASE_URL='postgres://planner:<password>@<db-host>:5432/planner'
+export PLANNER_DATABASE_URL='postgres://planner:<password>@<db-host>:5432/planner?sslmode=verify-full&sslrootcert=/path/to/pg-ca.crt'
 
 npm run db:migrate                       # tuỳ chọn: app tự migrate lúc khởi động
 npm run planner:import -- planner.json   # một lần, để chuyển file JSON hiện có vào
@@ -383,32 +399,83 @@ nên database sập sẽ hiện thành `503` của Planner chứ không thành v
 ### Stack tự host (Docker Compose + nginx)
 
 [`deploy/compose.app.yml`](../deploy/compose.app.yml) thêm service `app` vào một
-stack đã chạy `postgres` và `nginx`: mạng `edge` + `backend`, không publish cổng,
-volume tên `app-data` cho `.data/`, và service `tools` thuộc profile `tools`. Đặt
-bản checkout cạnh file compose của stack (hoặc đặt `APP_SRC`) rồi thêm vào `.env`
-của stack (mode 600, không bao giờ commit). `compose.yml` dưới đây là file compose
-của chính stack:
+stack đã chạy `nginx`: mạng `edge`, không publish cổng, volume tên `app-data` cho
+`.data/`, và service `tools` thuộc profile `tools`. **Tự nó không nối database
+nào.** Có hai bố cục được hỗ trợ, mỗi bố cục thêm đúng một file overlay lên trên —
+không bố cục nào phải sửa file của bố cục kia:
+
+| Bố cục | Overlay | Kết nối database |
+|---|---|---|
+| Cùng một compose | [`compose.app.local-db.yml`](../deploy/compose.app.local-db.yml) | service `postgres`, mạng riêng `backend`, không TLS |
+| Postgres trên VM riêng | [`compose.app.external-db.yml`](../deploy/compose.app.external-db.yml) | qua mạng LAN, TLS `verify-full`, mount CA |
+
+Đặt bản checkout cạnh file compose của stack (hoặc đặt `APP_SRC`) rồi thêm vào
+`.env` của stack (mode 600, không bao giờ commit) các giá trị chung dưới đây cùng
+`PLANNER_DATABASE_URL` của bố cục bạn chọn. `compose.yml` là file compose của chính
+stack:
 
 ```bash
 NEXT_PUBLIC_SITE_URL=https://chuyennhahung.vn        # hoặc http://<host> trước khi có TLS
-PLANNER_DATABASE_URL=postgres://cnh_app:<password>@postgres:5432/cnh_planner
 ADMIN_API_TOKEN=<openssl rand -base64 36>
 TRUST_PROXY_HEADERS=true
 ```
 
+Mật khẩu có ký tự dành riêng của URL (`@`, `:`, `/`, `?`, `#`, `&`) phải được
+percent-encode trong `PLANNER_DATABASE_URL`. Dùng cùng ba file `-f` cho mọi lệnh
+của một bố cục (`build`, `up`, `run --rm tools`); trộn lẫn sẽ khởi động app mà
+không có phần nối database.
+
+#### Cùng một compose
+
+`compose.yml` của stack định nghĩa service `postgres` và mạng `backend`. Overlay
+thêm `depends_on: postgres` và mạng `backend` cho `app` và `tools`. Kết nối nằm
+trong mạng Docker riêng và cổng 5432 không publish, nên không TLS, không CA:
+
 ```bash
-docker compose -f compose.yml -f compose.app.yml build app
-docker compose -f compose.yml -f compose.app.yml up -d app
-docker compose -f compose.yml -f compose.app.yml run --rm tools                 # db:migrate, không bắt buộc
-docker compose -f compose.yml -f compose.app.yml run --rm tools \
-  npm run planner:import -- /import/planner.json                                # ./import được mount chỉ đọc
+PLANNER_DATABASE_URL=postgres://cnh_app:<password>@postgres:5432/cnh_planner
 ```
 
-Chạy **đúng một** replica `app`. Content store của Travel vẫn là file JSON trên
-volume và rate limiter nằm trong bộ nhớ tiến trình (bước 1 của ADR 0008 cho content
-chưa làm); replica thứ hai sẽ chia đôi cả hai. Trên host nhỏ (2 GB RAM) `next build`
-là lúc tốn bộ nhớ nhất — giữ swap, hoặc build ở máy khác rồi chuyển image bằng
-`docker save | docker load`.
+```bash
+docker compose -f compose.yml -f compose.app.yml -f compose.app.local-db.yml build app
+docker compose -f compose.yml -f compose.app.yml -f compose.app.local-db.yml up -d app
+docker compose -f compose.yml -f compose.app.yml -f compose.app.local-db.yml run --rm tools   # db:migrate, không bắt buộc
+docker compose -f compose.yml -f compose.app.yml -f compose.app.local-db.yml run --rm tools \
+  npm run planner:import -- /import/planner.json                                              # ./import được mount chỉ đọc
+```
+
+#### Postgres trên VM riêng
+
+PostgreSQL chạy trên VM riêng và app kết nối qua mạng LAN bằng TLS `verify-full`
+— thiết lập certificate, `pg_hba.conf` và firewall như trong
+[Chạy Planner trên PostgreSQL](#chạy-planner-trên-postgresql). Overlay mount CA
+của database chỉ đọc từ `/opt/chuyennhahung/secrets/pg-ca.crt` vào
+`/run/secrets/pg-ca.crt` trong `app` và `tools`; không service nào vào mạng
+`backend`. Chép CA vào đó **trước** khi `up` (`chmod 644`; đây là certificate
+công khai, không phải secret) — bind mount một file chưa có sẽ khiến Docker tạo
+một thư mục ở chỗ đó:
+
+```bash
+PLANNER_DATABASE_URL=postgres://cnh_app:<password>@<DB_IP>:5432/cnh_planner?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt
+```
+
+```bash
+docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml build app
+docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml up -d app
+docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml run --rm tools   # db:migrate, không bắt buộc
+docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml run --rm tools \
+  npm run planner:import -- /import/planner.json                                                 # ./import được mount chỉ đọc
+```
+
+Nếu Planner trả `503` sau khi khởi động, hãy kiểm tra từ VM app rằng cổng 5432 của
+VM database truy cập được và SAN của certificate có đúng IP dùng trong URL.
+
+#### Một replica, host nhỏ
+
+Chạy **đúng một** replica `app`, ở cả hai bố cục. Content store của Travel vẫn là
+file JSON trên volume và rate limiter nằm trong bộ nhớ tiến trình (bước 1 của
+ADR 0008 cho content chưa làm); replica thứ hai sẽ chia đôi cả hai. Trên host nhỏ
+(2 GB RAM) `next build` là lúc tốn bộ nhớ nhất — giữ swap, hoặc build ở máy khác
+rồi chuyển image bằng `docker save | docker load`.
 
 ### Header của reverse proxy
 
