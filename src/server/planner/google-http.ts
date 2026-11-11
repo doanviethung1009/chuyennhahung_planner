@@ -3,6 +3,7 @@ import { pathnames, type Locale } from '@/i18n/routing';
 import { safeReturnTo } from '@/lib/return-to';
 import { OAUTH_COOKIE_PATH, OAUTH_STATE_COOKIE } from './google';
 import { OAUTH_ATTEMPT_MINUTES } from './schemas';
+import { isSecureRequest } from '@/server/request-scheme';
 
 /**
  * HTTP plumbing for the two Google routes (ADR 0007): the state cookie and the
@@ -82,7 +83,7 @@ export function redirectToAccount(
   return clearStateCookie(redirectTo(request, `${accountPath(locale)}${query}`), request);
 }
 
-const secure = (request: Request) => new URL(request.url).protocol === 'https:';
+const secure = (request: Request) => isSecureRequest(request);
 
 /**
  * Binds the attempt to this browser. `SameSite=Lax` is what lets the cookie

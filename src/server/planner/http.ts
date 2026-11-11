@@ -8,6 +8,7 @@ import { SESSION_COOKIE, type CredentialSource, type PlannerIdentity } from './a
 import { getPlannerRepository } from './instance';
 import type { PlannerRepository, TripView } from './repository';
 import { tripListQuerySchema } from './schemas';
+import { isSecureRequest, ownOrigins } from '@/server/request-scheme';
 
 /**
  * The HTTP boundary for the Planner. It reuses the content system's error
@@ -126,7 +127,7 @@ function requireSameOrigin(request: Request, source: CredentialSource | null): v
     } catch {
       throw forbidden('the Origin header is not a valid origin');
     }
-    if (stated !== new URL(request.url).origin) {
+    if (!ownOrigins(request).has(stated)) {
       throw forbidden(`a cross-site ${request.method} is refused: Origin was "${stated}"`);
     }
     return;
@@ -140,9 +141,10 @@ function requireSameOrigin(request: Request, source: CredentialSource | null): v
 }
 
 /**
- * Attaches the session cookie. `Secure` follows the request's own scheme so a
- * plain-http dev server still works; in production the site is https, so the
- * flag is on. `HttpOnly` is unconditional — the browser must never be able to
+ * Attaches the session cookie. `Secure` follows the browser's scheme so a
+ * plain-http dev server still works; behind a TLS-terminating proxy that scheme
+ * comes from `X-Forwarded-Proto`, trusted only with `TRUST_PROXY_HEADERS=true`
+ * (`src/server/request-scheme.ts`). `HttpOnly` is unconditional — the browser must never be able to
  * read this value, which is the whole reason it is a cookie and not a token in
  * `localStorage`.
  */
@@ -160,7 +162,7 @@ export function setSessionCookie(
     name: SESSION_COOKIE,
     value: token,
     httpOnly: true,
-    secure: new URL(request.url).protocol === 'https:',
+    secure: isSecureRequest(request),
     sameSite: 'lax',
     path: '/',
     maxAge: secondsLeft,
@@ -177,7 +179,7 @@ export function clearSessionCookie(
     name: SESSION_COOKIE,
     value: '',
     httpOnly: true,
-    secure: new URL(request.url).protocol === 'https:',
+    secure: isSecureRequest(request),
     sameSite: 'lax',
     path: '/',
     maxAge: 0,
