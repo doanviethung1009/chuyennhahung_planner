@@ -43,8 +43,9 @@ với `Number.MAX_SAFE_INTEGER` nên map được sang `BIGINT`, và repository 
 bất biến sau hơn 65 test chạy trên store trong bộ nhớ. Chủ dự án đã xác
 nhận VM chạy PostgreSQL 16 hoặc 17 và app sẽ kết nối qua một Docker network nội
 bộ trên cùng VM, nên không cần TLS và cổng 5432 không mở ra ngoài. *(Sửa đổi
-2026-11-11, sau PR #36: PostgreSQL chạy trên **một VM khác** với app, nên kết nối
-đi qua mạng LAN và bắt buộc TLS với `sslmode=verify-full` — xem §5.)* Điều chưa
+2026-11-11, sau PR #36: chủ dự án chạy hai bố cục — PostgreSQL là một service trong
+**cùng một compose**, nơi điều trên vẫn đúng, hoặc trên **một VM riêng**, nơi kết
+nối đi qua mạng LAN và bắt buộc TLS với `sslmode=verify-full` — xem §5.)* Điều chưa
 biết: khối lượng dữ liệu dự kiến (chưa có traffic thật).
 
 **Quan hệ với [ADR 0008](0008-postgres-document-store.vi.md).** ADR 0008, được
@@ -174,13 +175,20 @@ driver về dưới dạng chuỗi và được chuyển đổi qua ranh giới 
 - Thông tin đăng nhập là một role riêng chỉ sở hữu các bảng của Planner (không
   superuser, không `CREATEDB`), cung cấp qua biến môi trường, không bao giờ
   commit. Cổng database không mở ra ngoài mạng riêng của VM.
-- *(Sửa đổi 2026-11-11.)* Database chạy trên VM riêng, nên app kết nối qua mạng
-  LAN và `PLANNER_DATABASE_URL` **phải** có `sslmode=verify-full&sslrootcert=<CA>`.
-  `pg` 8.23 đang dùng vốn đã coi `require`, `prefer` và `verify-ca` là
-  `verify-full`, nên người vận hành cung cấp một CA và một server certificate có
-  SAN chứa IP của VM database. Trên VM database, `pg_hba.conf` chỉ nhận role của
-  app qua một dòng `hostssl` cho IP của VM app, và firewall chỉ mở 5432 cho IP đó.
-  Giả định cũ "mạng Docker nội bộ, không TLS" không còn đúng. Thiết lập:
+- *(Sửa đổi 2026-11-11.)* Hỗ trợ cả hai bố cục deploy, mỗi bố cục là một
+  overlay compose trên `deploy/compose.app.yml`, nên không bố cục nào sửa bố cục kia:
+  - **Cùng một compose** (`compose.app.local-db.yml`): service `postgres` trên
+    mạng Docker riêng `backend`, cổng không publish, không TLS — giả định ban đầu ở
+    trên, vẫn đúng cho bố cục này.
+  - **VM riêng** (`compose.app.external-db.yml`): kết nối đi qua mạng LAN, nên
+    `PLANNER_DATABASE_URL` **phải** có `sslmode=verify-full&sslrootcert=<CA>`.
+    `pg` 8.23 đang dùng vốn đã coi `require`, `prefer` và `verify-ca` là
+    `verify-full`, nên người vận hành cung cấp một CA và một server certificate có
+    SAN chứa IP của VM database. Trên VM database, `pg_hba.conf` chỉ nhận role
+    của app qua một dòng `hostssl` cho IP của VM app, và firewall chỉ mở 5432 cho
+    IP đó.
+
+  Thiết lập: [usage → Deploy](../usage.vi.md#deploy) và
   [usage → Chạy Planner trên PostgreSQL](../usage.vi.md#chạy-planner-trên-postgresql).
 
 ### 6. Chuyển dữ liệu sang, và chuyển ngược lại

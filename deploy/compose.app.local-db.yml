@@ -1,0 +1,23 @@
+# Overlay: PostgreSQL as the `postgres` service of the SAME compose stack
+# (ADR 0009 §5). Use with the stack's compose file and compose.app.yml —
+# docs/usage.md → Deploy:
+#
+#   docker compose -f compose.yml -f compose.app.yml -f compose.app.local-db.yml up -d app
+#
+# The stack's compose.yml must define the `postgres` service and the `backend`
+# network. The link stays on that private Docker network and 5432 is not
+# published, so no TLS and no CA mount. In the stack's .env (mode 600):
+#   PLANNER_DATABASE_URL=postgres://cnh_app:<password>@postgres:5432/cnh_planner
+
+services:
+  app:
+    depends_on:
+      - postgres
+    networks:
+      - backend
+
+  tools:
+    depends_on:
+      - postgres
+    networks:
+      - backend

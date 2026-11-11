@@ -242,9 +242,11 @@ without retrying, so a database that is down is not hammered. The old variable
 `DATABASE_URL` is ignored — a warning is logged if it is set without
 `PLANNER_DATABASE_URL`.
 
-**The database is on another machine, so the link uses TLS with full
-verification.** In the self-hosted layout PostgreSQL runs on its own VM and the
-app reaches it across the LAN (ADR 0009 §5, amended 2026-11-11). Add
+**On the same compose stack** the link stays on the private Docker network
+(the `postgres` service, port not published) and needs no TLS. **When the
+database is on another machine, the link uses TLS with full verification**:
+the app reaches it across the LAN (ADR 0009 §5, amended 2026-11-11; both
+layouts are in [Deploy](#deploy)). Add
 `?sslmode=verify-full&sslrootcert=<path to the CA>` to `PLANNER_DATABASE_URL`.
 The `pg` driver in use (8.23) treats `sslmode=require`, `prefer` and `verify-ca`
 as aliases for `verify-full`, so there is no "encrypted but unverified" mode to
@@ -403,44 +405,85 @@ so a database outage shows as Planner `503`s, not as a restart loop.
 ### Self-hosted stack (Docker Compose + nginx)
 
 [`deploy/compose.app.yml`](../deploy/compose.app.yml) adds the `app` service to
-a stack that already runs `nginx` on the app VM; PostgreSQL runs on a
-**separate VM** and is reached over the LAN with TLS `verify-full` (see
-[Run the Planner on PostgreSQL](#run-the-planner-on-postgresql) for the
-certificate, `pg_hba.conf` and firewall setup). The `app` service joins the
-`edge` network only, publishes no port, keeps `.data/` on a named volume
-`app-data`, and mounts the database CA read-only from
-`/opt/chuyennhahung/secrets/pg-ca.crt` at `/run/secrets/pg-ca.crt`; the `tools`
-service (profile `tools`) mounts the same CA. Copy the CA there first
-(`chmod 644`; it is a public certificate, not a secret). Put the checkout next
-to the stack's compose file (or set `APP_SRC`) and add to the stack's `.env`
-(mode 600, never committed). `compose.yml` below stands for the stack's own
+a stack that already runs `nginx`: network `edge`, no published port, a named
+volume `app-data` for `.data/`, and a `tools` service under the `tools` profile.
+It wires **no database on its own**. Two layouts are supported, and each adds
+exactly one overlay file on top — neither needs the other edited:
+
+| Layout | Overlay | Database link |
+|---|---|---|
+| Same compose stack | [`compose.app.local-db.yml`](../deploy/compose.app.local-db.yml) | `postgres` service, private `backend` network, no TLS |
+| PostgreSQL on a separate VM | [`compose.app.external-db.yml`](../deploy/compose.app.external-db.yml) | across the LAN, TLS `verify-full`, CA mounted |
+
+Put the checkout next to the stack's compose file (or set `APP_SRC`) and add to
+the stack's `.env` (mode 600, never committed) the shared values below plus the
+`PLANNER_DATABASE_URL` of your layout. `compose.yml` stands for the stack's own
 compose file:
 
 ```bash
 NEXT_PUBLIC_SITE_URL=https://chuyennhahung.vn        # or http://<host> before TLS
-PLANNER_DATABASE_URL=postgres://cnh_app:<password>@<DB_IP>:5432/cnh_planner?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt
 ADMIN_API_TOKEN=<openssl rand -base64 36>
 TRUST_PROXY_HEADERS=true
 ```
 
 A password with URL-reserved characters (`@`, `:`, `/`, `?`, `#`, `&`) must be
-percent-encoded in the URL. If the Planner answers `503` after start-up, check
-from the app VM that 5432 on the DB VM is reachable and that the certificate's
-SAN carries the IP used in the URL.
+percent-encoded in `PLANNER_DATABASE_URL`. Use the same three `-f` files for
+every command of a layout (`build`, `up`, `run --rm tools`); mixing them
+starts the app without its database wiring.
+
+#### Same compose stack
+
+The stack's `compose.yml` defines the `postgres` service and the `backend`
+network. The overlay adds `depends_on: postgres` and the `backend` network to
+`app` and `tools`. The link stays on the private Docker network and 5432 is not
+published, so no TLS and no CA:
 
 ```bash
-docker compose -f compose.yml -f compose.app.yml build app
-docker compose -f compose.yml -f compose.app.yml up -d app
-docker compose -f compose.yml -f compose.app.yml run --rm tools                 # db:migrate, optional
-docker compose -f compose.yml -f compose.app.yml run --rm tools \
-  npm run planner:import -- /import/planner.json                                # ./import is mounted read-only
+PLANNER_DATABASE_URL=postgres://cnh_app:<password>@postgres:5432/cnh_planner
 ```
 
-Run **exactly one** `app` replica. The Travel content store is still a JSON
-file on the volume and the rate limiters live in process memory (ADR 0008
-step 1 for content is not built); a second replica would split both. On a
-small host (2 GB RAM) `next build` is the memory peak — keep swap on, or build
-on another machine and move the image with `docker save | docker load`.
+```bash
+docker compose -f compose.yml -f compose.app.yml -f compose.app.local-db.yml build app
+docker compose -f compose.yml -f compose.app.yml -f compose.app.local-db.yml up -d app
+docker compose -f compose.yml -f compose.app.yml -f compose.app.local-db.yml run --rm tools   # db:migrate, optional
+docker compose -f compose.yml -f compose.app.yml -f compose.app.local-db.yml run --rm tools \
+  npm run planner:import -- /import/planner.json                                              # ./import is mounted read-only
+```
+
+#### PostgreSQL on a separate VM
+
+PostgreSQL runs on its own VM and the app reaches it across the LAN with TLS
+`verify-full` — set up the certificate, `pg_hba.conf` and firewall as in
+[Run the Planner on PostgreSQL](#run-the-planner-on-postgresql). The overlay
+mounts the database CA read-only from `/opt/chuyennhahung/secrets/pg-ca.crt` at
+`/run/secrets/pg-ca.crt` in `app` and `tools`; neither joins a `backend`
+network. Copy the CA there **before** `up` (`chmod 644`; it is a public
+certificate, not a secret) — a bind mount of a missing file makes Docker create
+a directory in its place:
+
+```bash
+PLANNER_DATABASE_URL=postgres://cnh_app:<password>@<DB_IP>:5432/cnh_planner?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt
+```
+
+```bash
+docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml build app
+docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml up -d app
+docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml run --rm tools   # db:migrate, optional
+docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml run --rm tools \
+  npm run planner:import -- /import/planner.json                                                 # ./import is mounted read-only
+```
+
+If the Planner answers `503` after start-up, check from the app VM that 5432 on
+the DB VM is reachable and that the certificate's SAN carries the IP used in
+the URL.
+
+#### One replica, small host
+
+Run **exactly one** `app` replica, in either layout. The Travel content store is
+still a JSON file on the volume and the rate limiters live in process memory
+(ADR 0008 step 1 for content is not built); a second replica would split both.
+On a small host (2 GB RAM) `next build` is the memory peak — keep swap on, or
+build on another machine and move the image with `docker save | docker load`.
 
 ### Reverse proxy headers
 

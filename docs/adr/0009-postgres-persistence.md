@@ -45,8 +45,9 @@ holds every invariant behind 65+ tests that run against an in-memory store.
 The owner has
 confirmed that the VM runs PostgreSQL 16 or 17 and that the app will reach it
 over a private Docker network on the same VM, so TLS is not required and port
-5432 is not published. *(Amended 2026-11-11, after PR #36: PostgreSQL runs on a
-**separate VM** from the app, so the link crosses the LAN and TLS with
+5432 is not published. *(Amended 2026-11-11, after PR #36: the owner runs two
+layouts — PostgreSQL as a service in the **same compose stack**, where this
+holds, or on a **separate VM**, where the link crosses the LAN and TLS with
 `sslmode=verify-full` is required — see §5.)* What we do not know: the expected data volume (no
 production traffic yet).
 
@@ -182,15 +183,22 @@ never with a bare `Number()`.
 - The credentials are a dedicated role that owns only the Planner tables (no
   superuser, no `CREATEDB`), supplied by environment, never committed. The
   database port is not published beyond the VM's private network.
-- *(Amended 2026-11-11.)* The database runs on its own VM, so the app reaches it
-  across the LAN and `PLANNER_DATABASE_URL` **must** carry
-  `sslmode=verify-full&sslrootcert=<CA>`. The installed `pg` 8.23 treats
-  `require`, `prefer` and `verify-ca` as `verify-full` anyway, so the operator
-  provides a CA and a server certificate whose SAN contains the database VM's
-  IP. On the database VM, `pg_hba.conf` admits the app role only through a
-  `hostssl` line for the app VM's IP, and a firewall opens 5432 to that IP
-  alone. The previous "private Docker network, no TLS" assumption no longer
-  holds. Setup: [usage → Run the Planner on PostgreSQL](../usage.md#run-the-planner-on-postgresql).
+- *(Amended 2026-11-11.)* Both deployment layouts are supported, each as one
+  compose overlay on `deploy/compose.app.yml`, so neither edits the other:
+  - **Same compose stack** (`compose.app.local-db.yml`): the `postgres`
+    service on the private `backend` Docker network, port not published, no
+    TLS — the original assumption above, still valid for this layout.
+  - **Separate VM** (`compose.app.external-db.yml`): the link crosses the LAN,
+    so `PLANNER_DATABASE_URL` **must** carry
+    `sslmode=verify-full&sslrootcert=<CA>`. The installed `pg` 8.23 treats
+    `require`, `prefer` and `verify-ca` as `verify-full` anyway, so the
+    operator provides a CA and a server certificate whose SAN contains the
+    database VM's IP. On the database VM, `pg_hba.conf` admits the app role
+    only through a `hostssl` line for the app VM's IP, and a firewall opens
+    5432 to that IP alone.
+
+  Setup: [usage → Deploy](../usage.md#deploy) and
+  [usage → Run the Planner on PostgreSQL](../usage.md#run-the-planner-on-postgresql).
 
 ### 6. Moving the data, and moving it back
 
