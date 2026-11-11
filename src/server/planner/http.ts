@@ -121,7 +121,7 @@ function requireSameOrigin(request: Request, source: CredentialSource | null): v
   if (fetchSite !== null) {
     if (fetchSite !== 'same-origin') {
       throw forbidden(
-        `a cross-site ${request.method} is refused: Sec-Fetch-Site was "${fetchSite}"`,
+        `a cross-site ${request.method} is refused`,
       );
     }
     return;
@@ -135,7 +135,7 @@ function requireSameOrigin(request: Request, source: CredentialSource | null): v
       throw forbidden('the Origin header is not a valid origin');
     }
     if (!ownOrigins(request).has(stated)) {
-      throw forbidden(`a cross-site ${request.method} is refused: Origin was "${stated}"`);
+      throw forbidden(`a cross-site ${request.method} is refused`);
     }
     return;
   }
@@ -273,7 +273,17 @@ export interface AdminRouteOptions {
 }
 
 /** Session admin mutations: 30 per minute per user (ADR 0010 §8). Per process. */
-export const adminSessionLimiter = createRateLimiter({ limit: 30, windowMs: 60_000 });
+/**
+ * Kept on `globalThis` so every copy of this module Next.js loads in one
+ * process (page and route-handler bundles) draws from one budget, as the JSON
+ * store does (ADR 0010).
+ */
+const ADMIN_LIMITER_KEY = Symbol.for('chuyennhahung.adminSessionLimiter');
+export const adminSessionLimiter: ReturnType<typeof createRateLimiter> = ((
+  globalThis as typeof globalThis & {
+    [ADMIN_LIMITER_KEY]?: ReturnType<typeof createRateLimiter>;
+  }
+)[ADMIN_LIMITER_KEY] ??= createRateLimiter({ limit: 30, windowMs: 60_000 }));
 
 const ADMIN_NO_STORE = (response: NextResponse): NextResponse => {
   response.headers.set('cache-control', 'no-store');

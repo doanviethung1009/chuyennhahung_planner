@@ -41,6 +41,19 @@ describe('admin portal (frontend, ADR 0010)', () => {
     expect(redirects.map((r) => r.source)).toContain('/tour/:slug');
   });
 
+  it('matches the bare admin paths and their sub-paths with Next’s own matcher, and nothing beside them', async () => {
+    const { pathToRegexp } = (await import(
+      'next/dist/compiled/path-to-regexp' as string
+    )) as { pathToRegexp: (path: string) => RegExp };
+    const covered = (path: string) => adminPaths.some((source) => pathToRegexp(source).test(path));
+    for (const path of ['/quan-tri', '/quan-tri/', '/quan-tri/x', '/en/admin', '/en/admin/x']) {
+      expect(covered(path), path).toBe(true);
+    }
+    for (const path of ['/quan-trix', '/en/administrator', '/admin', '/']) {
+      expect(covered(path), path).toBe(false);
+    }
+  });
+
   it('keeps ADMIN_API_TOKEN and server modules out of every admin client file', () => {
     const files = readdirSync(adminDir).filter((name) => /\.tsx?$/.test(name));
     expect(files.length).toBeGreaterThan(0);

@@ -62,6 +62,8 @@ Các điểm lệch và chi tiết như đã dựng:
 - Admin đang thao tác được kiểm tra lại **bên trong** transaction của repository, nên việc hạ quyền giữa guard và lúc ghi không lọt qua được.
 - Session admin làm mới `lastSeenAt` mỗi 10 phút (`ADMIN_SESSION_TOUCH_INTERVAL_MINUTES`), không phải mỗi lần đọc.
 - Cổng của trang là server component đầu tiên đọc kho Planner. Next.js nạp `src/server/persistence/json-store.ts` một lần cho bundle trang và một lần cho route handler, nên bộ nhớ đệm và hàng đợi ghi của kho JSON nay được giữ theo đường dẫn tệp trên `globalThis` (`tests/json-store.test.ts`). Nếu không, session đăng nhập qua API sẽ không hiện với `/quan-tri`. PostgreSQL không bị ảnh hưởng.
+- Bộ giới hạn tần suất cho session admin cũng được giữ trên `globalThis` vì cùng lý do, nên mọi bản sao của `http.ts` dùng chung một hạn mức 30 lần mỗi phút.
+- Rủi ro chấp nhận: bước kiểm tra lại trong transaction xác nhận người thao tác vẫn là admin, chứ không xác nhận session của họ còn hiệu lực. Một session hết hạn hoặc bị thu hồi trong vài mili giây giữa `identify` và lúc ghi (ví dụ khi admin đó bị cấp lại mật khẩu cùng lúc) vẫn hoàn tất thay đổi đang chạy đó. Muốn đóng kẽ hở này cần kiểm tra lại session ngay trong transaction; xem lại cùng với audit log.
 - Route chưa bật giữ hành vi chỉ-token: `adminPlannerRoute(request, handler)` không kèm options chỉ nhận service token; muốn dùng session cần `adminPlannerRoute(request, { action, session: true }, handler)`.
 
 ## Các phương án đã cân nhắc

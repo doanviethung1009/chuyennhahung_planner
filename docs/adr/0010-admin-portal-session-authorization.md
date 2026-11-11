@@ -62,6 +62,8 @@ Deviations and details as built:
 - The acting admin is re-checked **inside** the repository transaction, so a demotion between guard and write cannot slip through.
 - Admin sessions refresh `lastSeenAt` every 10 minutes (`ADMIN_SESSION_TOUCH_INTERVAL_MINUTES`), not on every read.
 - The page gate is the first server component to read the Planner store. Next.js loads `src/server/persistence/json-store.ts` once for the page bundle and once for the route handlers, so the JSON store's in-memory cache and write queue are now kept per file path on `globalThis` (`tests/json-store.test.ts`). Without that, a session signed in through the API was invisible to `/quan-tri`. PostgreSQL is unaffected.
+- The session admin rate limiter is kept on `globalThis` for the same reason, so every copy of `http.ts` draws from one 30-per-minute budget.
+- Accepted risk: the in-transaction re-check confirms the actor is still an admin, not that their session is still valid. A session expired or revoked in the milliseconds between `identify` and the write (for example by a concurrent reset of that admin) still completes that one in-flight change. Closing it means re-validating the session inside the transaction; revisit with the audit log.
 - Routes that have not opted in keep token-only behaviour: `adminPlannerRoute(request, handler)` without options is service-token only; session access needs `adminPlannerRoute(request, { action, session: true }, handler)`.
 
 ## Options considered
