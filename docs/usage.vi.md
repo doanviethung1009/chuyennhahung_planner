@@ -228,10 +228,18 @@ CREATE DATABASE planner OWNER planner;
 ```
 
 Không mở cổng 5432 ra giao diện công khai (dùng mạng Docker riêng, không publish
-cổng). Cách đơn giản nhất là một role sở hữu database và dùng cho cả migrate lẫn
-chạy app. Muốn tách, hãy migrate bằng role chủ và chỉ cấp cho role của app
-`GRANT SELECT, INSERT, UPDATE, DELETE` trên các bảng Planner (và `USAGE` trên
-schema).
+cổng). Vì migration chạy khi khởi động, role của app phải tạo và sửa được bảng:
+dùng một role sở hữu database cho cả migrate lẫn chạy app. **Rủi ro đã chấp nhận
+(ADR 0009):** nếu credential của app bị lộ hoặc app dính lỗi injection, kẻ tấn
+công cũng có quyền DDL. Muốn tách một role chủ cho `npm run db:migrate` khỏi một
+role app chỉ có quyền DML (`GRANT SELECT, INSERT, UPDATE, DELETE` trên các bảng
+Planner, `USAGE` trên schema) thì cần một công tắc tắt migration khi khởi động, thứ
+hiện chưa có.
+
+Nếu một replica khác đang giữ lock migration, lúc khởi động app chờ tối đa 30 giây
+rồi trả `503`; các request trong 5 giây sau nhận luôn `503` đó mà không thử lại,
+để database đang chết không bị dội request. Biến cũ `DATABASE_URL` bị bỏ qua — app
+ghi cảnh báo nếu nó được đặt mà không có `PLANNER_DATABASE_URL`.
 
 Kết nối tới Postgres không mã hoá trên mạng Docker riêng, điều này chỉ chấp nhận
 được khi database còn nằm trên cùng máy. Nếu sau này database chuyển sang máy

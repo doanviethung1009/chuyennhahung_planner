@@ -248,6 +248,13 @@ phải thay thế cho A.
   lại mỗi transaction hoặc gắn với một bộ đếm thế hệ trong database, không được
   tin cậy giữa các process. Chạy một instance trên VM, như kế hoạch, giữ cả hai
   đúng.
+- **Role của app có quyền DDL.** Migration khi khởi động (§4) nghĩa là role chạy
+  app tạo, sửa và xoá được các bảng Planner, nên credential của app bị lộ hoặc một
+  lỗi injection cũng mang theo các quyền đó. Chấp nhận cho một VM trên mạng riêng
+  (security review, 2026-11-11). Muốn bỏ nó cần một công tắc tắt migration khi
+  khởi động, một role chủ riêng cho `npm run db:migrate` và một role app chỉ có
+  DML. Thời gian chờ lock lúc khởi động có giới hạn (30 giây, rồi `503`), và một
+  lần khởi động lỗi không được thử lại trong 5 giây.
 - **Lỗi constraint là kiểu lỗi mới.** Lỗi unique-violation từ Postgres phải map
   về đúng `409` mà repository đang trả, không phải `500`.
 - **Đảo ngược** là script export cộng với bỏ `PLANNER_DATABASE_URL`; các lần ghi sau lần

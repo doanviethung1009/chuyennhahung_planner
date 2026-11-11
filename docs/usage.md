@@ -227,10 +227,19 @@ CREATE DATABASE planner OWNER planner;
 ```
 
 Keep port 5432 off the public interface (a private Docker network, not a
-published port). The simplest layout is one role that owns the database and is
-used for both migrating and running. To split them, migrate as the owner and
-give the app role `GRANT SELECT, INSERT, UPDATE, DELETE` on the Planner tables
-(and `USAGE` on the schema) only.
+published port). Because migrations run at startup, the app's role must be
+able to create and alter tables: use one role that owns the database for both
+migrating and running. **Accepted risk (ADR 0009):** a leaked app credential or
+an injection bug in the app would also carry DDL rights. Splitting an owner role
+for `npm run db:migrate` from a DML-only app role
+(`GRANT SELECT, INSERT, UPDATE, DELETE` on the Planner tables, `USAGE` on the
+schema) needs a switch to turn startup migrations off, which does not exist yet.
+
+If another replica holds the migration lock, startup waits at most 30 seconds,
+then answers `503`; requests during the next 5 seconds get the same `503`
+without retrying, so a database that is down is not hammered. The old variable
+`DATABASE_URL` is ignored — a warning is logged if it is set without
+`PLANNER_DATABASE_URL`.
 
 The link to Postgres is unencrypted on the private Docker network, which is
 acceptable only while the database stays on the same host. If it ever moves to

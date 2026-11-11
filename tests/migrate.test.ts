@@ -75,10 +75,56 @@ describe('migration runner', () => {
     const lock = log.indexOf('SELECT pg_advisory_lock($1)');
     const bootstrap = log.findIndex((l) => l.startsWith('CREATE TABLE IF NOT EXISTS schema_migrations'));
     const unlock = log.indexOf('SELECT pg_advisory_unlock($1)');
-    expect(lock).toBe(0);
+    expect(lock).toBe(1);
     expect(bootstrap).toBeGreaterThan(lock);
     expect(log.indexOf('BEGIN')).toBeGreaterThan(bootstrap);
     expect(unlock).toBe(log.length - 1);
+  });
+
+  it('bounds the wait for the lock, then resets the timeout before any migration runs', async () => {
+    const queries: { text: string; values?: unknown[] }[] = [];
+    const pool: PgPoolLike = {
+      async connect() {
+        return {
+          async query(text: string, values?: unknown[]) {
+            queries.push({ text: text.trim().split('\n')[0]!, values });
+            return { rows: [] };
+          },
+          release() {},
+        };
+      },
+    };
+    await runMigrations(pool, [file('0001_a.sql', 'CREATE TABLE a ()')], '7s');
+    const texts = queries.map((q) => q.text);
+    expect(queries[0]).toEqual({ text: "SELECT set_config('lock_timeout', $1, false)", values: ['7s'] });
+    expect(texts[1]).toBe('SELECT pg_advisory_lock($1)');
+    expect(texts[2]).toBe('RESET lock_timeout');
+    expect(texts.indexOf('CREATE TABLE a ()')).toBeGreaterThan(2);
+  });
+
+  it('gives up when the lock wait times out, destroys the connection and never unlocks', async () => {
+    const log: string[] = [];
+    let destroyed: boolean | undefined;
+    const pool: PgPoolLike = {
+      async connect() {
+        return {
+          async query(text: string) {
+            log.push(text.trim().split('\n')[0]!);
+            if (text.includes('pg_advisory_lock(')) {
+              throw Object.assign(new Error('canceling statement due to lock timeout'), { code: '55P03' });
+            }
+            return { rows: [] };
+          },
+          release(destroy?: boolean | Error) {
+            destroyed = Boolean(destroy);
+          },
+        };
+      },
+    };
+    await expect(runMigrations(pool, [file('0001_a.sql', 'CREATE TABLE a ()')])).rejects.toMatchObject({ code: '55P03' });
+    expect(log).not.toContain('SELECT pg_advisory_unlock($1)');
+    expect(log).not.toContain('CREATE TABLE a ()');
+    expect(destroyed).toBe(true);
   });
 
   it('frees the lock when a file fails', async () => {

@@ -15,6 +15,12 @@ import type { PgPoolLike } from './postgres-planner-store';
 
 export const MIGRATION_FILE = /^\d{4}_[a-z0-9_]+\.sql$/;
 const MIGRATION_LOCK_KEY = '8008002';
+/**
+ * How long a runner waits for another runner's lock before giving up. Without
+ * it, a replica whose migration hangs would hang the other replica's first
+ * request — and every request queued behind it — indefinitely.
+ */
+export const MIGRATION_LOCK_TIMEOUT = '30s';
 
 export interface MigrationFile {
   name: string;
@@ -44,6 +50,7 @@ export async function readMigrationFiles(directory: string): Promise<MigrationFi
 export async function runMigrations(
   pool: PgPoolLike,
   files: MigrationFile[],
+  lockTimeout: string = MIGRATION_LOCK_TIMEOUT,
 ): Promise<MigrationReport> {
   const report: MigrationReport = { applied: [], skipped: [] };
   const client = await pool.connect();
@@ -52,8 +59,12 @@ export async function runMigrations(
   try {
     // Everything, the bootstrap too, happens under the lock: two runners
     // racing `CREATE TABLE IF NOT EXISTS` can still collide on the catalogue.
+    // Bounded wait (SQLSTATE 55P03 on expiry), then reset: this connection goes
+    // back to the pool, and the store's own lock waits must not inherit it.
+    await client.query(`SELECT set_config('lock_timeout', $1, false)`, [lockTimeout]);
     await client.query('SELECT pg_advisory_lock($1)', [MIGRATION_LOCK_KEY]);
     locked = true;
+    await client.query('RESET lock_timeout');
     await client.query(
       `CREATE TABLE IF NOT EXISTS schema_migrations (
          name text PRIMARY KEY,

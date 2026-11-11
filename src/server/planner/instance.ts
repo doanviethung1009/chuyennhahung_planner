@@ -22,6 +22,13 @@ const DEFAULT_STORE_PATH = '.data/planner.json';
 
 async function selectStore(): Promise<PlannerStore> {
   const databaseUrl = process.env.PLANNER_DATABASE_URL?.trim();
+  if (!databaseUrl && process.env.DATABASE_URL?.trim()) {
+    // The old name (ADR 0009 before it was reconciled with ADR 0008). Without
+    // this, a deploy that still sets it would run on the JSON file silently.
+    console.warn(
+      '[planner] DATABASE_URL is set but ignored: the Planner reads PLANNER_DATABASE_URL; using the JSON store',
+    );
+  }
   if (databaseUrl) {
     // The pool connects lazily, but migrations run here, before the first
     // request is served (ADR 0008 §7): under a session advisory lock, so
@@ -42,6 +49,13 @@ async function selectStore(): Promise<PlannerStore> {
 }
 
 let instance: Promise<PlannerRepository> | null = null;
+/**
+ * After a failed build, requests within this window get the same failure
+ * instead of each opening a pool and retrying the migration — a down database
+ * must not be hammered by every incoming request.
+ */
+export const PLANNER_RETRY_BACKOFF_MS = 5_000;
+let lastFailure: { at: number; error: unknown } | null = null;
 
 async function build(): Promise<PlannerRepository> {
   const content = await getRepository();
@@ -55,9 +69,19 @@ async function build(): Promise<PlannerRepository> {
 export function getPlannerRepository(): Promise<PlannerRepository> {
   // Cached as a promise so concurrent first requests share one build rather
   // than racing to open the same file.
-  instance ??= build().catch((error: unknown) => {
-    instance = null;
-    throw error;
-  });
+  if (!instance && lastFailure && Date.now() - lastFailure.at < PLANNER_RETRY_BACKOFF_MS) {
+    return Promise.reject(lastFailure.error);
+  }
+  instance ??= build().then(
+    (repository) => {
+      lastFailure = null;
+      return repository;
+    },
+    (error: unknown) => {
+      instance = null;
+      lastFailure = { at: Date.now(), error };
+      throw error;
+    },
+  );
   return instance;
 }

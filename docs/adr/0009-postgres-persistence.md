@@ -259,6 +259,13 @@ paths, not a replacement for A.
   be rebuilt per transaction or keyed to a database generation counter, not
   trusted across processes. Running a single instance on the VM, which is the
   plan, keeps both correct.
+- **The app's role holds DDL rights.** Migrations at startup (§4) mean the
+  runtime role can create, alter and drop the Planner tables, so a leaked app
+  credential or an injection bug carries those rights too. Accepted for one VM
+  on a private network (security review, 2026-11-11). Removing it means a
+  switch that turns startup migrations off, a separate owner role for
+  `npm run db:migrate`, and a DML-only app role. The startup lock wait is
+  bounded (30 s, then `503`), and a failed start is not retried for 5 s.
 - **Constraint errors are new failure modes.** A unique-violation from Postgres
   must map to the same `409` the repository already returns, not to a `500`.
 - **Reversal** is the export script plus unsetting `PLANNER_DATABASE_URL`; writes made
