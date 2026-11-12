@@ -47,4 +47,15 @@ describe('safeReturnTo (open-redirect guard)', () => {
     expect(safeReturnTo(null)).toBe('/my-trips');
     expect(safeReturnTo(undefined)).toBe('/my-trips');
   });
+
+  it('returns to the admin content screens, in both locales', () => {
+    for (const path of [
+      '/quan-tri/noi-dung/chuyen-di',
+      '/quan-tri/noi-dung/chuyen-di/da-lat-2-ngay',
+      '/en/admin/content/places',
+      '/en/admin/content/reviews',
+    ]) {
+      expect(safeReturnTo(path)).toBe(path);
+    }
+  });
 });

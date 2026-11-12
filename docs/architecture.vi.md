@@ -79,6 +79,11 @@ trong [`src/i18n/routing.ts`](../src/i18n/routing.ts):
 | `/sign-in` | `/dang-nhap` | `/en/sign-in` |
 | `/account/password` | `/doi-mat-khau` | `/en/account/password` |
 | `/admin` | `/quan-tri` | `/en/admin` |
+| `/admin/content/stories` | `/quan-tri/noi-dung/chuyen-di` | `/en/admin/content/stories` |
+| `/admin/content/stories/[slug]` | `/quan-tri/noi-dung/chuyen-di/[slug]` | `/en/admin/content/stories/[slug]` |
+| `/admin/content/places` | `/quan-tri/noi-dung/dia-diem` | `/en/admin/content/places` |
+| `/admin/content/places/[slug]` | `/quan-tri/noi-dung/dia-diem/[slug]` | `/en/admin/content/places/[slug]` |
+| `/admin/content/reviews` | `/quan-tri/noi-dung/danh-gia` | `/en/admin/content/reviews` |
 | `/my-trips` | `/chuyen-di-cua-toi` | `/en/my-trips` |
 | `/my-trips/[id]` | `/chuyen-di-cua-toi/[id]` | `/en/my-trips/[id]` |
 | `/shared/[token]` | `/chia-se/[token]` | `/en/shared/[token]` |
@@ -300,6 +305,18 @@ flowchart LR
 
 `adminPlannerRoute(request, handler)` không kèm options vẫn chỉ nhận token. Session admin sống idle 2 giờ / tuyệt đối 12 giờ theo role hiện tại. Guard chống tự khoá (session không tự đổi role hay tự reset; không bao giờ còn 0 admin; admin thao tác được kiểm tra lại trong transaction của repository) trả 409 `invalid_state`. Trang dùng `readAdminPageAccess()` -> `{ status: 'anonymous' | 'must-change-password' | 'not-admin' | 'admin', principal }`: chuyển sang đăng nhập, chuyển sang đổi mật khẩu, `notFound()`, render. Mutation bị giới hạn tốc độ theo user (trong bộ nhớ, theo process).
 
+**Guard nội dung (lát cắt 2, [ADR 0011](adr/0011-admin-content-cms.vi.md)).** Các route admin của Travel Content bật session qua `adminContentRoute(request, { action, session: true }, handler)` trong `src/server/admin/content-route.ts`. Nó dùng lại `resolveAdminPrincipal` của module planner (chiều phụ thuộc admin -> planner -> content; `content/http.ts` không import cái nào), chạy handler, ánh xạ lỗi bằng `toErrorResponse` và luôn trả `Cache-Control: no-store`. Action mới `content:write` thuộc `editor`, `admin` và `service`; `story:publish` giữ nguyên. Trang dùng `readStaffPageAccess()` (`anonymous` / `must-change-password` / `forbidden` / `staff`); `forbidden` là vai trò không có cả `user:provision` lẫn `content:write`. Năm trang nội dung có `noindex`, không nằm trong sitemap, và được các prefix robots `/quan-tri` và `/en/admin` bao phủ.
+
+| Route | Method | Action |
+|---|---|---|
+| `stories`, `places`, `reviews` | GET danh sách | `content:write` |
+| `stories/[slug]`, `places/[slug]`, `reviews/[id]` | GET, PATCH | `content:write` |
+| `stories/[slug]/places` | PATCH | `content:write` |
+| `stories/[slug]/status`, `reviews/[id]/status` | POST | `story:publish` |
+| POST tạo, DELETE, `templates/**`, `collections/**`, `integrity` | mọi method | chỉ token (`adminRoute`) |
+
+PATCH nhận header tuỳ chọn `If-Match: "<updatedAt>"` (`ifMatchStamp`); repository so sánh trong transaction và ghi cũ trả **412** `version_conflict`. Không có header nghĩa là ghi sau thắng.
+
 ## Các phase
 
 Những thứ vắng mặt có chủ đích, và không được dựng sớm:
@@ -325,7 +342,7 @@ Những thứ vắng mặt có chủ đích, và không được dựng sớm:
   thẳng theo [ADR 0009](adr/0009-postgres-persistence.vi.md). Còn mở: store Travel
   content và store rate limit dùng chung (ADR 0008, chưa dựng), và query SQL theo
   từng method khi việc nạp toàn bộ Planner mỗi request trở nên chậm.
-- **Phase 07 — Admin Portal, CMS & RBAC (đang làm: lát cắt 1 đã ship).** Lát cắt 1 — cổng
+- **Phase 07 — Admin Portal, CMS & RBAC (đang làm: lát cắt 1 và 2 đã ship).** Lát cắt 2 — sửa story, place và review trên trình duyệt — đã dựng ([ADR 0011](adr/0011-admin-content-cms.vi.md), [features/admin-content-cms.vi.md](features/admin-content-cms.vi.md)). Còn mở sau lát cắt 2: trang công khai đọc seed có kiểu trong `src/content/` chứ không đọc repository nội dung, nên chỉnh sửa trong CMS không hiện trên site công khai (cần ADR riêng); audit log; template, collection, tạo và xoá trên trình duyệt; đăng xuất của editor trên trang tổng quan; MFA; HTTPS. Lát cắt 1 — cổng
   quản lý user trên trình duyệt — đã dựng ([ADR 0010](adr/0010-admin-portal-session-authorization.vi.md),
   [features/admin-portal.vi.md](features/admin-portal.vi.md)). Mọi mục còn lại bên dưới
   chưa dựng và không được dựng sớm; mỗi mục cần ghi quyết định trước.

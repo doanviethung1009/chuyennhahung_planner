@@ -78,6 +78,11 @@ folders. The visible URL per locale is defined once, in
 | `/sign-in` | `/dang-nhap` | `/en/sign-in` |
 | `/account/password` | `/doi-mat-khau` | `/en/account/password` |
 | `/admin` | `/quan-tri` | `/en/admin` |
+| `/admin/content/stories` | `/quan-tri/noi-dung/chuyen-di` | `/en/admin/content/stories` |
+| `/admin/content/stories/[slug]` | `/quan-tri/noi-dung/chuyen-di/[slug]` | `/en/admin/content/stories/[slug]` |
+| `/admin/content/places` | `/quan-tri/noi-dung/dia-diem` | `/en/admin/content/places` |
+| `/admin/content/places/[slug]` | `/quan-tri/noi-dung/dia-diem/[slug]` | `/en/admin/content/places/[slug]` |
+| `/admin/content/reviews` | `/quan-tri/noi-dung/danh-gia` | `/en/admin/content/reviews` |
 | `/my-trips` | `/chuyen-di-cua-toi` | `/en/my-trips` |
 | `/my-trips/[id]` | `/chuyen-di-cua-toi/[id]` | `/en/my-trips/[id]` |
 | `/shared/[token]` | `/chia-se/[token]` | `/en/shared/[token]` |
@@ -300,6 +305,18 @@ flowchart LR
 
 `adminPlannerRoute(request, handler)` without options stays token-only. Admin sessions last idle 2 h / absolute 12 h by the current role. Lockout guards (no self role change or self reset by a session; never zero admins; acting admin re-checked in the repository transaction) answer 409 `invalid_state`. Pages use `readAdminPageAccess()` -> `{ status: 'anonymous' | 'must-change-password' | 'not-admin' | 'admin', principal }`: sign-in redirect, password-change redirect, `notFound()`, render. Mutations are rate-limited per user (in memory, per process).
 
+**Content guard (slice 2, [ADR 0011](adr/0011-admin-content-cms.md)).** The Travel Content admin routes opt in to sessions through `adminContentRoute(request, { action, session: true }, handler)` in `src/server/admin/content-route.ts`. It reuses `resolveAdminPrincipal` from the planner module (dependency direction admin -> planner -> content; `content/http.ts` imports neither), runs the handler, maps errors with `toErrorResponse` and always answers `Cache-Control: no-store`. A new action `content:write` is held by `editor`, `admin` and `service`; `story:publish` is unchanged. Pages use `readStaffPageAccess()` (`anonymous` / `must-change-password` / `forbidden` / `staff`); `forbidden` is a role with neither `user:provision` nor `content:write`. The five content pages are `noindex`, not in the sitemap, and covered by the `/quan-tri` and `/en/admin` robots prefixes.
+
+| Route | Method | Action |
+|---|---|---|
+| `stories`, `places`, `reviews` | GET list | `content:write` |
+| `stories/[slug]`, `places/[slug]`, `reviews/[id]` | GET, PATCH | `content:write` |
+| `stories/[slug]/places` | PATCH | `content:write` |
+| `stories/[slug]/status`, `reviews/[id]/status` | POST | `story:publish` |
+| POST create, DELETE, `templates/**`, `collections/**`, `integrity` | any | token-only (`adminRoute`) |
+
+PATCH accepts an optional `If-Match: "<updatedAt>"` (`ifMatchStamp`); the repository compares inside the transaction and a stale write answers **412** `version_conflict`. No header means last write wins.
+
 ## Phases
 
 Deliberately absent, and not to be scaffolded early:
@@ -326,7 +343,7 @@ Deliberately absent, and not to be scaffolded early:
   directly by [ADR 0009](adr/0009-postgres-persistence.md). Still open: the Travel
   content store and the shared rate-limit store (ADR 0008, not built yet), and
   per-method SQL queries once loading the whole Planner per request becomes slow.
-- **Phase 07 — Admin Portal, CMS & RBAC (in progress: slice 1 shipped).** Slice 1 — the
+- **Phase 07 — Admin Portal, CMS & RBAC (in progress: slices 1 and 2 shipped).** Slice 2 — browser editing of stories, places and reviews — is built ([ADR 0011](adr/0011-admin-content-cms.md), [features/admin-content-cms.md](features/admin-content-cms.md)). Still open after slice 2: the public pages read the typed seed in `src/content/`, not the content repository, so a CMS edit does not appear on the public site (needs its own ADR); audit log; templates, collections, create and delete in the browser; editor sign-out on the overview; MFA; HTTPS. Slice 1 — the
   browser user-administration portal — is built ([ADR 0010](adr/0010-admin-portal-session-authorization.md),
   [features/admin-portal.md](features/admin-portal.md)). Everything else below is not
   built or to be scaffolded early; each item needs its decision recorded first.

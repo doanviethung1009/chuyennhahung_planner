@@ -136,6 +136,15 @@ export function versionConflict(
   );
 }
 
+/** Content edit stamped with an `updatedAt` that is no longer the stored one. */
+export function staleContent(entity: string, actual: string): ContentError {
+  // The client's `If-Match` value is deliberately not echoed back (sec review W1).
+  return new ContentError(
+    'version_conflict',
+    `${entity} has changed since you loaded it (stored ${actual}) — reload and retry`,
+  );
+}
+
 /** Too many requests from one client. `retryAfterSeconds` is an integer >= 1. */
 export function rateLimited(retryAfterSeconds: number): ContentError {
   const seconds = Math.max(1, Math.ceil(retryAfterSeconds));

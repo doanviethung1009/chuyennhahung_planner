@@ -8,6 +8,7 @@ import {
   invalidState,
   notFound,
   slugConflict,
+  staleContent,
 } from './errors';
 import type { ContentData, ContentStore } from './store';
 import type {
@@ -195,11 +196,12 @@ export class TravelContentRepository {
     });
   }
 
-  updatePlace(slug: string, patch: PlaceUpdateInput): Promise<Place> {
+  updatePlace(slug: string, patch: PlaceUpdateInput, expectedUpdatedAt?: string): Promise<Place> {
     return this.transaction((data) => {
       const index = data.places.findIndex((p) => p.slug === slug);
       const existing = data.places[index];
       if (index < 0 || !existing) throw notFound('place', slug);
+      checkStamp('place', existing.updatedAt, expectedUpdatedAt);
 
       const issues: FieldIssue[] = [];
       if (patch.destinationSlug !== undefined) {
@@ -301,11 +303,16 @@ export class TravelContentRepository {
     });
   }
 
-  updateStory(slug: string, patch: StoryUpdateInput): Promise<TravelStory> {
+  updateStory(
+    slug: string,
+    patch: StoryUpdateInput,
+    expectedUpdatedAt?: string,
+  ): Promise<TravelStory> {
     return this.transaction((data) => {
       const index = data.stories.findIndex((s) => s.slug === slug);
       const existing = data.stories[index];
       if (index < 0 || !existing) throw notFound('story', slug);
+      checkStamp('story', existing.updatedAt, expectedUpdatedAt);
 
       const merged = { ...existing, ...patch };
       this.validateStoryReferences(data, merged);
@@ -370,11 +377,16 @@ export class TravelContentRepository {
   }
 
   /** Add or remove related places on a story, idempotently. */
-  patchStoryPlaces(slug: string, patch: StoryPlacesPatch): Promise<TravelStory> {
+  patchStoryPlaces(
+    slug: string,
+    patch: StoryPlacesPatch,
+    expectedUpdatedAt?: string,
+  ): Promise<TravelStory> {
     return this.transaction((data) => {
       const index = data.stories.findIndex((s) => s.slug === slug);
       const existing = data.stories[index];
       if (index < 0 || !existing) throw notFound('story', slug);
+      checkStamp('story', existing.updatedAt, expectedUpdatedAt);
 
       const issues: FieldIssue[] = [];
       this.checkPlaces(data, patch.add, 'add', issues);
@@ -648,11 +660,16 @@ export class TravelContentRepository {
     });
   }
 
-  updateReview(id: string, patch: ReviewUpdateInput): Promise<TravelReview> {
+  updateReview(
+    id: string,
+    patch: ReviewUpdateInput,
+    expectedUpdatedAt?: string,
+  ): Promise<TravelReview> {
     return this.transaction((data) => {
       const index = data.reviews.findIndex((r) => r.id === id);
       const existing = data.reviews[index];
       if (index < 0 || !existing) throw notFound('review', id);
+      checkStamp('review', existing.updatedAt, expectedUpdatedAt);
 
       const merged = { ...existing, ...patch };
       this.validateReviewSubject(data, merged.subject);
@@ -1127,6 +1144,13 @@ export class TravelContentRepository {
 // ---------------------------------------------------------------------------
 // Pure helpers
 // ---------------------------------------------------------------------------
+
+/** Optimistic concurrency inside the transaction: no stamp = last write wins. */
+function checkStamp(entity: string, actual: string, expected: string | undefined): void {
+  if (expected !== undefined && expected !== actual) {
+    throw staleContent(entity, actual);
+  }
+}
 
 function paginate<T>(items: T[], query: Partial<ListQuery>): T[] {
   const offset = query.offset ?? 0;
