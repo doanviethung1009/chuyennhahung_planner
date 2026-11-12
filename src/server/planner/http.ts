@@ -331,7 +331,7 @@ export async function adminPlannerRoute(
   }
 }
 
-async function resolveAdminPrincipal(
+export async function resolveAdminPrincipal(
   request: Request,
   options: AdminRouteOptions,
 ): Promise<AdminPrincipal> {

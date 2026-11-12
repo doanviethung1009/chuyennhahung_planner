@@ -111,14 +111,14 @@ describe('role resolution', () => {
 });
 
 describe('can', () => {
-  const actions: Action[] = ['user:provision', 'user:promote', 'template:write', 'story:publish', 'trip:support-read'];
+  const actions: Action[] = ['user:provision', 'user:promote', 'template:write', 'story:publish', 'content:write', 'trip:support-read'];
 
   it('matches the declared matrix for every role and action', () => {
     const expected: Record<string, Action[]> = {
       member: [],
-      editor: ['template:write', 'story:publish'],
-      admin: ['template:write', 'story:publish', 'user:provision', 'user:promote'],
-      service: ['template:write', 'story:publish', 'user:provision', 'user:promote'],
+      editor: ['template:write', 'story:publish', 'content:write'],
+      admin: ['template:write', 'story:publish', 'content:write', 'user:provision', 'user:promote'],
+      service: ['template:write', 'story:publish', 'content:write', 'user:provision', 'user:promote'],
     };
     for (const [role, allowed] of Object.entries(expected)) {
       for (const action of actions) {

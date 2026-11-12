@@ -65,4 +65,15 @@ describe('route topology', () => {
       'about',
     ]);
   });
+
+  it('localizes the admin content routes under the admin prefix', () => {
+    expect(pathnames['/admin/content/stories']).toEqual({
+      vi: '/quan-tri/noi-dung/chuyen-di',
+      en: '/admin/content/stories',
+    });
+    expect(pathnames['/admin/content/places'].vi).toBe('/quan-tri/noi-dung/dia-diem');
+    expect(pathnames['/admin/content/reviews'].vi).toBe('/quan-tri/noi-dung/danh-gia');
+    expect(pathnames['/admin/content/stories/[slug]'].vi).toBe('/quan-tri/noi-dung/chuyen-di/[slug]');
+    expect(pathnames['/admin/content/places/[slug]'].vi).toBe('/quan-tri/noi-dung/dia-diem/[slug]');
+  });
 });

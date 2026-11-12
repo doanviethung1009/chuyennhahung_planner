@@ -55,3 +55,50 @@ export async function readAdminPageAccess(): Promise<AdminPageAccess> {
     throw error;
   }
 }
+
+/**
+ * Page gate for the whole admin shell (ADR 0011 §5): any role that can do
+ * something there. `forbidden` -> `notFound()`; the shell hides sections by
+ * `can(role, ...)`, but the API stays the authority.
+ */
+export type StaffPageAccess =
+  | { status: 'anonymous' }
+  | { status: 'must-change-password' }
+  | { status: 'forbidden' }
+  | {
+      status: 'staff';
+      principal: { kind: 'session'; userId: string; handle: string; role: Role };
+    };
+
+export async function readStaffPageAccess(): Promise<StaffPageAccess> {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  if (!token) return { status: 'anonymous' };
+
+  const request = new Request('http://admin-page.internal/', {
+    headers: { cookie: `${SESSION_COOKIE}=${token}` },
+  });
+
+  try {
+    const identity = await (await getPlannerRepository()).identify(request);
+    if (identity.source !== 'cookie') return { status: 'anonymous' };
+    const principal = { role: identity.role };
+    if (!can(principal, 'user:provision') && !can(principal, 'content:write')) {
+      return { status: 'forbidden' };
+    }
+    if (identity.passwordChangeRequired) return { status: 'must-change-password' };
+    return {
+      status: 'staff',
+      principal: {
+        kind: 'session',
+        userId: identity.userId,
+        handle: identity.handle,
+        role: identity.role,
+      },
+    };
+  } catch (error) {
+    if (error instanceof ContentError && error.code === 'unauthorized') {
+      return { status: 'anonymous' };
+    }
+    throw error;
+  }
+}

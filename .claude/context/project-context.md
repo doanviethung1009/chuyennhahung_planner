@@ -77,6 +77,7 @@ The owner opened the Planner backend phase and it shipped: `src/app/api/planner/
 | `src/server/planner/budget.ts`, `money.ts` | Target budget vs estimated/actual cost; integer-safe money |
 | `src/server/planner/http.ts` | Planner HTTP boundary — reuses the content error envelope, adds `ETag`/`If-Match` optimistic concurrency |
 | `src/server/planner/catalog.ts`, `store.ts` | Place catalog access and persistence |
+| `src/server/admin/content-route.ts` | ADR 0011: `adminContentRoute` (session-capable guard for `api/admin/travel/**`, resolver reused from `planner/http.ts`, always `no-store`) and `ifMatchStamp` (optional `If-Match` -> 412 `version_conflict`). Action `content:write` = editor/admin/service. `readStaffPageAccess` in `planner/admin-page.ts`. Pages: `src/app/[locale]/admin/content/**` (5 localized routes). Public pages still read `src/content/`, not the repository |
 | `src/server/rate-limit.ts` | In-memory sliding-window limiter (`createRateLimiter`, `clientKey`, `shareReadLimiter` 60/min, `signInLimiter` 10/min, `checkShareRead(headers)` for the share page). Per-process, spoofable key — ADR 0005 |
 | `PlannerRepository` sharing methods | `duplicateTrip`, `setVisibility`, `rotateShareToken`, `revokeShare`, `getSharedTrip(token): SharedTripView \| null` (allow-list projection), `describeSession`; catalog gains `getLinkedStory` (ADR 0005) |
 | `src/app/api/planner/[id]/{duplicate,share,share/rotate}`, `GET /api/planner/session`, `GET /api/shared/[token]` | Duplicate, share lifecycle, session probe, public read-only view (GET only, identical 404s, `rate_limited` 429 + `Retry-After`) |
@@ -109,7 +110,7 @@ contract** — twin, mirrored headings, single h1, translation link, index regis
 resolving links) · `tests/design-tokens.test.ts` · `tests/routing.test.ts` ·
 `tests/content.test.ts` · `tests/map.test.ts` · `tests/travel-content-{api,auth,schemas,
 repository,acceptance}.test.ts` (+ `travel-content-helpers.ts`) · `tests/json-store.test.ts`
-(store cache) · `tests/planner-password.test.ts`, `tests/planner-google.test.ts` (ADR 0007 sign-in) · `tests/planner-roles.test.ts` (ADR 0006 roles, `can` matrix, PATCH) · `tests/security-headers.test.ts` (site-wide headers).
+(store cache) · `tests/planner-password.test.ts`, `tests/planner-google.test.ts` (ADR 0007 sign-in) · `tests/planner-roles.test.ts` (ADR 0006 roles, `can` matrix, PATCH) · `tests/security-headers.test.ts` (site-wide headers) · `tests/admin-content-session.test.ts` (ADR 0011 route/action matrix, `If-Match` 412).
 
 ## Sensitive data and regulated boundaries
 `ADMIN_API_TOKEN` guards the admin API — never log it, echo it or commit it. `.env*`

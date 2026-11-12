@@ -22,6 +22,11 @@ const KEEPS_QUERY: readonly AppPathname[] = [
   '/trip-setup/[template]',
   '/account/password',
   '/admin',
+  '/admin/content/stories',
+  '/admin/content/stories/[slug]',
+  '/admin/content/places',
+  '/admin/content/places/[slug]',
+  '/admin/content/reviews',
 ];
 const PUBLIC = (Object.keys(pathnames) as AppPathname[]).filter(
   (key) => !NOT_RETURNABLE.includes(key) && !KEEPS_QUERY.includes(key),

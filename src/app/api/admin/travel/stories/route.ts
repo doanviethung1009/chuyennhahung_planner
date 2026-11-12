@@ -1,3 +1,4 @@
+import { adminContentRoute } from '@/server/admin/content-route';
 import {
   adminRoute,
   jsonCreated,
@@ -11,7 +12,7 @@ import { storyCreateSchema } from '@/server/content/schemas';
 export const dynamic = 'force-dynamic';
 
 export function GET(request: Request) {
-  return adminRoute(request, async () => {
+  return adminContentRoute(request, { action: 'content:write', session: true }, async () => {
     const repository = await getRepository();
     // Unlike the public list, this returns drafts and archived stories too.
     const stories = await repository.listStories(parseListQuery(request));

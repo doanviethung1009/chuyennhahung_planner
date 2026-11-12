@@ -6,6 +6,25 @@ import { z } from 'zod';
  * and its model cannot drift apart. See `docs/adr/0001-travel-content-system.md`.
  */
 
+/**
+ * PATCH schemas: Zod 4 applies `.default(...)` even inside `.partial()`, so a
+ * one-field PATCH would reset every defaulted field (placeSlugs, gallery, pros…).
+ * Strip top-level defaults first so an absent key stays absent. Create schemas
+ * keep their defaults.
+ */
+type WithoutDefaults<S extends z.ZodRawShape> = {
+  [K in keyof S]: S[K] extends z.ZodDefault<infer Inner> ? Inner : S[K];
+};
+
+function updateShape<S extends z.ZodRawShape>(shape: S): WithoutDefaults<S> {
+  return Object.fromEntries(
+    Object.entries(shape).map(([key, field]) => [
+      key,
+      field instanceof z.ZodDefault ? field.unwrap() : field,
+    ]),
+  ) as WithoutDefaults<S>;
+}
+
 // ---------------------------------------------------------------------------
 // Primitives
 // ---------------------------------------------------------------------------
@@ -169,7 +188,7 @@ export const placeInputSchema = z.object({
 
 export const placeCreateSchema = placeInputSchema;
 /** PATCH semantics: every field optional, slug immutable (URLs are permanent). */
-export const placeUpdateSchema = placeInputSchema.omit({ slug: true }).partial();
+export const placeUpdateSchema = z.object(updateShape(placeInputSchema.omit({ slug: true }).shape)).partial();
 
 export const placeSchema = placeInputSchema.extend({
   createdAt: timestampSchema,
@@ -286,7 +305,7 @@ export const storyInputSchema = z.object({
 });
 
 export const storyCreateSchema = storyInputSchema;
-export const storyUpdateSchema = storyInputSchema.omit({ slug: true }).partial();
+export const storyUpdateSchema = z.object(updateShape(storyInputSchema.omit({ slug: true }).shape)).partial();
 
 export const storySchema = storyInputSchema.extend({
   status: publishStatusSchema,
@@ -325,8 +344,8 @@ export const collectionInputSchema = z.object({
 });
 
 export const collectionCreateSchema = collectionInputSchema;
-export const collectionUpdateSchema = collectionInputSchema
-  .omit({ slug: true })
+export const collectionUpdateSchema = z
+  .object(updateShape(collectionInputSchema.omit({ slug: true }).shape))
   .partial();
 
 export const collectionSchema = collectionInputSchema.extend({
@@ -366,7 +385,7 @@ export const reviewInputSchema = z.object({
 });
 
 export const reviewCreateSchema = reviewInputSchema;
-export const reviewUpdateSchema = reviewInputSchema.omit({ id: true }).partial();
+export const reviewUpdateSchema = z.object(updateShape(reviewInputSchema.omit({ id: true }).shape)).partial();
 
 export const reviewSchema = reviewInputSchema.extend({
   status: publishStatusSchema,
@@ -459,8 +478,8 @@ export const templateInputSchema = z.object({
 });
 
 export const templateCreateSchema = templateInputSchema;
-export const templateUpdateSchema = templateInputSchema
-  .omit({ slug: true, sourceStorySlug: true, days: true })
+export const templateUpdateSchema = z
+  .object(updateShape(templateInputSchema.omit({ slug: true, sourceStorySlug: true, days: true }).shape))
   .partial()
   .extend({ days: z.array(templateDayInputSchema).min(1).max(30).optional() });
 
