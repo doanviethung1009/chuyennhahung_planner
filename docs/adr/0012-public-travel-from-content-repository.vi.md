@@ -2,10 +2,10 @@
 
 🇬🇧 English version: [0012-public-travel-from-content-repository.md](0012-public-travel-from-content-repository.md)
 
-- **Trạng thái:** Đề xuất
+- **Trạng thái:** Đã chấp nhận (2026-11-12)
 - **Ngày:** 2026-11-12
 - **Người sở hữu:** system-architect
-- **Người quyết định:** chủ dự án (chờ duyệt), system-architect (hình dạng)
+- **Người quyết định:** chủ dự án (chấp nhận 2026-11-12, đúng như đề xuất), system-architect (hình dạng)
 - **Ảnh hưởng:** `src/server/content/public.ts` (mới), `src/server/content/{schemas,repository}.ts`, `src/content/travel/**`, `src/server/planner/catalog.ts`, `src/app/[locale]/{page,stories,destinations}/**`, `src/app/sitemap.ts`, `src/components/{cards,sections}/**`, một script seed mới, `Dockerfile`, `docs/usage.*`, `docs/architecture.*`
 
 ## Bối cảnh
@@ -105,7 +105,7 @@ Khó hơn:
 
 ## Việc tiếp theo
 
-- Task Contract: `.claude/contracts/public-travel-from-content-repo.md`. Trạng thái DESIGNED; chờ chủ dự án chấp nhận ADR này và PR #41 merge. Tài liệu tính năng `docs/features/public-travel-cms.md` + `.vi.md` (frontend-engineer).
+- Task Contract: `.claude/contracts/public-travel-from-content-repo.md`. Trạng thái DESIGNED; ADR này đã được chấp nhận; còn chờ PR #41 merge. Tài liệu tính năng `docs/features/public-travel-cms.md` + `.vi.md` (frontend-engineer).
 - Khi chấp nhận: đổi trạng thái, rồi cập nhật `docs/architecture.md` + `.vi.md` (bảng route/caching, dòng backlog Phase 07 "trang công khai đọc seed có kiểu"), `docs/usage.*` (`PUBLIC_CONTENT_SOURCE`, `content:seed-static`, số trang khi build, build Docker) và `.claude/context/project-context.md`. Quyết định 8 của ADR 0011 bị quyết định 4 ở đây thay thế.
 - Câu hỏi mở cho chủ dự án:
   1. Mặc định `PUBLIC_CONTENT_SOURCE` khi cutover: `repository` ngay, hay `static` cho tới khi script seed đã chạy trên VM?

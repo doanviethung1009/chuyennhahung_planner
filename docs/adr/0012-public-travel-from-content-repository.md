@@ -2,10 +2,10 @@
 
 🇻🇳 Bản tiếng Việt: [0012-public-travel-from-content-repository.vi.md](0012-public-travel-from-content-repository.vi.md)
 
-- **Status:** Proposed
+- **Status:** Accepted (2026-11-12)
 - **Date:** 2026-11-12
 - **Owner:** system-architect
-- **Decided by:** owner (approval pending), system-architect (shape)
+- **Decided by:** owner (accepted 2026-11-12, as proposed), system-architect (shape)
 - **Affects:** new `src/server/content/public.ts`, `src/server/content/{schemas,repository}.ts`, `src/content/travel/**`, `src/server/planner/catalog.ts`, `src/app/[locale]/{page,stories,destinations}/**`, `src/app/sitemap.ts`, `src/components/{cards,sections}/**`, a new seed script, `Dockerfile`, `docs/usage.*`, `docs/architecture.*`
 
 ## Context
@@ -105,7 +105,7 @@ Harder:
 
 ## Follow-up
 
-- Task Contract: `.claude/contracts/public-travel-from-content-repo.md`. State DESIGNED; gated on the owner accepting this ADR and on PR #41 merging. Feature document `docs/features/public-travel-cms.md` + `.vi.md` (frontend-engineer).
+- Task Contract: `.claude/contracts/public-travel-from-content-repo.md`. State DESIGNED; this ADR is accepted; still gated on PR #41 merging. Feature document `docs/features/public-travel-cms.md` + `.vi.md` (frontend-engineer).
 - On acceptance, flip the status, then update `docs/architecture.md` + `.vi.md` (route/caching table, Phase 07 backlog line "public pages read the typed seed"), `docs/usage.*` (`PUBLIC_CONTENT_SOURCE`, `content:seed-static`, build page count, Docker build), and `.claude/context/project-context.md`. ADR 0011's decision 8 is superseded by decision 4 here.
 - Open questions for the owner:
   1. Default `PUBLIC_CONTENT_SOURCE` at cutover: `repository` immediately, or `static` until the seed script has run on the VM?
