@@ -3,7 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
 import { destinations } from '@/content/destinations';
-import { storiesNewestFirst } from '@/content/stories';
+import { getPublicContent } from '@/server/content/public';
 import { itineraries } from '@/content/itineraries';
 import { videoReviewsNewestFirst } from '@/content/video-reviews';
 import { Hero } from '@/components/sections/hero';
@@ -14,6 +14,9 @@ import { FeaturedItineraries } from '@/components/sections/featured-itineraries'
 import { PlanTripCta } from '@/components/sections/plan-trip-cta';
 import { VideoReviewsSection } from '@/components/sections/video-reviews-section';
 import { AboutSection } from '@/components/sections/about-section';
+
+/** Stories come from the content repository per request (ADR 0012). */
+export const dynamic = 'force-dynamic';
 
 type Params = { params: Promise<{ locale: Locale }> };
 
@@ -33,6 +36,7 @@ export default async function HomePage({ params }: Params) {
   const { locale } = await params;
   setRequestLocale(locale);
 
+  const storiesNewestFirst = await (await getPublicContent()).listStories();
   const featured = storiesNewestFirst[0];
   if (!featured) return null;
 
@@ -40,7 +44,11 @@ export default async function HomePage({ params }: Params) {
 
   return (
     <>
-      <Hero locale={locale} featured={featured} />
+      <Hero
+        locale={locale}
+        featured={featured}
+        storyCount={storiesNewestFirst.length}
+      />
 
       <LatestStories stories={storiesNewestFirst.slice(0, 3)} locale={locale} />
 

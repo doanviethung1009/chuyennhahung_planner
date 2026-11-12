@@ -64,6 +64,14 @@ function targetsServer(spec: string, fromFile: string): boolean {
 }
 
 describe('client boundary', () => {
+  it('keeps pages off the content repository and store (ADR 0012)', () => {
+    const offenders = walk(join(root, 'app'))
+      .filter((p) => !p.includes(`${sep}api${sep}`))
+      .filter((p) => valueImports(readFileSync(p, 'utf8')).some((spec) => /server\/content\/(repository|store)$/.test(spec)))
+      .map((p) => relative(root, p));
+    expect(offenders).toEqual([]);
+  });
+
   it('finds the client components it is guarding', () => {
     expect(clientFiles.length).toBeGreaterThan(0);
   });

@@ -13,15 +13,15 @@ activity, chi phí và ngân sách — còn *giao diện* Planner vẫn thuộc 
 | Hạng mục | Lựa chọn | Ở đâu |
 |---|---|---|
 | Framework | Next.js 16, App Router, React 19 | [`src/app/`](../src/app) |
-| Render | Server component, prerender toàn bộ khi build | mọi `page.tsx` |
+| Render | Server component. Trang đọc nội dung Travel (`/`, `/stories`, `/stories/[slug]`, `/destinations/[slug]`, sitemap) là `force-dynamic`; phần còn lại prerender khi build ([ADR 0012](adr/0012-public-travel-from-content-repository.vi.md)) | mọi `page.tsx` |
 | Ngôn ngữ | TypeScript `strict` + `noUncheckedIndexedAccess` | [`tsconfig.json`](../tsconfig.json) |
 | i18n | `next-intl` 4, VI không prefix, EN ở `/en` | [`src/i18n/`](../src/i18n) |
 | Styling | Tailwind v4, token `@theme` theo hướng CSS-first | [`src/app/globals.css`](../src/app/globals.css) |
-| Nội dung | Dữ liệu seed TypeScript có type, không CMS | [`src/content/`](../src/content) |
+| Nội dung | Story, place, review: repository nội dung qua `getPublicContent()`; điểm đến, lịch trình, review video: TypeScript có type trong `src/content/` | [`src/content/`](../src/content) |
 | Test | Vitest 3 trên Node 24 (giờ đã nâng lên 4/5 được, nhưng chưa nâng) | [`tests/`](../tests) |
 | Lưu trữ | Planner: PostgreSQL khi có `PLANNER_DATABASE_URL` ([ADR 0009](adr/0009-postgres-persistence.vi.md)), nếu không thì file JSON; Travel content: file JSON | [`src/server/persistence/`](../src/server/persistence) |
 
-Các trang công khai là tệp tĩnh sinh ra lúc build từ dữ liệu có type trong repo.
+Các trang công khai hiển thị nội dung Travel (trang chủ, story, chi tiết điểm đến, sitemap) được render theo từng request từ repository nội dung qua một module đọc chỉ-server, `getPublicContent()` trong `src/server/content/public.ts` ([ADR 0012](adr/0012-public-travel-from-content-repository.vi.md)), nên chỉnh sửa đã xuất bản trong CMS hiện ngay ở request kế tiếp. Các trang công khai còn lại (`/about`, lịch trình, review video, `/map`) vẫn là tệp tĩnh sinh lúc build từ dữ liệu có type trong repo.
 Phía API — Travel Content System và Planner — chạy trên server Node, và ở
 production Planner cần thêm PostgreSQL
 ([ADR 0009](adr/0009-postgres-persistence.vi.md)); không có `PLANNER_DATABASE_URL` thì nó
@@ -42,7 +42,8 @@ request
   │                                     NextIntlClientProvider
   │
   └─ src/app/[locale]/**/page.tsx ..... server component
-         ├─ đọc src/content/**         (dữ liệu seed có type)
+         ├─ đọc getPublicContent()     (story; src/server/content/public.ts)
+         ├─ đọc src/content/**         (điểm đến, lịch trình, review video)
          ├─ đọc messages/<locale>.json qua useTranslations/getTranslations
          ├─ ghép các src/components/**
          └─ export generateMetadata → src/lib/metadata.ts
@@ -114,10 +115,12 @@ thiếu bản dịch.
 | Bộ dữ liệu | File | Số lượng |
 |---|---|---|
 | Điểm đến | [`destinations.ts`](../src/content/destinations.ts) | 8 |
-| Chuyện đi chơi | [`stories.ts`](../src/content/stories.ts) | 6 |
+| Chuyện đi chơi (nguồn seed / adapter `static` / fixture test; story đang chạy đọc từ repository nội dung) | [`stories.ts`](../src/content/stories.ts) | 6 |
 | Lịch trình | [`itineraries.ts`](../src/content/itineraries.ts) | 4 |
 | Review video | [`video-reviews.ts`](../src/content/video-reviews.ts) | 6 |
 | Site + mạng xã hội | [`site.ts`](../src/content/site.ts) | — |
+
+Trang công khai không bao giờ import repository hay store: chúng gọi `getPublicContent()` (`src/server/content/public.ts`, chỉ-server, chỉ story đã xuất bản, còn lại 404), và `tests/client-boundary.test.ts` ép ranh giới này. Render là `force-dynamic`, không revalidate; JSON store dùng cache trong tiến trình và cache được cập nhật ngay khi ghi trong cùng tiến trình, nên giả định chỉ một tiến trình ghi. Rollback là `PUBLIC_CONTENT_SOURCE=static` (biến môi trường đọc lúc request, restart, không build lại); `npm run content:seed-static` thêm sáu story seed vào store đã có mà không ghi đè chỉnh sửa.
 
 Các shape nằm trong [`src/content/types.ts`](../src/content/types.ts). Hai field
 có ý nghĩa kiến trúc: `coords` của điểm đến là toạ độ WGS84 thật mà bản đồ chiếu
@@ -236,7 +239,7 @@ WCAG AA — đó là lý do màu primary tương tác là `clay-600` chứ khôn
 | Type | `npm run typecheck` | `Localized<T>` đủ locale, route an toàn kiểu |
 | Lint | `npm run lint` | bộ rule `eslint-config-next` |
 | Test | `npm run test` | nội dung, đồng bộ i18n, routing, bản đồ, token, tài liệu |
-| Build | `npm run build` | mọi trang prerender được |
+| Build | `npm run build` | trang tĩnh prerender; trang nội dung Travel là `force-dynamic`, không cần database lúc build |
 | UI | `npm run verify:ui` | ảnh chụp ở 375/768/1440, fail nếu tràn ngang |
 
 ## Chia sẻ chuyến đi và nhân bản từ câu chuyện
@@ -342,7 +345,7 @@ Những thứ vắng mặt có chủ đích, và không được dựng sớm:
   thẳng theo [ADR 0009](adr/0009-postgres-persistence.vi.md). Còn mở: store Travel
   content và store rate limit dùng chung (ADR 0008, chưa dựng), và query SQL theo
   từng method khi việc nạp toàn bộ Planner mỗi request trở nên chậm.
-- **Phase 07 — Admin Portal, CMS & RBAC (đang làm: lát cắt 1 và 2 đã ship).** Lát cắt 2 — sửa story, place và review trên trình duyệt — đã dựng ([ADR 0011](adr/0011-admin-content-cms.vi.md), [features/admin-content-cms.vi.md](features/admin-content-cms.vi.md)). Còn mở sau lát cắt 2: trang công khai đọc seed có kiểu trong `src/content/` chứ không đọc repository nội dung, nên chỉnh sửa trong CMS không hiện trên site công khai (cần ADR riêng); audit log; template, collection, tạo và xoá trên trình duyệt; đăng xuất của editor trên trang tổng quan; MFA; HTTPS. Lát cắt 1 — cổng
+- **Phase 07 — Admin Portal, CMS & RBAC (đang làm: lát cắt 1 và 2 đã ship).** Lát cắt 2 — sửa story, place và review trên trình duyệt — đã dựng ([ADR 0011](adr/0011-admin-content-cms.vi.md), [features/admin-content-cms.vi.md](features/admin-content-cms.vi.md)). Trang công khai nay đọc repository nội dung ([ADR 0012](adr/0012-public-travel-from-content-repository.vi.md)), nên chỉnh sửa đã xuất bản trong CMS hiện trên site công khai. Còn mở sau lát cắt 2: audit log; template, collection, tạo và xoá trên trình duyệt; đăng xuất của editor trên trang tổng quan; MFA; HTTPS. Lát cắt 1 — cổng
   quản lý user trên trình duyệt — đã dựng ([ADR 0010](adr/0010-admin-portal-session-authorization.vi.md),
   [features/admin-portal.vi.md](features/admin-portal.vi.md)). Mọi mục còn lại bên dưới
   chưa dựng và không được dựng sớm; mỗi mục cần ghi quyết định trước.

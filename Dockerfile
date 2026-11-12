@@ -47,8 +47,9 @@ COPY --from=builder --chown=node:node /app/public ./public
 # Startup migrations read process.cwd()/db/migrations (ADR 0009). Output
 # tracing usually carries them; copying states the dependency outright.
 COPY --from=builder --chown=node:node /app/db/migrations ./db/migrations
-# The build seeds a content store under .data/ and tracing copies it in. The
-# runtime store belongs to the mounted volume alone, seeded on first use.
+# Story pages render per request (ADR 0012), so the build should leave no
+# .data/; clearing it guards against a stray store being traced into the
+# image. The runtime store belongs to the mounted volume alone.
 RUN rm -rf .data && mkdir -p .data && chown node:node .data
 USER node
 EXPOSE 3000

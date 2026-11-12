@@ -32,7 +32,7 @@ closed.
 | `ADMIN_API_TOKEN` | *unset* | Guards every admin route. Unset, or shorter than 32 chars, and they all answer `503` — never an open default |
 | `TRAVEL_CONTENT_STORE` | `.data/travel-content.json` | Where the content store lives |
 | `TRAVEL_CONTENT_AUTOSEED` | `true` | Set `false` to skip seeding demo content on first use |
-| `PUBLIC_CONTENT_SOURCE` | `repository` | Read on every call (a restart, not a rebuild). `repository`: public Travel content comes from the content store; `static`: from `src/content/stories.ts` (rollback). Any other value means `repository`. Public pages adopt the read module in the follow-up frontend slice; until then it changes nothing visible ([ADR 0012](adr/0012-public-travel-from-content-repository.md)) |
+| `PUBLIC_CONTENT_SOURCE` | `repository` | Read on every call (a restart, not a rebuild). `repository`: public Travel content comes from the content store; `static`: from `src/content/stories.ts` (rollback). Any other value means `repository`. Applies to the home page, `/stories`, story pages, destination pages and the sitemap ([ADR 0012](adr/0012-public-travel-from-content-repository.md)) |
 | `PLANNER_STORE` | `.data/planner.json` | Where Planner trips live. Separate file from the content store by design. Ignored when `PLANNER_DATABASE_URL` is set |
 | `PLANNER_DATABASE_URL` | *unset* | PostgreSQL connection string. Set: the Planner uses PostgreSQL and never falls back to the file ([ADR 0009](adr/0009-postgres-persistence.md)). A secret — environment only. See *Run the Planner on PostgreSQL* |
 | `DATABASE_POOL_MAX` | `5` | Size of the per-process connection pool |
@@ -61,7 +61,7 @@ Override deliberately with `--no-verify` if you ever really mean it.
 | Command | What it does |
 |---|---|
 | `npm run dev` | Dev server with Turbopack |
-| `npm run build` | Production build — prerenders all 57 pages |
+| `npm run build` | Production build — prerenders 42 pages; story, destination, home and sitemap routes render per request |
 | `npm start` | Serves the production build |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint, flat config |
@@ -247,7 +247,7 @@ Recovery: if the only admin is locked out, use the service token to reset the pa
 
 Sign in as in the section above (an `editor` account has the role `editor`; an admin can set it from `/quan-tri`) and open `/quan-tri/noi-dung/chuyen-di` (`/en/admin/content/stories`). The five pages are stories, a story, places, a place and reviews (`/quan-tri/noi-dung/dia-diem`, `/quan-tri/noi-dung/danh-gia`). Edit a record and save; publishing or archiving a story or review is a separate action. Create, delete, templates and collections are not in the browser yet — use the token API ([travel-content-api.md](travel-content-api.md)).
 
-Limitations: the public pages still render from the typed seed in `src/content/`, so a saved edit is stored and served by `/api/travel/**` but does **not** show on the public site (ADR 0011, implementation notes). The browser sends `If-Match` with the record's `updatedAt`; if someone else saved first the save is refused with **412** `version_conflict` — reload and re-apply your change. Edits are not attributed in an audit log yet.
+A published edit shows on the public site on the next request: the story pages, home, destination pages and sitemap render per request from the content store ([ADR 0012](adr/0012-public-travel-from-content-repository.md)). Drafts and archived stories are not public (404). The browser sends `If-Match` with the record's `updatedAt`; if someone else saved first the save is refused with **412** `version_conflict` — reload and re-apply your change. Edits are not attributed in an audit log yet.
 
 ### Seed the static stories into the content store
 
@@ -258,7 +258,7 @@ npm run content:seed-static -- --dry-run   # list what would be created, write n
 npm run content:seed-static                # create them
 ```
 
-It uses the same store as the app (`TRAVEL_CONTENT_STORE`, else `.data/travel-content.json`), creates only slugs that are not there yet and never updates one, so a CMS edit is never overwritten. It is not run on boot. If you deleted a seeded story and run it again, that story comes back. Owner action: the seeded `travelDates` are the publish date, not the real trip dates — correct them in the CMS. Public pages adopt the read module in the follow-up frontend slice ([ADR 0012](adr/0012-public-travel-from-content-repository.md)).
+It uses the same store as the app (`TRAVEL_CONTENT_STORE`, else `.data/travel-content.json`), creates only slugs that are not there yet and never updates one, so a CMS edit is never overwritten. It is not run on boot. If you deleted a seeded story and run it again, that story comes back. Owner action: the seeded `travelDates` are the publish date, not the real trip dates — correct them in the CMS. Until they are seeded, an existing store shows only its own stories on the public site ([ADR 0012](adr/0012-public-travel-from-content-repository.md)).
 
 **Stop the app first.** The JSON content store is cached in the app process, which assumes it is the only writer. Seeding while the app runs leaves it serving the old copy, and its next CMS write would put that old copy back on disk, erasing the seeded stories. On the deployed stack, use the same `-f` files as your layout:
 
@@ -431,7 +431,7 @@ These are plausible defaults, **not verified**. Confirm each with the owner:
 
 ## Deploy
 
-`npm run build` emits a prerendered site with a standalone Node server
+`npm run build` emits a mostly prerendered site with a standalone Node server
 (`output: 'standalone'` in `next.config.ts`), so any Node-capable host works. The
 Planner API is the exception to "no runtime data dependency": with
 `PLANNER_DATABASE_URL` set it needs a reachable PostgreSQL at runtime, and a new

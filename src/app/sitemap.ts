@@ -1,10 +1,13 @@
 import type { MetadataRoute } from 'next';
 import { siteConfig } from '@/content/site';
 import { destinations } from '@/content/destinations';
-import { stories } from '@/content/stories';
+import { getPublicContent } from '@/server/content/public';
 import { itineraries } from '@/content/itineraries';
 import { getPathname } from '@/i18n/navigation';
 import { defaultLocale, locales } from '@/i18n/routing';
+
+/** Story entries come from the content store, so the sitemap is built per request. */
+export const dynamic = 'force-dynamic';
 
 type Href = Parameters<typeof getPathname>[0]['href'];
 
@@ -30,7 +33,7 @@ function entry(
   };
 }
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     entry('/', { priority: 1, changeFrequency: 'weekly' }),
     entry('/stories', { priority: 0.9, changeFrequency: 'weekly' }),
@@ -42,13 +45,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     entry('/about', { priority: 0.6, changeFrequency: 'yearly' }),
   ];
 
+  const stories = await (await getPublicContent()).listSitemapEntries();
   const storyPages = stories.map((story) =>
     entry(
       { pathname: '/stories/[slug]', params: { slug: story.slug } },
       {
         priority: 0.8,
         changeFrequency: 'yearly',
-        lastModified: story.publishedAt,
+        lastModified: story.updatedAt,
       },
     ),
   );

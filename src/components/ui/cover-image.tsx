@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { canOptimizeImage } from '@/lib/image-src';
 
 /**
  * Card and hero artwork.
@@ -29,7 +30,7 @@ export function CoverImage({
       fill
       sizes={sizes}
       priority={priority}
-      unoptimized={src.endsWith('.svg')}
+      unoptimized={!canOptimizeImage(src)}
       className={`object-cover ${className}`}
     />
   );

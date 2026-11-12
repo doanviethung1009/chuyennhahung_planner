@@ -13,16 +13,15 @@ and budgeting — while the Planner *UI* is still a later phase; see
 | Concern | Choice | Where |
 |---|---|---|
 | Framework | Next.js 16, App Router, React 19 | [`src/app/`](../src/app) |
-| Rendering | Server components, fully prerendered at build | all `page.tsx` |
+| Rendering | Server components. Pages that read Travel content (`/`, `/stories`, `/stories/[slug]`, `/destinations/[slug]`, sitemap) are `force-dynamic`; the rest prerender at build ([ADR 0012](adr/0012-public-travel-from-content-repository.md)) | all `page.tsx` |
 | Language | TypeScript `strict` + `noUncheckedIndexedAccess` | [`tsconfig.json`](../tsconfig.json) |
 | i18n | `next-intl` 4, VI unprefixed, EN at `/en` | [`src/i18n/`](../src/i18n) |
 | Styling | Tailwind v4, CSS-first `@theme` tokens | [`src/app/globals.css`](../src/app/globals.css) |
-| Content | Typed TypeScript seed data, no CMS | [`src/content/`](../src/content) |
+| Content | Stories, places and reviews: content repository via `getPublicContent()`; destinations, itineraries, video reviews: typed TypeScript in `src/content/` | [`src/content/`](../src/content) |
 | Tests | Vitest 3 on Node 24 (4/5 now possible, not yet upgraded) | [`tests/`](../tests) |
 | Persistence | Planner: PostgreSQL when `PLANNER_DATABASE_URL` is set ([ADR 0009](adr/0009-postgres-persistence.md)), else a JSON file; Travel content: JSON file | [`src/server/persistence/`](../src/server/persistence) |
 
-Public pages are static artefacts produced at build time from typed content in
-the repository. The API side — the Travel Content System and the Planner — runs
+Public pages that show Travel content (home, stories, destination detail, sitemap) are rendered per request from the content repository through one server-only read module, `getPublicContent()` in `src/server/content/public.ts` ([ADR 0012](adr/0012-public-travel-from-content-repository.md)), so a published CMS edit is visible on the next request. The other public pages (`/about`, itineraries, video reviews, `/map`) stay static artefacts built from typed content in the repository. The API side — the Travel Content System and the Planner — runs
 on the Node server, and in production the Planner also needs PostgreSQL
 ([ADR 0009](adr/0009-postgres-persistence.md)); without `PLANNER_DATABASE_URL` it falls
 back, by configuration only, to a JSON file for local development.
@@ -42,7 +41,8 @@ request
   │                                     NextIntlClientProvider
   │
   └─ src/app/[locale]/**/page.tsx ..... server component
-         ├─ reads src/content/**       (typed seed data)
+         ├─ reads getPublicContent()   (stories; src/server/content/public.ts)
+         ├─ reads src/content/**       (destinations, itineraries, video reviews)
          ├─ reads messages/<locale>.json via useTranslations/getTranslations
          ├─ composes src/components/**
          └─ exports generateMetadata → src/lib/metadata.ts
@@ -112,10 +112,12 @@ missing translation.
 | Collection | File | Count |
 |---|---|---|
 | Destinations | [`destinations.ts`](../src/content/destinations.ts) | 8 |
-| Stories | [`stories.ts`](../src/content/stories.ts) | 6 |
+| Stories (seed source / `static` adapter / test fixture; live stories come from the content repository) | [`stories.ts`](../src/content/stories.ts) | 6 |
 | Itineraries | [`itineraries.ts`](../src/content/itineraries.ts) | 4 |
 | Video reviews | [`video-reviews.ts`](../src/content/video-reviews.ts) | 6 |
 | Site + socials | [`site.ts`](../src/content/site.ts) | — |
+
+Public pages never import the repository or the store: they call `getPublicContent()` (`src/server/content/public.ts`, server-only, published-only, 404 otherwise), and `tests/client-boundary.test.ts` enforces that boundary. Rendering is `force-dynamic` with no revalidation; the JSON store serves an in-process cache that a write in the same process updates immediately, which assumes a single writer process. Rollback is `PUBLIC_CONTENT_SOURCE=static` (request-time env, restart, no rebuild); `npm run content:seed-static` adds the six seed stories to an existing store without overwriting edits.
 
 Shapes live in [`src/content/types.ts`](../src/content/types.ts). Two fields
 carry architectural weight: a destination's `coords` are real WGS84 values that
@@ -235,7 +237,7 @@ and the reason `--color-border-strong` exists. Details:
 | Types | `npm run typecheck` | `Localized<T>` completeness, route-type safety |
 | Lint | `npm run lint` | `eslint-config-next` rules |
 | Tests | `npm run test` | content, i18n parity, routing, map, tokens, docs |
-| Build | `npm run build` | every page prerenders |
+| Build | `npm run build` | static pages prerender; Travel-content pages are `force-dynamic` and need no database at build |
 | UI | `npm run verify:ui` | screenshots at 375/768/1440, fails on overflow |
 
 ## Trip sharing and story cloning
@@ -343,7 +345,7 @@ Deliberately absent, and not to be scaffolded early:
   directly by [ADR 0009](adr/0009-postgres-persistence.md). Still open: the Travel
   content store and the shared rate-limit store (ADR 0008, not built yet), and
   per-method SQL queries once loading the whole Planner per request becomes slow.
-- **Phase 07 — Admin Portal, CMS & RBAC (in progress: slices 1 and 2 shipped).** Slice 2 — browser editing of stories, places and reviews — is built ([ADR 0011](adr/0011-admin-content-cms.md), [features/admin-content-cms.md](features/admin-content-cms.md)). Still open after slice 2: the public pages read the typed seed in `src/content/`, not the content repository, so a CMS edit does not appear on the public site (needs its own ADR); audit log; templates, collections, create and delete in the browser; editor sign-out on the overview; MFA; HTTPS. Slice 1 — the
+- **Phase 07 — Admin Portal, CMS & RBAC (in progress: slices 1 and 2 shipped).** Slice 2 — browser editing of stories, places and reviews — is built ([ADR 0011](adr/0011-admin-content-cms.md), [features/admin-content-cms.md](features/admin-content-cms.md)). Public pages now read the content repository ([ADR 0012](adr/0012-public-travel-from-content-repository.md)), so a published CMS edit appears on the public site. Still open after slice 2: audit log; templates, collections, create and delete in the browser; editor sign-out on the overview; MFA; HTTPS. Slice 1 — the
   browser user-administration portal — is built ([ADR 0010](adr/0010-admin-portal-session-authorization.md),
   [features/admin-portal.md](features/admin-portal.md)). Everything else below is not
   built or to be scaffolded early; each item needs its decision recorded first.
