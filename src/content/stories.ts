@@ -1,5 +1,12 @@
 import type { Story } from './types';
 
+/**
+ * ADR 0012: this file is no longer the live source of public stories. It is the
+ * seed source (`src/content/travel/static-stories.ts`), the `static` adapter behind
+ * `PUBLIC_CONTENT_SOURCE=static` (rollback) and a test fixture. Editing it does
+ * not change production once pages read the content repository; edit in the CMS.
+ */
+
 /** Newest first. `publishedAt` drives sorting and `datePublished` in JSON-LD. */
 export const stories: Story[] = [
   {

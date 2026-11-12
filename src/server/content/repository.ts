@@ -100,8 +100,8 @@ export class TravelContentRepository {
   // Reference checking
   // -------------------------------------------------------------------------
 
-  private checkDestination(slug: string, path: string, issues: FieldIssue[]): void {
-    if (!this.destinationSlugs.has(slug)) {
+  private checkDestination(slug: string | null, path: string, issues: FieldIssue[]): void {
+    if (slug !== null && !this.destinationSlugs.has(slug)) {
       issues.push({ path, message: `destination "${slug}" does not exist` });
     }
   }
@@ -1059,7 +1059,7 @@ export class TravelContentRepository {
       }
     }
     for (const story of data.stories) {
-      if (!this.destinationSlugs.has(story.destinationSlug)) {
+      if (story.destinationSlug !== null && !this.destinationSlugs.has(story.destinationSlug)) {
         report('story', story.slug, `unknown destination "${story.destinationSlug}"`);
       }
       for (const slug of story.placeSlugs) {

@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { destinations } from '../src/content/destinations';
+import { stories as staticStories } from '../src/content/stories';
 import { itineraries } from '../src/content/itineraries';
 import {
   daLatRomanticStory,
@@ -209,7 +210,8 @@ describe('seed integrity', () => {
 
   it('seeds the whole module set', async () => {
     expect(await repo.listPlaces({ limit: 100 })).toHaveLength(6);
-    expect(await repo.listStories({ limit: 100 })).toHaveLength(1);
+    // The Đà Lạt story plus the typed-seed stories (ADR 0012).
+    expect(await repo.listStories({ limit: 100 })).toHaveLength(1 + staticStories.length);
     expect(await repo.listCollections({ limit: 100 })).toHaveLength(1);
     expect(await repo.listReviews({ limit: 100 })).toHaveLength(2);
     expect(await repo.listTemplates({ limit: 100 })).toHaveLength(1);
@@ -229,7 +231,8 @@ describe('seed integrity', () => {
   it('is idempotent — a second seed does not duplicate anything', async () => {
     await seedTravelContent(repo);
     expect(await repo.listPlaces({ limit: 100 })).toHaveLength(6);
-    expect(await repo.listStories({ limit: 100 })).toHaveLength(1);
+    // The Đà Lạt story plus the typed-seed stories (ADR 0012).
+    expect(await repo.listStories({ limit: 100 })).toHaveLength(1 + staticStories.length);
   });
 
   it('fills every localized field in both locales', async () => {

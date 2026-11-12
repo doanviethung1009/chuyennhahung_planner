@@ -908,6 +908,12 @@ export class PlannerRepository {
     }
 
     const destinationSlug = template.sourceSnapshot.destinationSlug;
+    // ADR 0012 made a story's destination nullable; a trip still needs one.
+    if (destinationSlug === null) {
+      throw invalidState(
+        `template "${template.slug}" comes from a story with no destination and cannot be cloned into a trip`,
+      );
+    }
     if (!this.catalog.hasDestination(destinationSlug)) {
       throw invalidState(
         `template "${template.slug}" points at destination "${destinationSlug}", which no longer exists`,
@@ -971,7 +977,7 @@ export class PlannerRepository {
         durationDays: template.durationDays,
         estimatedTotalVnd: template.estimatedTotalVnd,
         clonedAt: at,
-        story: this.catalog.getLinkedStory(template.slug),
+        story: await this.catalog.getLinkedStory(template.slug),
       },
       days,
       activities,

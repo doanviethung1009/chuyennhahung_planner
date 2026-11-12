@@ -289,7 +289,14 @@ export const storyInputSchema = z.object({
   content: z.array(storyBlockSchema).min(1).max(200),
   cover: imageRefSchema,
   gallery: z.array(imageRefSchema).max(30).default([]),
-  destinationSlug: slugSchema,
+  /** Null for a story that is not about one destination (ADR 0012). */
+  destinationSlug: slugSchema.nullable(),
+  /**
+   * Public Planner template that is this story's real itinerary. Cannot be derived
+   * from `template.sourceStorySlug`: a template may be cut from a different story.
+   * Optional on input so documents stored before ADR 0012 still validate (ADR 0012).
+   */
+  plannerTemplateSlug: slugSchema.nullable().default(null),
   travelDates: dateRangeSchema,
   actualCost: tripCostSchema.nullable().default(null),
   placeSlugs: z.array(slugSchema).max(60).default([]),
@@ -454,7 +461,7 @@ export const templateDaySchema = z.object({
 export const sourceSnapshotSchema = z.object({
   storySlug: slugSchema,
   title: localizedTextSchema,
-  destinationSlug: slugSchema,
+  destinationSlug: slugSchema.nullable(),
   travelDates: z.object({ start: isoDateSchema, end: isoDateSchema }),
   actualCostTotalVnd: vndSchema.nullable(),
   placeSlugs: z.array(slugSchema),

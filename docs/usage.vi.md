@@ -32,6 +32,7 @@ mọi biến dưới đây đều có mặc định dùng được, hoặc tự 
 | `ADMIN_API_TOKEN` | *chưa đặt* | Bảo vệ mọi route admin. Chưa đặt, hoặc ngắn hơn 32 ký tự, thì tất cả trả `503` — không bao giờ mở mặc định |
 | `TRAVEL_CONTENT_STORE` | `.data/travel-content.json` | Nơi content store nằm |
 | `TRAVEL_CONTENT_AUTOSEED` | `true` | Đặt `false` để bỏ qua seed nội dung demo ở lần dùng đầu |
+| `PUBLIC_CONTENT_SOURCE` | `repository` | Đọc ở mỗi lần gọi (khởi động lại, không cần build lại). `repository`: nội dung Travel công khai lấy từ content store; `static`: lấy từ `src/content/stories.ts` (đường lùi). Giá trị khác coi như `repository`. Các trang công khai chuyển sang module đọc này ở lát frontend tiếp theo; trước đó biến này chưa đổi gì nhìn thấy được ([ADR 0012](adr/0012-public-travel-from-content-repository.vi.md)) |
 | `PLANNER_STORE` | `.data/planner.json` | Nơi trip của Planner nằm. Tách file khỏi content store một cách có chủ đích. Bị bỏ qua khi đã đặt `PLANNER_DATABASE_URL` |
 | `PLANNER_DATABASE_URL` | *chưa đặt* | Chuỗi kết nối PostgreSQL. Đã đặt: Planner dùng PostgreSQL và không bao giờ quay về file ([ADR 0009](adr/0009-postgres-persistence.vi.md)). Là secret — chỉ qua biến môi trường. Xem *Chạy Planner trên PostgreSQL* |
 | `DATABASE_POOL_MAX` | `5` | Kích thước connection pool của mỗi tiến trình |
@@ -248,6 +249,28 @@ Khôi phục: nếu admin duy nhất bị khoá, dùng service token để reset
 Đăng nhập như mục trên (tài khoản `editor` có vai trò `editor`; admin đặt vai trò này được từ `/quan-tri`) rồi mở `/quan-tri/noi-dung/chuyen-di` (`/en/admin/content/stories`). Năm trang gồm danh sách chuyến đi, một chuyến đi, địa điểm, một địa điểm và đánh giá (`/quan-tri/noi-dung/dia-diem`, `/quan-tri/noi-dung/danh-gia`). Sửa một bản ghi rồi lưu; xuất bản hoặc lưu trữ story hay review là một hành động riêng. Tạo mới, xoá, template và collection chưa có trên trình duyệt — dùng API token ([travel-content-api.vi.md](travel-content-api.vi.md)).
 
 Giới hạn: trang công khai vẫn render từ seed có kiểu trong `src/content/`, nên bản sửa đã lưu được lưu và phục vụ bởi `/api/travel/**` nhưng **không** hiện trên site công khai (ADR 0011, ghi chú hiện thực). Trình duyệt gửi `If-Match` kèm `updatedAt` của bản ghi; nếu người khác lưu trước, thao tác bị từ chối với **412** `version_conflict` — tải lại rồi áp dụng lại thay đổi. Việc sửa chưa được ghi vào audit log.
+
+### Nạp các bài viết tĩnh vào content store
+
+Content store mới tinh đã có sẵn các bài viết từ `src/content/stories.ts` ngay lần seed đầu tiên. Store **đã tồn tại** thì bỏ qua bước đó (vì đã có nội dung), nên hãy nạp thủ công:
+
+```bash
+npm run content:seed-static -- --dry-run   # liệt kê những gì sẽ tạo, không ghi gì
+npm run content:seed-static                # tạo chúng
+```
+
+Lệnh dùng cùng store với app (`TRAVEL_CONTENT_STORE`, nếu không thì `.data/travel-content.json`), chỉ tạo các slug chưa có và không bao giờ cập nhật slug nào, nên bản sửa trong CMS không bị ghi đè. Lệnh không chạy khi khởi động. Nếu bạn đã xóa một bài đã seed rồi chạy lại, bài đó sẽ xuất hiện lại. Việc của chủ dự án: `travelDates` của bài seed là ngày đăng, không phải ngày đi thật — hãy sửa trong CMS. Các trang công khai chuyển sang module đọc ở lát frontend tiếp theo ([ADR 0012](adr/0012-public-travel-from-content-repository.vi.md)).
+
+**Dừng app trước.** Content store JSON được cache trong tiến trình app, vốn giả định mình là bên ghi duy nhất. Seed trong lúc app đang chạy thì app vẫn phục vụ bản cũ, và lần ghi CMS kế tiếp sẽ ghi bản cũ đó đè lên đĩa, xoá mất các bài vừa seed. Trên stack đã deploy, dùng đúng các file `-f` của bố cục bạn chọn:
+
+```bash
+docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml stop app
+docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml run --rm tools \
+  npm run content:seed-static
+docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml start app
+```
+
+Chạy một lần khi deploy bản phát hành có lệnh này: từ bản đó Planner đã liên kết template với bài viết qua content store, nên cho tới khi seed xong, template clone từ `da-lat-3-ngay-lang-man` sẽ không mang ghi công bài viết.
 
 ### Chạy Planner trên PostgreSQL
 
