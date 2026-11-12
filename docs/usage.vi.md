@@ -191,14 +191,7 @@ curl -s -X DELETE http://localhost:3000/api/admin/planner/users/<userId>/google 
   -H "authorization: Bearer $ADMIN_API_TOKEN"
 ```
 
-Để bật Google ở máy local, tạo một OAuth client loại *Web application* trên Google
-Cloud Console, đăng ký `http://localhost:3000/api/planner/oauth/google/callback`
-làm redirect URI, rồi đặt `GOOGLE_CLIENT_ID` và `GOOGLE_CLIENT_SECRET` trong
-`.env.local` (không bao giờ commit). Lần đăng nhập Google đầu tiên với email chưa
-có tài khoản sẽ tạo tài khoản mới.
-Email đã có tài khoản thì bị từ chối với `link_required` — Google không bao giờ
-được liên kết theo email. Người đó đăng nhập bằng mật khẩu rồi bấm "Liên kết tài
-khoản Google" ở `/doi-mat-khau`.
+Để bật đăng nhập Google, làm theo mục *Cấu hình đăng nhập Google* bên dưới.
 
 Sửa một trip đang có thì cần version lấy từ `ETag` của nó:
 
@@ -243,6 +236,55 @@ curl -s -X POST http://localhost:3000/api/admin/planner/users \
 Trên VM dev chạy HTTP thuần qua IP: `NEXT_PUBLIC_SITE_URL` phải đúng origin `http://<ip>` và được nướng vào lúc build, nếu không mutation admin bị từ chối. Cookie không có `Secure` qua HTTP nên mật khẩu và cookie admin đi dạng rõ: chỉ dùng trong LAN, và chuyển sang HTTPS trước khi có người dùng thật.
 
 Khôi phục: nếu admin duy nhất bị khoá, dùng service token để reset mật khẩu (`POST .../users/<userId>/reset-password`) hoặc nâng quyền người khác (`PATCH .../users/<userId>` với `{"role":"admin"}`).
+
+### Cấu hình đăng nhập Google
+
+Đăng nhập Google ([ADR 0007](adr/0007-password-and-google-sign-in.vi.md)) tắt cho tới khi server có **cả hai** biến `GOOGLE_CLIENT_ID` và `GOOGLE_CLIENT_SECRET`. Thiếu chúng thì nút "Đăng nhập bằng Google" không hiện ở `/dang-nhap` và các route Google trả 404 — đó là trạng thái bình thường của một bản checkout mới. App chỉ xin Google `openid email profile` và chỉ chấp nhận email đã được Google xác minh.
+
+**1. Tạo OAuth client trên Google Cloud Console**
+
+1. Chọn hoặc tạo một project tại <https://console.cloud.google.com>.
+2. *APIs & Services → OAuth consent screen*: user type **External**, tên app, email hỗ trợ. Scope: không thêm gì ngoài mặc định (`openid`, `email`, `profile`). Khi app còn ở chế độ **Testing**, chỉ các tài khoản Google có trong *Test users* mới đăng nhập được — thêm tài khoản của bạn vào.
+3. *APIs & Services → Credentials → Create credentials → OAuth client ID*, loại **Web application**.
+4. *Authorized redirect URIs*: mỗi môi trường một dòng, khớp từng ký tự với callback app gửi đi:
+
+   | Môi trường | Redirect URI |
+   |---|---|
+   | Dev local | `http://localhost:3000/api/planner/oauth/google/callback` |
+   | Đã deploy | `https://<tên-miền>/api/planner/oauth/google/callback` |
+
+   *Authorized JavaScript origins* để trống được: luồng chạy phía server.
+5. Chép **Client ID** và **Client secret**.
+
+**2. Đặt biến môi trường**
+
+Ở máy local, trong `.env.local` tại thư mục gốc repo (đã gitignore — không bao giờ commit, không bao giờ đặt secret vào biến `NEXT_PUBLIC_*`):
+
+```bash
+GOOGLE_CLIENT_ID=<client-id>.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=<client-secret>
+# Tùy chọn:
+# GOOGLE_SIGNUP_ENABLED=false   # chỉ tài khoản có sẵn; Google không tạo tài khoản mới
+# GOOGLE_REDIRECT_URI=...       # chỉ khi callback tự suy ra bị sai
+```
+
+Trên stack Compose, đặt đúng hai dòng đó vào file `.env` cạnh các file compose; `compose.app.yml` truyền chúng (cùng `GOOGLE_SIGNUP_ENABLED`) vào container app. `GOOGLE_REDIRECT_URI` không được truyền ở đó: callback được suy ra từ `NEXT_PUBLIC_SITE_URL`, nên origin đó phải trùng với origin đã đăng ký ở bước 1.4.
+
+Biến chỉ được đọc lúc khởi động. **Khởi động lại** `npm run dev` (hoặc tạo lại container) sau khi đổi.
+
+**3. Kiểm tra**
+
+1. Mở `/dang-nhap`: có nút Google.
+2. Bấm vào: trang chọn tài khoản của Google hiện ra. Nếu Google báo `redirect_uri_mismatch`, URI đăng ký ở bước 1.4 khác với URI app gửi — so lại scheme, host, port và path.
+3. Chọn tài khoản, bạn quay về site và đã đăng nhập.
+
+**Cách khớp tài khoản**
+
+- Email Google **chưa** có tài khoản sẽ tạo tài khoản `member` mới, trừ khi `GOOGLE_SIGNUP_ENABLED=false` (khi đó báo `account_not_found`). Google không bao giờ cấp quyền nhân viên: nâng quyền bằng service token hoặc ở `/quan-tri`.
+- Email **đã** có tài khoản (ví dụ admin tạo bằng `admin:create`) bị từ chối với `link_required` — Google không bao giờ được liên kết theo email. Đăng nhập bằng mật khẩu, rồi bấm "Liên kết tài khoản Google" ở `/doi-mat-khau`. Từ đó cả hai cách đều vào được tài khoản đó.
+- Gỡ liên kết bằng `DELETE /api/admin/planner/users/<userId>/google` (service token).
+
+**HTTP trên địa chỉ IP không dùng được.** Google chỉ chấp nhận redirect URI HTTP thường cho `localhost`. VM dev chạy dạng `http://192.168.x.x` không dùng được đăng nhập Google; cần tên miền có HTTPS trước. Trong lúc chờ, dùng đăng nhập mật khẩu ở đó và để trống hai biến để nút không hiện.
 
 ### Sửa nội dung trên trình duyệt (admin hoặc editor)
 
@@ -574,3 +616,7 @@ phải host công khai, nên kiểm tra same-origin của Planner chấp nhận 
 | `MISSING_MESSAGE` lúc chạy | Key chỉ được thêm vào một file messages |
 | `npm run verify:ui` không mở được browser | Chrome không nằm ở đường dẫn macOS hard-code trong `scripts/screenshots.mjs` |
 | Dấu tiếng Việt hiển thị sai | Thêm font mà thiếu subset `vietnamese` |
+| Không có nút "Đăng nhập bằng Google" | Server thiếu `GOOGLE_CLIENT_ID` hoặc `GOOGLE_CLIENT_SECRET`, hoặc chưa khởi động lại sau khi đặt — xem *Cấu hình đăng nhập Google* |
+| Google báo `Error 400: redirect_uri_mismatch` | Redirect URI trên Google Cloud Console khác callback của app (scheme, host, port, path); trên host `http://<ip>` thì không thể chạy |
+| Google báo `Error 403: access_denied` | Consent screen đang ở *Testing* và tài khoản Google đó không có trong test users |
+| Quay về `/dang-nhap` với thông báo "email này đã có tài khoản" | `link_required`: đăng nhập bằng mật khẩu rồi liên kết Google ở `/doi-mat-khau` |
