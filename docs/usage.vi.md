@@ -243,6 +243,12 @@ Trên VM dev chạy HTTP thuần qua IP: `NEXT_PUBLIC_SITE_URL` phải đúng or
 
 Khôi phục: nếu admin duy nhất bị khoá, dùng service token để reset mật khẩu (`POST .../users/<userId>/reset-password`) hoặc nâng quyền người khác (`PATCH .../users/<userId>` với `{"role":"admin"}`).
 
+### Sửa nội dung trên trình duyệt (admin hoặc editor)
+
+Đăng nhập như mục trên (tài khoản `editor` có vai trò `editor`; admin đặt vai trò này được từ `/quan-tri`) rồi mở `/quan-tri/noi-dung/chuyen-di` (`/en/admin/content/stories`). Năm trang gồm danh sách chuyến đi, một chuyến đi, địa điểm, một địa điểm và đánh giá (`/quan-tri/noi-dung/dia-diem`, `/quan-tri/noi-dung/danh-gia`). Sửa một bản ghi rồi lưu; xuất bản hoặc lưu trữ story hay review là một hành động riêng. Tạo mới, xoá, template và collection chưa có trên trình duyệt — dùng API token ([travel-content-api.vi.md](travel-content-api.vi.md)).
+
+Giới hạn: trang công khai vẫn render từ seed có kiểu trong `src/content/`, nên bản sửa đã lưu được lưu và phục vụ bởi `/api/travel/**` nhưng **không** hiện trên site công khai (ADR 0011, ghi chú hiện thực). Trình duyệt gửi `If-Match` kèm `updatedAt` của bản ghi; nếu người khác lưu trước, thao tác bị từ chối với **412** `version_conflict` — tải lại rồi áp dụng lại thay đổi. Việc sửa chưa được ghi vào audit log.
+
 ### Chạy Planner trên PostgreSQL
 
 Khi đặt `PLANNER_DATABASE_URL`, Planner lưu dữ liệu trong PostgreSQL 16 hoặc 17

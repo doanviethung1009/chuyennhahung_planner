@@ -242,6 +242,12 @@ On the dev VM over plain HTTP on its IP: `NEXT_PUBLIC_SITE_URL` must be the exac
 
 Recovery: if the only admin is locked out, use the service token to reset the password (`POST .../users/<userId>/reset-password`) or to promote another user (`PATCH .../users/<userId>` with `{"role":"admin"}`).
 
+### Edit content in the browser (admin or editor)
+
+Sign in as in the section above (an `editor` account has the role `editor`; an admin can set it from `/quan-tri`) and open `/quan-tri/noi-dung/chuyen-di` (`/en/admin/content/stories`). The five pages are stories, a story, places, a place and reviews (`/quan-tri/noi-dung/dia-diem`, `/quan-tri/noi-dung/danh-gia`). Edit a record and save; publishing or archiving a story or review is a separate action. Create, delete, templates and collections are not in the browser yet — use the token API ([travel-content-api.md](travel-content-api.md)).
+
+Limitations: the public pages still render from the typed seed in `src/content/`, so a saved edit is stored and served by `/api/travel/**` but does **not** show on the public site (ADR 0011, implementation notes). The browser sends `If-Match` with the record's `updatedAt`; if someone else saved first the save is refused with **412** `version_conflict` — reload and re-apply your change. Edits are not attributed in an audit log yet.
+
 ### Run the Planner on PostgreSQL
 
 With `PLANNER_DATABASE_URL` set the Planner keeps its data in PostgreSQL 16 or 17
