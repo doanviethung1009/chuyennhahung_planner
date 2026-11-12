@@ -54,6 +54,14 @@ describe('safeReturnTo (open-redirect guard)', () => {
     }
   });
 
+  it('drops the query and fragment of a public page, keeps those of a private one', () => {
+    expect(safeReturnTo('/chuyen-di-choi?utm_source=x&email=a@b.c')).toBe('/chuyen-di-choi');
+    expect(safeReturnTo('/en/stories#comments')).toBe('/en/stories');
+    expect(safeReturnTo('/?q=1')).toBe('/');
+    expect(safeReturnTo('/tao-chuyen-di/da-lat-3-ngay-lang-man?x=1')).toBe('/tao-chuyen-di/da-lat-3-ngay-lang-man?x=1');
+    expect(safeReturnTo('/chuyen-di-cua-toi?status=archived')).toBe('/chuyen-di-cua-toi?status=archived');
+  });
+
   it('rejects unknown paths and routes that are not returnable', () => {
     for (const bad of [
       '/admin/x',

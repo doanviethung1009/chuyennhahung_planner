@@ -60,7 +60,9 @@ None. The control links to existing routes:
 - **`returnTo`.** `safeReturnTo` (`src/lib/return-to.ts`) used to accept only the
   private routes; it now accepts every localized page in the route table except
   `/sign-in` and `/shared/[token]`, so a reader goes back to the story they were
-  on. The open-redirect checks (single leading `/`, no `//`, backslash, control
+  on. A public page comes back as its path alone — its query and fragment are
+  dropped, because `returnTo` is copied into sign-in URLs, logs, `Referer` and the
+  stored Google attempt; private pages keep theirs. The open-redirect checks (single leading `/`, no `//`, backslash, control
   character or scheme, known route only) are unchanged. The Google start route
   uses the same guard, so Google returns to the same page.
 - **Google.** On the sign-in page the "Sign in with Google" button exists only
@@ -88,8 +90,9 @@ None. The control links to existing routes:
   signs out with a same-origin `DELETE`; the admin entry is gated on the admin
   role; the control is mounted on desktop and in the drawer; no `href="#"`.
 - [`return-to.test.ts`](../../tests/return-to.test.ts) — public pages (home in both
-  locales, stories, destinations, reviews, about) are accepted; sign-in and share
-  links still fall back.
+  locales, stories, destinations, reviews, about) are accepted, with their query
+  and fragment dropped; private pages keep theirs; sign-in and share links still
+  fall back.
 - `i18n.test.ts` keeps the new `nav` keys in both catalogues; `client-boundary.test.ts`
   checks the new client module imports no server code.
 - The rendered behaviour (desktop menu by keyboard, mobile drawer at 375px,

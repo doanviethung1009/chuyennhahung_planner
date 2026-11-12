@@ -9,7 +9,23 @@ import { pathnames, type AppPathname } from '@/i18n/routing';
  * sign-in URL) and `/sign-in` itself, which is nowhere to "return" to.
  */
 const NOT_RETURNABLE: readonly AppPathname[] = ['/sign-in', '/shared/[token]'];
-const RETURNABLE = (Object.keys(pathnames) as AppPathname[]).filter((key) => !NOT_RETURNABLE.includes(key));
+
+/**
+ * Private pages keep their query (a trip-setup draft, for one). On a public
+ * page the query and fragment are dropped: they are not needed to land back on
+ * the page, and a `returnTo` is copied into sign-in URLs, logs, `Referer` and
+ * the stored Google attempt.
+ */
+const KEEPS_QUERY: readonly AppPathname[] = [
+  '/my-trips',
+  '/my-trips/[id]',
+  '/trip-setup/[template]',
+  '/account/password',
+  '/admin',
+];
+const PUBLIC = (Object.keys(pathnames) as AppPathname[]).filter(
+  (key) => !NOT_RETURNABLE.includes(key) && !KEEPS_QUERY.includes(key),
+);
 
 function toPattern(path: string): RegExp {
   // The home page: `/` in Vietnamese, `/en` (or `/en/`) in English.
@@ -21,16 +37,22 @@ function toPattern(path: string): RegExp {
   return new RegExp(`^(?:/en)?${source}/?$`);
 }
 
-const allowed: RegExp[] = RETURNABLE.flatMap((key) => {
-  const entry: string | Record<string, string> = pathnames[key];
-  return (typeof entry === 'string' ? [entry] : Object.values(entry)).map(toPattern);
-});
+function patternsFor(keys: readonly AppPathname[]): RegExp[] {
+  return keys.flatMap((key) => {
+    const entry: string | Record<string, string> = pathnames[key];
+    return (typeof entry === 'string' ? [entry] : Object.values(entry)).map(toPattern);
+  });
+}
+
+const privatePatterns = patternsFor(KEEPS_QUERY);
+const publicPatterns = patternsFor(PUBLIC);
 
 /**
  * Validates a `returnTo` value (open-redirect guard). Accepts only a same-site
  * relative path that starts with a single `/`, has no backslash, control
- * character or scheme, and resolves to a known page of the site.
- * Anything else returns `fallback`.
+ * character or scheme, and resolves to a known page of the site. A private
+ * page is returned as given; a public page as its path alone. Anything else
+ * returns `fallback`.
  */
 export function safeReturnTo(value: string | null | undefined, fallback = '/my-trips'): string {
   if (typeof value !== 'string' || value.length === 0 || value.length > 300) return fallback;
@@ -40,5 +62,7 @@ export function safeReturnTo(value: string | null | undefined, fallback = '/my-t
   const path = value.split(/[?#]/, 1)[0] ?? '';
   if (path.includes(':')) return fallback;
 
-  return allowed.some((pattern) => pattern.test(path)) ? value : fallback;
+  if (privatePatterns.some((pattern) => pattern.test(path))) return value;
+  if (publicPatterns.some((pattern) => pattern.test(path))) return path;
+  return fallback;
 }

@@ -58,7 +58,10 @@ Không thêm route. Control dẫn tới các route sẵn có:
   đọc lại phiên. Nếu lỗi, một thông báo hiện ngay tại chỗ.
 - **`returnTo`.** `safeReturnTo` (`src/lib/return-to.ts`) trước chỉ nhận các route
   riêng tư; giờ nhận mọi trang đã bản địa hoá trong bảng route, trừ `/sign-in` và
-  `/shared/[token]`, để người đọc quay lại đúng bài đang xem. Các kiểm tra chống
+  `/shared/[token]`, để người đọc quay lại đúng bài đang xem. Trang công khai chỉ
+  giữ lại đường dẫn — query và fragment bị bỏ, vì `returnTo` bị chép vào URL đăng
+  nhập, log, `Referer` và lượt đăng nhập Google được lưu; trang riêng tư giữ
+  nguyên. Các kiểm tra chống
   open redirect (một dấu `/` ở đầu, không `//`, dấu gạch ngược, ký tự điều khiển hay
   scheme, chỉ route đã biết) giữ nguyên. Route bắt đầu Google dùng cùng bộ kiểm tra
   này, nên Google cũng đưa người dùng về đúng trang đó.
@@ -88,7 +91,8 @@ Không thêm route. Control dẫn tới các route sẵn có:
   máy tính và trong menu kéo ra; không có `href="#"`.
 - [`return-to.test.ts`](../../tests/return-to.test.ts) — các trang công khai (trang
   chủ ở cả hai ngôn ngữ, chuyện đi chơi, khám phá, góc review, về nhà Hưng) được
-  chấp nhận; trang đăng nhập và link chia sẻ vẫn về mặc định.
+  chấp nhận nhưng bỏ query và fragment; trang riêng tư giữ nguyên; trang đăng nhập
+  và link chia sẻ vẫn về mặc định.
 - `i18n.test.ts` giữ các khoá `nav` mới ở cả hai bộ chuỗi; `client-boundary.test.ts`
   kiểm tra module client mới không import code server.
 - Hành vi hiển thị (menu máy tính bằng bàn phím, menu điện thoại ở 375px, đăng
