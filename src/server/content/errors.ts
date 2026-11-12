@@ -137,10 +137,11 @@ export function versionConflict(
 }
 
 /** Content edit stamped with an `updatedAt` that is no longer the stored one. */
-export function staleContent(entity: string, expected: string, actual: string): ContentError {
+export function staleContent(entity: string, actual: string): ContentError {
+  // The client's `If-Match` value is deliberately not echoed back (sec review W1).
   return new ContentError(
     'version_conflict',
-    `${entity} has changed since you loaded it (you had ${expected}, stored ${actual}) — reload and retry`,
+    `${entity} has changed since you loaded it (stored ${actual}) — reload and retry`,
   );
 }
 

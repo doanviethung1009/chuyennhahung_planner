@@ -226,7 +226,10 @@ describe('If-Match on content PATCH', () => {
 
     const stale = await patchPlace('cms-place', { rating: 2 }, { bearer: ADMIN_TOKEN, ifMatch: '"2000-01-01T00:00:00.000Z"' });
     expect(stale.status).toBe(412);
-    expect((await stale.json()).error.code).toBe('version_conflict');
+    const staleBody = await stale.json();
+    expect(staleBody.error.code).toBe('version_conflict');
+    // The client-supplied stamp is not echoed back (sec review W1).
+    expect(staleBody.error.message).not.toContain('2000-01-01');
     const unchanged = await (await getPlace('cms-place', { bearer: ADMIN_TOKEN })).json();
     expect(unchanged).toEqual(current);
 

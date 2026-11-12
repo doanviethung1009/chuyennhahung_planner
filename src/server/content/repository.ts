@@ -1148,7 +1148,7 @@ export class TravelContentRepository {
 /** Optimistic concurrency inside the transaction: no stamp = last write wins. */
 function checkStamp(entity: string, actual: string, expected: string | undefined): void {
   if (expected !== undefined && expected !== actual) {
-    throw staleContent(entity, expected, actual);
+    throw staleContent(entity, actual);
   }
 }
 
