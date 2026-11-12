@@ -190,14 +190,7 @@ curl -s -X DELETE http://localhost:3000/api/admin/planner/users/<userId>/google 
   -H "authorization: Bearer $ADMIN_API_TOKEN"
 ```
 
-To turn Google on locally, create an OAuth client of type *Web application* in
-Google Cloud Console, register
-`http://localhost:3000/api/planner/oauth/google/callback` as a redirect URI, and
-set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env.local` (never
-committed). A first Google sign-in with an email no account has creates one.
-An email that already has an account is refused with `link_required` — Google is
-never linked by email. The person signs in with their password and follows
-"Link your Google account" on `/doi-mat-khau` instead.
+To turn Google sign-in on, follow *Set up Google sign-in* below.
 
 Mutating an existing trip needs the version from its `ETag`:
 
@@ -242,6 +235,55 @@ curl -s -X POST http://localhost:3000/api/admin/planner/users \
 On the dev VM over plain HTTP on its IP: `NEXT_PUBLIC_SITE_URL` must be the exact `http://<ip>` origin and is baked at build time, or admin mutations are refused. Cookies are not `Secure` over HTTP, so the admin password and cookie travel in clear text: LAN only, and switch to HTTPS before real users.
 
 Recovery: if the only admin is locked out, use the service token to reset the password (`POST .../users/<userId>/reset-password`) or to promote another user (`PATCH .../users/<userId>` with `{"role":"admin"}`).
+
+### Set up Google sign-in
+
+Google sign-in ([ADR 0007](adr/0007-password-and-google-sign-in.md)) is off until the server has **both** `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. Without them the "Sign in with Google" button is not rendered on `/dang-nhap` and the Google routes answer 404 — that is the expected state of a fresh checkout. The app asks Google for `openid email profile` only and accepts only a Google-verified email.
+
+**1. Create the OAuth client in Google Cloud Console**
+
+1. Pick or create a project at <https://console.cloud.google.com>.
+2. *APIs & Services → OAuth consent screen*: user type **External**, app name, support email. Scopes: nothing beyond the defaults (`openid`, `email`, `profile`). While the app is in **Testing**, only the Google accounts listed under *Test users* can sign in — add yours.
+3. *APIs & Services → Credentials → Create credentials → OAuth client ID*, type **Web application**.
+4. *Authorized redirect URIs*: one entry per environment, byte-for-byte the callback the app sends:
+
+   | Environment | Redirect URI |
+   |---|---|
+   | Local dev | `http://localhost:3000/api/planner/oauth/google/callback` |
+   | Deployed | `https://<your-domain>/api/planner/oauth/google/callback` |
+
+   *Authorized JavaScript origins* can stay empty: the flow is server-side.
+5. Copy the **Client ID** and **Client secret**.
+
+**2. Set the variables**
+
+Locally, in `.env.local` at the repository root (gitignored — never commit it, never put the secret in a `NEXT_PUBLIC_*` variable):
+
+```bash
+GOOGLE_CLIENT_ID=<client-id>.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=<client-secret>
+# Optional:
+# GOOGLE_SIGNUP_ENABLED=false   # existing accounts only; no new account from Google
+# GOOGLE_REDIRECT_URI=...       # only if the derived callback is wrong
+```
+
+On the Compose stack, put the same two lines in the `.env` beside the compose files; `compose.app.yml` passes them (and `GOOGLE_SIGNUP_ENABLED`) to the app container. `GOOGLE_REDIRECT_URI` is not passed there: the callback is derived from `NEXT_PUBLIC_SITE_URL`, so that origin must equal the one registered in step 1.4.
+
+The variables are read at startup. **Restart** `npm run dev` (or recreate the container) after changing them.
+
+**3. Check it**
+
+1. Open `/dang-nhap`: the Google button is there.
+2. Click it: Google's account chooser opens. If Google shows `redirect_uri_mismatch` instead, the URI registered in step 1.4 differs from the one the app sent — compare scheme, host, port and path.
+3. Choose an account and you are back on the site, signed in.
+
+**How accounts are matched**
+
+- A Google email that **no** account has creates a new `member` account, unless `GOOGLE_SIGNUP_ENABLED=false` (then `account_not_found`). Staff roles are never granted by Google: promote with the service token or from `/quan-tri`.
+- An email that **already** has an account (for example an admin made with `admin:create`) is refused with `link_required` — Google is never linked by email. Sign in with the password, then use "Link your Google account" on `/doi-mat-khau`. From then on either method signs that account in.
+- Unlink with `DELETE /api/admin/planner/users/<userId>/google` (service token).
+
+**HTTP on an IP address does not work.** Google accepts a plain-HTTP redirect URI only for `localhost`. The dev VM served as `http://192.168.x.x` cannot use Google sign-in; it needs a domain with HTTPS first. Until then, use password sign-in there and leave the two variables unset so the button stays hidden.
 
 ### Edit content in the browser (admin or editor)
 
@@ -584,3 +626,7 @@ accepts the `NEXT_PUBLIC_SITE_URL` origin. Set it to the exact public origin.
 | `MISSING_MESSAGE` at runtime | Key added to one catalogue only |
 | `npm run verify:ui` cannot launch | Chrome is not at the hard-coded macOS path in `scripts/screenshots.mjs` |
 | Diacritics render wrong | A font was added without the `vietnamese` subset |
+| No "Sign in with Google" button | `GOOGLE_CLIENT_ID` or `GOOGLE_CLIENT_SECRET` is unset on the server, or the server was not restarted after setting them — see *Set up Google sign-in* |
+| Google shows `Error 400: redirect_uri_mismatch` | The redirect URI in Google Cloud Console differs from the app's callback (scheme, host, port, path); on an `http://<ip>` host it cannot work at all |
+| Google shows `Error 403: access_denied` | The consent screen is in *Testing* and that Google account is not a test user |
+| Back on `/dang-nhap` with "this email already has an account" | `link_required`: sign in with the password and link Google on `/doi-mat-khau` |
