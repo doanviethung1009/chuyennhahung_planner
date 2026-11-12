@@ -270,7 +270,7 @@ docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml 
 docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml start app
 ```
 
-Chạy một lần khi deploy bản phát hành có lệnh này: từ bản đó Planner đã liên kết template với bài viết qua content store, nên cho tới khi seed xong, template clone từ `da-lat-3-ngay-lang-man` sẽ không mang ghi công bài viết.
+Chạy một lần khi deploy bản phát hành có lệnh này: từ bản đó Planner đã liên kết template với bài viết qua content store, nên cho tới khi seed xong, template clone từ `da-lat-3-ngay-lang-man` sẽ không mang ghi công bài viết. Trước đó hãy build lại image `tools` của bản phát hành này để nó có script.
 
 ### Chạy Planner trên PostgreSQL
 
