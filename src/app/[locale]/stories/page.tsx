@@ -2,10 +2,12 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
-import { storiesNewestFirst } from '@/content/stories';
+import { getPublicContent } from '@/server/content/public';
 import { Container } from '@/components/ui/container';
 import { PageHeader } from '@/components/layout/page-header';
 import { StoryCard } from '@/components/cards/story-card';
+
+export const dynamic = 'force-dynamic';
 
 type Params = { params: Promise<{ locale: Locale }> };
 
@@ -26,6 +28,7 @@ export default async function StoriesPage({ params }: Params) {
   setRequestLocale(locale);
 
   const t = await getTranslations('stories');
+  const storiesNewestFirst = await (await getPublicContent()).listStories();
 
   return (
     <>

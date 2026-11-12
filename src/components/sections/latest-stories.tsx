@@ -1,16 +1,15 @@
 import { getTranslations } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
-import type { Story } from '@/content/types';
 import { Container } from '@/components/ui/container';
 import { Section, SectionHeader } from '@/components/ui/section';
-import { StoryCard } from '@/components/cards/story-card';
+import { StoryCard, type StoryCardData } from '@/components/cards/story-card';
 
 /** First story is given the wide treatment; the rest fill a 2-up grid. */
 export async function LatestStories({
   stories,
   locale,
 }: {
-  stories: Story[];
+  stories: StoryCardData[];
   locale: Locale;
 }) {
   const [t, tCommon] = await Promise.all([

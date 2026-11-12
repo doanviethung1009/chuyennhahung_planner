@@ -75,7 +75,7 @@ function Fields({ draft }: { draft: Draft }) {
         <LocalizedField path="excerpt" label={t('fieldExcerpt')} multiline rows={3} />
         <div className="grid gap-5 md:grid-cols-2">
           <TextField path="cover" label={t('fieldCover')} hint={t('imageHint')} />
-          <TextField path="destinationSlug" label={t('fieldDestination')} />
+          <TextField path="destinationSlug" label={t('fieldDestination')} hint={t('destinationHint')} nullable />
           <TextField path="travelDates.start" label={t('fieldStart')} type="date" />
           <TextField path="travelDates.end" label={t('fieldEnd')} type="date" />
           <TextField path="readingMinutes" label={t('fieldReading')} type="number" />

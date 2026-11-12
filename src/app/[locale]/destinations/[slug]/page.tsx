@@ -5,8 +5,8 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
 import { siteConfig } from '@/content/site';
-import { destinations, getDestination } from '@/content/destinations';
-import { getStoriesForDestination } from '@/content/stories';
+import { getDestination } from '@/content/destinations';
+import { getPublicContent } from '@/server/content/public';
 import { getItinerariesForDestination } from '@/content/itineraries';
 import { formatDate } from '@/lib/format';
 import { Container } from '@/components/ui/container';
@@ -17,11 +17,10 @@ import { StoryCard } from '@/components/cards/story-card';
 import { ItineraryCard } from '@/components/cards/itinerary-card';
 import { JsonLd } from '@/components/seo/json-ld';
 
+export const dynamic = 'force-dynamic';
+
 type Params = { params: Promise<{ locale: Locale; slug: string }> };
 
-export function generateStaticParams() {
-  return destinations.map((destination) => ({ slug: destination.slug }));
-}
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { locale, slug } = await params;
@@ -49,7 +48,7 @@ export default async function DestinationPage({ params }: Params) {
     getTranslations('region'),
   ]);
 
-  const relatedStories = getStoriesForDestination(slug);
+  const relatedStories = await (await getPublicContent()).listStoriesForDestination(slug);
   const relatedItineraries = getItinerariesForDestination(slug);
 
   return (

@@ -32,7 +32,7 @@ mọi biến dưới đây đều có mặc định dùng được, hoặc tự 
 | `ADMIN_API_TOKEN` | *chưa đặt* | Bảo vệ mọi route admin. Chưa đặt, hoặc ngắn hơn 32 ký tự, thì tất cả trả `503` — không bao giờ mở mặc định |
 | `TRAVEL_CONTENT_STORE` | `.data/travel-content.json` | Nơi content store nằm |
 | `TRAVEL_CONTENT_AUTOSEED` | `true` | Đặt `false` để bỏ qua seed nội dung demo ở lần dùng đầu |
-| `PUBLIC_CONTENT_SOURCE` | `repository` | Đọc ở mỗi lần gọi (khởi động lại, không cần build lại). `repository`: nội dung Travel công khai lấy từ content store; `static`: lấy từ `src/content/stories.ts` (đường lùi). Giá trị khác coi như `repository`. Các trang công khai chuyển sang module đọc này ở lát frontend tiếp theo; trước đó biến này chưa đổi gì nhìn thấy được ([ADR 0012](adr/0012-public-travel-from-content-repository.vi.md)) |
+| `PUBLIC_CONTENT_SOURCE` | `repository` | Đọc ở mỗi lần gọi (khởi động lại, không cần build lại). `repository`: nội dung Travel công khai lấy từ content store; `static`: lấy từ `src/content/stories.ts` (đường lùi). Giá trị khác coi như `repository`. Áp dụng cho trang chủ, `/stories`, trang bài viết, trang điểm đến và sitemap ([ADR 0012](adr/0012-public-travel-from-content-repository.vi.md)) |
 | `PLANNER_STORE` | `.data/planner.json` | Nơi trip của Planner nằm. Tách file khỏi content store một cách có chủ đích. Bị bỏ qua khi đã đặt `PLANNER_DATABASE_URL` |
 | `PLANNER_DATABASE_URL` | *chưa đặt* | Chuỗi kết nối PostgreSQL. Đã đặt: Planner dùng PostgreSQL và không bao giờ quay về file ([ADR 0009](adr/0009-postgres-persistence.vi.md)). Là secret — chỉ qua biến môi trường. Xem *Chạy Planner trên PostgreSQL* |
 | `DATABASE_POOL_MAX` | `5` | Kích thước connection pool của mỗi tiến trình |
@@ -61,7 +61,7 @@ cố ý thì ghi đè bằng `--no-verify`.
 | Lệnh | Tác dụng |
 |---|---|
 | `npm run dev` | Dev server với Turbopack |
-| `npm run build` | Build production — prerender toàn bộ 57 trang |
+| `npm run build` | Build production — prerender 42 trang; route bài viết, điểm đến, trang chủ và sitemap render theo từng request |
 | `npm start` | Chạy bản build production |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint, flat config |
@@ -248,7 +248,7 @@ Khôi phục: nếu admin duy nhất bị khoá, dùng service token để reset
 
 Đăng nhập như mục trên (tài khoản `editor` có vai trò `editor`; admin đặt vai trò này được từ `/quan-tri`) rồi mở `/quan-tri/noi-dung/chuyen-di` (`/en/admin/content/stories`). Năm trang gồm danh sách chuyến đi, một chuyến đi, địa điểm, một địa điểm và đánh giá (`/quan-tri/noi-dung/dia-diem`, `/quan-tri/noi-dung/danh-gia`). Sửa một bản ghi rồi lưu; xuất bản hoặc lưu trữ story hay review là một hành động riêng. Tạo mới, xoá, template và collection chưa có trên trình duyệt — dùng API token ([travel-content-api.vi.md](travel-content-api.vi.md)).
 
-Giới hạn: trang công khai vẫn render từ seed có kiểu trong `src/content/`, nên bản sửa đã lưu được lưu và phục vụ bởi `/api/travel/**` nhưng **không** hiện trên site công khai (ADR 0011, ghi chú hiện thực). Trình duyệt gửi `If-Match` kèm `updatedAt` của bản ghi; nếu người khác lưu trước, thao tác bị từ chối với **412** `version_conflict` — tải lại rồi áp dụng lại thay đổi. Việc sửa chưa được ghi vào audit log.
+Bản sửa đã publish hiện trên site công khai ngay ở request kế tiếp: trang bài viết, trang chủ, trang điểm đến và sitemap được render theo từng request từ content store ([ADR 0012](adr/0012-public-travel-from-content-repository.vi.md)). Bản nháp và bài đã lưu trữ không công khai (404). Trình duyệt gửi `If-Match` kèm `updatedAt` của bản ghi; nếu người khác lưu trước, thao tác bị từ chối với **412** `version_conflict` — tải lại rồi áp dụng lại thay đổi. Việc sửa chưa được ghi vào audit log.
 
 ### Nạp các bài viết tĩnh vào content store
 
@@ -259,7 +259,7 @@ npm run content:seed-static -- --dry-run   # liệt kê những gì sẽ tạo, 
 npm run content:seed-static                # tạo chúng
 ```
 
-Lệnh dùng cùng store với app (`TRAVEL_CONTENT_STORE`, nếu không thì `.data/travel-content.json`), chỉ tạo các slug chưa có và không bao giờ cập nhật slug nào, nên bản sửa trong CMS không bị ghi đè. Lệnh không chạy khi khởi động. Nếu bạn đã xóa một bài đã seed rồi chạy lại, bài đó sẽ xuất hiện lại. Việc của chủ dự án: `travelDates` của bài seed là ngày đăng, không phải ngày đi thật — hãy sửa trong CMS. Các trang công khai chuyển sang module đọc ở lát frontend tiếp theo ([ADR 0012](adr/0012-public-travel-from-content-repository.vi.md)).
+Lệnh dùng cùng store với app (`TRAVEL_CONTENT_STORE`, nếu không thì `.data/travel-content.json`), chỉ tạo các slug chưa có và không bao giờ cập nhật slug nào, nên bản sửa trong CMS không bị ghi đè. Lệnh không chạy khi khởi động. Nếu bạn đã xóa một bài đã seed rồi chạy lại, bài đó sẽ xuất hiện lại. Việc của chủ dự án: `travelDates` của bài seed là ngày đăng, không phải ngày đi thật — hãy sửa trong CMS. Cho tới khi seed, store đã có chỉ hiển thị các bài của chính nó trên site công khai ([ADR 0012](adr/0012-public-travel-from-content-repository.vi.md)).
 
 **Dừng app trước.** Content store JSON được cache trong tiến trình app, vốn giả định mình là bên ghi duy nhất. Seed trong lúc app đang chạy thì app vẫn phục vụ bản cũ, và lần ghi CMS kế tiếp sẽ ghi bản cũ đó đè lên đĩa, xoá mất các bài vừa seed. Trên stack đã deploy, dùng đúng các file `-f` của bố cục bạn chọn:
 
@@ -426,7 +426,7 @@ làm đủ cả ba.
 
 ## Deploy
 
-`npm run build` tạo ra một site prerender kèm một Node server độc lập
+`npm run build` tạo ra một site phần lớn được prerender kèm một Node server độc lập
 (`output: 'standalone'` trong `next.config.ts`), nên host nào chạy được Node cũng
 dùng được. API Planner là ngoại lệ của "không phụ thuộc dữ liệu lúc chạy": khi đặt
 `PLANNER_DATABASE_URL` nó cần một PostgreSQL truy cập được lúc chạy, và file mới

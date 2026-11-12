@@ -4,7 +4,7 @@
 
 ## Summary
 
-Editors and admins edit stories, places and reviews in the browser, with the Vietnamese and English text side by side, and publish, unpublish or archive stories and moderate reviews, without `curl` or a token. Design: [ADR 0011](../adr/0011-admin-content-cms.md). It builds on the shell in [admin-portal.md](admin-portal.md). Edits are saved to the content store, but the public pages currently render from the built-in site content (`src/content/**`), so changes do **not** appear on the public site yet; the screens say so.
+Editors and admins edit stories, places and reviews in the browser, with the Vietnamese and English text side by side, and publish, unpublish or archive stories and moderate reviews, without `curl` or a token. Design: [ADR 0011](../adr/0011-admin-content-cms.md). It builds on the shell in [admin-portal.md](admin-portal.md). Published edits reach the public pages on the next request ([public-travel-cms.md](public-travel-cms.md), ADR 0012); drafts and archived records stay off the public site.
 
 ## Routes
 

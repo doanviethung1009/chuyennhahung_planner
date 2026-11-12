@@ -1,9 +1,9 @@
 import { useTranslations } from 'next-intl';
 
 /**
- * Honest about where an edit goes: it is saved to the content store, but the
- * public pages still render from the built-in site content, so nothing shows
- * on the public site yet. No refresh interval is promised.
+ * Honest about where an edit goes (ADR 0012): the public pages read the same
+ * content store, so a published edit shows on the next request. Drafts and
+ * archived records stay off the public site.
  */
 export function ContentNotice() {
   const t = useTranslations('adminContent.notice');

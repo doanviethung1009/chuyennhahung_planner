@@ -540,8 +540,8 @@
       "goStories": "Mở danh sách chuyến đi"
     },
     "notice": {
-      "title": "Lưu ý: chưa hiện trên trang công khai",
-      "body": "Chỉnh sửa ở đây được lưu vào kho nội dung, nhưng các trang công khai hiện vẫn đọc từ nội dung có sẵn của website, nên thay đổi chưa xuất hiện ngoài trang công khai."
+      "title": "Lưu ý: bản đã xuất bản hiện ngay trên trang công khai",
+      "body": "Các trang công khai đọc từ cùng kho nội dung này, nên chỉnh sửa của một bản đã xuất bản sẽ xuất hiện ở lần tải trang kế tiếp. Bản nháp và bản lưu trữ không hiện ra ngoài."
     },
     "statuses": {
       "draft": "Bản nháp",
@@ -657,7 +657,8 @@
       "seoKeywords": "Từ khoá",
       "seoOgImage": "Ảnh chia sẻ",
       "seoCanonical": "Đường dẫn chuẩn",
-      "seoNoindex": "Không cho công cụ tìm kiếm lập chỉ mục"
+      "seoNoindex": "Không cho công cụ tìm kiếm lập chỉ mục",
+      "destinationHint": "Để trống nếu chuyến đi không gắn với một điểm đến."
     },
     "places": {
       "metaTitle": "Quản lý địa điểm",
@@ -720,5 +721,16 @@
         "itinerary": "Lịch trình"
       }
     }
+  },
+  "storyPage": {
+    "placesTitle": "Những nơi trong chuyến đi này",
+    "placeMinutes": "Khoảng {minutes} phút",
+    "placeCost": "Chi phí ước tính {amount}",
+    "reviewsTitle": "Đánh giá của chúng mình trong chuyến này",
+    "reviewRating": "{rating} trên 5 sao",
+    "reviewVisited": "Đến vào {date}",
+    "reviewPros": "Điểm chúng mình thích",
+    "reviewCons": "Điểm chưa ổn",
+    "costsLabel": "Chi phí"
   }
 }

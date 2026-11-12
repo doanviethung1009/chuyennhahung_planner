@@ -540,8 +540,8 @@
       "goStories": "Open the stories list"
     },
     "notice": {
-      "title": "Note: not shown on the public site yet",
-      "body": "Edits here are saved to the content store, but the public pages still render from the website's built-in content, so your changes do not appear on the public site yet."
+      "title": "Note: published edits go live on the public site",
+      "body": "The public pages read from this same content store, so an edit to a published record appears on the next page load. Drafts and archived records stay off the public site."
     },
     "statuses": {
       "draft": "Draft",
@@ -657,7 +657,8 @@
       "seoKeywords": "Keywords",
       "seoOgImage": "Share image",
       "seoCanonical": "Canonical path",
-      "seoNoindex": "Ask search engines not to index this"
+      "seoNoindex": "Ask search engines not to index this",
+      "destinationHint": "Leave empty if the story is not tied to one destination."
     },
     "places": {
       "metaTitle": "Manage places",
@@ -720,5 +721,16 @@
         "itinerary": "Itinerary"
       }
     }
+  },
+  "storyPage": {
+    "placesTitle": "Places in this story",
+    "placeMinutes": "About {minutes} min",
+    "placeCost": "Estimated cost {amount}",
+    "reviewsTitle": "Our reviews from this trip",
+    "reviewRating": "{rating} out of 5 stars",
+    "reviewVisited": "Visited {date}",
+    "reviewPros": "What we liked",
+    "reviewCons": "What we did not like",
+    "costsLabel": "Costs"
   }
 }

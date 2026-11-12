@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
-import type { Story } from '@/content/types';
+import type { PublicStory } from '@/server/content/public';
 import { formatMonthYear } from '@/lib/format';
 import { CoverImage } from '@/components/ui/cover-image';
 import { MetaRow } from '@/components/ui/badge';
@@ -11,13 +11,18 @@ import { MetaRow } from '@/components/ui/badge';
  * title immediately after it carries the same meaning — announcing both would
  * make a screen reader read the story twice.
  */
+export type StoryCardData = Pick<
+  PublicStory,
+  'slug' | 'title' | 'excerpt' | 'cover' | 'publishedAt' | 'readingMinutes'
+>;
+
 export async function StoryCard({
   story,
   locale,
   featured = false,
   priority = false,
 }: {
-  story: Story;
+  story: StoryCardData;
   locale: Locale;
   featured?: boolean;
   priority?: boolean;

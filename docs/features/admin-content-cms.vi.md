@@ -51,7 +51,7 @@ Khi lưu, chỉ các khoá sửa được được gửi kèm `If-Match: "<updat
 
 ## Giới hạn và câu hỏi còn mở
 
-- Trang công khai vẫn đọc `src/content/**`; chỉnh sửa chưa hiện ra ngoài và không hứa khoảng thời gian làm mới nào.
+- Từ ADR 0012, trang công khai đọc cùng kho nội dung: bản đã xuất bản hiện ở lần tải trang kế tiếp ([public-travel-cms.vi.md](public-travel-cms.vi.md)); bản nháp và bản lưu trữ không hiện.
 - Chưa có màn hình tạo, xoá, mẫu, bộ sưu tập hay kiểm tra toàn vẹn; chưa có nhật ký kiểm toán nên chỉnh sửa không gắn với người sửa.
 - Khối bài viết sửa được chữ nhưng chưa thêm, xoá hay đổi thứ tự.
 - `If-Match` là tuỳ chọn với người gọi bằng token, nên `curl` vẫn có thể ghi đè.
