@@ -15,11 +15,12 @@ export type Action =
   | 'user:promote'
   | 'template:write'
   | 'story:publish'
+  | 'content:write'
   | 'trip:support-read';
 
 export type Principal = { role: Role | 'service' };
 
-const EDITOR_ACTIONS = ['template:write', 'story:publish'] as const satisfies readonly Action[];
+const EDITOR_ACTIONS = ['template:write', 'story:publish', 'content:write'] as const satisfies readonly Action[];
 
 /**
  * `trip:support-read` is a reserved name denied to every principal (ADR 0006
