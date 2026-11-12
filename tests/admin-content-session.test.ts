@@ -6,6 +6,16 @@ import { SESSION_COOKIE } from '../src/server/planner/auth';
 import { can, ROLE_ACTIONS } from '../src/server/identity/permissions';
 import { placeFixture, reviewFixture, storyFixture } from './travel-content-helpers';
 
+// The routes and the page read the process-wide repository, which would hash at
+// the production scrypt cost (N = 2^17, 128 MiB, ~0.75 s a hash uncontended).
+// Alongside the other suites doing the same, that pushed a test here past the
+// 5 s timeout. Nothing in this file is about the hash cost — that is
+// tests/planner-password.test.ts — so new hashes here use N = 2^10.
+vi.mock('../src/server/planner/password', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../src/server/planner/password')>()),
+  DEFAULT_SCRYPT_COST_LOG2: 10,
+}));
+
 /** ADR 0011: browser-session editors/admins on the opted-in content routes. */
 const ADMIN_TOKEN = 'test-admin-token-at-least-32-chars-long';
 const ORIGIN = 'https://example.test';
