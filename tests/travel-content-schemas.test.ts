@@ -8,7 +8,10 @@ import {
   ratingSchema,
   reorderActivitiesSchema,
   slugSchema,
+  sourceSnapshotSchema,
   storyCreateSchema,
+  storySchema,
+  storyUpdateSchema,
   templateCreateSchema,
   tripCostSchema,
   vndSchema,
@@ -209,5 +212,60 @@ describe('payload hygiene', () => {
       ],
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe('ADR 0012 additive story fields', () => {
+  it('accepts a null destinationSlug', () => {
+    expect(storyCreateSchema.safeParse(storyFixture({ destinationSlug: null })).success).toBe(true);
+  });
+
+  it('still rejects a malformed destinationSlug', () => {
+    expect(storyCreateSchema.safeParse({ ...storyFixture(), destinationSlug: 'Not A Slug' }).success).toBe(false);
+  });
+
+  it('defaults plannerTemplateSlug to null and rejects a malformed one', () => {
+    const { plannerTemplateSlug: _omit, ...withoutField } = storyFixture();
+    void _omit;
+    const parsed = storyCreateSchema.parse(withoutField);
+    expect(parsed.plannerTemplateSlug).toBeNull();
+    expect(storyCreateSchema.parse(storyFixture({ plannerTemplateSlug: 'da-lat-3-ngay' })).plannerTemplateSlug).toBe('da-lat-3-ngay');
+    expect(storyCreateSchema.safeParse({ ...storyFixture(), plannerTemplateSlug: 'Bad Slug' }).success).toBe(false);
+  });
+
+  it('parses an old stored story document that has no plannerTemplateSlug', () => {
+    const { plannerTemplateSlug: _omit, ...old } = storyFixture();
+    void _omit;
+    const stored = {
+      ...old,
+      status: 'published',
+      publishedAt: '2026-03-01T00:00:00.000Z',
+      actualCostTotalVnd: null,
+      createdAt: '2026-03-01T00:00:00.000Z',
+      updatedAt: '2026-03-01T00:00:00.000Z',
+    };
+    const result = storySchema.safeParse(stored);
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.plannerTemplateSlug).toBeNull();
+  });
+
+  it('accepts a null destinationSlug in a template source snapshot', () => {
+    const snapshot = {
+      storySlug: 'test-story',
+      title: { vi: 'a', en: 'b' },
+      destinationSlug: null,
+      travelDates: { start: '2026-02-13', end: '2026-02-15' },
+      actualCostTotalVnd: null,
+      placeSlugs: [],
+      storyUpdatedAt: '2026-03-01T00:00:00.000Z',
+      snapshotTakenAt: '2026-03-01T00:00:00.000Z',
+    };
+    expect(sourceSnapshotSchema.safeParse(snapshot).success).toBe(true);
+    expect(sourceSnapshotSchema.safeParse({ ...snapshot, destinationSlug: 'da-lat' }).success).toBe(true);
+  });
+
+  it('keeps plannerTemplateSlug absent from a one-field PATCH', () => {
+    const patch = storyUpdateSchema.parse({ readingMinutes: 9 });
+    expect('plannerTemplateSlug' in patch).toBe(false);
   });
 });

@@ -32,6 +32,7 @@ closed.
 | `ADMIN_API_TOKEN` | *unset* | Guards every admin route. Unset, or shorter than 32 chars, and they all answer `503` — never an open default |
 | `TRAVEL_CONTENT_STORE` | `.data/travel-content.json` | Where the content store lives |
 | `TRAVEL_CONTENT_AUTOSEED` | `true` | Set `false` to skip seeding demo content on first use |
+| `PUBLIC_CONTENT_SOURCE` | `repository` | Read on every call (a restart, not a rebuild). `repository`: public Travel content comes from the content store; `static`: from `src/content/stories.ts` (rollback). Any other value means `repository`. Public pages adopt the read module in the follow-up frontend slice; until then it changes nothing visible ([ADR 0012](adr/0012-public-travel-from-content-repository.md)) |
 | `PLANNER_STORE` | `.data/planner.json` | Where Planner trips live. Separate file from the content store by design. Ignored when `PLANNER_DATABASE_URL` is set |
 | `PLANNER_DATABASE_URL` | *unset* | PostgreSQL connection string. Set: the Planner uses PostgreSQL and never falls back to the file ([ADR 0009](adr/0009-postgres-persistence.md)). A secret — environment only. See *Run the Planner on PostgreSQL* |
 | `DATABASE_POOL_MAX` | `5` | Size of the per-process connection pool |
@@ -247,6 +248,28 @@ Recovery: if the only admin is locked out, use the service token to reset the pa
 Sign in as in the section above (an `editor` account has the role `editor`; an admin can set it from `/quan-tri`) and open `/quan-tri/noi-dung/chuyen-di` (`/en/admin/content/stories`). The five pages are stories, a story, places, a place and reviews (`/quan-tri/noi-dung/dia-diem`, `/quan-tri/noi-dung/danh-gia`). Edit a record and save; publishing or archiving a story or review is a separate action. Create, delete, templates and collections are not in the browser yet — use the token API ([travel-content-api.md](travel-content-api.md)).
 
 Limitations: the public pages still render from the typed seed in `src/content/`, so a saved edit is stored and served by `/api/travel/**` but does **not** show on the public site (ADR 0011, implementation notes). The browser sends `If-Match` with the record's `updatedAt`; if someone else saved first the save is refused with **412** `version_conflict` — reload and re-apply your change. Edits are not attributed in an audit log yet.
+
+### Seed the static stories into the content store
+
+A fresh content store already gets the typed-seed stories from `src/content/stories.ts` when it is first seeded. An **existing** store skips that step (it already has content), so add them by hand:
+
+```bash
+npm run content:seed-static -- --dry-run   # list what would be created, write nothing
+npm run content:seed-static                # create them
+```
+
+It uses the same store as the app (`TRAVEL_CONTENT_STORE`, else `.data/travel-content.json`), creates only slugs that are not there yet and never updates one, so a CMS edit is never overwritten. It is not run on boot. If you deleted a seeded story and run it again, that story comes back. Owner action: the seeded `travelDates` are the publish date, not the real trip dates — correct them in the CMS. Public pages adopt the read module in the follow-up frontend slice ([ADR 0012](adr/0012-public-travel-from-content-repository.md)).
+
+**Stop the app first.** The JSON content store is cached in the app process, which assumes it is the only writer. Seeding while the app runs leaves it serving the old copy, and its next CMS write would put that old copy back on disk, erasing the seeded stories. On the deployed stack, use the same `-f` files as your layout:
+
+```bash
+docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml stop app
+docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml run --rm tools \
+  npm run content:seed-static
+docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml start app
+```
+
+Run it once when deploying the release that adds it: from that release the Planner already links a template to its story through the content store, so until the stories are seeded a template cloned from `da-lat-3-ngay-lang-man` carries no story attribution. Rebuild the `tools` image with this release first, so it contains the script.
 
 ### Run the Planner on PostgreSQL
 

@@ -54,6 +54,7 @@ export function storyFixture(
     cover: '/images/covers/story-da-lat.svg',
     gallery: [],
     destinationSlug: 'da-lat',
+    plannerTemplateSlug: null,
     travelDates: { start: '2026-02-13', end: '2026-02-15' },
     actualCost: null,
     placeSlugs: [],

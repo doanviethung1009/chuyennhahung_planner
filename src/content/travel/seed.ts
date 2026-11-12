@@ -1,3 +1,4 @@
+import { seedStaticStories } from '@/content/travel/static-stories';
 import type { TravelContentRepository } from '@/server/content/repository';
 import type {
   CollectionCreateInput,
@@ -257,6 +258,7 @@ export const demoReviews: ReviewCreateInput[] = [
 
 /** The acceptance-test story: three romantic days in Đà Lạt. */
 export const daLatRomanticStory: StoryCreateInput = {
+  plannerTemplateSlug: null,
   slug: 'ba-ngay-lang-man-o-da-lat',
   title: {
     vi: 'Ba ngày lãng mạn ở Đà Lạt, không cần kín lịch',
@@ -581,4 +583,8 @@ export async function seedTravelContent(
   await repository.setCollectionStatus(daLatCollection.slug, { action: 'publish' });
 
   await repository.createTemplate(daLatRomanticTemplate);
+
+  // The seven typed-seed stories (ADR 0012). A fresh store only: an existing store
+  // returns above and is topped up by `npm run content:seed-static`.
+  await seedStaticStories(repository);
 }

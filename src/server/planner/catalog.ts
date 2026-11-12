@@ -1,8 +1,12 @@
-import { stories } from '@/content/stories';
-import type { Localized } from '@/content/types';
-import { destinations } from '@/content/destinations';
-import type { TravelContentRepository } from '@/server/content/repository';
-import type { Place, TravelTemplate } from '@/server/content/schemas';
+import type { Localized } from "@/content/types";
+import { destinations } from "@/content/destinations";
+import {
+  createRepositoryPublicContent,
+  createStaticPublicContent,
+  publicContentSource,
+} from "@/server/content/public";
+import type { TravelContentRepository } from "@/server/content/repository";
+import type { Place, TravelTemplate } from "@/server/content/schemas";
 
 /**
  * The Planner's read-only window onto the Travel Content System.
@@ -20,17 +24,38 @@ export interface PlannerCatalog {
   /** Only an *approved* (public) template may be cloned — a draft is invisible. */
   getApprovedTemplate(slug: string): Promise<TravelTemplate | null>;
   /** The site story whose `plannerTemplateSlug` is this template, if any. */
-  getLinkedStory(templateSlug: string): { slug: string; title: Localized<string> } | null;
+  getLinkedStory(
+    templateSlug: string,
+  ): Promise<{ slug: string; title: Localized<string> } | null>;
+}
+
+type SiteStory = {
+  slug: string;
+  title: Localized<string>;
+  plannerTemplateSlug?: string | null;
+};
+
+/**
+ * Default story source: the public read module (ADR 0012 decision 9), over the
+ * same repository the catalog was given, honouring `PUBLIC_CONTENT_SOURCE`. Only
+ * published stories are linked, so a draft is never attributed.
+ */
+function defaultSiteStories(
+  content: TravelContentRepository,
+): () => Promise<SiteStory[]> {
+  return () =>
+    (publicContentSource() === "static"
+      ? createStaticPublicContent()
+      : createRepositoryPublicContent(() => Promise.resolve(content))
+    ).listStories();
 }
 
 export function createContentCatalog(
   content: TravelContentRepository,
   knownDestinationSlugs: Iterable<string> = destinations.map((d) => d.slug),
-  siteStories: ReadonlyArray<{
-    slug: string;
-    title: Localized<string>;
-    plannerTemplateSlug?: string;
-  }> = stories,
+  siteStories:
+    | ReadonlyArray<SiteStory>
+    | (() => Promise<ReadonlyArray<SiteStory>>) = defaultSiteStories(content),
 ): PlannerCatalog {
   const destinationSlugs = new Set(knownDestinationSlugs);
 
@@ -45,8 +70,10 @@ export function createContentCatalog(
         return null;
       }
     },
-    getLinkedStory(templateSlug) {
-      const story = siteStories.find((s) => s.plannerTemplateSlug === templateSlug);
+    async getLinkedStory(templateSlug) {
+      const list =
+        typeof siteStories === "function" ? await siteStories() : siteStories;
+      const story = list.find((s) => s.plannerTemplateSlug === templateSlug);
       return story ? { slug: story.slug, title: story.title } : null;
     },
     async getApprovedTemplate(slug) {

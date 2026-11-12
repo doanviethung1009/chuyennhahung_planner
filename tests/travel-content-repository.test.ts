@@ -682,3 +682,39 @@ describe('concurrent mutations', () => {
     expect(await repo.listPlaces({ limit: 100 })).toHaveLength(12);
   });
 });
+
+describe('stories without a destination (ADR 0012)', () => {
+  it('creates and filters a story with a null destination', async () => {
+    await repo.createStory(storyFixture({ slug: 'no-destination', destinationSlug: null }));
+    await repo.createStory(storyFixture({ slug: 'in-da-lat' }));
+
+    const stored = await repo.getStory('no-destination');
+    expect(stored.destinationSlug).toBeNull();
+
+    const inDaLat = await repo.listStories({ destinationSlug: 'da-lat' });
+    expect(inDaLat.map((s) => s.slug)).toEqual(['in-da-lat']);
+    expect(await repo.listStories()).toHaveLength(2);
+  });
+
+  it('still rejects an unknown destination', async () => {
+    await expectRejection(
+      repo.createStory(storyFixture({ destinationSlug: 'atlantis' })),
+      'invalid_reference',
+    );
+  });
+
+  it('accepts null on update, and the integrity sweep reports nothing for it', async () => {
+    await repo.createStory(storyFixture());
+    const updated = await repo.updateStory('test-story', { destinationSlug: null });
+    expect(updated.destinationSlug).toBeNull();
+    expect(await repo.validateIntegrity()).toEqual([]);
+  });
+
+  it('snapshots a null destination into a template and keeps plannerTemplateSlug', async () => {
+    await repo.createStory(storyFixture({ destinationSlug: null, plannerTemplateSlug: 'test-template' }));
+    await repo.setStoryStatus('test-story', { action: 'publish' });
+    const template = await repo.createTemplate(templateFixture());
+    expect(template.sourceSnapshot.destinationSlug).toBeNull();
+    expect((await repo.getStory('test-story')).plannerTemplateSlug).toBe('test-template');
+  });
+});
