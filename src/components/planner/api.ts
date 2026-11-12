@@ -18,8 +18,8 @@ export class ApiError extends Error {
 interface Options {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
-  /** Trip version for `If-Match`. */
-  version?: number;
+  /** Trip version (number) or content `updatedAt` stamp (string) for `If-Match`. */
+  version?: number | string;
 }
 
 /**

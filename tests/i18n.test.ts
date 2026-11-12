@@ -56,6 +56,8 @@ describe('message catalogues', () => {
       'locale.vi',
       'locale.en',
       'footer.aboutHeading',
+      // Language names are written in their own language in both catalogues.
+      'adminContent.form.langVi',
     ]);
 
     const copied = Object.keys(viFlat).filter(
