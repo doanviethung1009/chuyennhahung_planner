@@ -26,6 +26,7 @@ New features start from [`_template.md`](_template.md) /
 | Planner on PostgreSQL | [planner-postgres-persistence.md](planner-postgres-persistence.md) | `PLANNER_DATABASE_URL` store, advisory-lock transaction, migrations, import and export |
 | Admin roles | [admin-roles.md](admin-roles.md) | `role` on the user, `permissions.ts`, `PATCH /api/admin/planner/users/[userId]` to promote the first admin |
 | Admin portal | [admin-portal.md](admin-portal.md) | `/quan-tri` — admin-only user list, create, role change and password reset in the browser (ADR 0010) |
+| Header account | [header-account.md](header-account.md) | Sign-in icon for guests, account menu (My Trips, password, admin, sign out) for members, desktop and mobile |
 
 ## Phases not yet open
 

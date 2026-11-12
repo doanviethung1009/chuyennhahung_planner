@@ -1,14 +1,19 @@
-import { pathnames } from '@/i18n/routing';
+import { pathnames, type AppPathname } from '@/i18n/routing';
 
 /**
  * The only places a sign-in may send a traveller back to. Everything is derived
  * from the route table, so a renamed route cannot leave a stale allow-list.
- * `/shared/[token]` and `/sign-in` itself are deliberately absent: neither is
- * somewhere you "return" to after signing in.
+ * Every page of the site is returnable — the header's sign-in link sends the
+ * visitor back to whatever they were reading — except `/shared/[token]` (a
+ * share link carries a capability in its path; it should not travel through a
+ * sign-in URL) and `/sign-in` itself, which is nowhere to "return" to.
  */
-const RETURNABLE = ['/my-trips', '/my-trips/[id]', '/trip-setup/[template]', '/account/password', '/admin'] as const;
+const NOT_RETURNABLE: readonly AppPathname[] = ['/sign-in', '/shared/[token]'];
+const RETURNABLE = (Object.keys(pathnames) as AppPathname[]).filter((key) => !NOT_RETURNABLE.includes(key));
 
 function toPattern(path: string): RegExp {
+  // The home page: `/` in Vietnamese, `/en` (or `/en/`) in English.
+  if (path === '/') return /^(?:\/en)?\/?$/;
   const source = path
     .split('/')
     .map((part) => (/^\[\w+\]$/.test(part) ? '[A-Za-z0-9_-]+' : part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
@@ -17,14 +22,14 @@ function toPattern(path: string): RegExp {
 }
 
 const allowed: RegExp[] = RETURNABLE.flatMap((key) => {
-  const entry = pathnames[key];
-  return Object.values(entry).map(toPattern);
+  const entry: string | Record<string, string> = pathnames[key];
+  return (typeof entry === 'string' ? [entry] : Object.values(entry)).map(toPattern);
 });
 
 /**
  * Validates a `returnTo` value (open-redirect guard). Accepts only a same-site
  * relative path that starts with a single `/`, has no backslash, control
- * character or scheme, and resolves to a known localized private route.
+ * character or scheme, and resolves to a known page of the site.
  * Anything else returns `fallback`.
  */
 export function safeReturnTo(value: string | null | undefined, fallback = '/my-trips'): string {

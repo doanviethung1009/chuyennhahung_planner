@@ -64,8 +64,9 @@ API được dùng (đều cùng origin, xác thực bằng cookie; body là `.s
 3. **Đăng nhập** (`SignInForm`) gửi mã truy cập do người vận hành cấp. `returnTo`
    được server kiểm tra bằng `safeReturnTo` (`src/lib/return-to.ts`): chỉ một dấu
    `/` ở đầu, không `//`, không dấu gạch ngược hay ký tự điều khiển, không có
-   scheme, và phải khớp một route riêng tư đã bản địa hoá đã biết; nếu không sẽ về
-   `/my-trips`. `429` hiển thị thời gian chờ.
+   scheme, và phải khớp một trang đã bản địa hoá đã biết của site, trừ `/sign-in`
+   và `/shared/[token]` (xem [tài khoản trên header](header-account.vi.md)); nếu
+   không sẽ về `/my-trips`. `429` hiển thị thời gian chờ.
 4. **Chuyến đi của tôi** (`MyTrips`) liệt kê trip đang dùng hoặc đã lưu trữ; đổi
    tình trạng, nhân bản, lưu trữ, khôi phục và xoá vĩnh viễn hai bước. `401` chuyển
    tới đăng nhập kèm `returnTo`; `412` làm mới danh sách. Lưu trữ cũng thu hồi

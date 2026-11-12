@@ -12,7 +12,15 @@
     "closeMenu": "Đóng menu",
     "primary": "Điều hướng chính",
     "skipToContent": "Bỏ qua, vào nội dung chính",
-    "myTrips": "Chuyến đi của tôi"
+    "myTrips": "Chuyến đi của tôi",
+    "signIn": "Đăng nhập",
+    "accountMenu": "Tài khoản của {name}",
+    "signedInAs": "Đang đăng nhập: {name}",
+    "changePassword": "Đổi mật khẩu",
+    "admin": "Trang quản trị",
+    "signOut": "Đăng xuất",
+    "signingOut": "Đang đăng xuất…",
+    "signOutFailed": "Chưa đăng xuất được. Hãy thử lại."
   },
   "locale": {
     "label": "Ngôn ngữ",

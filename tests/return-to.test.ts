@@ -37,8 +37,34 @@ describe('safeReturnTo (open-redirect guard)', () => {
     }
   });
 
+  it('accepts public pages, so the header sign-in link returns the reader to them', () => {
+    for (const ok of [
+      '/',
+      '/en',
+      '/en/',
+      '/chuyen-di-choi',
+      '/en/stories',
+      '/chuyen-di-choi/mot-cau-chuyen',
+      '/kham-pha/da-lat',
+      '/goc-review',
+      '/en/about',
+      '/thiet-ke-chuyen-di',
+    ]) {
+      expect(safeReturnTo(ok), ok).toBe(ok);
+    }
+  });
+
   it('rejects unknown paths and routes that are not returnable', () => {
-    for (const bad of ['/admin/x', '/dang-nhap', '/chia-se/abc', '/stories', '/my-trips/a/b']) {
+    for (const bad of [
+      '/admin/x',
+      '/dang-nhap',
+      '/en/sign-in',
+      '/chia-se/abc',
+      '/en/shared/abc',
+      '/khong-co-trang-nay',
+      '/en/x',
+      '/my-trips/a/b',
+    ]) {
       expect(safeReturnTo(bad), bad).toBe('/my-trips');
     }
   });

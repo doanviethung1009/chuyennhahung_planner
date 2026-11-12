@@ -12,7 +12,15 @@
     "closeMenu": "Close menu",
     "primary": "Primary navigation",
     "skipToContent": "Skip to main content",
-    "myTrips": "My trips"
+    "myTrips": "My trips",
+    "signIn": "Sign in",
+    "accountMenu": "Account for {name}",
+    "signedInAs": "Signed in as {name}",
+    "changePassword": "Change password",
+    "admin": "Admin",
+    "signOut": "Sign out",
+    "signingOut": "Signing out…",
+    "signOutFailed": "Couldn't sign out. Please try again."
   },
   "locale": {
     "label": "Language",
