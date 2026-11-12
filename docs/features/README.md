@@ -27,6 +27,7 @@ New features start from [`_template.md`](_template.md) /
 | Admin roles | [admin-roles.md](admin-roles.md) | `role` on the user, `permissions.ts`, `PATCH /api/admin/planner/users/[userId]` to promote the first admin |
 | Admin portal | [admin-portal.md](admin-portal.md) | `/quan-tri` — admin-only user list, create, role change and password reset in the browser (ADR 0010) |
 | Admin content CMS | [admin-content-cms.md](admin-content-cms.md) | `/quan-tri/noi-dung/...` — editors and admins edit stories, places and reviews with vi and en side by side, publish and moderate (ADR 0011) |
+| Header account | [header-account.md](header-account.md) | Sign-in icon for guests, account menu (My Trips, password, admin, sign out) for members, desktop and mobile |
 
 ## Phases not yet open
 

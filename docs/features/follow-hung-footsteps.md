@@ -63,7 +63,9 @@ API used (all same-origin, cookie-authenticated; bodies are `.strict()`):
 3. **Sign in** (`SignInForm`) posts the operator-issued access code. `returnTo` is
    validated on the server by `safeReturnTo` (`src/lib/return-to.ts`): a single
    leading `/`, no `//`, no backslash or control character, no scheme, and it must
-   match a known localized private route; otherwise it falls back to `/my-trips`.
+   match a known localized page of the site other than `/sign-in` and
+   `/shared/[token]` (see [header account](header-account.md)); otherwise it falls
+   back to `/my-trips`.
    `429` shows the retry delay.
 4. **My Trips** (`MyTrips`) lists active or archived trips; status change,
    duplicate, archive, restore and a two-step permanent delete. A `401` redirects

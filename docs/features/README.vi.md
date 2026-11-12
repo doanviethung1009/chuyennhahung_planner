@@ -27,6 +27,7 @@ Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
 | Vai trò admin | [admin-roles.vi.md](admin-roles.vi.md) | `role` trên user, `permissions.ts`, `PATCH /api/admin/planner/users/[userId]` để nâng admin đầu tiên |
 | Cổng quản trị | [admin-portal.vi.md](admin-portal.vi.md) | `/quan-tri` — danh sách, tạo, đổi vai trò và cấp lại mật khẩu người dùng ngay trên trình duyệt, chỉ cho admin (ADR 0010) |
 | CMS nội dung quản trị | [admin-content-cms.vi.md](admin-content-cms.vi.md) | `/quan-tri/noi-dung/...` — biên tập viên và admin sửa chuyến đi, địa điểm, đánh giá với vi/en song song, xuất bản và duyệt (ADR 0011) |
+| Tài khoản trên header | [header-account.vi.md](header-account.vi.md) | Biểu tượng đăng nhập cho khách, menu tài khoản (Chuyến đi của tôi, mật khẩu, quản trị, đăng xuất) cho thành viên, trên máy tính và điện thoại |
 
 ## Các phase chưa mở
 

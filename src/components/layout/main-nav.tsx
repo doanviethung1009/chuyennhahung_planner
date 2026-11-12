@@ -7,6 +7,7 @@ import type { StaticPathname } from '@/i18n/routing';
 import type { NavKey } from './nav-items';
 import { buttonClass } from '@/components/ui/button';
 import { LocaleSwitcher } from './locale-switcher';
+import { AccountDrawerSection, AccountMenu, useAccount } from './account-menu';
 
 export interface NavLink {
   key: NavKey;
@@ -37,6 +38,7 @@ export function MainNav({
   navLabel,
 }: Props) {
   const pathname = usePathname();
+  const account = useAccount();
   /**
    * We store the route the drawer was opened on rather than a boolean, so
    * `open` is derived during render: any navigation — including the browser
@@ -120,6 +122,7 @@ export function MainNav({
 
       <div className="hidden items-center gap-3 lg:flex">
         <LocaleSwitcher />
+        <AccountMenu state={account} />
         <Link href={planHref} className={buttonClass({ size: 'sm' })}>
           {planLabel}
         </Link>
@@ -198,7 +201,8 @@ export function MainNav({
                     </Link>
                   ))}
                 </nav>
-                <div className="px-5 pt-2 pb-6">
+                <AccountDrawerSection state={account} onNavigate={close} />
+                <div className="px-5 pt-4 pb-6">
                   <Link
                     href={planHref}
                     onClick={close}
