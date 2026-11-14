@@ -30,6 +30,7 @@ Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
 | Lọc người dùng quản trị | [admin-user-filter.vi.md](admin-user-filter.vi.md) | Tìm kiếm (tên, handle, email) và lọc vai trò trên bảng người dùng `/quan-tri`, phía client |
 | Chuyến đi cộng đồng | [community-trips.vi.md](community-trips.vi.md) | Chuyến đi công khai hiện trên trang chủ và `/chuyen-di-cong-dong` sau khi chủ chuyến đồng ý và staff duyệt; mọi sửa đổi xếp lại hàng; tác giả hiện tên hoặc ẩn danh (ADR 0014, PR 1) |
 | Trình sửa chuyến đi | [trip-editor.vi.md](trip-editor.vi.md) | Sửa trip ở `/my-trips/[id]`: thông tin chung, ngày, hoạt động (thêm, sửa, xoá, sắp xếp, chuyển ngày), khoản chi; mọi thao tác ghi đều gửi `If-Match` |
+| Phát sinh ngân sách khi chia sẻ | [shared-budget-overrun.vi.md](shared-budget-overrun.vi.md) | Trang chia sẻ và trang chủ chuyến hiện tổng dự báo, phần vượt và số tiền mỗi người góp thêm |
 | CMS nội dung quản trị | [admin-content-cms.vi.md](admin-content-cms.vi.md) | `/quan-tri/noi-dung/...` — biên tập viên và admin sửa chuyến đi, địa điểm, đánh giá với vi/en song song, xuất bản và duyệt (ADR 0011) |
 | Trang Travel công khai từ kho nội dung | [public-travel-cms.vi.md](public-travel-cms.vi.md) | Trang chủ, chuyến đi, điểm đến và sitemap đọc chuyến đi đã xuất bản từ kho nội dung, động, nên sửa trong CMS hiện ngay ở request kế tiếp (ADR 0012) |
 | Tài khoản trên header | [header-account.vi.md](header-account.vi.md) | Biểu tượng đăng nhập cho khách, menu tài khoản (Chuyến đi của tôi, mật khẩu, quản trị, đăng xuất) cho thành viên, trên máy tính và điện thoại |

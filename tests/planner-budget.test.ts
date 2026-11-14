@@ -220,6 +220,9 @@ describe('budget against the target', () => {
     expect(over.budget.projectedTotalVnd).toBe(5_800_000);
     expect(over.budget.varianceVnd).toBe(800_000);
     expect(over.budget.overBudget).toBe(true);
+    expect(over.budget.overrunVnd).toBe(800_000);
+    expect(over.budget.perPerson.overrunVnd).toBe(Math.ceil(800_000 / over.budget.partySize));
+    expect(view.budget.overrunVnd).toBe(0);
     // Only 1.800.000 has actually left the wallet.
     expect(over.budget.remainingVnd).toBe(3_200_000);
   });

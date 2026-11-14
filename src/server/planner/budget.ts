@@ -71,11 +71,19 @@ export interface TripBudgetSummary {
   /** Projection minus target. Positive means the plan does not fit the budget. */
   varianceVnd: number;
   overBudget: boolean;
+  /**
+   * How far the projection exceeds the target, never negative. 0 when the plan
+   * fits, and 0 when no target was set (a target of 0 means "not budgeted yet",
+   * so there is nothing to overrun).
+   */
+  overrunVnd: number;
   perPerson: {
     targetVnd: number;
     estimatedVnd: number;
     actualVnd: number;
     projectedVnd: number;
+    /** Each traveller's share of `overrunVnd`, rounded up so the party covers it. */
+    overrunVnd: number;
   };
   activityCount: number;
   settledActivityCount: number;
@@ -148,6 +156,7 @@ export function computeTripBudget(
   const projectedTotalVnd = sumVnd([actualTotalVnd, unsettledEstimate], 'projectedTotalVnd');
 
   const targetTotalVnd = trip.budget.targetTotalVnd;
+  const overrunVnd = targetTotalVnd > 0 ? Math.max(0, projectedTotalVnd - targetTotalVnd) : 0;
   const categories = new Set<CostCategory>([
     ...estimatedByCategory.keys(),
     ...actualByCategory.keys(),
@@ -163,11 +172,13 @@ export function computeTripBudget(
     remainingVnd: targetTotalVnd - actualTotalVnd,
     varianceVnd: projectedTotalVnd - targetTotalVnd,
     overBudget: projectedTotalVnd > targetTotalVnd,
+    overrunVnd,
     perPerson: {
       targetVnd: perPersonVnd(targetTotalVnd, partySize),
       estimatedVnd: perPersonVnd(estimatedTotalVnd, partySize),
       actualVnd: perPersonVnd(actualTotalVnd, partySize),
       projectedVnd: perPersonVnd(projectedTotalVnd, partySize),
+      overrunVnd: partySize > 0 ? Math.ceil(overrunVnd / partySize) : 0,
     },
     activityCount: activities.length,
     settledActivityCount: [...estimatedByActivity.keys()].filter((id) =>

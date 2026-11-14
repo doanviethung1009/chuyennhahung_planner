@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { getPathname } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
@@ -46,6 +46,7 @@ export function SharePanel({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setState((current) => ({ ...current, listing: initial.listing }));
   }, [parentStatus]); // eslint-disable-line react-hooks/exhaustive-deps
+  const linkInput = useRef<HTMLInputElement>(null);
 
   const link =
     state.shareToken && typeof window !== 'undefined'
@@ -71,14 +72,27 @@ export function SharePanel({
 
   async function copy() {
     if (!link) return;
+    // `navigator.clipboard` exists only on a secure origin (https or localhost);
+    // on a plain-http host it is undefined, so fall back to selecting the field
+    // and `execCommand('copy')`, which still works there.
+    let copied = false;
     try {
       await navigator.clipboard.writeText(link);
-      setFailed(false);
-      setMessage(t('copied'));
+      copied = true;
     } catch {
-      setFailed(true);
-      setMessage(t('copyFailed'));
+      const input = linkInput.current;
+      if (input) {
+        input.focus();
+        input.select();
+        try {
+          copied = document.execCommand('copy');
+        } catch {
+          copied = false;
+        }
+      }
     }
+    setFailed(!copied);
+    setMessage(copied ? t('copied') : t('copyFailed'));
   }
 
   const base = `/api/planner/${encodeURIComponent(tripId)}/share`;
@@ -126,6 +140,7 @@ export function SharePanel({
           </label>
           <input
             id="share-link"
+            ref={linkInput}
             readOnly
             className={`${inputClass} mt-1.5`}
             value={link}
@@ -151,8 +166,18 @@ export function SharePanel({
             >
               {t('revoke')}
             </button>
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonClass({ size: 'sm', variant: 'secondary' })}
+            >
+              {t('viewShared')}
+              <span className="sr-only"> {t('newTab')}</span>
+            </a>
           </div>
-          <p className="mt-3 text-sm text-foreground-muted">{t('rotateHint')}</p>
+          <p className="mt-3 text-sm text-foreground-muted">{t('liveHint')}</p>
+          <p className="mt-2 text-sm text-foreground-muted">{t('rotateHint')}</p>
         </div>
       ) : null}
 

@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createContentCatalog } from '../src/server/planner/catalog';
 import { SESSION_COOKIE } from '../src/server/planner/auth';
 import { tripSchema, type Trip } from '../src/server/planner/schemas';
-import { createMemoryPlannerStore, emptyPlannerData } from '../src/server/planner/store';
+import { createJsonPlannerStore, createMemoryPlannerStore, emptyPlannerData } from '../src/server/planner/store';
 import {
   activityInput,
   daLatTripInput,
@@ -40,7 +40,7 @@ async function sharedTrip(visibility: 'unlisted' | 'public' = 'unlisted') {
 }
 
 describe('share view when spending exceeds the budget', () => {
-  it('keeps the budget summary and still hides every expense', async () => {
+  it('shares the overrun totals and still hides every expense', async () => {
     const planner = makePlanner();
     const { userId } = await makeOwner(planner);
     const view = await planner.createTrip(
@@ -68,9 +68,15 @@ describe('share view when spending exceeds the budget', () => {
       currency: 'VND',
       targetTotalVnd: 1_000_000,
       estimatedTotalVnd: 800_000,
+      // 3.000.000 paid + 800.000 not yet paid, against a 1.000.000 target.
+      projectedTotalVnd: 3_800_000,
+      overrunVnd: 2_800_000,
+      overrunPerPersonVnd: Math.ceil(2_800_000 / owner.trip.partySize),
     });
+    // Totals are shared; the individual expense and its amount are not.
     expect(JSON.stringify(shared)).not.toContain('CHI TIÊU RIÊNG');
-    expect(JSON.stringify(shared)).not.toContain('3000000');
+    expect(JSON.stringify(shared)).not.toContain('actualTotalVnd');
+    expect(JSON.stringify(shared)).not.toContain('"amountVnd"');
   });
 });
 
@@ -178,7 +184,7 @@ describe('public projection', () => {
     expect(Object.keys(view.days[0]!.activities[0]!).sort()).toEqual(
       ['category', 'endTime', 'note', 'order', 'placeSlug', 'startTime', 'title'],
     );
-    expect(Object.keys(view.budget).sort()).toEqual(['currency', 'estimatedTotalVnd', 'targetTotalVnd']);
+    expect(Object.keys(view.budget).sort()).toEqual(['currency', 'estimatedTotalVnd', 'overrunPerPersonVnd', 'overrunVnd', 'projectedTotalVnd', 'targetTotalVnd']);
   });
 
   it('fails when a new Trip field appears that nobody classified', () => {
@@ -641,5 +647,30 @@ describe('share index (W3)', () => {
 
     await planner.revokeShare(userId, tripId);
     expect(await planner.getSharedTrip(rotated.shareToken!)).toBeNull();
+  });
+});
+
+describe('share link across two repositories on one JSON file', () => {
+  // Next.js can load the repository module twice (a page's bundle and a route
+  // handler's). Both sit on one store, so a link made through one must resolve
+  // through the other even after the other has already built its share index.
+  it('resolves a link created or rotated by the other instance', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'share-two-instances-'));
+    try {
+      const file = join(dir, 'planner.json');
+      const writer = makePlanner({ store: createJsonPlannerStore(file) });
+      const reader = makePlanner({ store: createJsonPlannerStore(file) });
+      const { userId } = await makeOwner(writer);
+      const view = await writer.createTrip(userId, daLatTripInput());
+
+      const first = await writer.setVisibility(userId, view.trip.id, 'unlisted');
+      expect(await reader.getSharedTrip(first.shareToken!)).not.toBeNull();
+
+      const second = await writer.rotateShareToken(userId, view.trip.id);
+      expect(await reader.getSharedTrip(second.shareToken!)).not.toBeNull();
+      expect(await reader.getSharedTrip(first.shareToken!)).toBeNull();
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });

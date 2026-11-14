@@ -156,7 +156,11 @@ Store JSON (`src/server/persistence/json-store.ts`) giữ tài liệu đã parse
 nhớ sau lần đọc đầu và chỉ thay khi một lần ghi đã xuống đĩa, nên mỗi lần đọc là một
 `structuredClone` thay vì đọc file rồi `JSON.parse`. Điều này dựa trên cùng quy tắc
 một-process: sửa tay file khi server đang chạy sẽ không được thấy cho tới khi khởi
-động lại (`tests/json-store.test.ts`).
+động lại (`tests/json-store.test.ts`). Store cũng đếm số lần ghi theo từng file, trên
+toàn process, và trả số đó qua `revision()`: Next.js có thể nạp module repository nhiều
+hơn một lần (bundle của trang và của route handler), và chỉ mục share-token mà mỗi bản
+giữ sẽ được dựng lại khi số đếm đổi — thiếu nó, link tạo qua API sẽ trả 404 ở trang
+`/shared/[token]` (`tests/planner-sharing.test.ts`).
 
 Store PostgreSQL của Planner ([ADR 0009](adr/0009-postgres-persistence.vi.md))
 giữ nguyên repository và chuyển transaction vào store: mọi store đều có
