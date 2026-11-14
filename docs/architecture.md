@@ -336,7 +336,7 @@ PATCH accepts an optional `If-Match: "<updatedAt>"` (`ifMatchStamp`); the reposi
 
 Deliberately absent, and not to be scaffolded early:
 
-- **Planner UI** — partly opened by [ADR 0005](adr/0005-trip-sharing-and-story-cloning.md): story-to-trip cloning, My Trips, sign-in and the read-only share page only. A full trip editor, the Planner map and AI suggestions are not. The Planner *backend* core shipped under `/api/planner`
+- **Planner UI** — partly opened by [ADR 0005](adr/0005-trip-sharing-and-story-cloning.md): story-to-trip cloning, My Trips, sign-in and the read-only share page, then the blank-trip form and the trip editor on `/my-trips/[id]` ([features/trip-editor.md](features/trip-editor.md)). The Planner map and AI suggestions are not. The Planner *backend* core shipped under `/api/planner`
   ([ADR 0002](adr/0002-planner-core.md),
   [features/travel-planner-core.md](features/travel-planner-core.md)):
   trips, generated days, activities, expenses, budgeting, archive/restore and

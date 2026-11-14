@@ -28,6 +28,7 @@ New features start from [`_template.md`](_template.md) /
 | Admin roles | [admin-roles.md](admin-roles.md) | `role` on the user, `permissions.ts`, `PATCH /api/admin/planner/users/[userId]` to promote the first admin |
 | Admin portal | [admin-portal.md](admin-portal.md) | `/quan-tri` — admin-only user list, create, role change and password reset in the browser (ADR 0010) |
 | Admin user filter | [admin-user-filter.md](admin-user-filter.md) | Search (name, handle, email) and role filter on the `/quan-tri` users table, client-side |
+| Trip editor | [trip-editor.md](trip-editor.md) | Edit a trip on `/my-trips/[id]`: header, days, activities (add, edit, delete, reorder, move), expenses; every write sends `If-Match` |
 | Admin content CMS | [admin-content-cms.md](admin-content-cms.md) | `/quan-tri/noi-dung/...` — editors and admins edit stories, places and reviews with vi and en side by side, publish and moderate (ADR 0011) |
 | Public Travel pages from content | [public-travel-cms.md](public-travel-cms.md) | Home, stories, destinations and sitemap read published stories from the content repository, dynamic, so CMS edits go live on the next request (ADR 0012) |
 | Header account | [header-account.md](header-account.md) | Sign-in icon for guests, account menu (My Trips, password, admin, sign out) for members, desktop and mobile |
@@ -40,7 +41,6 @@ Not features, and not to be scaffolded early. See
 
 | Phase | Blocked on |
 |---|---|
-| Full Planner editor UI | The core API shipped in [travel-planner-core.md](travel-planner-core.md); the clone-and-share flow is in [follow-hung-footsteps.md](follow-hung-footsteps.md), but editing days, activities and expenses in the browser is not built |
 | Planner map and AI suggestions | Deliberately deferred by the brief that opened the Planner phase |
 | Clickable video cards | Per-video URLs we do not hold |
 | Real photography | The owner's photos |

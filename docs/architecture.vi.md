@@ -336,7 +336,7 @@ PATCH nhận header tuỳ chọn `If-Match: "<updatedAt>"` (`ifMatchStamp`); rep
 
 Những thứ vắng mặt có chủ đích, và không được dựng sớm:
 
-- **Giao diện Planner** — được mở một phần bởi [ADR 0005](adr/0005-trip-sharing-and-story-cloning.vi.md): chỉ gồm nhân bản story thành trip, My Trips, đăng nhập và trang chia sẻ chỉ-đọc. Trình sửa trip đầy đủ, bản đồ Planner và gợi ý AI thì chưa. Phần lõi *backend* của Planner đã ship dưới
+- **Giao diện Planner** — được mở một phần bởi [ADR 0005](adr/0005-trip-sharing-and-story-cloning.vi.md): gồm nhân bản story thành trip, My Trips, đăng nhập và trang chia sẻ chỉ-đọc, rồi form tạo trip trống và trình sửa trip ở `/my-trips/[id]` ([features/trip-editor.vi.md](features/trip-editor.vi.md)). Bản đồ Planner và gợi ý AI thì chưa. Phần lõi *backend* của Planner đã ship dưới
   `/api/planner` ([ADR 0002](adr/0002-planner-core.vi.md),
   [features/travel-planner-core.vi.md](features/travel-planner-core.vi.md)):
   trip, ngày sinh tự động, activity, chi phí, ngân sách, lưu trữ/khôi phục và

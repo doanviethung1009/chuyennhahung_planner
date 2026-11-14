@@ -89,9 +89,11 @@ The owner opened the Planner backend phase and it shipped: `src/app/api/planner/
 > traveller-owned trip data with a principal per traveller. They share the error
 > envelope and `parseJsonBody` from `src/server/content/http.ts`.
 
-> **Still absent, and not to be scaffolded without an ADR:** a full Planner trip
-> editor (`/plan-your-trip` is still the contact-only content page), the Planner
-> map, AI suggestions, a hosted identity provider / Auth.js, MFA, and foreign keys between content entities (both stores can already run on PostgreSQL, ADR 0009 / 0013). See
+> **Trip editor shipped** (`src/components/planner/trip-editor/**`, `docs/features/trip-editor.md`):
+> header, days, activities and expenses are editable on `/my-trips/[id]` over the
+> existing API, every write with `If-Match`. **Still absent, and not to be
+> scaffolded without an ADR:** the Planner map (`/plan-your-trip` is still the
+> contact-only content page), AI suggestions, a hosted identity provider / Auth.js, MFA, and foreign keys between content entities (both stores can already run on PostgreSQL, ADR 0009 / 0013). See
 > `docs/architecture.md#phases`.
 
 ## Other critical modules
