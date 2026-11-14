@@ -108,6 +108,13 @@ Tham chiếu tới các thực thể đang có đều bằng slug và được k
 `placeSlug` → place của Travel Content System, `templateSlug` → một
 `TravelTemplate` **public**.
 
+Place trong catalog thêm qua `POST /api/planner/:id/activities` phải thuộc
+`destinationSlug` của trip; place của điểm đến khác bị từ chối với `422
+invalid_reference` (`path: placeSlug`). Quy tắc chỉ áp dụng **khi tạo**: place không
+đổi về sau (schema cập nhật không có `placeSlug`), còn nhân bản template và
+`planner-import` chép các dòng đã có, nên trip hiện có vẫn import và sửa được.
+`validateIntegrity` cũng không báo lệch này.
+
 Những field mang trọng lượng thật:
 
 - **`costScope`** (`group` | `per_person`) là giá trị dễ sai nhất trong việc tính

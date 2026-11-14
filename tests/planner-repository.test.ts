@@ -192,6 +192,42 @@ describe('activities', () => {
     );
   });
 
+  it('refuses a catalog place from another destination, and leaves the trip untouched', async () => {
+    const planner = makePlanner();
+    const { userId } = await makeOwner(planner);
+    const { trip } = await planner.createTrip(userId, daLatTripInput());
+
+    const error = await planner
+      .addActivity(userId, trip.id, activityInput({ placeSlug: 'doi-che-moc-chau' }), null)
+      .then(
+        () => null,
+        (caught: unknown) => caught,
+      );
+    expect(error).toMatchObject({
+      code: 'invalid_reference',
+      status: 422,
+      issues: [{ path: 'placeSlug' }],
+    });
+
+    const after = await planner.getTrip(userId, trip.id);
+    expect(after.trip.version).toBe(trip.version);
+    expect(after.days[0]!.activities).toHaveLength(0);
+  });
+
+  it('accepts a catalog place from the trip destination', async () => {
+    const planner = makePlanner();
+    const { userId } = await makeOwner(planner);
+    const { trip } = await planner.createTrip(userId, daLatTripInput());
+
+    const view = await planner.addActivity(
+      userId,
+      trip.id,
+      activityInput({ placeSlug: 'ho-xuan-huong', title: undefined }),
+      null,
+    );
+    expect(view.days[0]!.activities[0]!.placeSlug).toBe('ho-xuan-huong');
+  });
+
   it('keeps an expense when the activity it paid for is deleted', async () => {
     const planner = makePlanner();
     const { userId } = await makeOwner(planner);

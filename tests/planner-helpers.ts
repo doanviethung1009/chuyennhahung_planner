@@ -90,10 +90,15 @@ export async function makeOwner(
   return { userId: issued.user.id, token: issued.accessToken };
 }
 
-const place = (slug: string, category: Place['category'], nameVi: string): Place => ({
+const place = (
+  slug: string,
+  category: Place['category'],
+  nameVi: string,
+  destinationSlug = 'da-lat',
+): Place => ({
   slug,
   name: { vi: nameVi, en: nameVi },
-  destinationSlug: 'da-lat',
+  destinationSlug,
   location: { vi: 'Đà Lạt', en: 'Đà Lạt' },
   coords: { lat: 11.94, lng: 108.44 },
   category,
@@ -115,6 +120,7 @@ export function fakeCatalog(
   const places = new Map<string, Place>([
     ['ho-xuan-huong', place('ho-xuan-huong', 'nature', 'Hồ Xuân Hương')],
     ['vuon-ca-phe-me-linh', place('vuon-ca-phe-me-linh', 'cafe', 'Cà phê Mê Linh')],
+    ['doi-che-moc-chau', place('doi-che-moc-chau', 'nature', 'Đồi chè Mộc Châu', 'moc-chau')],
     ['khach-san-trung-tam', place('khach-san-trung-tam', 'stay', 'Khách sạn trung tâm')],
   ]);
 

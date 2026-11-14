@@ -107,6 +107,13 @@ References to existing entities are by slug and are checked on write:
 `placeSlug` → the Travel Content System's places, `templateSlug` → a **public**
 `TravelTemplate`.
 
+A catalog place added with `POST /api/planner/:id/activities` must belong to the
+trip's `destinationSlug`; a place from another destination is refused with `422
+invalid_reference` (`path: placeSlug`). The rule applies **on create only**: the
+place never changes afterwards (the update schema has no `placeSlug`), and template
+clones and `planner-import` copy rows that already exist, so existing trips stay
+importable and editable. `validateIntegrity` does not flag a mismatch either.
+
 Fields that carry real weight:
 
 - **`costScope`** (`group` | `per_person`) is the most error-prone value in trip

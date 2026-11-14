@@ -16,6 +16,23 @@ type Day = TripView['days'][number];
 /** The small outline button used for every row action. */
 const rowButton = buttonClass({ size: 'sm', variant: 'secondary' });
 
+const MOVE_ORDER = { up: ['up', 'down', 'day'], down: ['down', 'up', 'day'], day: ['day', 'up', 'down'] } as const;
+
+/** Waits (a few frames) for the page to re-enable the row, then focuses the first usable control. */
+function focusMoveControl(activityId: string, control: 'up' | 'down' | 'day', attempt = 0): void {
+  requestAnimationFrame(() => {
+    const row = document.querySelector(`[data-activity-id="${CSS.escape(activityId)}"]`);
+    for (const kind of MOVE_ORDER[control]) {
+      const el = row?.querySelector<HTMLElement>(`[data-move="${kind}"]:not(:disabled)`);
+      if (el) {
+        el.focus();
+        return;
+      }
+    }
+    if (attempt < 60) focusMoveControl(activityId, control, attempt + 1);
+  });
+}
+
 export function DayCard({
   tripId,
   day,
@@ -61,9 +78,21 @@ export function DayCard({
     if (ok) setEditingDay(false);
   }
 
-  const move = (activityId: string, toDayNumber: number, toIndex: number, done: string) =>
-    mutate(
-      done,
+  /**
+   * The move controls are disabled while the write is in flight, so focus would
+   * drop to <body> and a keyboard user would lose their place. Once the page
+   * has re-rendered, put it back on the control they used — on the moved row,
+   * wherever it landed — falling back to whichever control there is still
+   * enabled (the up button is disabled on the first row, and so on).
+   */
+  const move = async (
+    activityId: string,
+    toDayNumber: number,
+    toIndex: number,
+    control: 'up' | 'down' | 'day',
+  ) => {
+    const ok = await mutate(
+      t('moved'),
       (version) =>
         api<TripView>(`${base}/reorder`, {
           method: 'PATCH',
@@ -72,6 +101,9 @@ export function DayCard({
         }),
       { conflictMessage: t('errorDayFull', { max: ACTIVITIES_PER_DAY_LIMIT }) },
     );
+    if (ok) focusMoveControl(activityId, control);
+    return ok;
+  };
 
   const heading = day.title ?? tDetail('day', { number: day.dayNumber });
   const last = day.activities.length - 1;
@@ -146,7 +178,7 @@ export function DayCard({
 
       <ul className="mt-4 grid list-none gap-4 p-0">
         {day.activities.map((activity, index) => (
-          <li key={activity.id} className="grid gap-3 border-t border-border-subtle pt-4 first:border-t-0 first:pt-0">
+          <li key={activity.id} data-activity-id={activity.id} className="grid gap-3 border-t border-border-subtle pt-4 first:border-t-0 first:pt-0">
             {editingId === activity.id ? (
               <ActivityForm
                 idPrefix={`edit-${activity.id}`}
@@ -189,8 +221,9 @@ export function DayCard({
                     type="button"
                     disabled={busy || index === 0}
                     className={rowButton}
+                    data-move="up"
                     aria-label={t('moveUpLabel', { title: activity.title })}
-                    onClick={() => move(activity.id, day.dayNumber, index - 1, t('moved'))}
+                    onClick={() => move(activity.id, day.dayNumber, index - 1, 'up')}
                   >
                     <span aria-hidden="true">↑</span>
                   </button>
@@ -198,8 +231,9 @@ export function DayCard({
                     type="button"
                     disabled={busy || index === last}
                     className={rowButton}
+                    data-move="down"
                     aria-label={t('moveDownLabel', { title: activity.title })}
-                    onClick={() => move(activity.id, day.dayNumber, index + 1, t('moved'))}
+                    onClick={() => move(activity.id, day.dayNumber, index + 1, 'down')}
                   >
                     <span aria-hidden="true">↓</span>
                   </button>
@@ -210,12 +244,13 @@ export function DayCard({
                       </label>
                       <select
                         id={`move-${activity.id}`}
+                        data-move="day"
                         className={`${inputClass} !w-auto`}
                         disabled={busy}
                         value=""
                         onChange={(e) => {
                           const target = Number(e.target.value);
-                          if (target) void move(activity.id, target, 0, t('moved'));
+                          if (target) void move(activity.id, target, 0, 'day');
                         }}
                       >
                         <option value="">{t('moveToDay')}</option>
