@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createContentCatalog } from '../src/server/planner/catalog';
 import { SESSION_COOKIE } from '../src/server/planner/auth';
 import { tripSchema, type Trip } from '../src/server/planner/schemas';
-import { createMemoryPlannerStore, emptyPlannerData } from '../src/server/planner/store';
+import { createJsonPlannerStore, createMemoryPlannerStore, emptyPlannerData } from '../src/server/planner/store';
 import {
   activityInput,
   daLatTripInput,
@@ -641,5 +641,30 @@ describe('share index (W3)', () => {
 
     await planner.revokeShare(userId, tripId);
     expect(await planner.getSharedTrip(rotated.shareToken!)).toBeNull();
+  });
+});
+
+describe('share link across two repositories on one JSON file', () => {
+  // Next.js can load the repository module twice (a page's bundle and a route
+  // handler's). Both sit on one store, so a link made through one must resolve
+  // through the other even after the other has already built its share index.
+  it('resolves a link created or rotated by the other instance', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'share-two-instances-'));
+    try {
+      const file = join(dir, 'planner.json');
+      const writer = makePlanner({ store: createJsonPlannerStore(file) });
+      const reader = makePlanner({ store: createJsonPlannerStore(file) });
+      const { userId } = await makeOwner(writer);
+      const view = await writer.createTrip(userId, daLatTripInput());
+
+      const first = await writer.setVisibility(userId, view.trip.id, 'unlisted');
+      expect(await reader.getSharedTrip(first.shareToken!)).not.toBeNull();
+
+      const second = await writer.rotateShareToken(userId, view.trip.id);
+      expect(await reader.getSharedTrip(second.shareToken!)).not.toBeNull();
+      expect(await reader.getSharedTrip(first.shareToken!)).toBeNull();
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });

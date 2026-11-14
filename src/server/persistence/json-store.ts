@@ -31,8 +31,9 @@ export interface DocumentStore<T> {
    * Optional change counter for stores shared between processes. Two calls
    * return the same value only if no process committed in between, so anything
    * derived from the data (the Planner's share-token index) can be rebuilt when
-   * it moves. The memory and JSON stores have one writer — this process — and
-   * omit it.
+   * it moves. The memory store has one writer and omits it; the JSON store
+   * counts its writes per file, process-wide, because Next.js can load the
+   * repository more than once.
    */
   revision?(): Promise<string | number>;
 }
@@ -149,6 +150,7 @@ export function createJsonDocumentStore<T>(
     // so the cache is exactly what a cold read would return (JSON drops
     // `undefined` keys and turns a Date into a string; a clone would not).
     shared.cached = normalize(JSON.parse(body) as Partial<T>);
+    shared.writes += 1;
   }
 
   return {
@@ -168,12 +170,21 @@ export function createJsonDocumentStore<T>(
         return result;
       });
     },
+    // Counted on the per-path shared state, so every module instance of this
+    // store in the process sees the same value: a repository built from
+    // another bundle can tell that someone else wrote, and drop what it
+    // derived (the share-token index) instead of serving a stale 404.
+    async revision() {
+      return shared.writes;
+    },
   };
 }
 
 type SharedFileState = {
   enqueue: ReturnType<typeof createSerialQueue>;
   cached: unknown;
+  /** Completed writes to this file since the process started. */
+  writes: number;
 };
 
 const SHARED_KEY = Symbol.for('chuyennhahung.jsonDocumentStores');
@@ -186,7 +197,7 @@ function sharedFileState(absolutePath: string): SharedFileState {
   const registry = (holder[SHARED_KEY] ??= new Map());
   let state = registry.get(absolutePath);
   if (!state) {
-    state = { enqueue: createSerialQueue(), cached: undefined };
+    state = { enqueue: createSerialQueue(), cached: undefined, writes: 0 };
     registry.set(absolutePath, state);
   }
   return state;
