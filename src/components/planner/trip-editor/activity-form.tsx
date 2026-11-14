@@ -24,6 +24,7 @@ export function ActivityForm({
   idPrefix,
   places,
   activity,
+  busy,
   onSubmit,
   onCancel,
 }: {
@@ -31,6 +32,8 @@ export function ActivityForm({
   places: CatalogPlace[];
   /** Present when editing. */
   activity?: TripActivity;
+  /** A write is in flight: the submit button waits, so a double click cannot send the same version twice. */
+  busy: boolean;
   onSubmit: (body: Record<string, unknown>) => ReturnType<Mutate>;
   onCancel: () => void;
 }) {
@@ -173,7 +176,7 @@ export function ActivityForm({
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <button type="submit" className={buttonClass({ size: 'sm' })}>
+        <button type="submit" disabled={busy} className={buttonClass({ size: 'sm' })}>
           {activity ? t('saveChanges') : t('addActivitySubmit')}
         </button>
         <button type="button" className={buttonClass({ size: 'sm', variant: 'secondary' })} onClick={onCancel}>
