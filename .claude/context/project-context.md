@@ -81,7 +81,8 @@ The owner opened the Planner backend phase and it shipped: `src/app/api/planner/
 | `src/server/rate-limit.ts` | In-memory sliding-window limiter (`createRateLimiter`, `clientKey`, `shareReadLimiter` 60/min, `signInLimiter` 10/min, `checkShareRead(headers)` for the share page). Per-process, spoofable key — ADR 0005 |
 | `PlannerRepository` sharing methods | `duplicateTrip`, `setVisibility`, `rotateShareToken`, `revokeShare`, `getSharedTrip(token): SharedTripView \| null` (allow-list projection), `describeSession`; catalog gains `getLinkedStory` (ADR 0005) |
 | `src/app/api/planner/[id]/{duplicate,share,share/rotate}`, `GET /api/planner/session`, `GET /api/shared/[token]` | Duplicate, share lifecycle, session probe, public read-only view (GET only, identical 404s, `rate_limited` 429 + `Retry-After`) |
-| `src/server/persistence/json-store.ts` | Shared JSON document store |
+| `src/server/persistence/json-store.ts` | Shared JSON document store (memory + file); `DocumentStore.transact` |
+| `src/server/persistence/postgres-planner-store.ts`, `planner-rows.ts`, `postgres-pool.ts`, `migrate.ts`, `planner-transfer.ts` | ADR 0008/0009: the Planner's PostgreSQL store. Selected in `planner/instance.ts` **only when `PLANNER_DATABASE_URL` is set** (never falls back to the file); unset → `.data/planner.json`. Migrations in `db/migrations/*.sql` run at startup (`npm run db:migrate` by hand); `planner:import` / `planner:export` move data. See `docs/features/planner-postgres-persistence.md`. **Travel Content is still a JSON file** (`content/instance.ts`, `TRAVEL_CONTENT_STORE`) |
 
 > **Two systems, one vocabulary — do not conflate them.** Travel Content is editorial
 > data owned by the brand with a single `ADMIN_API_TOKEN` principal; the Planner is
@@ -90,7 +91,7 @@ The owner opened the Planner backend phase and it shipped: `src/app/api/planner/
 
 > **Still absent, and not to be scaffolded without an ADR:** a full Planner trip
 > editor (`/plan-your-trip` is still the contact-only content page), the Planner
-> map, AI suggestions, a hosted identity provider / Auth.js, MFA, and SQL. See
+> map, AI suggestions, a hosted identity provider / Auth.js, MFA, and SQL for Travel Content (the Planner is already on PostgreSQL, ADR 0009). See
 > `docs/architecture.md#phases`.
 
 ## Other critical modules
