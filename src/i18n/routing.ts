@@ -26,6 +26,7 @@ export const pathnames = {
   '/sign-in': { vi: '/dang-nhap', en: '/sign-in' },
   '/account/password': { vi: '/doi-mat-khau', en: '/account/password' },
   '/my-trips': { vi: '/chuyen-di-cua-toi', en: '/my-trips' },
+  '/my-trips/new': { vi: '/chuyen-di-cua-toi/moi', en: '/my-trips/new' },
   '/my-trips/[id]': { vi: '/chuyen-di-cua-toi/[id]', en: '/my-trips/[id]' },
   '/shared/[token]': { vi: '/chia-se/[token]', en: '/shared/[token]' },
   '/reviews': { vi: '/goc-review', en: '/reviews' },

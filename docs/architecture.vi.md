@@ -86,6 +86,7 @@ trong [`src/i18n/routing.ts`](../src/i18n/routing.ts):
 | `/admin/content/places/[slug]` | `/quan-tri/noi-dung/dia-diem/[slug]` | `/en/admin/content/places/[slug]` |
 | `/admin/content/reviews` | `/quan-tri/noi-dung/danh-gia` | `/en/admin/content/reviews` |
 | `/my-trips` | `/chuyen-di-cua-toi` | `/en/my-trips` |
+| `/my-trips/new` | `/chuyen-di-cua-toi/moi` | `/en/my-trips/new` |
 | `/my-trips/[id]` | `/chuyen-di-cua-toi/[id]` | `/en/my-trips/[id]` |
 | `/shared/[token]` | `/chia-se/[token]` | `/en/shared/[token]` |
 
@@ -282,7 +283,7 @@ flowchart LR
   chỉ bind. Proxy phải ghi đè cả hai header forwarded
   ([usage → Deploy](usage.vi.md#deploy)). `GET /api/health` là probe liveness của
   container và không đọc store nào.
-- **Trang riêng tư** (`/sign-in`, `/account/password`, `/my-trips`, `/my-trips/[id]`,
+- **Trang riêng tư** (`/sign-in`, `/account/password`, `/my-trips`, `/my-trips/new`, `/my-trips/[id]`,
   `/trip-setup/[template]`) là `noindex` và không có trong sitemap; `/shared/[token]` là
   `noindex` trừ khi trip là `public`, và gửi `Referrer-Policy: no-referrer`.
 - **Mọi response đều có security header** từ `next.config.ts` (`securityHeaders`):
