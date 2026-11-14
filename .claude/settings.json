@@ -10,6 +10,9 @@
       "Bash(git diff:*)",
       "Bash(git log:*)"
     ],
+    "ask": [
+      "Agent"
+    ],
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",

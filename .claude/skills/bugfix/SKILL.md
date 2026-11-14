@@ -10,8 +10,10 @@ whole logs or files. Establish, in this order:
 
 1. **Expected vs actual**, and the exact reproduction.
 2. **Root cause**, quoted as `file:line`. Not a symptom, not a guess.
-3. **Risk tier** (S/M/L/XL) and the owning agent. If the cause is cross-module or
-   high risk, have **`system-architect`** route it.
+3. **Risk tier** (S/M/L/XL) and the owning role. If the cause is cross-module or
+   high risk, switch to the architect role and write the Task Contract first
+   (`.claude/rules/02-architecture-orchestration.md`). You fix it yourself — spawn
+   no subagent unless the project owner approves it.
 
 Then make the **smallest fix that addresses the root cause** and add a regression
 test that fails before it and passes after — `tests/` holds the suite. Run

@@ -32,26 +32,29 @@ needs it and it has not loaded:
 | `03-project-chuyen-nha-hung.md` | stack, i18n, routes, tokens, a11y, phases |
 | `04-responsibilities.md` | who owns which files, who can block |
 | `05-git-governance.md` | branches, commits, PRs, prohibited commands |
-| `06-token-optimization.md` | agents, model tiers, session length |
+| `06-token-optimization.md` | Single-Agent First, model tiers, session length, handoff |
 | `07-documentation.md` | what `tests/docs.test.ts` enforces under `docs/` |
 
-## Agent roster
-Route work to the agent that owns the files. Rules for each: `.claude/agents/<name>.md`.
+## Roles and agents
+**Single-Agent First.** The main session does the whole task by default and plays the
+roles below **in sequence** (architect → backend → frontend). A role is a hat with an
+owned file set; an agent is a spawned subagent. Spawning one is the exception and
+**needs the project owner's approval first** — see "Architecture orchestration".
+Rules for each role/agent: `.claude/agents/<name>.md`.
 
-| Agent | Model | Mode | Owns |
+| Role / agent | Model if spawned | Mode | Owns |
 |---|---|---|---|
 | `system-architect` | sonnet | designs | Route topology, data contracts, ADRs, `docs/architecture.*`, Task Contracts |
 | `backend-engineer` | sonnet | implements | `src/app/api/**`, `src/server/**`, server actions, persistence, validation |
 | `frontend-engineer` | sonnet | implements | `src/app/**` markup, `src/components/**`, `globals.css` tokens, `messages/*.json` |
-| `explorer` | haiku | read-only | Cheap, narrow file/symbol location |
+| `explorer` | haiku | read-only | Broad search only — a few `grep`s are done inline |
 | `qc` | sonnet | read-only, **on demand** | Independent verification — PASS / BLOCKED / NOT VERIFIED |
 | `security` | sonnet | read-only, **on demand** | Auth, secrets, injection, privacy — PASS / PASS_WITH_WARNINGS / BLOCKED |
-| `git-controller` | haiku | read-only | Diff, branch and PR readiness; proposes commit and PR text |
+| `git-controller` | haiku | read-only, **on demand** | Diff, branch and PR readiness; proposes commit and PR text |
 
-`opus` only by explicit per-call override for a genuinely hard decision. **Ownership is
-exclusive**: a task spanning two agents is split by the architect first; two agents
-never edit the same file. Documentation is not a fourth agent — whoever ships the
-change writes its document.
+**Ownership is exclusive per role**: the architect role settles the contract between
+roles first; when agents are spawned, two agents never edit the same file.
+Documentation is not a fourth role — whoever ships the change writes its document.
 
 ## Rules that bind everyone
 
@@ -83,9 +86,12 @@ change writes its document.
     structure, written in the same change.
 
 ## Architecture orchestration
-Triage before you implement: **S** inline, spawn nothing · **M** short Task Contract →
-one implementer · **L** architect + affected implementers · **XL** plus human approval
-at risky boundaries. `qc` and `security` **never run as part of the flow** — only when
+Triage before you implement. The class sets how much is written down, **not how many
+agents run**: **S** inline · **M** short Task Contract in chat · **L** contract file in
+`.claude/contracts/` · **XL** plus human approval at risky boundaries. No class spawns
+a subagent on its own. To delegate, propose it (agent, model, files, why not inline,
+budget) and wait for the owner's yes. At most **3 agents active at once, the main
+session included**. `qc` and `security` **never run as part of the flow** — only when
 the user asks (`/qc-check`, `/sec-check`, or in words); until then report them as
 **NOT RUN** and recommend them where warranted. A BLOCKED verdict stops the work; at
 most two review/fix cycles.
@@ -97,9 +103,13 @@ without explicit user authorization; agents never do git — the main session do
 
 ## Token discipline
 The main session is where the credits go: **one session per branch/PR**, `/compact`
-past ~150k context, the strongest model only for the hard part. Locate with `grep`,
-read narrowly, keep outputs short, no full agent team for a small change. Never claim
-a savings percentage without measured usage.
+past ~150k context (propose it, do not wait to be asked), a short handoff when the
+session ends. Haiku for narrow/mechanical work, Sonnet for implementation, design and
+verification; **Opus only when the owner asks or approves it** — never by default. Do
+not switch model or raise thinking effort mid-session without need (it breaks prompt
+caching). Read only the files the change touches, never scan the whole repository, do
+not re-read or re-review what is already settled. Never claim a savings percentage
+without measured usage.
 
 ## Safety
 No invented tests, APIs, schema, credentials, prices, dependencies or success status.
