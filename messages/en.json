@@ -470,7 +470,14 @@
       "resetConfirm": "Reset the password for {handle}? All of their sessions will be signed out.",
       "resetYes": "Yes, reset",
       "resetNo": "Cancel",
-      "retry": "Reload the list"
+      "retry": "Reload the list",
+      "searchLabel": "Search users",
+      "searchPlaceholder": "Name, handle or email",
+      "filterRoleLabel": "Filter by role",
+      "filterRoleAll": "All roles",
+      "filterClear": "Clear filters",
+      "filterResult": "Showing {shown} of {total} users",
+      "filterEmpty": "No users match the filters."
     },
     "create": {
       "heading": "Create a user",

@@ -470,7 +470,14 @@
       "resetConfirm": "Cấp lại mật khẩu cho {handle}? Mọi phiên đăng nhập của họ sẽ bị đăng xuất.",
       "resetYes": "Có, cấp lại",
       "resetNo": "Huỷ",
-      "retry": "Tải lại danh sách"
+      "retry": "Tải lại danh sách",
+      "searchLabel": "Tìm người dùng",
+      "searchPlaceholder": "Tên, mã tài khoản hoặc email",
+      "filterRoleLabel": "Lọc theo vai trò",
+      "filterRoleAll": "Mọi vai trò",
+      "filterClear": "Xoá bộ lọc",
+      "filterResult": "Hiển thị {shown}/{total} người dùng",
+      "filterEmpty": "Không có người dùng nào khớp bộ lọc."
     },
     "create": {
       "heading": "Tạo người dùng",
