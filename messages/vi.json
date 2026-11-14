@@ -372,7 +372,8 @@
     "purgeConfirmLabel": "Xác nhận xoá {title}",
     "purgeYes": "Xoá vĩnh viễn",
     "purgeNo": "Giữ lại",
-    "purged": "Đã xoá vĩnh viễn chuyến đi."
+    "purged": "Đã xoá vĩnh viễn chuyến đi.",
+    "createCta": "Tạo chuyến đi mới"
   },
   "tripDetail": {
     "metaTitle": "Chi tiết chuyến đi",
@@ -739,5 +740,35 @@
     "reviewPros": "Điểm chúng mình thích",
     "reviewCons": "Điểm chưa ổn",
     "costsLabel": "Chi phí"
+  },
+  "newTrip": {
+    "metaTitle": "Tạo chuyến đi mới",
+    "pageTitle": "Tạo chuyến đi mới",
+    "description": "Chọn điểm đến, số ngày, số người và ngân sách. Bạn sẽ tự thêm các hoạt động vào từng ngày sau đó.",
+    "title": "Tên chuyến đi",
+    "destination": "Điểm đến",
+    "durationDays": "Số ngày",
+    "durationHint": "Từ 1 đến 30 ngày.",
+    "startDate": "Ngày khởi hành",
+    "startDateHint": "Chưa chốt ngày cũng được, bạn có thể bổ sung sau.",
+    "partySize": "Số người đi",
+    "budget": "Ngân sách cả chuyến (đồng)",
+    "budgetHint": "Số đồng nguyên, có thể để 0 nếu chưa tính.",
+    "travelStyle": "Phong cách chuyến đi",
+    "pace": "Nhịp độ",
+    "unset": "Chưa chọn",
+    "note": "Ghi chú cho bản thân",
+    "noteHint": "Chỉ bạn thấy ghi chú này.",
+    "save": "Tạo chuyến đi",
+    "saving": "Đang tạo…",
+    "cancel": "Quay lại danh sách",
+    "signInNote": "Nếu chưa đăng nhập, bạn sẽ được đưa tới trang đăng nhập.",
+    "errorTitle": "Tên chuyến đi cần từ 3 đến 120 ký tự.",
+    "errorDestination": "Hãy chọn một điểm đến.",
+    "errorDuration": "Số ngày phải là số nguyên từ 1 đến 30.",
+    "errorPartySize": "Số người phải là số nguyên từ 1 đến 50.",
+    "errorBudget": "Ngân sách phải là số đồng nguyên, không âm.",
+    "errorValidation": "Một số thông tin chưa hợp lệ. Hãy kiểm tra lại ngày đi, tên chuyến đi và ghi chú.",
+    "errorGeneric": "Chưa tạo được chuyến đi. Hãy thử lại sau ít phút."
   }
 }

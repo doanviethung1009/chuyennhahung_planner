@@ -78,7 +78,13 @@ export function MyTrips() {
 
   return (
     <div>
-      <div role="group" aria-label={t('tabsLabel')} className="flex flex-wrap gap-2">
+      <p>
+        <Link href="/my-trips/new" className={buttonClass({ size: 'md' })}>
+          {t('createCta')}
+        </Link>
+      </p>
+
+      <div role="group" aria-label={t('tabsLabel')} className="mt-6 flex flex-wrap gap-2">
         {(['active', 'archived'] as const).map((key) => (
           <button
             key={key}

@@ -372,7 +372,8 @@
     "purgeConfirmLabel": "Confirm deleting {title}",
     "purgeYes": "Delete permanently",
     "purgeNo": "Keep it",
-    "purged": "Trip deleted permanently."
+    "purged": "Trip deleted permanently.",
+    "createCta": "Create a new trip"
   },
   "tripDetail": {
     "metaTitle": "Trip details",
@@ -739,5 +740,35 @@
     "reviewPros": "What we liked",
     "reviewCons": "What we did not like",
     "costsLabel": "Costs"
+  },
+  "newTrip": {
+    "metaTitle": "Create a new trip",
+    "pageTitle": "Create a new trip",
+    "description": "Pick a destination, length, party size and budget. You add the activities to each day afterwards.",
+    "title": "Trip name",
+    "destination": "Destination",
+    "durationDays": "Number of days",
+    "durationHint": "From 1 to 30 days.",
+    "startDate": "Departure date",
+    "startDateHint": "No fixed date yet? You can add it later.",
+    "partySize": "Travellers",
+    "budget": "Whole-trip budget (VND)",
+    "budgetHint": "A whole amount of dong; 0 is fine if you have not worked it out.",
+    "travelStyle": "Trip style",
+    "pace": "Pace",
+    "unset": "Not set",
+    "note": "Note to yourself",
+    "noteHint": "Only you can see this note.",
+    "save": "Create trip",
+    "saving": "Creating…",
+    "cancel": "Back to the list",
+    "signInNote": "If you are not signed in you will be taken to the sign-in page.",
+    "errorTitle": "The trip name needs 3 to 120 characters.",
+    "errorDestination": "Please choose a destination.",
+    "errorDuration": "Days must be a whole number from 1 to 30.",
+    "errorPartySize": "Travellers must be a whole number from 1 to 50.",
+    "errorBudget": "The budget must be a whole, non-negative amount of dong.",
+    "errorValidation": "Some details are not valid. Check the date, name and note.",
+    "errorGeneric": "We could not create the trip. Please try again in a moment."
   }
 }
