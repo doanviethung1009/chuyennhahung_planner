@@ -55,7 +55,8 @@ function ExpenseForm({
       category,
       amountVnd: value,
       costScope: scope,
-      dayNumber: dayNumber ? Number(dayNumber) : null,
+      // Left out for a linked expense: its day comes from the activity.
+      ...(expense?.activityId ? {} : { dayNumber: dayNumber ? Number(dayNumber) : null }),
       paidOn: paidOn || null,
       note: note.trim() || null,
     });
@@ -99,8 +100,16 @@ function ExpenseForm({
         </Field>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field id={id('day')} label={t('expenseDay')}>
-          <select id={id('day')} className={inputClass} value={dayNumber} onChange={(e) => setDayNumber(e.target.value)}>
+        <Field id={id('day')} label={t('expenseDay')} hint={expense?.activityId ? t('expenseDayLinked') : undefined}>
+          <select
+            id={id('day')}
+            className={inputClass}
+            value={dayNumber}
+            // A day follows the linked activity: the API refuses a different one.
+            disabled={Boolean(expense?.activityId)}
+            aria-describedby={expense?.activityId ? id('day-hint') : undefined}
+            onChange={(e) => setDayNumber(e.target.value)}
+          >
             <option value="">{t('expenseWholeTrip')}</option>
             {view.days.map((day) => (
               <option key={day.id} value={day.dayNumber}>
@@ -169,8 +178,10 @@ export function ExpensesPanel({ view, busy, mutate }: { view: TripView; busy: bo
                   busy={busy}
                   onCancel={() => setEditingId(null)}
                   onSubmit={async (body) => {
-                    const ok = await mutate(t('expenseSaved'), (version) =>
-                      api<TripView>(`${base}/${encodeURIComponent(expense.id)}`, { method: 'PATCH', version, body }),
+                    const ok = await mutate(
+                      t('expenseSaved'),
+                      (version) => api<TripView>(`${base}/${encodeURIComponent(expense.id)}`, { method: 'PATCH', version, body }),
+                      { refocus: true },
                     );
                     if (ok) setEditingId(null);
                     return ok;
@@ -206,8 +217,10 @@ export function ExpensesPanel({ view, busy, mutate }: { view: TripView; busy: bo
                           disabled={busy}
                           className={buttonClass({ size: 'sm' })}
                           onClick={async () => {
-                            const ok = await mutate(t('expenseDeleted'), (version) =>
-                              api<TripView>(`${base}/${encodeURIComponent(expense.id)}`, { method: 'DELETE', version }),
+                            const ok = await mutate(
+                              t('expenseDeleted'),
+                              (version) => api<TripView>(`${base}/${encodeURIComponent(expense.id)}`, { method: 'DELETE', version }),
+                              { refocus: true },
                             );
                             if (ok) setConfirmId(null);
                           }}
@@ -244,7 +257,9 @@ export function ExpensesPanel({ view, busy, mutate }: { view: TripView; busy: bo
           busy={busy}
           onCancel={() => setAdding(false)}
           onSubmit={async (body) => {
-            const ok = await mutate(t('expenseAdded'), (version) => api<TripView>(base, { method: 'POST', version, body }));
+            const ok = await mutate(t('expenseAdded'), (version) => api<TripView>(base, { method: 'POST', version, body }), {
+              refocus: true,
+            });
             if (ok) setAdding(false);
             return ok;
           }}

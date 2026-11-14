@@ -26,7 +26,10 @@ export function TripDetail({ id }: { id: string }) {
   const router = useRouter();
 
   const [load, setLoad] = useState<Load>({ state: 'loading' });
-  const [busy, setBusy] = useState(false);
+  const [pageBusy, setBusy] = useState(false);
+  // An editor write in flight locks this page's own actions too: both use the same trip version.
+  const [editorBusy, setEditorBusy] = useState(false);
+  const busy = pageBusy || editorBusy;
   const [message, setMessage] = useState('');
 
   const path = `/api/planner/${encodeURIComponent(id)}`;
@@ -220,6 +223,8 @@ export function TripDetail({ id }: { id: string }) {
               onView={(next) => setLoad({ state: 'ready', view: next })}
               onReload={fetchTrip}
               onUnauthorized={() => goToSignIn(locale)}
+              locked={pageBusy}
+              onBusyChange={setEditorBusy}
             />
           )}
 

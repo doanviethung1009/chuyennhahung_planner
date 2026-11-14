@@ -801,7 +801,7 @@
     "errorDuration": "Duration must be between 5 and 1440 minutes.",
     "errorLabel": "The expense description needs 2 to 160 characters.",
     "errorStale": "This trip was just changed elsewhere. The page has been refreshed, please try again.",
-    "errorState": "That did not work: the days being removed still hold activities or expenses. Delete those first.",
+    "errorState": "That did not work because the trip is not in a state that allows it.",
     "errorValidation": "Some details are not valid. Please check the fields you just filled in.",
     "errorGeneric": "We could not save that. Please try again in a moment.",
     "daySaved": "Day saved.",
@@ -863,6 +863,11 @@
     "expenseDeleted": "Expense deleted.",
     "editExpenseLabel": "Edit expense \"{label}\"",
     "deleteExpenseLabel": "Delete expense \"{label}\"",
-    "deleteExpenseConfirm": "Delete this expense?"
+    "deleteExpenseConfirm": "Delete this expense?",
+    "errorShrink": "Could not reduce the days: the days being removed still hold activities or expenses. Delete those first.",
+    "errorDayFull": "A day can hold at most {max} activities.",
+    "dayFull": "This day already has {max} activities.",
+    "expenseDayLinked": "This expense is linked to an activity, so its day follows that activity.",
+    "nothingChanged": "You have not changed anything to save."
   }
 }

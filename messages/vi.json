@@ -801,7 +801,7 @@
     "errorDuration": "Thời lượng phải từ 5 đến 1440 phút.",
     "errorLabel": "Nội dung khoản chi cần từ 2 đến 160 ký tự.",
     "errorStale": "Chuyến đi vừa được sửa ở nơi khác. Trang đã được làm mới, bạn hãy thử lại.",
-    "errorState": "Chưa làm được: các ngày bị bỏ vẫn còn hoạt động hoặc khoản chi. Hãy xoá chúng trước.",
+    "errorState": "Chưa làm được vì trạng thái hiện tại của chuyến đi không cho phép.",
     "errorValidation": "Có thông tin chưa hợp lệ. Hãy kiểm tra lại các ô vừa nhập.",
     "errorGeneric": "Chưa lưu được. Hãy thử lại sau ít phút.",
     "daySaved": "Đã lưu ngày.",
@@ -863,6 +863,11 @@
     "expenseDeleted": "Đã xoá khoản chi.",
     "editExpenseLabel": "Sửa khoản chi \"{label}\"",
     "deleteExpenseLabel": "Xoá khoản chi \"{label}\"",
-    "deleteExpenseConfirm": "Xoá khoản chi này?"
+    "deleteExpenseConfirm": "Xoá khoản chi này?",
+    "errorShrink": "Chưa giảm được số ngày: các ngày bị bỏ vẫn còn hoạt động hoặc khoản chi. Hãy xoá chúng trước.",
+    "errorDayFull": "Mỗi ngày chỉ có tối đa {max} hoạt động.",
+    "dayFull": "Ngày này đã đủ {max} hoạt động.",
+    "expenseDayLinked": "Khoản chi này gắn với một hoạt động nên ngày đi theo hoạt động đó.",
+    "nothingChanged": "Bạn chưa đổi gì để lưu."
   }
 }

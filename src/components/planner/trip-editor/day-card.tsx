@@ -9,7 +9,7 @@ import { api } from '../api';
 import type { TripView } from '@/server/planner/repository';
 import { Field, inputClass } from '../field';
 import { ActivityForm, type CatalogPlace } from './activity-form';
-import { formatDong, type Mutate } from './shared';
+import { ACTIVITIES_PER_DAY_LIMIT, formatDong, type Mutate } from './shared';
 
 type Day = TripView['days'][number];
 
@@ -20,6 +20,7 @@ export function DayCard({
   tripId,
   day,
   dayCount,
+  fullDays,
   places,
   busy,
   mutate,
@@ -27,6 +28,8 @@ export function DayCard({
   tripId: string;
   day: Day;
   dayCount: number;
+  /** Day numbers already at the activity limit: nothing can be added or moved into them. */
+  fullDays: Set<number>;
   places: CatalogPlace[];
   busy: boolean;
   mutate: Mutate;
@@ -45,27 +48,37 @@ export function DayCard({
 
   async function saveDay(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const ok = await mutate(t('daySaved'), (version) =>
-      api<TripView>(`${base}/days/${day.dayNumber}`, {
-        method: 'PATCH',
-        version,
-        body: { title: dayTitle.trim() || null, note: dayNote.trim() || null },
-      }),
+    const ok = await mutate(
+      t('daySaved'),
+      (version) =>
+        api<TripView>(`${base}/days/${day.dayNumber}`, {
+          method: 'PATCH',
+          version,
+          body: { title: dayTitle.trim() || null, note: dayNote.trim() || null },
+        }),
+      { refocus: true },
     );
     if (ok) setEditingDay(false);
   }
 
   const move = (activityId: string, toDayNumber: number, toIndex: number, done: string) =>
-    mutate(done, (version) =>
-      api<TripView>(`${base}/reorder`, {
-        method: 'PATCH',
-        version,
-        body: { op: 'move-activity', activityId, toDayNumber, toIndex },
-      }),
+    mutate(
+      done,
+      (version) =>
+        api<TripView>(`${base}/reorder`, {
+          method: 'PATCH',
+          version,
+          body: { op: 'move-activity', activityId, toDayNumber, toIndex },
+        }),
+      { conflictMessage: t('errorDayFull', { max: ACTIVITIES_PER_DAY_LIMIT }) },
     );
 
   const heading = day.title ?? tDetail('day', { number: day.dayNumber });
   const last = day.activities.length - 1;
+  const full = day.activities.length >= ACTIVITIES_PER_DAY_LIMIT;
+  const moveTargets = Array.from({ length: dayCount }, (_, i) => i + 1).filter(
+    (n) => n !== day.dayNumber && !fullDays.has(n),
+  );
 
   return (
     <li className="rounded-xl border border-border-subtle bg-surface p-5 md:p-6">
@@ -141,8 +154,11 @@ export function DayCard({
                 activity={activity}
                 onCancel={() => setEditingId(null)}
                 onSubmit={async (body) => {
-                  const ok = await mutate(t('activitySaved'), (version) =>
-                    api<TripView>(`${base}/activities/${encodeURIComponent(activity.id)}`, { method: 'PATCH', version, body }),
+                  const ok = await mutate(
+                    t('activitySaved'),
+                    (version) =>
+                      api<TripView>(`${base}/activities/${encodeURIComponent(activity.id)}`, { method: 'PATCH', version, body }),
+                    { refocus: true },
                   );
                   if (ok) setEditingId(null);
                   return ok;
@@ -186,7 +202,7 @@ export function DayCard({
                   >
                     <span aria-hidden="true">↓</span>
                   </button>
-                  {dayCount > 1 ? (
+                  {moveTargets.length > 0 ? (
                     <>
                       <label htmlFor={`move-${activity.id}`} className="sr-only">
                         {t('moveToDayLabel', { title: activity.title })}
@@ -202,13 +218,11 @@ export function DayCard({
                         }}
                       >
                         <option value="">{t('moveToDay')}</option>
-                        {Array.from({ length: dayCount }, (_, i) => i + 1)
-                          .filter((n) => n !== day.dayNumber)
-                          .map((n) => (
-                            <option key={n} value={n}>
-                              {tDetail('day', { number: n })}
-                            </option>
-                          ))}
+                        {moveTargets.map((n) => (
+                          <option key={n} value={n}>
+                            {tDetail('day', { number: n })}
+                          </option>
+                        ))}
                       </select>
                     </>
                   ) : null}
@@ -229,8 +243,11 @@ export function DayCard({
                         disabled={busy}
                         className={buttonClass({ size: 'sm' })}
                         onClick={async () => {
-                          const ok = await mutate(t('activityDeleted'), (version) =>
-                            api<TripView>(`${base}/activities/${encodeURIComponent(activity.id)}`, { method: 'DELETE', version }),
+                          const ok = await mutate(
+                            t('activityDeleted'),
+                            (version) =>
+                              api<TripView>(`${base}/activities/${encodeURIComponent(activity.id)}`, { method: 'DELETE', version }),
+                            { refocus: true },
                           );
                           if (ok) setConfirmId(null);
                         }}
@@ -266,27 +283,38 @@ export function DayCard({
             places={places}
             onCancel={() => setAdding(false)}
             onSubmit={async (body) => {
-              const ok = await mutate(t('activityAdded'), (version) =>
-                api<TripView>(`${base}/activities`, {
-                  method: 'POST',
-                  version,
-                  body: { ...body, dayNumber: day.dayNumber },
-                }),
+              const ok = await mutate(
+                t('activityAdded'),
+                (version) =>
+                  api<TripView>(`${base}/activities`, {
+                    method: 'POST',
+                    version,
+                    body: { ...body, dayNumber: day.dayNumber },
+                  }),
+                { refocus: true, conflictMessage: t('errorDayFull', { max: ACTIVITIES_PER_DAY_LIMIT }) },
               );
               if (ok) setAdding(false);
               return ok;
             }}
           />
         ) : (
-          <button
-            type="button"
-            disabled={busy}
-            className={rowButton}
-            aria-label={t('addActivityLabel', { day: day.dayNumber })}
-            onClick={() => setAdding(true)}
-          >
-            {t('addActivity')}
-          </button>
+          <>
+            <button
+              type="button"
+              disabled={busy || full}
+              className={rowButton}
+              aria-label={t('addActivityLabel', { day: day.dayNumber })}
+              aria-describedby={full ? `day-${day.dayNumber}-full` : undefined}
+              onClick={() => setAdding(true)}
+            >
+              {t('addActivity')}
+            </button>
+            {full ? (
+              <p id={`day-${day.dayNumber}-full`} className="mt-2 text-sm text-foreground-muted">
+                {t('dayFull', { max: ACTIVITIES_PER_DAY_LIMIT })}
+              </p>
+            ) : null}
+          </>
         )}
       </div>
     </li>
