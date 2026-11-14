@@ -36,3 +36,20 @@ export const social: SocialLink[] = [
     url: `mailto:${siteConfig.contactEmail}`,
   },
 ];
+
+/**
+ * ⚠️ OWNER ACTION REQUIRED (ADR 0014)
+ * Travellers can ask to appear on the home page. Until the owner supplies BOTH
+ * values below, that control stays disabled and no contact is invented.
+ *  - `terms`: the contribution terms, in both languages.
+ *  - `takedownContact`: a real email that receives content-removal requests.
+ */
+export const contribution: {
+  terms: { vi: string; en: string } | null;
+  takedownContact: string | null;
+} = {
+  terms: null,
+  takedownContact: null,
+};
+
+export const contributionOpen = contribution.terms !== null && contribution.takedownContact !== null;

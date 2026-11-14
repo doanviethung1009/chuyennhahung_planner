@@ -75,6 +75,8 @@ folders. The visible URL per locale is defined once, in
 | `/itineraries/[slug]` | `/len-lich-trinh/[slug]` | `/en/itineraries/[slug]` |
 | `/plan-your-trip` | `/thiet-ke-chuyen-di` | `/en/plan-your-trip` |
 | `/reviews` | `/goc-review` | `/en/reviews` |
+| `/community-trips` | `/chuyen-di-cong-dong` | `/en/community-trips` |
+| `/admin/community` | `/quan-tri/cong-dong` | `/en/admin/community` |
 | `/about` | `/ve-nha-hung` | `/en/about` |
 | `/trip-setup/[template]` | `/tao-chuyen-di/[template]` | `/en/trip-setup/[template]` |
 | `/sign-in` | `/dang-nhap` | `/en/sign-in` |
@@ -331,6 +333,15 @@ flowchart LR
 | POST create, DELETE, `templates/**`, `collections/**`, `integrity` | any | token-only (`adminRoute`) |
 
 PATCH accepts an optional `If-Match: "<updatedAt>"` (`ifMatchStamp`); the repository compares inside the transaction and a stale write answers **412** `version_conflict`. No header means last write wins.
+
+### Community trips (ADR 0014, PR 1)
+
+A trip's place on the home page is a separate opt-in, `Trip.listing`, not `visibility`.
+Owner `PUT /api/planner/[id]/listing` -> `pending`; staff (`community:moderate`) approve or
+reject at `/admin/community`; only `approved` reaches `GET /api/community/trips`, the
+gallery and the home page, through the allow-list `CommunityTripCard`. Any mutation
+re-queues it (`touch`), leaving `public` or archiving clears it. The control stays closed
+until the owner fills `contribution` in `src/content/site.ts`. Place reviews are PR 2.
 
 ## Phases
 

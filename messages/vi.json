@@ -20,7 +20,8 @@
     "admin": "Trang quản trị",
     "signOut": "Đăng xuất",
     "signingOut": "Đang đăng xuất…",
-    "signOutFailed": "Chưa đăng xuất được. Hãy thử lại."
+    "signOutFailed": "Chưa đăng xuất được. Hãy thử lại.",
+    "communityTrips": "Chuyến đi cộng đồng"
   },
   "locale": {
     "label": "Ngôn ngữ",
@@ -114,6 +115,12 @@
       "title": "Hai đứa, một chiếc xe máy và rất nhiều lần đi lạc",
       "lead": "Chuyện Nhà Hưng bắt đầu từ một chuyến Đà Lạt năm 2021 mà cả hai đều không chuẩn bị gì. Từ đó đến giờ mình vẫn giữ nguyên cách đi đó.",
       "cta": "Đọc về nhà Hưng"
+    },
+    "community": {
+      "eyebrow": "Từ cộng đồng",
+      "title": "Chuyến đi của những người đi cùng",
+      "lead": "Lịch trình thật do người đọc chia sẻ. Mỗi chuyến đều được người của Nhà Hưng xem qua trước khi lên đây.",
+      "viewAll": "Xem tất cả chuyến đi"
     }
   },
   "stories": {
@@ -423,7 +430,31 @@
     "saved": "Đã lưu cài đặt chia sẻ.",
     "rotated": "Đã tạo đường dẫn mới. Đường dẫn cũ không còn dùng được.",
     "revoked": "Đã ngừng chia sẻ. Chuyến đi đã về riêng tư.",
-    "errorGeneric": "Chưa cập nhật được chia sẻ. Hãy thử lại."
+    "errorGeneric": "Chưa cập nhật được chia sẻ. Hãy thử lại.",
+    "listingTitle": "Hiện ở trang chủ",
+    "listingIntro": "Gửi chuyến đi công khai này để được hiển thị trên trang chủ và trang Chuyến đi cộng đồng. Người của Nhà Hưng sẽ xem qua trước khi lên.",
+    "listingClosed": "Tính năng này chưa mở: Nhà Hưng chưa công bố điều khoản đóng góp và đầu mối gỡ nội dung.",
+    "termsHeading": "Điều khoản đóng góp",
+    "takedown": "Yêu cầu gỡ nội dung gửi tới",
+    "listingStatusLabel": "Trạng thái:",
+    "listingStatus": {
+      "none": "Chưa gửi",
+      "pending": "Đang chờ duyệt",
+      "approved": "Đã lên trang chủ",
+      "rejected": "Không được duyệt"
+    },
+    "listingReason": "Lý do: {reason}",
+    "authorLabel": "Hiển thị người chia sẻ",
+    "author": {
+      "name": "Tên hiển thị của tôi",
+      "anonymous": "Ẩn danh"
+    },
+    "listingRequest": "Gửi để hiện ở trang chủ",
+    "listingResubmit": "Gửi lại để duyệt",
+    "listingWithdraw": "Rút khỏi trang chủ",
+    "listingRequested": "Đã gửi. Chuyến đi sẽ hiện sau khi được duyệt.",
+    "listingWithdrawn": "Đã rút chuyến đi khỏi trang chủ.",
+    "listingEditNote": "Mọi thay đổi trên chuyến đi đã lên trang chủ sẽ đưa nó về trạng thái chờ duyệt và gỡ tạm khỏi trang chủ."
   },
   "shared": {
     "metaDescription": "Một lịch trình du lịch được chia sẻ từ Chuyện Nhà Hưng.",
@@ -540,7 +571,8 @@
       "content": "Nội dung",
       "stories": "Chuyến đi",
       "places": "Địa điểm",
-      "reviews": "Đánh giá"
+      "reviews": "Đánh giá",
+      "community": "Chuyến đi cộng đồng"
     },
     "overview": {
       "heading": "Chào mừng đến khu quản trị",
@@ -869,5 +901,53 @@
     "dayFull": "Ngày này đã đủ {max} hoạt động.",
     "expenseDayLinked": "Khoản chi này gắn với một hoạt động nên ngày đi theo hoạt động đó.",
     "nothingChanged": "Bạn chưa đổi gì để lưu."
+  },
+  "community": {
+    "metaTitle": "Chuyến đi từ cộng đồng",
+    "title": "Chuyến đi từ cộng đồng",
+    "description": "Lịch trình thật do người đi chia sẻ công khai. Mỗi chuyến được duyệt trước khi hiển thị.",
+    "count": "{count} chuyến đi",
+    "empty": "Chưa có chuyến đi nào được duyệt. Bạn có thể là người đầu tiên: chia sẻ chuyến đi của mình ở mục Chuyến đi của tôi.",
+    "days": "{count} ngày",
+    "party": "{count} người",
+    "activities": "{count} hoạt động",
+    "by": "Chia sẻ bởi {author}",
+    "byAnonymous": "Một người đi ẩn danh",
+    "moderationNote": "Mỗi chuyến đều do Nhà Hưng duyệt trước khi hiển thị. Nội dung do người đi tự viết và không đại diện cho Nhà Hưng.",
+    "takedown": "Muốn gỡ một chuyến đi? Gửi yêu cầu tới"
+  },
+  "adminCommunity": {
+    "metaTitle": "Duyệt chuyến đi cộng đồng",
+    "title": "Duyệt chuyến đi cộng đồng",
+    "description": "Duyệt hoặc gỡ các chuyến đi công khai muốn hiện ở trang chủ. Chuyến chờ duyệt nằm trên cùng.",
+    "loading": "Đang tải…",
+    "empty": "Chưa có yêu cầu nào.",
+    "meta": "{owner} · {destination} · {days} ngày · {activities} hoạt động · hiển thị: {author}",
+    "author": {
+      "name": "tên",
+      "anonymous": "ẩn danh"
+    },
+    "requested": "Gửi lúc {date}",
+    "reason": "Lý do: {reason}",
+    "statuses": {
+      "pending": "Chờ duyệt",
+      "approved": "Đã duyệt",
+      "rejected": "Từ chối"
+    },
+    "view": "Xem chuyến đi (tab mới)",
+    "approve": "Duyệt",
+    "reject": "Từ chối",
+    "remove": "Gỡ khỏi trang chủ",
+    "reasonLabel": "Lý do (người chia sẻ sẽ thấy)",
+    "confirm": {
+      "reject": "Xác nhận từ chối",
+      "remove": "Xác nhận gỡ"
+    },
+    "cancel": "Hủy",
+    "done": {
+      "approve": "Đã duyệt chuyến đi.",
+      "reject": "Đã từ chối.",
+      "remove": "Đã gỡ khỏi trang chủ."
+    }
   }
 }

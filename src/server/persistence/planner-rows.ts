@@ -176,6 +176,7 @@ export const TABLES: readonly TableSpec<PlannerCollection>[] = [
       col('visibility', 'visibility', 'text'),
       col('shareToken', 'share_token', 'text', 'nullable'),
       col('shareTokenCreatedAt', 'share_token_created_at', 'timestamptz', 'nullable'),
+      col('listing', 'listing', 'jsonb', 'nullable'),
       col('duplicatedFromTripId', 'duplicated_from_trip_id', 'text', 'nullable'),
       col('version', 'version', 'int'),
       ...createdUpdated,

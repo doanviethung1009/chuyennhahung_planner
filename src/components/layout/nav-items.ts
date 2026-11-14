@@ -24,4 +24,5 @@ export const primaryNav: NavItem[] = [
 export const footerExtraNav: NavItem[] = [
   { key: 'map', href: '/map' },
   { key: 'planTrip', href: '/plan-your-trip' },
+  { key: 'communityTrips', href: '/community-trips' },
 ];

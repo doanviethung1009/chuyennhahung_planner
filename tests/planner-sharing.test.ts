@@ -89,7 +89,7 @@ describe('share lifecycle', () => {
     expect(await planner.getSharedTrip(rotated.shareToken!)).not.toBeNull();
 
     const revoked = await planner.setVisibility(userId, tripId, 'private');
-    expect(revoked).toEqual({ visibility: 'private', shareToken: null, shareTokenCreatedAt: null });
+    expect(revoked).toEqual({ visibility: 'private', shareToken: null, shareTokenCreatedAt: null, listing: null });
     expect(await planner.getSharedTrip(rotated.shareToken!)).toBeNull();
 
     const again = await planner.setVisibility(userId, tripId, 'unlisted');
@@ -191,7 +191,7 @@ describe('public projection', () => {
     ];
     const withheld = [
       'id', 'ownerId', 'note', 'status', 'archivedAt', 'shareToken', 'shareTokenCreatedAt',
-      'duplicatedFromTripId', 'version', 'createdAt', 'updatedAt',
+      'listing', 'duplicatedFromTripId', 'version', 'createdAt', 'updatedAt',
     ];
     expect(Object.keys(tripSchema.shape).sort()).toEqual([...projected, ...withheld].sort());
   });
@@ -305,7 +305,7 @@ describe('backward compatibility', () => {
     const { userId } = await makeOwner(planner0);
     const { trip } = await planner0.createTrip(userId, daLatTripInput());
     const old: Record<string, unknown> = { ...trip };
-    for (const k of ['planningStatus', 'visibility', 'shareToken', 'shareTokenCreatedAt', 'duplicatedFromTripId']) {
+    for (const k of ['planningStatus', 'visibility', 'shareToken', 'shareTokenCreatedAt', 'listing', 'duplicatedFromTripId']) {
       delete old[k];
     }
     const store = createMemoryPlannerStore({
@@ -447,7 +447,7 @@ describe('HTTP: share endpoints', () => {
     expect(pub.headers.get('x-robots-tag')).toBeNull();
 
     const del = await r.share.DELETE(req(`/api/planner/${id}/share`, { method: 'DELETE', bearer }), ctx({ id }));
-    expect(await del.json()).toEqual({ visibility: 'private', shareToken: null, shareTokenCreatedAt: null });
+    expect(await del.json()).toEqual({ visibility: 'private', shareToken: null, shareTokenCreatedAt: null, listing: null });
 
     // Revoked, malformed, unknown and private-with-valid-format: identical.
     const unknown = 'A'.repeat(43);

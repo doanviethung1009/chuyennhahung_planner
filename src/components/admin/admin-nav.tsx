@@ -1,7 +1,7 @@
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 
-export type AdminSection = 'overview' | 'stories' | 'places' | 'reviews';
+export type AdminSection = 'overview' | 'stories' | 'places' | 'reviews' | 'community';
 
 const linkBase =
   'inline-flex min-h-11 items-center rounded-pill border px-4 text-sm font-medium transition-colors duration-200 ease-gentle';
@@ -48,6 +48,9 @@ export function AdminNav({
           </Link>
           <Link href="/admin/content/reviews" className={cls('reviews')} aria-current={aria('reviews')}>
             {t('reviews')}
+          </Link>
+          <Link href="/admin/community" className={cls('community')} aria-current={aria('community')}>
+            {t('community')}
           </Link>
         </div>
       ) : null}

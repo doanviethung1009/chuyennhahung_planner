@@ -28,6 +28,7 @@ New features start from [`_template.md`](_template.md) /
 | Admin roles | [admin-roles.md](admin-roles.md) | `role` on the user, `permissions.ts`, `PATCH /api/admin/planner/users/[userId]` to promote the first admin |
 | Admin portal | [admin-portal.md](admin-portal.md) | `/quan-tri` — admin-only user list, create, role change and password reset in the browser (ADR 0010) |
 | Admin user filter | [admin-user-filter.md](admin-user-filter.md) | Search (name, handle, email) and role filter on the `/quan-tri` users table, client-side |
+| Community trips | [community-trips.md](community-trips.md) | Public trips shown on the home page and `/community-trips` after owner opt-in and staff approval; any edit re-queues; author by name or anonymous (ADR 0014, PR 1) |
 | Trip editor | [trip-editor.md](trip-editor.md) | Edit a trip on `/my-trips/[id]`: header, days, activities (add, edit, delete, reorder, move), expenses; every write sends `If-Match` |
 | Admin content CMS | [admin-content-cms.md](admin-content-cms.md) | `/quan-tri/noi-dung/...` — editors and admins edit stories, places and reviews with vi and en side by side, publish and moderate (ADR 0011) |
 | Public Travel pages from content | [public-travel-cms.md](public-travel-cms.md) | Home, stories, destinations and sitemap read published stories from the content repository, dynamic, so CMS edits go live on the next request (ADR 0012) |

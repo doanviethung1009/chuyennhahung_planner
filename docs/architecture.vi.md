@@ -77,6 +77,8 @@ trong [`src/i18n/routing.ts`](../src/i18n/routing.ts):
 | `/itineraries/[slug]` | `/len-lich-trinh/[slug]` | `/en/itineraries/[slug]` |
 | `/plan-your-trip` | `/thiet-ke-chuyen-di` | `/en/plan-your-trip` |
 | `/reviews` | `/goc-review` | `/en/reviews` |
+| `/community-trips` | `/chuyen-di-cong-dong` | `/en/community-trips` |
+| `/admin/community` | `/quan-tri/cong-dong` | `/en/admin/community` |
 | `/about` | `/ve-nha-hung` | `/en/about` |
 | `/trip-setup/[template]` | `/tao-chuyen-di/[template]` | `/en/trip-setup/[template]` |
 | `/sign-in` | `/dang-nhap` | `/en/sign-in` |
@@ -331,6 +333,15 @@ flowchart LR
 | POST tạo, DELETE, `templates/**`, `collections/**`, `integrity` | mọi method | chỉ token (`adminRoute`) |
 
 PATCH nhận header tuỳ chọn `If-Match: "<updatedAt>"` (`ifMatchStamp`); repository so sánh trong transaction và ghi cũ trả **412** `version_conflict`. Không có header nghĩa là ghi sau thắng.
+
+### Chuyến đi cộng đồng (ADR 0014, PR 1)
+
+Chỗ của chuyến đi trên trang chủ là một lựa chọn riêng, `Trip.listing`, không phải `visibility`.
+Chủ chuyến `PUT /api/planner/[id]/listing` -> `pending`; staff (`community:moderate`) duyệt
+hoặc từ chối ở `/admin/community`; chỉ `approved` mới tới `GET /api/community/trips`, gallery
+và trang chủ, qua allow-list `CommunityTripCard`. Mọi thay đổi xếp lại hàng (`touch`), rời
+`public` hoặc lưu trữ thì xoá. Nút vẫn đóng cho tới khi chủ nhà điền `contribution` trong
+`src/content/site.ts`. Đánh giá địa điểm là PR 2.
 
 ## Các phase
 
