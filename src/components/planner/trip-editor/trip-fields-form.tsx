@@ -41,21 +41,23 @@ export function TripFieldsForm({ view, busy, mutate }: { view: TripView; busy: b
     if (party === null) return setError(t('errorParty'));
     if (amount === null) return setError(t('errorAmount'));
 
-    await mutate(t('tripSaved'), (version) =>
-      api<TripView>(`/api/planner/${encodeURIComponent(trip.id)}`, {
-        method: 'PATCH',
-        version,
-        body: {
-          title: trimmed,
-          startDate: startDate || null,
-          durationDays: days,
-          partySize: party,
-          budget: { targetTotalVnd: amount },
-          travelStyle: travelStyle || null,
-          pace: pace || null,
-          note: note.trim() || null,
-        },
-      }),
+    // Only what the user changed: a stale form must never rewrite what someone else just saved.
+    const patch: Record<string, unknown> = {};
+    if (trimmed !== trip.title) patch.title = trimmed;
+    if ((startDate || null) !== trip.startDate) patch.startDate = startDate || null;
+    if (days !== trip.durationDays) patch.durationDays = days;
+    if (party !== trip.partySize) patch.partySize = party;
+    if (amount !== budget.targetTotalVnd) patch.budget = { targetTotalVnd: amount };
+    if ((travelStyle || null) !== trip.travelStyle) patch.travelStyle = travelStyle || null;
+    if ((pace || null) !== trip.pace) patch.pace = pace || null;
+    if ((note.trim() || null) !== trip.note) patch.note = note.trim() || null;
+    if (Object.keys(patch).length === 0) return setError(t('nothingChanged'));
+
+    await mutate(
+      t('tripSaved'),
+      (version) =>
+        api<TripView>(`/api/planner/${encodeURIComponent(trip.id)}`, { method: 'PATCH', version, body: patch }),
+      { conflictMessage: t('errorShrink') },
     );
   }
 

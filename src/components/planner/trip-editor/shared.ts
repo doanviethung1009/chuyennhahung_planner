@@ -6,7 +6,20 @@ import type { TripView } from '@/server/planner/repository';
  * read and must return the full `TripView` the API answers every write with.
  * Resolves true when the write landed, so a form knows whether it can close.
  */
-export type Mutate = (done: string, request: (version: number) => Promise<TripView>) => Promise<boolean>;
+export interface MutateOptions {
+  /** Shown instead of the generic message when the API answers 409 for this write. */
+  conflictMessage?: string;
+  /** The control that triggered the write disappears on success: move focus to the status message. */
+  refocus?: boolean;
+}
+export type Mutate = (
+  done: string,
+  request: (version: number) => Promise<TripView>,
+  options?: MutateOptions,
+) => Promise<boolean>;
+
+/** Mirrors `ACTIVITIES_PER_DAY_LIMIT` in the API (server code is not imported into the browser bundle). */
+export const ACTIVITIES_PER_DAY_LIMIT = 40;
 
 export const COST_CATEGORIES = ['transport', 'stay', 'food', 'tickets', 'rental', 'shopping', 'other'] as const;
 export type CostCategory = (typeof COST_CATEGORIES)[number];

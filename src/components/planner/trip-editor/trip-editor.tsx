@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { TripView } from '@/server/planner/repository';
 import { ApiError, api } from '../api';
 import type { CatalogPlace } from './activity-form';
 import { DayCard } from './day-card';
 import { ExpensesPanel } from './expenses-panel';
-import type { Mutate } from './shared';
+import { ACTIVITIES_PER_DAY_LIMIT, type Mutate } from './shared';
 import { TripFieldsForm } from './trip-fields-form';
 
 /**
@@ -21,20 +21,31 @@ export function TripEditor({
   onView,
   onReload,
   onUnauthorized,
+  locked,
+  onBusyChange,
 }: {
   view: TripView;
   onView: (view: TripView) => void;
   onReload: () => Promise<void>;
   onUnauthorized: () => void;
+  /** The page is busy with a write of its own (status, duplicate, archive). */
+  locked: boolean;
+  /** Tells the page when an editor write is in flight, so it can lock its own controls. */
+  onBusyChange: (busy: boolean) => void;
 }) {
   const t = useTranslations('tripEditor');
-  const [busy, setBusy] = useState(false);
+  const [writing, setWriting] = useState(false);
+  const busy = writing || locked;
+  // Bumped on a stale write so the details form restarts from the server's copy.
+  const [formEpoch, setFormEpoch] = useState(0);
+  const statusRef = useRef<HTMLParagraphElement>(null);
   const [message, setMessage] = useState('');
   const [failed, setFailed] = useState(false);
   const [places, setPlaces] = useState<CatalogPlace[]>([]);
 
   const { trip, days } = view;
   const destinationSlug = trip.destinationSlug;
+  const fullDays = new Set(days.filter((d) => d.activities.length >= ACTIVITIES_PER_DAY_LIMIT).map((d) => d.dayNumber));
 
   // The catalog is public and optional: without it an activity is simply self-made.
   useEffect(() => {
@@ -54,13 +65,16 @@ export function TripEditor({
   }, [destinationSlug]);
 
   const mutate: Mutate = useCallback(
-    async (done, request) => {
-      setBusy(true);
+    async (done, request, options) => {
+      setWriting(true);
+      onBusyChange(true);
       setMessage('');
       setFailed(false);
       try {
         onView(await request(trip.version));
         setMessage(done);
+        // The delete or close button is gone now; without this focus falls back to <body>.
+        if (options?.refocus) setTimeout(() => statusRef.current?.focus(), 0);
         return true;
       } catch (error) {
         if (error instanceof ApiError && error.status === 401) {
@@ -71,8 +85,10 @@ export function TripEditor({
         if (error instanceof ApiError && error.status === 412) {
           setMessage(t('errorStale'));
           await onReload();
+          // After the reload, so the form is rebuilt from the fresh copy and not the old one.
+          setFormEpoch((epoch) => epoch + 1);
         } else if (error instanceof ApiError && error.status === 409) {
-          setMessage(t('errorState'));
+          setMessage(options?.conflictMessage ?? t('errorState'));
         } else if (error instanceof ApiError && error.status === 422) {
           setMessage(t('errorValidation'));
         } else {
@@ -80,15 +96,18 @@ export function TripEditor({
         }
         return false;
       } finally {
-        setBusy(false);
+        setWriting(false);
+        onBusyChange(false);
       }
     },
-    [trip.version, onView, onReload, onUnauthorized, t],
+    [trip.version, onView, onReload, onUnauthorized, onBusyChange, t],
   );
 
   return (
     <>
       <p
+        ref={statusRef}
+        tabIndex={-1}
         role="status"
         className={`min-h-6 text-sm ${failed ? 'font-medium text-primary-strong' : 'text-foreground-muted'}`}
       >
@@ -99,7 +118,7 @@ export function TripEditor({
         <h2 id="detail-edit" className="font-display text-2xl font-semibold">
           {t('editHeading')}
         </h2>
-        <TripFieldsForm view={view} busy={busy} mutate={mutate} />
+        <TripFieldsForm key={formEpoch} view={view} busy={busy} mutate={mutate} />
       </section>
 
       <section aria-labelledby="detail-days" className="grid gap-4">
@@ -113,6 +132,7 @@ export function TripEditor({
               tripId={trip.id}
               day={day}
               dayCount={days.length}
+              fullDays={fullDays}
               places={places}
               busy={busy}
               mutate={mutate}

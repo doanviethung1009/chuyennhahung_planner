@@ -29,7 +29,12 @@ None. The editor lives on the existing `/my-trips/[id]` (`/chuyen-di-cua-toi/[id
 3. Days are resized through the trip's `durationDays` (the API has no add-day route). Adding appends empty days; shrinking is refused with `409 invalid_state` while a removed day still holds an activity or an expense, and the page says so and changes nothing.
 4. An activity picked from the catalog prefills its name, duration and cost, all still editable; the place itself cannot change afterwards (the update schema has no `placeSlug`). Move up/down and "move to day" use `PATCH /reorder`; there is no drag-and-drop.
 5. Every delete asks first, inline ("Delete this activity?" with Delete / Keep it).
-6. Errors: `401` goes to sign-in; `412` says the trip was changed elsewhere and reloads it; `409` and `422` show a plain message; anything else shows a generic one. The message sits in a `role="status"` region.
+6. Errors: `401` goes to sign-in; `412` says the trip was changed elsewhere, reloads it and rebuilds the details form from the fresh copy; `409` shows a message specific to the write (days still in use when shrinking, a day already at 40 activities, or a neutral one); `422` and anything else show a plain one. The message sits in a `role="status"` region.
+   - The details form sends only the fields the user changed, so a stale form cannot rewrite what someone else just saved.
+   - A day at 40 activities disables "Add an activity" and drops out of the "move to day" list.
+   - An expense linked to an activity has its day locked (the day follows the activity; the API refuses a different one).
+   - After a delete, add, save or form close, focus moves to the status message instead of falling back to the page.
+   - A write in the editor also disables the page's status, duplicate and archive controls (and the other way round), since both use the same trip version.
 7. Costs show exact dong (`300.000 ₫`), not the rounded millions used in the summary, and say whether they are per person or for the group.
 
 ## Files
@@ -48,12 +53,12 @@ None. The editor lives on the existing `/my-trips/[id]` (`/chuyen-di-cua-toi/[id
 
 ## Tests
 
-No new test file: the repository has no component-test setup, and the API contract it drives is covered by the existing planner tests. `tests/i18n.test.ts` checks VI/EN parity of the new keys and `tests/docs.test.ts` the documents. The flows were exercised by hand in a browser against a local server with a scratch store: add, edit, reorder, move between days, delete with confirm, day title/note, trip details, growing and shrinking days (including the blocked shrink), expenses add/edit/delete, a stale-version `412`, and a catalog place on a Đà Lạt trip. 375px width showed no horizontal overflow. Keyboard-only use and screen readers were not tested.
+No new test file: the repository has no component-test setup, and the API contract it drives is covered by the existing planner tests. `tests/i18n.test.ts` checks VI/EN parity of the new keys and `tests/docs.test.ts` the documents. The flows were exercised by hand in a browser against a local server with a scratch store: add, edit, reorder, move between days, delete with confirm, day title/note, trip details, growing and shrinking days (including the blocked shrink), expenses add/edit/delete, a stale-version `412`, and a catalog place on a Đà Lạt trip. 375px width showed no horizontal overflow. Keyboard-only use and screen readers were not tested. A `qc` review of the first version found the issues the points above now address.
 
 ## Limits and open questions
 
 - Linking an expense to a specific activity is not offered; an existing link is kept when the expense is edited. Duplicate-day or whole-day reordering does not exist.
-- The trip-details form keeps what was typed after a refused save or a conflict, so it can differ from the server's copy until the next successful save.
+- After a stale-version conflict the details form is rebuilt from the server's copy, so anything typed in it is lost; a refused save for another reason keeps what was typed.
 - No drag-and-drop, no undo; a delete is final once confirmed.
 - The place catalog depends on the content seed; with more places the picker is a long `<select>`.
 - `qc` and `security` have not been run on this change.
