@@ -147,3 +147,36 @@ branch-protection on `main` requiring the `verify` job.
 Still not wired up, and worth adding when CI can be made required: secret scanning and a
 dependency scan. `npm ci` currently reports 20 advisories (9 moderate, 9 high,
 2 critical), which nothing in the pipeline fails on yet.
+
+## Worktree and branch cleanup
+Every session that works in a worktree leaves a checkout, a local branch and often a
+`node_modules` behind. They pile up (dozens at a time), eat disk and make `git worktree
+list` unreadable. Clean up **when the PR is merged**, not "later":
+
+1. **Verify before deleting.** `git fetch origin`, then confirm the PR is `MERGED`
+   (`gh pr view <n> --json state`) and that its change is on `origin/main` (grep a
+   distinctive symbol with `git grep <symbol> origin/main`). Squash merges leave the
+   local branch looking unmerged, so `git branch -d` refuses — that is expected; do not
+   trust "not merged" or "merged" from `git branch --merged` alone.
+2. **Look at what would be lost.** `git status --short` in the worktree and
+   `git log origin/main..HEAD`. Commits that are only the pre-squash copies of a merged
+   PR are safe to drop. Anything else, or uncommitted work you did not make, stops the
+   cleanup until the owner decides. Untracked files that tooling regenerates (for
+   example the `AGENTS.md` that Next.js writes) are not work.
+3. **Fast-forward the primary checkout.** `git -C <primary> pull --ff-only` so local
+   `main` matches `origin/main` — a stale `main` is what the next branch is cut from.
+   Never commit, rebase or reset `main` to do it; if it will not fast-forward, stop.
+4. **Remove, from outside the worktree.** `git -C <primary> worktree remove <path>`
+   (add `--force` only after step 2 showed nothing worth keeping), then
+   `git -C <primary> branch -D <branch>` and `git worktree prune`. The remote branch is
+   already gone when the PR was merged with `--delete-branch`; otherwise
+   `git push origin --delete <branch>` after the owner agrees.
+5. **Only your own.** Remove the worktree and branch of the session you are finishing.
+   Other worktrees may belong to a live session; list them and offer, never sweep. A
+   periodic audit is `git worktree list` plus `gh pr list --state merged --head <branch>`
+   per entry, proposed to the owner as a table before anything is deleted.
+6. Dev servers started for a browser check (`next dev` on a scratch port) are stopped
+   and their scratch stores left in the scratchpad, never in the repository or `.data/`.
+
+Cleanup is a git operation, so the usual authorization applies: the owner asks for it
+(or a skill/rule here says to do it at merge time) before anything is deleted.
