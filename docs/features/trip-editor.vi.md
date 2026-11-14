@@ -34,6 +34,7 @@ Không có. Trình sửa nằm trên `/my-trips/[id]` sẵn có (`/chuyen-di-cua
    - Ngày đã đủ 40 hoạt động thì nút "Thêm hoạt động" bị khoá và ngày đó không còn trong danh sách "chuyển sang ngày".
    - Khoản chi gắn với một hoạt động bị khoá ô ngày (ngày đi theo hoạt động; API từ chối ngày khác).
    - Sau khi xoá, thêm, lưu hoặc đóng form, focus chuyển tới dòng thông báo thay vì rơi về trang.
+   - Sau khi chuyển lên, chuyển xuống hoặc "chuyển sang ngày", focus quay lại đúng control đó trên dòng vừa chuyển (hoặc control gần nhất còn bật, ví dụ "chuyển lên" khi dòng đã xuống cuối), để người dùng bàn phím không mất vị trí; dòng thông báo vẫn đọc "Đã di chuyển hoạt động."
    - Một thao tác ghi trong trình sửa cũng khoá các nút trạng thái, nhân bản và lưu trữ của trang (và ngược lại), vì cả hai dùng chung phiên bản trip.
 7. Chi phí hiện đủ số đồng (`300.000 ₫`), không làm tròn triệu như phần tóm tắt, và ghi rõ là mỗi người hay cả nhóm.
 

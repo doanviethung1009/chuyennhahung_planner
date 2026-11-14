@@ -34,6 +34,7 @@ None. The editor lives on the existing `/my-trips/[id]` (`/chuyen-di-cua-toi/[id
    - A day at 40 activities disables "Add an activity" and drops out of the "move to day" list.
    - An expense linked to an activity has its day locked (the day follows the activity; the API refuses a different one).
    - After a delete, add, save or form close, focus moves to the status message instead of falling back to the page.
+   - After a move up, move down or "move to day", focus returns to the same control on the moved row (or the nearest enabled one, e.g. "move up" when the row reached the bottom), so a keyboard user keeps their place; the status still announces "Đã di chuyển hoạt động."
    - A write in the editor also disables the page's status, duplicate and archive controls (and the other way round), since both use the same trip version.
 7. Costs show exact dong (`300.000 ₫`), not the rounded millions used in the summary, and say whether they are per person or for the group.
 
