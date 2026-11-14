@@ -150,6 +150,7 @@ export function DayCard({
             {editingId === activity.id ? (
               <ActivityForm
                 idPrefix={`edit-${activity.id}`}
+                busy={busy}
                 places={places}
                 activity={activity}
                 onCancel={() => setEditingId(null)}
@@ -280,6 +281,7 @@ export function DayCard({
         {adding ? (
           <ActivityForm
             idPrefix={`add-${day.dayNumber}`}
+            busy={busy}
             places={places}
             onCancel={() => setAdding(false)}
             onSubmit={async (body) => {

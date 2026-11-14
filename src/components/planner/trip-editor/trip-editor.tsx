@@ -39,6 +39,8 @@ export function TripEditor({
   // Bumped on a stale write so the details form restarts from the server's copy.
   const [formEpoch, setFormEpoch] = useState(0);
   const statusRef = useRef<HTMLParagraphElement>(null);
+  // A second write with the same version would only come back as a spurious 412.
+  const inFlight = useRef(false);
   const [message, setMessage] = useState('');
   const [failed, setFailed] = useState(false);
   const [places, setPlaces] = useState<CatalogPlace[]>([]);
@@ -66,6 +68,8 @@ export function TripEditor({
 
   const mutate: Mutate = useCallback(
     async (done, request, options) => {
+      if (inFlight.current) return false;
+      inFlight.current = true;
       setWriting(true);
       onBusyChange(true);
       setMessage('');
@@ -96,6 +100,7 @@ export function TripEditor({
         }
         return false;
       } finally {
+        inFlight.current = false;
         setWriting(false);
         onBusyChange(false);
       }

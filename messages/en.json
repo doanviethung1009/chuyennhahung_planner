@@ -411,7 +411,7 @@
   },
   "share": {
     "title": "Share this trip",
-    "intro": "People with the link can read the itinerary only. They cannot edit it, and they do not see your note or what you have paid.",
+    "intro": "People with the link can read the itinerary only. They cannot edit it, and they do not see your trip note, your day notes or what you have paid. They do see each activity's title, time and note, so keep private details out of activity notes.",
     "visibilityLabel": "Who can view",
     "linkLabel": "Share link",
     "copy": "Copy link",

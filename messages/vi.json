@@ -411,7 +411,7 @@
   },
   "share": {
     "title": "Chia sẻ chuyến đi",
-    "intro": "Người nhận chỉ xem được lịch trình, không sửa được và không thấy ghi chú hay chi phí đã trả của bạn.",
+    "intro": "Người nhận chỉ xem được lịch trình, không sửa được và không thấy ghi chú của chuyến đi, ghi chú của từng ngày hay chi phí đã trả. Họ vẫn thấy tên, giờ và ghi chú của từng hoạt động, nên đừng ghi chuyện riêng tư vào ghi chú hoạt động.",
     "visibilityLabel": "Ai xem được",
     "linkLabel": "Đường dẫn chia sẻ",
     "copy": "Sao chép đường dẫn",
