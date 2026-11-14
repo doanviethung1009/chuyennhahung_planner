@@ -39,6 +39,41 @@ async function sharedTrip(visibility: 'unlisted' | 'public' = 'unlisted') {
   return { planner, userId, tripId: view.trip.id, token: share.shareToken! };
 }
 
+describe('share view when spending exceeds the budget', () => {
+  it('keeps the budget summary and still hides every expense', async () => {
+    const planner = makePlanner();
+    const { userId } = await makeOwner(planner);
+    const view = await planner.createTrip(
+      userId,
+      daLatTripInput({ budget: { targetTotalVnd: 1_000_000, currency: 'VND' } }),
+    );
+    await planner.addActivity(
+      userId,
+      view.trip.id,
+      activityInput({ estimatedCostVnd: 800_000 }),
+      null,
+    );
+    await planner.addExpense(
+      userId,
+      view.trip.id,
+      expenseInput({ label: 'CHI TIÊU RIÊNG', amountVnd: 3_000_000 }),
+      null,
+    );
+    const owner = await planner.getTrip(userId, view.trip.id);
+    expect(owner.budget).toMatchObject({ actualTotalVnd: 3_000_000, overBudget: true });
+
+    const share = await planner.setVisibility(userId, view.trip.id, 'unlisted');
+    const shared = await planner.getSharedTrip(share.shareToken!);
+    expect(shared?.budget).toEqual({
+      currency: 'VND',
+      targetTotalVnd: 1_000_000,
+      estimatedTotalVnd: 800_000,
+    });
+    expect(JSON.stringify(shared)).not.toContain('CHI TIÊU RIÊNG');
+    expect(JSON.stringify(shared)).not.toContain('3000000');
+  });
+});
+
 describe('share lifecycle', () => {
   it('mints, rotates, revokes and re-shares', async () => {
     const { planner, userId, tripId, token } = await sharedTrip();
