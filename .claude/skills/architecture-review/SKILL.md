@@ -5,10 +5,12 @@ description: Request a read-only architecture impact assessment and task breakdo
 
 Review: $ARGUMENTS
 
-Use the **`system-architect`** agent. It inspects relevant files only and reports:
-current state with real paths, affected modules and data contracts, risk class
-(S/M/L/XL), migration and rollback, FE/BE dependency order, which agents are
-affected, acceptance tests, and a token-conscious execution plan.
+Do this yourself in the **architect role** (rules in `.claude/agents/system-architect.md`);
+spawn the `system-architect` agent only if the project owner approves it. Inspect the
+relevant files only and report: current state with real paths, affected modules and
+data contracts, risk class (S/M/L/XL), migration and rollback, FE/BE dependency order,
+which roles are affected, acceptance tests, and a token-conscious execution plan
+(subagents: none unless approved).
 
 No implementation in this skill — design only.
 

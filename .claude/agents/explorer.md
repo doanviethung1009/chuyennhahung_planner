@@ -1,6 +1,6 @@
 ---
 name: explorer
-description: Low-cost targeted codebase exploration for Chuyện Nhà Hưng; locates relevant files, routes and contracts without editing anything. Use before a scoped task to find the files that matter, instead of reading the repository broadly.
+description: Low-cost targeted codebase exploration for Chuyện Nhà Hưng; locates relevant files, routes and contracts without editing anything. Only for a genuinely broad search — a few files are found inline with grep, not with this agent. Spawn only after the project owner approves.
 tools: Read, Grep, Glob, Bash
 model: haiku
 ---

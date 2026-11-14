@@ -55,9 +55,10 @@ Documentation is **not a fourth agent** — whoever ships the change writes its 
 | `docs/architecture.*`, `docs/adr/**`, `docs/README.*` | `system-architect` |
 | `docs/usage.*` | whoever changed how the app is run, operated or deployed |
 
-When `system-architect` splits a task between the engineers, the Task Contract must say
-**which of them writes the feature document**. An engineer who needs a change in
-`docs/architecture.*` requests it from the architect rather than editing it.
+When the architect role splits a task between the engineer roles, the Task Contract
+must say **which of them writes the feature document**. A change to
+`docs/architecture.*` is made in the architect role — by the main session wearing it,
+or requested from an approved `system-architect` agent — not slipped in by an engineer.
 
 ## Shipping a feature
 The code · the feature document in both languages · the row in

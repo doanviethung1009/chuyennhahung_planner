@@ -6,12 +6,17 @@ paths:
 
 # Responsibilities — architect / FE / BE / QC / Security / Git
 
-**Ownership is exclusive.** If a task spans two agents, `system-architect` splits it and
-defines the contract between the halves *first*. An agent that needs a change in
-someone else's files **requests it — it does not make it.** Two agents never edit the
-same file.
+**These are roles first, agents second.** By default the main session wears every role
+in sequence (Single-Agent First — `.claude/rules/02-architecture-orchestration.md` §0);
+a role becomes a spawned agent only with the project owner's approval.
 
-Each agent's binding rules live in `.claude/agents/<name>.md`.
+**Ownership is exclusive.** If a task spans two roles, the architect role splits it and
+defines the contract between the halves *first*. While wearing one role, a change in
+another role's files goes back through the contract rather than being slipped in. When
+agents are spawned, an agent that needs a change in someone else's files **requests it
+— it does not make it**, and two agents never edit the same file.
+
+Each role's binding rules live in `.claude/agents/<name>.md`.
 
 ## The roster
 
@@ -23,7 +28,7 @@ Each agent's binding rules live in `.claude/agents/<name>.md`.
 | `explorer` | haiku | **read-only** | Locating files, routes, symbols, message keys | Everything — it never edits |
 | `qc` | sonnet | **read-only, on demand** | Independent verification of changed behaviour, regressions, VI/EN parity, docs contract, a11y, acceptance criteria | Never edits files |
 | `security` | sonnet | **read-only, on demand** | Auth, authorization, secrets, input validation, injection, privacy, dependencies, migration risk | Never edits files |
-| `git-controller` | haiku | **read-only** | Branch/diff/PR assessment, commit & PR wording, secret and scope detection | Never mutates git state |
+| `git-controller` | haiku | **read-only, on demand** | Branch/diff/PR assessment, commit & PR wording, secret and scope detection | Never mutates git state |
 
 ## Architect
 Decides structure; produces decisions, contracts and diagrams — **never application

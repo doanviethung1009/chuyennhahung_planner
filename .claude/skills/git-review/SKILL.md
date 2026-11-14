@@ -15,7 +15,8 @@ Return **READY** or **BLOCKED** with evidence, plus:
 - a proposed branch name in this project's convention — `<type>/<short-kebab-summary>`,
   e.g. `feat/planner-cta` (**not** `feature/<id>-<slug>`);
 - a proposed Conventional Commit message, imperative subject ≤72 chars, ending with
-  `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`;
+  the `Co-Authored-By:` trailer the session's attribution instructions give (it names
+  the model actually in use — do not hard-code one);
 - a proposed PR body covering What, Why, Verification (real command output),
   Screenshots for visible UI change, linked ADR, and deliberate omissions, ending
   with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
