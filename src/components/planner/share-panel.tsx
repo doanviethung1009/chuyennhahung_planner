@@ -138,8 +138,18 @@ export function SharePanel({
             >
               {t('revoke')}
             </button>
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonClass({ size: 'sm', variant: 'secondary' })}
+            >
+              {t('viewShared')}
+              <span className="sr-only"> {t('newTab')}</span>
+            </a>
           </div>
-          <p className="mt-3 text-sm text-foreground-muted">{t('rotateHint')}</p>
+          <p className="mt-3 text-sm text-foreground-muted">{t('liveHint')}</p>
+          <p className="mt-2 text-sm text-foreground-muted">{t('rotateHint')}</p>
         </div>
       ) : null}
 
