@@ -20,7 +20,8 @@
     "admin": "Admin",
     "signOut": "Sign out",
     "signingOut": "Signing out…",
-    "signOutFailed": "Couldn't sign out. Please try again."
+    "signOutFailed": "Couldn't sign out. Please try again.",
+    "communityTrips": "Community trips"
   },
   "locale": {
     "label": "Language",
@@ -114,6 +115,12 @@
       "title": "Two of us, one motorbike, and a lot of wrong turns",
       "lead": "Chuyện Nhà Hưng started with a 2021 trip to Đà Lạt that neither of us prepared for. We have travelled the same way ever since.",
       "cta": "Read about us"
+    },
+    "community": {
+      "eyebrow": "From the community",
+      "title": "Trips from fellow travellers",
+      "lead": "Real itineraries shared by readers. Every trip is reviewed by the Nhà Hưng team before it appears here.",
+      "viewAll": "See all trips"
     }
   },
   "stories": {
@@ -432,7 +439,31 @@
     "saved": "Sharing settings saved.",
     "rotated": "New link created. The old link no longer works.",
     "revoked": "Sharing stopped. The trip is private again.",
-    "errorGeneric": "We could not update sharing. Please try again."
+    "errorGeneric": "We could not update sharing. Please try again.",
+    "listingTitle": "Show on the home page",
+    "listingIntro": "Submit this public trip to be shown on the home page and the Community trips page. The Nhà Hưng team reviews it first.",
+    "listingClosed": "This is not open yet: Nhà Hưng has not published the contribution terms and the takedown contact.",
+    "termsHeading": "Contribution terms",
+    "takedown": "Send takedown requests to",
+    "listingStatusLabel": "Status:",
+    "listingStatus": {
+      "none": "Not submitted",
+      "pending": "Waiting for review",
+      "approved": "Shown on the home page",
+      "rejected": "Not approved"
+    },
+    "listingReason": "Reason: {reason}",
+    "authorLabel": "How to show you as the sharer",
+    "author": {
+      "name": "My display name",
+      "anonymous": "Anonymous"
+    },
+    "listingRequest": "Submit for the home page",
+    "listingResubmit": "Resubmit for review",
+    "listingWithdraw": "Withdraw from the home page",
+    "listingRequested": "Submitted. The trip will appear once it is approved.",
+    "listingWithdrawn": "The trip was withdrawn from the home page.",
+    "listingEditNote": "Any change to a trip shown on the home page sends it back to review and takes it down until it is approved again."
   },
   "shared": {
     "metaDescription": "A travel itinerary shared from Chuyện Nhà Hưng.",
@@ -555,7 +586,8 @@
       "content": "Content",
       "stories": "Stories",
       "places": "Places",
-      "reviews": "Reviews"
+      "reviews": "Reviews",
+      "community": "Community trips"
     },
     "overview": {
       "heading": "Welcome to the admin area",
@@ -887,5 +919,53 @@
     "dayFull": "This day already has {max} activities.",
     "expenseDayLinked": "This expense is linked to an activity, so its day follows that activity.",
     "nothingChanged": "You have not changed anything to save."
+  },
+  "community": {
+    "metaTitle": "Community trips",
+    "title": "Community trips",
+    "description": "Real itineraries shared publicly by travellers. Each trip is reviewed before it is shown.",
+    "count": "{count} trips",
+    "empty": "No approved trips yet. You could be the first: share a trip from My trips.",
+    "days": "{count} days",
+    "party": "{count} travellers",
+    "activities": "{count} activities",
+    "by": "Shared by {author}",
+    "byAnonymous": "An anonymous traveller",
+    "moderationNote": "Every trip is reviewed by Nhà Hưng before it is shown. The content is written by travellers and does not speak for Nhà Hưng.",
+    "takedown": "Want a trip removed? Send a request to"
+  },
+  "adminCommunity": {
+    "metaTitle": "Community trip review",
+    "title": "Community trip review",
+    "description": "Approve or remove public trips that want to appear on the home page. Pending trips are listed first.",
+    "loading": "Loading…",
+    "empty": "No requests yet.",
+    "meta": "{owner} · {destination} · {days} days · {activities} activities · shown as: {author}",
+    "author": {
+      "name": "name",
+      "anonymous": "anonymous"
+    },
+    "requested": "Submitted {date}",
+    "reason": "Reason: {reason}",
+    "statuses": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "view": "View trip (new tab)",
+    "approve": "Approve",
+    "reject": "Reject",
+    "remove": "Remove from home page",
+    "reasonLabel": "Reason (the sharer will see it)",
+    "confirm": {
+      "reject": "Confirm rejection",
+      "remove": "Confirm removal"
+    },
+    "cancel": "Cancel",
+    "done": {
+      "approve": "Trip approved.",
+      "reject": "Rejected.",
+      "remove": "Removed from the home page."
+    }
   }
 }

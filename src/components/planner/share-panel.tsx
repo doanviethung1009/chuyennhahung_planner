@@ -1,11 +1,12 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { getPathname } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { buttonClass } from '@/components/ui/button';
-import type { ShareState, Visibility } from '@/server/planner/schemas';
+import { contribution, contributionOpen } from '@/content/site';
+import type { ShareState, TripListing, Visibility } from '@/server/planner/schemas';
 import { ApiError, api } from './api';
 import { inputClass } from './field';
 
@@ -33,6 +34,18 @@ export function SharePanel({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [failed, setFailed] = useState(false);
+  const [authorDisplay, setAuthorDisplay] = useState<TripListing['authorDisplay']>(
+    initial.listing?.authorDisplay ?? 'name',
+  );
+
+  // Editing the trip re-queues an approved listing on the server (ADR 0014);
+  // follow the parent's copy so this panel never shows a stale "approved".
+  const parentStatus = initial.listing?.status ?? null;
+  useEffect(() => {
+    // Mirror a server-side change made by an edit elsewhere on the page.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setState((current) => ({ ...current, listing: initial.listing }));
+  }, [parentStatus]); // eslint-disable-line react-hooks/exhaustive-deps
   const linkInput = useRef<HTMLInputElement>(null);
 
   const link =
@@ -165,6 +178,104 @@ export function SharePanel({
           </div>
           <p className="mt-3 text-sm text-foreground-muted">{t('liveHint')}</p>
           <p className="mt-2 text-sm text-foreground-muted">{t('rotateHint')}</p>
+        </div>
+      ) : null}
+
+      {state.visibility === 'public' ? (
+        <div className="mt-8 border-t border-border-subtle pt-6">
+          <h3 className="font-display text-xl font-semibold">{t('listingTitle')}</h3>
+          <p className="mt-2 text-base text-foreground-muted">{t('listingIntro')}</p>
+
+          {!contributionOpen ? (
+            <p className="mt-3 rounded-md border border-border-strong bg-surface p-4 text-sm text-foreground">
+              {t('listingClosed')}
+            </p>
+          ) : (
+            <>
+              {contribution.terms ? (
+                <div className="mt-3 rounded-md bg-surface p-4 text-sm text-foreground-muted">
+                  <p className="font-medium text-foreground">{t('termsHeading')}</p>
+                  <p className="mt-1 whitespace-pre-line">{contribution.terms[locale]}</p>
+                  {contribution.takedownContact ? (
+                    <p className="mt-2">
+                      {t('takedown')}{' '}
+                      <a
+                        href={`mailto:${contribution.takedownContact}`}
+                        className="font-medium text-primary-strong underline underline-offset-4"
+                      >
+                        {contribution.takedownContact}
+                      </a>
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+
+              <p className="mt-4 text-sm font-medium">
+                {t('listingStatusLabel')}{' '}
+                <span className="font-normal text-foreground-muted">{t(`listingStatus.${state.listing?.status ?? 'none'}`)}</span>
+              </p>
+              {state.listing?.status === 'rejected' && state.listing.rejectReason ? (
+                <p className="mt-1 text-sm text-foreground-muted">
+                  {t('listingReason', { reason: state.listing.rejectReason })}
+                </p>
+              ) : null}
+
+              <fieldset className="mt-4">
+                <legend className="text-sm font-medium">{t('authorLabel')}</legend>
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:gap-6">
+                  {(['name', 'anonymous'] as const).map((value) => (
+                    <label key={value} className="inline-flex min-h-11 items-center gap-2 text-base">
+                      <input
+                        type="radio"
+                        name="listing-author"
+                        value={value}
+                        checked={authorDisplay === value}
+                        disabled={busy}
+                        onChange={() => setAuthorDisplay(value)}
+                      />
+                      {t(`author.${value}`)}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  disabled={busy}
+                  className={buttonClass({ size: 'sm' })}
+                  onClick={() =>
+                    run(
+                      () =>
+                        api<ShareState>(`/api/planner/${encodeURIComponent(tripId)}/listing`, {
+                          method: 'PUT',
+                          body: { authorDisplay },
+                        }),
+                      t('listingRequested'),
+                    )
+                  }
+                >
+                  {state.listing ? t('listingResubmit') : t('listingRequest')}
+                </button>
+                {state.listing ? (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    className={buttonClass({ size: 'sm', variant: 'secondary' })}
+                    onClick={() =>
+                      run(
+                        () => api<ShareState>(`/api/planner/${encodeURIComponent(tripId)}/listing`, { method: 'DELETE' }),
+                        t('listingWithdrawn'),
+                      )
+                    }
+                  >
+                    {t('listingWithdraw')}
+                  </button>
+                ) : null}
+              </div>
+              <p className="mt-3 text-sm text-foreground-muted">{t('listingEditNote')}</p>
+            </>
+          )}
         </div>
       ) : null}
 

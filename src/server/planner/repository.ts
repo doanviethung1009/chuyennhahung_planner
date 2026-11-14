@@ -55,6 +55,10 @@ import {
   SHARE_TOKEN_PATTERN,
   type PublicPlannerUser,
   type ShareState,
+  type CommunityTripCard,
+  type ListingDecision,
+  type ListingQueueItem,
+  type TripListing,
   type SharedTripView,
   type TripDuplicateInput,
   type Visibility,
@@ -842,6 +846,7 @@ export class PlannerRepository {
         visibility: 'private',
         shareToken: null,
         shareTokenCreatedAt: null,
+        listing: null,
         duplicatedFromTripId: null,
         version: 1,
         createdAt: at,
@@ -1196,6 +1201,7 @@ export class PlannerRepository {
         visibility: 'private',
         shareToken: null,
         shareTokenCreatedAt: null,
+        listing: null,
         duplicatedFromTripId: trip.id,
         version: 1,
         createdAt: at,
@@ -1229,8 +1235,10 @@ export class PlannerRepository {
         shareToken = newShareToken();
         shareTokenCreatedAt = this.timestamp();
       }
-      data.trips[index] = { ...trip, visibility, shareToken, shareTokenCreatedAt };
-      return { visibility, shareToken, shareTokenCreatedAt };
+      // Leaving `public` ends the listing at once (ADR 0014 §3).
+      const listing = visibility === 'public' ? trip.listing : null;
+      data.trips[index] = { ...trip, visibility, shareToken, shareTokenCreatedAt, listing };
+      return { visibility, shareToken, shareTokenCreatedAt, listing };
     });
   }
 
@@ -1245,7 +1253,7 @@ export class PlannerRepository {
       const shareToken = newShareToken();
       const shareTokenCreatedAt = this.timestamp();
       data.trips[index] = { ...trip, shareToken, shareTokenCreatedAt };
-      return { visibility: trip.visibility, shareToken, shareTokenCreatedAt };
+      return { visibility: trip.visibility, shareToken, shareTokenCreatedAt, listing: trip.listing };
     });
   }
 
@@ -1258,9 +1266,134 @@ export class PlannerRepository {
         visibility: 'private',
         shareToken: null,
         shareTokenCreatedAt: null,
+        listing: null,
       };
-      return { visibility: 'private', shareToken: null, shareTokenCreatedAt: null };
+      return { visibility: 'private', shareToken: null, shareTokenCreatedAt: null, listing: null };
     });
+  }
+
+  // -------------------------------------------------------------------------
+  // Community listing (ADR 0014)
+  // -------------------------------------------------------------------------
+
+  /**
+   * The owner asks to be shown on the home page. Needs an active, `public`
+   * trip. Always lands in `pending`; only staff move it on. Not a content
+   * edit: no `version` bump, no `If-Match`.
+   */
+  requestListing(
+    ownerId: string,
+    tripId: string,
+    authorDisplay: TripListing['authorDisplay'],
+  ): Promise<ShareState> {
+    return this.transaction((data) => {
+      const { trip, index } = PlannerRepository.requireOwnedTrip(data, ownerId, tripId);
+      PlannerRepository.requireActive(trip);
+      if (trip.visibility !== 'public' || trip.shareToken === null) {
+        throw invalidState(`trip "${tripId}" must be public before it can be listed`);
+      }
+      const listing: TripListing = {
+        status: 'pending',
+        authorDisplay,
+        requestedAt: this.timestamp(),
+        decidedAt: null,
+        decidedBy: null,
+        rejectReason: null,
+      };
+      data.trips[index] = { ...trip, listing };
+      return shareStateOf(data.trips[index] as Trip);
+    });
+  }
+
+  /** Withdraws the listing. Idempotent. */
+  withdrawListing(ownerId: string, tripId: string): Promise<ShareState> {
+    return this.transaction((data) => {
+      const { trip, index } = PlannerRepository.requireOwnedTrip(data, ownerId, tripId);
+      data.trips[index] = { ...trip, listing: null };
+      return shareStateOf(data.trips[index] as Trip);
+    });
+  }
+
+  /**
+   * Staff decision. `approve` and `reject` act on a pending request, `remove`
+   * on an approved one; reject and remove both end in `rejected` with a reason.
+   * A trip that stopped being public since the request cannot be approved.
+   */
+  decideListing(
+    tripId: string,
+    decision: ListingDecision,
+    actor: string,
+    reason: string | null,
+  ): Promise<TripListing> {
+    return this.transaction((data) => {
+      const index = data.trips.findIndex((candidate) => candidate.id === tripId);
+      const trip = data.trips[index];
+      if (!trip || !trip.listing) {
+        throw new ContentError('not_found', `no listing request for trip "${tripId}"`);
+      }
+      const needed = decision === 'remove' ? 'approved' : 'pending';
+      if (trip.listing.status !== needed) {
+        throw invalidState(`cannot ${decision}: the listing is ${trip.listing.status}`);
+      }
+      if (decision === 'approve' && !isShareable(trip)) {
+        throw invalidState('the trip is no longer shared');
+      }
+      if (decision === 'approve' && trip.visibility !== 'public') {
+        throw invalidState('only a public trip can be listed');
+      }
+      const listing: TripListing = {
+        ...trip.listing,
+        status: decision === 'approve' ? 'approved' : 'rejected',
+        decidedAt: this.timestamp(),
+        decidedBy: actor.slice(0, 80),
+        rejectReason: decision === 'approve' ? null : reason,
+      };
+      data.trips[index] = { ...trip, listing };
+      return listing;
+    });
+  }
+
+  /** The staff queue: pending first, then approved, oldest request first. */
+  async listListingQueue(): Promise<ListingQueueItem[]> {
+    const data = await this.snapshot();
+    const items: ListingQueueItem[] = [];
+    for (const trip of data.trips) {
+      if (!trip.listing || trip.status !== 'active') continue;
+      items.push({
+        tripId: trip.id,
+        title: trip.title,
+        destinationSlug: trip.destinationSlug,
+        durationDays: trip.durationDays,
+        activityCount: data.tripActivities.filter((a) => a.tripId === trip.id).length,
+        ownerDisplayName:
+          data.users.find((user) => user.id === trip.ownerId)?.displayName ?? '—',
+        shareToken: trip.shareToken,
+        listing: trip.listing,
+      });
+    }
+    const rank = { pending: 0, approved: 1, rejected: 2 } as const;
+    return items.sort(
+      (a, b) =>
+        rank[a.listing.status] - rank[b.listing.status] ||
+        a.listing.requestedAt.localeCompare(b.listing.requestedAt),
+    );
+  }
+
+  /**
+   * The public gallery: only an active, public, shared trip whose listing staff
+   * approved. Newest decision first. Every field is named in `buildCommunityCard`.
+   */
+  async listCommunityTrips(limit = 24): Promise<CommunityTripCard[]> {
+    const data = await this.snapshot();
+    const cards: CommunityTripCard[] = [];
+    for (const trip of data.trips) {
+      if (!isShareable(trip) || trip.visibility !== 'public') continue;
+      if (trip.listing?.status !== 'approved' || trip.listing.decidedAt === null) continue;
+      cards.push(buildCommunityCard(data, trip, trip.listing));
+    }
+    return cards
+      .sort((a, b) => b.approvedAt.localeCompare(a.approvedAt))
+      .slice(0, Math.max(1, Math.min(limit, 100)));
   }
 
   /**
@@ -1783,6 +1916,13 @@ export class PlannerRepository {
       version: trip.version + 1,
       updatedAt: this.timestamp(),
     };
+    // ADR 0014: approval vouches for the content that was reviewed, so any
+    // change re-queues it; leaving `public` (or archiving) ends the listing.
+    if (next.visibility !== 'public' || next.status !== 'active') {
+      next.listing = null;
+    } else if (next.listing?.status === 'approved') {
+      next.listing = { ...next.listing, status: 'pending', decidedAt: null, decidedBy: null };
+    }
     data.trips[index] = next;
     return next;
   }
@@ -2131,6 +2271,38 @@ function isShareable(
   return trip.status === 'active' && trip.visibility !== 'private' && trip.shareToken !== null;
 }
 
+function shareStateOf(trip: Trip): ShareState {
+  return {
+    visibility: trip.visibility,
+    shareToken: trip.shareToken,
+    shareTokenCreatedAt: trip.shareTokenCreatedAt,
+    listing: trip.listing,
+  };
+}
+
+/**
+ * The gallery projection (ADR 0014). Named field by field, no spread. The
+ * author's name appears only when the owner chose it; anonymous is `null`.
+ */
+function buildCommunityCard(
+  data: PlannerData,
+  trip: Trip & { shareToken: string },
+  listing: TripListing,
+): CommunityTripCard {
+  const owner = data.users.find((user) => user.id === trip.ownerId);
+  return {
+    shareToken: trip.shareToken,
+    title: trip.title,
+    destinationSlug: trip.destinationSlug,
+    durationDays: trip.durationDays,
+    partySize: trip.partySize,
+    travelStyle: trip.travelStyle,
+    activityCount: data.tripActivities.filter((activity) => activity.tripId === trip.id).length,
+    author: listing.authorDisplay === 'name' && owner ? owner.displayName : null,
+    approvedAt: listing.decidedAt ?? listing.requestedAt,
+  };
+}
+
 function shareTokenDigest(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
@@ -2151,6 +2323,7 @@ function withTripDefaults(data: PlannerData): PlannerData {
     trip.visibility ??= 'private';
     trip.shareToken ??= null;
     trip.shareTokenCreatedAt ??= null;
+    trip.listing ??= null;
     trip.duplicatedFromTripId ??= null;
     if (trip.sourceTemplate) trip.sourceTemplate.story ??= null;
   }

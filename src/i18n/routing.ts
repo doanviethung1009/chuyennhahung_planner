@@ -30,6 +30,7 @@ export const pathnames = {
   '/my-trips/[id]': { vi: '/chuyen-di-cua-toi/[id]', en: '/my-trips/[id]' },
   '/shared/[token]': { vi: '/chia-se/[token]', en: '/shared/[token]' },
   '/reviews': { vi: '/goc-review', en: '/reviews' },
+  '/community-trips': { vi: '/chuyen-di-cong-dong', en: '/community-trips' },
   '/admin': { vi: '/quan-tri', en: '/admin' },
   '/admin/content/stories': { vi: '/quan-tri/noi-dung/chuyen-di', en: '/admin/content/stories' },
   '/admin/content/stories/[slug]': {
@@ -42,6 +43,7 @@ export const pathnames = {
     en: '/admin/content/places/[slug]',
   },
   '/admin/content/reviews': { vi: '/quan-tri/noi-dung/danh-gia', en: '/admin/content/reviews' },
+  '/admin/community': { vi: '/quan-tri/cong-dong', en: '/admin/community' },
   '/about': { vi: '/ve-nha-hung', en: '/about' },
 } as const;
 

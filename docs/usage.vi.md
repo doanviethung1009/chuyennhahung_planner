@@ -345,6 +345,10 @@ Biến chỉ được đọc lúc khởi động. **Khởi động lại** `npm 
 
 **HTTP trên địa chỉ IP không dùng được.** Google chỉ chấp nhận redirect URI HTTP thường cho `localhost`. VM dev chạy dạng `http://192.168.x.x` không dùng được đăng nhập Google; cần tên miền có HTTPS trước. Trong lúc chờ, dùng đăng nhập mật khẩu ở đó và để trống hai biến để nút không hiện.
 
+### Duyệt chuyến đi cộng đồng (admin hoặc editor)
+
+Mở `/quan-tri/cong-dong` (`/en/admin/community`). Yêu cầu chờ duyệt nằm trên: **Duyệt**, hoặc **Từ chối** kèm lý do để chủ chuyến thấy; chuyến đã duyệt có thể **Gỡ** kèm lý do. Trang chủ và `/chuyen-di-cong-dong` chỉ hiện chuyến đã duyệt. Trước khi người đi gửi được gì, hãy điền `contribution.terms` (VI và EN) và `contribution.takedownContact` trong `src/content/site.ts`; cho tới lúc đó nút của chủ chuyến vẫn đóng.
+
 ### Sửa nội dung trên trình duyệt (admin hoặc editor)
 
 Đăng nhập như mục trên (tài khoản `editor` có vai trò `editor`; admin đặt vai trò này được từ `/quan-tri`) rồi mở `/quan-tri/noi-dung/chuyen-di` (`/en/admin/content/stories`). Năm trang gồm danh sách chuyến đi, một chuyến đi, địa điểm, một địa điểm và đánh giá (`/quan-tri/noi-dung/dia-diem`, `/quan-tri/noi-dung/danh-gia`). Sửa một bản ghi rồi lưu; xuất bản hoặc lưu trữ story hay review là một hành động riêng. Tạo mới, xoá, template và collection chưa có trên trình duyệt — dùng API token ([travel-content-api.vi.md](travel-content-api.vi.md)).

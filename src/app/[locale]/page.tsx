@@ -14,6 +14,8 @@ import { FeaturedItineraries } from '@/components/sections/featured-itineraries'
 import { PlanTripCta } from '@/components/sections/plan-trip-cta';
 import { VideoReviewsSection } from '@/components/sections/video-reviews-section';
 import { AboutSection } from '@/components/sections/about-section';
+import { CommunityTripsSection } from '@/components/sections/community-trips-section';
+import { getCommunityTrips } from '@/server/community/public';
 
 /** Stories come from the content repository per request (ADR 0012). */
 export const dynamic = 'force-dynamic';
@@ -40,6 +42,7 @@ export default async function HomePage({ params }: Params) {
   const featured = storiesNewestFirst[0];
   if (!featured) return null;
 
+  const communityTrips = await getCommunityTrips(3);
   const featuredItineraries = itineraries.filter((i) => i.featured);
 
   return (
@@ -60,6 +63,8 @@ export default async function HomePage({ params }: Params) {
       <MapPreview destinations={destinations} locale={locale} />
 
       <FeaturedItineraries itineraries={featuredItineraries} locale={locale} />
+
+      <CommunityTripsSection trips={communityTrips} locale={locale} />
 
       <PlanTripCta />
 

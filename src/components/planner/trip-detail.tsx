@@ -242,6 +242,7 @@ export function TripDetail({ id }: { id: string }) {
                 visibility: trip.visibility,
                 shareToken: trip.shareToken,
                 shareTokenCreatedAt: trip.shareTokenCreatedAt,
+                listing: trip.listing,
               }}
               onUnauthorized={() => goToSignIn(locale)}
             />

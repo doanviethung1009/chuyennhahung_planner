@@ -66,6 +66,40 @@ export const planningStatusSchema = z.enum(['draft', 'planned', 'completed']);
 /** Who may read a trip. Changed only through the share endpoints (ADR 0005). */
 export const visibilitySchema = z.enum(['private', 'unlisted', 'public']);
 
+/** How the author appears on the community gallery (ADR 0014). */
+export const authorDisplaySchema = z.enum(['name', 'anonymous']);
+export const listingStatusSchema = z.enum(['pending', 'approved', 'rejected']);
+
+/**
+ * A trip's place on the home page and gallery (ADR 0014). Absent / `null` means
+ * "not listed". Separate from `visibility`: `public` is an indexable link,
+ * `listing.status === 'approved'` is what puts it in front of visitors.
+ */
+export const tripListingSchema = z.object({
+  status: listingStatusSchema,
+  authorDisplay: authorDisplaySchema,
+  requestedAt: timestampSchema,
+  decidedAt: timestampSchema.nullable(),
+  /** The staff user id, or `service`. Never shown publicly. */
+  decidedBy: z.string().max(80).nullable(),
+  rejectReason: z.string().trim().max(500).nullable(),
+});
+
+/** `PUT /listing` body. Strict: status and decision fields are never accepted. */
+export const listingRequestSchema = z.object({ authorDisplay: authorDisplaySchema }).strict();
+
+/** `PATCH /api/admin/community/trips/[id]` body. */
+export const listingDecisionSchema = z
+  .object({
+    decision: z.enum(['approve', 'reject', 'remove']),
+    reason: z.string().trim().min(3).max(500).optional(),
+  })
+  .strict()
+  .refine((value) => value.decision === 'approve' || value.reason !== undefined, {
+    message: 'a reason is required to reject or remove',
+    path: ['reason'],
+  });
+
 /** 32 random bytes, base64url: 43 characters. Checked before any lookup. */
 export const SHARE_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 
@@ -291,6 +325,8 @@ export const tripSchema = z.object({
   /** Bearer secret for the read-only link. Never leaves the owner's API. */
   shareToken: z.string().regex(SHARE_TOKEN_PATTERN).nullable().default(null),
   shareTokenCreatedAt: timestampSchema.nullable().default(null),
+  /** ADR 0014. `null` = not listed. Absent on older rows. */
+  listing: tripListingSchema.nullable().default(null),
   duplicatedFromTripId: plannerIdSchema.nullable().default(null),
   /** Bumped on every mutation of the trip or anything under it (ADR 0002 §6). */
   version: z.number().int().min(1),
@@ -471,6 +507,8 @@ export type TripFromTemplateCreateInput = z.infer<typeof tripFromTemplateCreateS
 export type TripUpdateInput = z.infer<typeof tripUpdateSchema>;
 export type PlanningStatus = z.infer<typeof planningStatusSchema>;
 export type Visibility = z.infer<typeof visibilitySchema>;
+export type TripListing = z.infer<typeof tripListingSchema>;
+export type ListingDecision = z.infer<typeof listingDecisionSchema>['decision'];
 export type ShareSettingsInput = z.infer<typeof shareSettingsSchema>;
 export type TripDuplicateInput = z.infer<typeof tripDuplicateSchema>;
 export type TripTemplateSnapshot = z.infer<typeof tripTemplateSnapshotSchema>;
@@ -648,9 +686,39 @@ export interface SharedTripView {
   } | null;
 }
 
+/**
+ * The public gallery card (ADR 0014). An allow-list: every field is named in
+ * `buildCommunityCard`, nothing is spread. `author` is `null` for anonymous —
+ * never an email, user id or `ownerId`.
+ */
+export interface CommunityTripCard {
+  shareToken: string;
+  title: string;
+  destinationSlug: string;
+  durationDays: number;
+  partySize: number;
+  travelStyle: Trip['travelStyle'];
+  activityCount: number;
+  author: string | null;
+  approvedAt: string;
+}
+
+/** A row of the staff queue. Staff-only: carries the share link and the owner's display name. */
+export interface ListingQueueItem {
+  tripId: string;
+  title: string;
+  destinationSlug: string;
+  durationDays: number;
+  activityCount: number;
+  ownerDisplayName: string;
+  shareToken: string | null;
+  listing: TripListing;
+}
+
 /** What the share endpoints return to the owner. */
 export interface ShareState {
   visibility: Visibility;
   shareToken: string | null;
   shareTokenCreatedAt: string | null;
+  listing: TripListing | null;
 }
