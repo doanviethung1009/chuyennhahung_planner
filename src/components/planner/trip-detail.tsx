@@ -14,6 +14,7 @@ import type { PlanningStatus } from '@/server/planner/schemas';
 import { ApiError, api, goToSignIn } from './api';
 import { SharePanel } from './share-panel';
 import { StatusSelect } from './status-select';
+import { TripEditor } from './trip-editor/trip-editor';
 
 type Load = { state: 'loading' } | { state: 'missing' } | { state: 'error' } | { state: 'ready'; view: TripView };
 
@@ -112,6 +113,7 @@ export function TripDetail({ id }: { id: string }) {
             <dl className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
               <Row label={t('budgetTarget')} value={formatVnd(budget.targetTotalVnd, locale)} />
               <Row label={t('budgetEstimated')} value={formatVnd(budget.estimatedTotalVnd, locale)} />
+              <Row label={t('budgetActual')} value={formatVnd(budget.actualTotalVnd, locale)} />
               {trip.travelStyle ? <Row label={t('travelStyle')} value={tStyle(trip.travelStyle)} /> : null}
               {trip.pace ? <Row label={t('pace')} value={tPace(trip.pace)} /> : null}
               {trip.note ? <Row label={t('note')} value={trip.note} /> : null}
@@ -181,36 +183,45 @@ export function TripDetail({ id }: { id: string }) {
             </section>
           ) : null}
 
-          <section aria-labelledby="detail-days" className="grid gap-4">
-            <h2 id="detail-days" className="font-display text-2xl font-semibold">
-              {t('itinerary')}
-            </h2>
-            <ol className="grid list-none gap-5 p-0">
-              {days.map((day) => (
-                <li key={day.id} className="rounded-xl border border-border-subtle bg-surface p-5 md:p-6">
-                  <h3 className="font-display text-lg font-semibold md:text-xl">
-                    {day.title ?? t('day', { number: day.dayNumber })}
-                  </h3>
-                  {day.date ? <p className="mt-1 text-sm text-foreground-muted">{formatDate(day.date, locale)}</p> : null}
-                  <ul className="mt-4 grid list-none gap-3 p-0">
-                    {day.activities.map((activity) => (
-                      <li key={activity.id} className="flex gap-4">
-                        <span className="w-16 shrink-0 text-sm font-medium text-primary-strong tabular-nums">
-                          {activity.startTime ?? t('anytime')}
-                        </span>
-                        <span>
-                          <span className="block text-base">{activity.title}</span>
-                          {activity.note ? (
-                            <span className="mt-0.5 block text-sm text-foreground-muted">{activity.note}</span>
-                          ) : null}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ol>
-          </section>
+          {archived ? (
+            <section aria-labelledby="detail-days" className="grid gap-4">
+              <h2 id="detail-days" className="font-display text-2xl font-semibold">
+                {t('itinerary')}
+              </h2>
+              <ol className="grid list-none gap-5 p-0">
+                {days.map((day) => (
+                  <li key={day.id} className="rounded-xl border border-border-subtle bg-surface p-5 md:p-6">
+                    <h3 className="font-display text-lg font-semibold md:text-xl">
+                      {day.title ?? t('day', { number: day.dayNumber })}
+                    </h3>
+                    {day.date ? <p className="mt-1 text-sm text-foreground-muted">{formatDate(day.date, locale)}</p> : null}
+                    <ul className="mt-4 grid list-none gap-3 p-0">
+                      {day.activities.map((activity) => (
+                        <li key={activity.id} className="flex gap-4">
+                          <span className="w-16 shrink-0 text-sm font-medium text-primary-strong tabular-nums">
+                            {activity.startTime ?? t('anytime')}
+                          </span>
+                          <span>
+                            <span className="block text-base">{activity.title}</span>
+                            {activity.note ? (
+                              <span className="mt-0.5 block text-sm text-foreground-muted">{activity.note}</span>
+                            ) : null}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          ) : (
+            <TripEditor
+              view={load.view}
+              onView={(next) => setLoad({ state: 'ready', view: next })}
+              onReload={fetchTrip}
+              onUnauthorized={() => goToSignIn(locale)}
+            />
+          )}
 
           {!archived ? (
             <SharePanel
