@@ -29,12 +29,13 @@ Không có. Trình sửa nằm trên `/my-trips/[id]` sẵn có (`/chuyen-di-cua
 3. Số ngày đổi qua `durationDays` của trip (API không có route thêm ngày). Tăng thì thêm các ngày trống; giảm bị từ chối bằng `409 invalid_state` khi ngày bị bỏ còn hoạt động hay khoản chi, trang báo rõ và không đổi gì.
 4. Hoạt động chọn từ danh mục sẽ điền sẵn tên, thời lượng và chi phí, vẫn sửa được; địa điểm thì không đổi được về sau (schema cập nhật không có `placeSlug`). Đưa lên/xuống và "chuyển sang ngày" dùng `PATCH /reorder`; không có kéo thả.
 5. Mọi thao tác xoá đều hỏi lại ngay tại chỗ ("Xoá hoạt động này?" với Xoá / Giữ lại).
-6. Lỗi: `401` chuyển sang đăng nhập; `412` báo chuyến đi vừa được sửa ở nơi khác, tải lại và dựng lại form thông tin theo bản mới; `409` hiện thông báo riêng cho từng thao tác (ngày bị bỏ còn nội dung khi giảm số ngày, ngày đã đủ 40 hoạt động, hoặc câu trung tính); `422` và các lỗi khác hiện thông báo dễ hiểu. Thông báo nằm trong vùng `role="status"`.
+6. Lỗi: `401` chuyển sang đăng nhập; `412` báo chuyến đi vừa được sửa ở nơi khác, tải lại và dựng lại form thông tin theo bản mới; `409` hiện thông báo riêng cho từng thao tác (ngày bị bỏ còn nội dung khi giảm số ngày, ngày đã đủ 40 hoạt động, hoặc câu trung tính); `422` và các lỗi khác hiện thông báo dễ hiểu. Thông báo nằm trong một vùng `role="status"` ghim ở cuối khung nhìn (luôn có trong DOM, có nút đóng, lỗi có viền và chữ nổi bật hơn), nên kết quả hiện ngay tại chỗ người dùng thao tác. Dòng "Đã lưu lúc HH:MM" dưới tiêu đề trình sửa ghi lần lưu thành công gần nhất.
    - Form thông tin chỉ gửi những trường người dùng đã đổi, nên form cũ không thể ghi đè điều người khác vừa lưu.
    - Ngày đã đủ 40 hoạt động thì nút "Thêm hoạt động" bị khoá và ngày đó không còn trong danh sách "chuyển sang ngày".
    - Khoản chi gắn với một hoạt động bị khoá ô ngày (ngày đi theo hoạt động; API từ chối ngày khác).
-   - Sau khi xoá, thêm, lưu hoặc đóng form, focus chuyển tới dòng thông báo thay vì rơi về trang.
+   - Sau khi xoá, thêm, lưu hoặc đóng form, focus chuyển tới dòng thông báo (bằng effect, sau khi đã hiển thị) thay vì rơi về trang. Đóng thông báo đang có focus thì focus chuyển về tiêu đề trình sửa.
    - Sau khi chuyển lên, chuyển xuống hoặc "chuyển sang ngày", focus quay lại đúng control đó trên dòng vừa chuyển (hoặc control gần nhất còn bật, ví dụ "chuyển lên" khi dòng đã xuống cuối), để người dùng bàn phím không mất vị trí; dòng thông báo vẫn đọc "Đã di chuyển hoạt động."
+   - Không có nút lưu chung: mỗi thao tác được lưu khi thành công và trình sửa nói rõ điều đó. Phần chia sẻ nói đường dẫn luôn hiện bản mới nhất (không cần chia sẻ lại; chi phí, ghi chú chuyến đi và ghi chú ngày không bao giờ được chia sẻ) và, khi đã có đường dẫn, có nút "Xem trang chia sẻ" (mở tab mới, `rel="noopener noreferrer"`).
    - Một thao tác ghi trong trình sửa cũng khoá các nút trạng thái, nhân bản và lưu trữ của trang (và ngược lại), vì cả hai dùng chung phiên bản trip.
 7. Chi phí hiện đủ số đồng (`300.000 ₫`), không làm tròn triệu như phần tóm tắt, và ghi rõ là mỗi người hay cả nhóm.
 

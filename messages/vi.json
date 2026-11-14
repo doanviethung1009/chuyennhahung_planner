@@ -411,6 +411,9 @@
   },
   "share": {
     "title": "Chia sẻ chuyến đi",
+    "liveHint": "Đường dẫn luôn hiện bản mới nhất của chuyến đi: thêm, xoá hay sửa hoạt động xong không cần chia sẻ lại. Chi phí, ghi chú chuyến đi và ghi chú từng ngày không bao giờ được chia sẻ.",
+    "viewShared": "Xem trang chia sẻ",
+    "newTab": "(mở trong tab mới)",
     "intro": "Người nhận chỉ xem được lịch trình, không sửa được và không thấy ghi chú của chuyến đi, ghi chú của từng ngày hay chi phí đã trả. Họ vẫn thấy tên, giờ và ghi chú của từng hoạt động, nên đừng ghi chuyện riêng tư vào ghi chú hoạt động.",
     "visibilityLabel": "Ai xem được",
     "linkLabel": "Đường dẫn chia sẻ",
@@ -774,6 +777,9 @@
   },
   "tripEditor": {
     "editHeading": "Sửa thông tin chuyến đi",
+    "autosaveNote": "Không có nút lưu chung: mỗi thao tác được lưu ngay khi thành công, kết quả hiện ở cuối màn hình. Đường dẫn chia sẻ (nếu có) luôn hiện bản mới nhất, không cần chia sẻ lại.",
+    "savedAt": "Đã lưu lúc {time}",
+    "dismissMessage": "Đóng thông báo",
     "daysHeading": "Lịch trình từng ngày",
     "tripSaved": "Đã lưu thông tin chuyến đi.",
     "saveChanges": "Lưu thay đổi",

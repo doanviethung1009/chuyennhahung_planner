@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import type { TripView } from '@/server/planner/repository';
 import { ApiError, api } from '../api';
 import type { CatalogPlace } from './activity-form';
@@ -34,6 +34,7 @@ export function TripEditor({
   onBusyChange: (busy: boolean) => void;
 }) {
   const t = useTranslations('tripEditor');
+  const locale = useLocale();
   const [writing, setWriting] = useState(false);
   const busy = writing || locked;
   // Bumped on a stale write so the details form restarts from the server's copy.
@@ -43,6 +44,11 @@ export function TripEditor({
   const inFlight = useRef(false);
   const [message, setMessage] = useState('');
   const [failed, setFailed] = useState(false);
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  // Counts requests to move focus to the message; the effect below runs after it is shown.
+  const [refocus, setRefocus] = useState(0);
+  const toastRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const [places, setPlaces] = useState<CatalogPlace[]>([]);
 
   const { trip, days } = view;
@@ -66,6 +72,10 @@ export function TripEditor({
     };
   }, [destinationSlug]);
 
+  useEffect(() => {
+    if (refocus > 0) statusRef.current?.focus();
+  }, [refocus]);
+
   const mutate: Mutate = useCallback(
     async (done, request, options) => {
       if (inFlight.current) return false;
@@ -77,8 +87,9 @@ export function TripEditor({
       try {
         onView(await request(trip.version));
         setMessage(done);
+        setSavedAt(new Date());
         // The delete or close button is gone now; without this focus falls back to <body>.
-        if (options?.refocus) setTimeout(() => statusRef.current?.focus(), 0);
+        if (options?.refocus) setRefocus((n) => n + 1);
         return true;
       } catch (error) {
         if (error instanceof ApiError && error.status === 401) {
@@ -110,19 +121,62 @@ export function TripEditor({
 
   return (
     <>
-      <p
-        ref={statusRef}
-        tabIndex={-1}
-        role="status"
-        className={`min-h-6 text-sm ${failed ? 'font-medium text-primary-strong' : 'text-foreground-muted'}`}
-      >
-        {message}
-      </p>
+      {/*
+        One live region for every outcome, pinned to the viewport so the result is seen
+        wherever on the page the user acted. It stays mounted (a live region must exist
+        before its text changes); focus lands on it after a write that removes the
+        control that was used.
+      */}
+      <div className="pointer-events-none fixed inset-x-4 bottom-4 z-50 flex justify-center">
+        <div
+          ref={toastRef}
+          className={`${message ? 'flex' : 'hidden'} pointer-events-auto w-full max-w-xl items-start gap-3 rounded-xl border-2 bg-surface p-4 text-base shadow-lg ${
+            failed ? 'border-primary-strong' : 'border-border-subtle'
+          }`}
+        >
+          <p
+            ref={statusRef}
+            tabIndex={-1}
+            role="status"
+            className={`min-h-6 flex-1 rounded-sm ${failed ? 'font-medium text-primary-strong' : 'text-foreground'}`}
+          >
+            {message}
+          </p>
+          <button
+            type="button"
+            aria-label={t('dismissMessage')}
+            className="-m-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-foreground-muted"
+            onClick={() => {
+              // Focus would fall back to <body> if it was on the message that is about to go.
+              if (toastRef.current?.contains(document.activeElement)) {
+                headingRef.current?.focus();
+              }
+              setMessage('');
+              setFailed(false);
+            }}
+          >
+            <span aria-hidden="true">✕</span>
+          </button>
+        </div>
+      </div>
 
       <section aria-labelledby="detail-edit" className="grid gap-4">
-        <h2 id="detail-edit" className="font-display text-2xl font-semibold">
+        <h2 ref={headingRef} tabIndex={-1} id="detail-edit" className="font-display text-2xl font-semibold">
           {t('editHeading')}
         </h2>
+        <p className="text-sm text-foreground-muted">
+          {t('autosaveNote')}
+          {savedAt ? (
+            <>
+              {' '}
+              <span className="font-medium text-foreground">
+                {t('savedAt', {
+                  time: new Intl.DateTimeFormat(locale === 'vi' ? 'vi-VN' : 'en-GB', { hour: '2-digit', minute: '2-digit' }).format(savedAt),
+                })}
+              </span>
+            </>
+          ) : null}
+        </p>
         <TripFieldsForm key={formEpoch} view={view} busy={busy} mutate={mutate} />
       </section>
 
