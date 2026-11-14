@@ -19,13 +19,15 @@ activity, chi phí và ngân sách — còn *giao diện* Planner vẫn thuộc 
 | Styling | Tailwind v4, token `@theme` theo hướng CSS-first | [`src/app/globals.css`](../src/app/globals.css) |
 | Nội dung | Story, place, review: repository nội dung qua `getPublicContent()`; điểm đến, lịch trình, review video: TypeScript có type trong `src/content/` | [`src/content/`](../src/content) |
 | Test | Vitest 3 trên Node 24 (giờ đã nâng lên 4/5 được, nhưng chưa nâng) | [`tests/`](../tests) |
-| Lưu trữ | Planner: PostgreSQL khi có `PLANNER_DATABASE_URL` ([ADR 0009](adr/0009-postgres-persistence.vi.md)), nếu không thì file JSON; Travel content: file JSON | [`src/server/persistence/`](../src/server/persistence) |
+| Lưu trữ | Planner: PostgreSQL khi có `PLANNER_DATABASE_URL` ([ADR 0009](adr/0009-postgres-persistence.vi.md)), nếu không thì file JSON; Travel content: PostgreSQL khi có `CONTENT_DATABASE_URL` ([ADR 0013](adr/0013-content-on-postgres-tables.vi.md)), nếu không thì file JSON | [`src/server/persistence/`](../src/server/persistence) |
 
 Các trang công khai hiển thị nội dung Travel (trang chủ, story, chi tiết điểm đến, sitemap) được render theo từng request từ repository nội dung qua một module đọc chỉ-server, `getPublicContent()` trong `src/server/content/public.ts` ([ADR 0012](adr/0012-public-travel-from-content-repository.vi.md)), nên chỉnh sửa đã xuất bản trong CMS hiện ngay ở request kế tiếp. Các trang công khai còn lại (`/about`, lịch trình, review video, `/map`) vẫn là tệp tĩnh sinh lúc build từ dữ liệu có type trong repo.
 Phía API — Travel Content System và Planner — chạy trên server Node, và ở
-production Planner cần thêm PostgreSQL
-([ADR 0009](adr/0009-postgres-persistence.vi.md)); không có `PLANNER_DATABASE_URL` thì nó
-dùng file JSON cho phát triển local, và chỉ do cấu hình quyết định.
+production cả hai store cần PostgreSQL
+([ADR 0009](adr/0009-postgres-persistence.vi.md),
+[ADR 0013](adr/0013-content-on-postgres-tables.vi.md)); không có `PLANNER_DATABASE_URL`
+hoặc `CONTENT_DATABASE_URL` thì store tương ứng dùng file JSON cho phát triển local, và
+chỉ do cấu hình quyết định.
 
 ## Đường đi của một request
 
@@ -141,7 +143,7 @@ cầu riêng tư, lưu trữ và sao lưu khác nhau.
 
 | Store | File | Chứa gì | Hợp đồng |
 |---|---|---|---|
-| Travel content | `.data/travel-content.json` (`TRAVEL_CONTENT_STORE`) | place, story, collection, review, template | [travel-content-api.vi.md](travel-content-api.vi.md) |
+| Travel content | PostgreSQL (`CONTENT_DATABASE_URL`, bảng `content_*`), nếu không thì `.data/travel-content.json` (`TRAVEL_CONTENT_STORE`) | place, story, collection, review, template | [travel-content-api.vi.md](travel-content-api.vi.md) |
 | Planner | PostgreSQL (`PLANNER_DATABASE_URL`), nếu không thì `.data/planner.json` (`PLANNER_STORE`) | planner user, session trình duyệt, trip, ngày, activity, chi phí | [features/travel-planner-core.vi.md](features/travel-planner-core.vi.md) |
 
 Tiền ở cả hai đều là số nguyên đồng, chặn trên ở 10^12 — không bao giờ là số
@@ -169,6 +171,15 @@ không truy cập được thì trả `503` — không bao giờ quay về file 
 là các migration SQL đánh số trong `db/migrations/`, chạy khi khởi động dưới một
 session advisory lock (ADR 0008 §7), hoặc chạy tay bằng `npm run db:migrate`.
 
+Store Travel content ([ADR 0013](adr/0013-content-on-postgres-tables.vi.md)) là cùng engine
+với một danh sách bảng khác: `content_places`, `content_stories`, `content_collections`,
+`content_reviews`, `content_templates`, cùng bộ đếm `content_revision` và lock ghi riêng.
+`ContentRepository` và 26 handler không đổi. Giá trị vô hướng là cột (có `CHECK` cho các
+enum), cấu trúc như văn bản song ngữ và block của story là `jsonb`, danh sách slug là
+`text[]`, và chưa có khoá ngoại giữa các entity content. Có `CONTENT_DATABASE_URL` nghĩa là
+Postgres, không bao giờ lùi về file; request đầu tiên chạy migration và seed dưới một lock.
+Nó có thể trỏ vào database của Planner hoặc database riêng.
+
 ## Ranh giới module
 
 Hướng phụ thuộc là một chiều. Tầng dưới không bao giờ gọi lên tầng trên.
@@ -186,7 +197,7 @@ app/api/**           route handler: parse, phân quyền, map lỗi sang status
    ↓
 server/content/** · server/planner/**    repository: toàn bộ invariant
    ↓
-server/persistence/**                    document store: JSON (ghi nguyên tử + hàng đợi) · PostgreSQL (Planner)
+server/persistence/**                    document store: JSON (ghi nguyên tử + hàng đợi) · PostgreSQL (Planner, Travel content)
 ```
 
 Phía API là một tầng thứ hai chạy song song, và hai bên chỉ gặp nhau ở đúng một
@@ -343,9 +354,13 @@ Những thứ vắng mặt có chủ đích, và không được dựng sớm:
 - **SQL.** Lộ trình đã được quyết trong
   [ADR 0008](adr/0008-postgres-document-store.vi.md): các document chuyển vào
   Postgres thành dòng JSONB trước, bảng chuẩn hoá sau. Với Planner, bước 2 được dựng
-  thẳng theo [ADR 0009](adr/0009-postgres-persistence.vi.md). Còn mở: store Travel
-  content và store rate limit dùng chung (ADR 0008, chưa dựng), và query SQL theo
-  từng method khi việc nạp toàn bộ Planner mỗi request trở nên chậm.
+  thẳng theo [ADR 0009](adr/0009-postgres-persistence.vi.md), và store Travel content đi
+  cùng lộ trình bảng chuẩn hoá
+  ([ADR 0013](adr/0013-content-on-postgres-tables.vi.md): mỗi collection một bảng, một
+  engine bảng dùng chung với Planner, chưa có khoá ngoại giữa các entity content).
+  Còn mở: store rate limit dùng chung (ADR 0008, chưa dựng), khoá ngoại và quy tắc
+  "đang được tham chiếu" cho content, và query SQL theo từng method khi việc nạp cả một
+  store mỗi lần revision đổi trở nên chậm.
 - **Phase 07 — Admin Portal, CMS & RBAC (đang làm: lát cắt 1 và 2 đã ship).** Lát cắt 2 — sửa story, place và review trên trình duyệt — đã dựng ([ADR 0011](adr/0011-admin-content-cms.vi.md), [features/admin-content-cms.vi.md](features/admin-content-cms.vi.md)). Trang công khai nay đọc repository nội dung ([ADR 0012](adr/0012-public-travel-from-content-repository.vi.md)), nên chỉnh sửa đã xuất bản trong CMS hiện trên site công khai. Còn mở sau lát cắt 2: audit log; template, collection, tạo và xoá trên trình duyệt; đăng xuất của editor trên trang tổng quan; MFA; HTTPS. Lát cắt 1 — cổng
   quản lý user trên trình duyệt — đã dựng ([ADR 0010](adr/0010-admin-portal-session-authorization.vi.md),
   [features/admin-portal.vi.md](features/admin-portal.vi.md)). Mọi mục còn lại bên dưới
@@ -357,7 +372,7 @@ Những thứ vắng mặt có chủ đích, và không được dựng sớm:
   - **Mô hình vai trò** — `member` / `editor` / `admin` trên một mô hình user, hàm thuần `can(identity, action, resource)`, `ADMIN_API_TOKEN` hạ thành service principal. Đã thực thi cho quản lý user từ lát cắt 1; `editor` chưa có màn hình.
   - **Củng cố session admin và CSRF** — xong ở lát cắt 1 (thời hạn ngắn hơn theo vai trò; `requireSameOrigin` thành chốt chịu lực cho mutation admin; token không bao giờ tới Client Component (`tests/client-boundary.test.ts`)); MFA vẫn còn mở.
   - **Audit log** — ai đổi template hay vai trò nào, và mọi lần đọc trip để hỗ trợ.
-  - **SQL và nhiều instance** — admin portal khiến có người ghi thứ hai vào store; Planner đã lên PostgreSQL ([ADR 0009](adr/0009-postgres-persistence.vi.md)), nhưng store JSON của content và rate limiter theo process vẫn không sống nổi qua một instance.
+  - **SQL và nhiều instance** — admin portal khiến có người ghi thứ hai vào store; cả hai store có thể lên PostgreSQL ([ADR 0009](adr/0009-postgres-persistence.vi.md), [ADR 0013](adr/0013-content-on-postgres-tables.vi.md)), nhưng rate limiter theo process vẫn không sống nổi qua một instance.
   - **Store cho rate limit** — chặn đăng nhập admin cần store dùng chung khi có hơn một process.
   - **CMS sửa template** — chỉ qua content store; giữ các bản sửa cũ của template hay dựa vào snapshot đã clone là chưa quyết (clone vốn đã độc lập nên lịch sử là tuỳ chọn).
   - **Ranh giới template/trip** — template ở content store, trip ở planner store, chỉ nối bằng bản sao giá trị `sourceTemplate`.

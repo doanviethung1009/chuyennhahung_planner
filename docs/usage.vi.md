@@ -30,8 +30,9 @@ mọi biến dưới đây đều có mặc định dùng được, hoặc tự 
 |---|---|---|
 | `NEXT_PUBLIC_SITE_URL` | `https://chuyennhahung.vn` | Canonical, `hreflang`, sitemap. Phải đặt lúc **build** |
 | `ADMIN_API_TOKEN` | *chưa đặt* | Bảo vệ mọi route admin. Chưa đặt, hoặc ngắn hơn 32 ký tự, thì tất cả trả `503` — không bao giờ mở mặc định |
-| `TRAVEL_CONTENT_STORE` | `.data/travel-content.json` | Nơi content store nằm |
-| `TRAVEL_CONTENT_AUTOSEED` | `true` | Đặt `false` để bỏ qua seed nội dung demo ở lần dùng đầu |
+| `TRAVEL_CONTENT_STORE` | `.data/travel-content.json` | Nơi content store nằm. Bị bỏ qua khi đặt `CONTENT_DATABASE_URL` |
+| `CONTENT_DATABASE_URL` | *chưa đặt* | Chuỗi kết nối PostgreSQL cho Travel Content. Đã đặt: content store dùng PostgreSQL và không bao giờ lùi về file ([ADR 0013](adr/0013-content-on-postgres-tables.vi.md)). Có thể là database của Planner hoặc database riêng. Là secret — chỉ qua biến môi trường. Xem *Chạy Travel Content trên PostgreSQL* |
+| `TRAVEL_CONTENT_AUTOSEED` | `true` | Đặt `false` để bỏ qua seed nội dung demo ở lần dùng đầu. Ở production với PostgreSQL, hãy import nội dung thật rồi đặt `false` |
 | `PUBLIC_CONTENT_SOURCE` | `repository` | Đọc ở mỗi lần gọi (khởi động lại, không cần build lại). `repository`: nội dung Travel công khai lấy từ content store; `static`: lấy từ `src/content/stories.ts` (đường lùi). Giá trị khác coi như `repository`. Áp dụng cho trang chủ, `/stories`, trang bài viết, trang điểm đến và sitemap ([ADR 0012](adr/0012-public-travel-from-content-repository.vi.md)) |
 | `PLANNER_STORE` | `.data/planner.json` | Nơi trip của Planner nằm. Tách file khỏi content store một cách có chủ đích. Bị bỏ qua khi đã đặt `PLANNER_DATABASE_URL` |
 | `PLANNER_DATABASE_URL` | *chưa đặt* | Chuỗi kết nối PostgreSQL. Đã đặt: Planner dùng PostgreSQL và không bao giờ quay về file ([ADR 0009](adr/0009-postgres-persistence.vi.md)). Là secret — chỉ qua biến môi trường. Xem *Chạy Planner trên PostgreSQL* |
@@ -66,7 +67,9 @@ cố ý thì ghi đè bằng `--no-verify`.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint, flat config |
 | `npm run test` | Vitest, chạy một lượt |
-| `npm run db:migrate` | Áp dụng `db/migrations/*.sql` vào `PLANNER_DATABASE_URL`; idempotent. Tuỳ chọn: app chạy cùng đoạn code đó lúc khởi động |
+| `npm run db:migrate` | Áp dụng `db/migrations/*.sql` vào `PLANNER_DATABASE_URL` và `CONTENT_DATABASE_URL` (cái nào được đặt); idempotent. Tuỳ chọn: app chạy cùng đoạn code đó lúc khởi động |
+| `npm run content:import -- <file>` | Nạp một `travel-content.json` vào các bảng content PostgreSQL đang trống, có kiểm tra, trong một transaction |
+| `npm run content:export -- <file>` | Ghi content PostgreSQL ra `travel-content.json` (sao lưu và rollback) |
 | `npm run planner:import -- <file>` | Nạp một `planner.json` vào Planner PostgreSQL đang trống, có kiểm tra, trong một transaction |
 | `npm run planner:export -- <file>` | Ghi Planner PostgreSQL ra `planner.json` (sao lưu và rollback) |
 | `npm run verify:ui` | Chụp 13 route ở 375/768/1440 vào `screenshots/`, fail nếu tràn ngang |
@@ -464,6 +467,44 @@ Script export tự đặt quyền `0600`; `pg_dump` thì không, nên chạy
 và xoá. Không có biến này, file đó bị bỏ qua và lần chạy phải được báo là **chưa
 chạy**, không phải là đã qua.
 
+### Chạy Travel Content trên PostgreSQL
+
+Khi đặt `CONTENT_DATABASE_URL`, story, place, collection, review và template nằm trong
+PostgreSQL ([ADR 0013](adr/0013-content-on-postgres-tables.vi.md)); không đặt thì không có
+gì đổi — file JSON ở development, memory store trong test. Khi đã đặt, app **không bao giờ
+lùi về** file: nếu database sập, API nội dung admin và mọi trang public đọc content trả
+`503`. Nhờ vậy app chạy được nhiều hơn một instance (rate limiter thì vẫn chưa, xem phần
+deploy).
+
+**Database và role.** Dùng role riêng và các quy tắc kết nối của *Chạy Planner trên
+PostgreSQL* (TLS `verify-full` qua mạng, mật khẩu percent-encode, quyền tối thiểu).
+`CONTENT_DATABASE_URL` có thể trỏ vào database của Planner, hoặc một database riêng
+(`cnh_content`) nếu muốn sao lưu và phạm vi ảnh hưởng tách biệt. Dù thế nào, mỗi store chạy
+toàn bộ bộ `db/migrations` trên database của nó, nên bảng của store kia có thể tồn tại ở
+đó, rỗng.
+
+**Chuyển nội dung hiện có vào.** Dừng việc ghi trước, rồi:
+
+```bash
+CONTENT_DATABASE_URL='postgres://…' npm run db:migrate
+CONTENT_DATABASE_URL='postgres://…' npm run content:import -- .data/travel-content.json
+```
+
+Import kiểm tra file bằng chính schema của repository, chạy kiểm tra toàn vẹn, từ chối bảng
+không rỗng, và chèn trong một transaction. Sau đó khởi động app với `CONTENT_DATABASE_URL`
+và `TRAVEL_CONTENT_AUTOSEED=false` để nội dung demo không bao giờ được seed cạnh nội dung
+thật. Trên database *mới*, app seed nội dung demo một lần, dưới một lock. `npm run
+content:seed-static` bổ sung bảy story tĩnh vào store mà môi trường đang chọn.
+
+**Sao lưu và rollback.** `pg_dump --format=custom "$CONTENT_DATABASE_URL" > content.dump`
+và `npm run content:export -- content-$(date +%F).json` (mode `0600`: file chứa bản nháp
+chưa xuất bản). Để rollback, bỏ `CONTENT_DATABASE_URL`, trỏ `TRAVEL_CONTENT_STORE` vào file
+đã export rồi khởi động lại; những lần ghi sau lần export cuối sẽ mất, nên hãy export
+trước. `db/rollback/0004_content.sql` xoá các bảng.
+
+**Test với database thật.** `TEST_DATABASE_URL` (một database scratch) cũng bật
+`tests/content-postgres.integration.test.ts`, trong một schema tạm.
+
 ### Thêm một chuỗi hiển thị cho người dùng
 
 Thêm key vào **cả** `messages/vi.json` và `messages/en.json`, rồi đọc bằng
@@ -630,9 +671,11 @@ VM database truy cập được và SAN của certificate có đúng IP dùng tr
 
 #### Một replica, host nhỏ
 
-Chạy **đúng một** replica `app`, ở cả hai bố cục. Content store của Travel vẫn là
-file JSON trên volume và rate limiter nằm trong bộ nhớ tiến trình (bước 1 của
-ADR 0008 cho content chưa làm); replica thứ hai sẽ chia đôi cả hai. Trên host nhỏ
+Chạy **đúng một** replica `app` trừ khi cả `PLANNER_DATABASE_URL` và `CONTENT_DATABASE_URL`
+đều được đặt, và kể cả khi đó rate limiter vẫn nằm trong bộ nhớ tiến trình nên replica thứ
+hai nhân đôi mức cho phép. Không có `CONTENT_DATABASE_URL`, content store của Travel là file
+JSON trên volume ([ADR 0013](adr/0013-content-on-postgres-tables.vi.md)) và replica thứ hai
+sẽ chia đôi nó. Trên host nhỏ
 (2 GB RAM) `next build` là lúc tốn bộ nhớ nhất — giữ swap, hoặc build ở máy khác
 rồi chuyển image bằng `docker save | docker load`.
 
@@ -663,6 +706,7 @@ phải host công khai, nên kiểm tra same-origin của Planner chấp nhận 
 | `require() of ES Module` từ `@tailwindcss/node` | Đang chạy Node cũ hơn `.nvmrc` — chạy `nvm use` |
 | `npm warn EBADENGINE` khi cài | Cùng nguyên nhân: Node cũ hơn `.nvmrc`. Chạy `nvm use`, rồi `npm ci` |
 | `npm warn install-scripts … not yet covered by allowScripts` | Có dependency mới mang install script, hoặc một package đã duyệt vừa đổi phiên bản — các phê duyệt trong `allowScripts` của `package.json` được ghim theo `pkg@version`. Kiểm tra đúng là package bạn mong đợi, rồi `npm install-scripts approve <pkg>` và commit thay đổi trong `package.json`. Lưu ý `--dry-run` vẫn ghi file ở npm 11.19 |
+| API nội dung hoặc trang story public trả `503 service_unavailable` | Đã đặt `CONTENT_DATABASE_URL` mà database không truy cập được hoặc từ chối đăng nhập — kiểm tra như dòng của Planner bên dưới; app không lùi về file |
 | Route Planner trả `503 service_unavailable` | Đã đặt `PLANNER_DATABASE_URL` mà database không truy cập được hoặc từ chối đăng nhập — kiểm tra host, role và chạy `npm run db:migrate` để xem vì sao migration lúc khởi động thất bại. App cố ý không quay về file JSON |
 | `relation "trips" does not exist` | Migration lúc khởi động chưa hoàn tất trên database đó — chạy `npm run db:migrate` và đọc thông báo của nó |
 | `/quan-tri` trả 404 cho người đã đăng nhập | Cố ý: tài khoản không phải `admin`. Nâng quyền bằng service token; role được đọc ở mỗi request |

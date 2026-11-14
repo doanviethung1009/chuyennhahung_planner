@@ -24,7 +24,16 @@ import type { PlannerData } from '@/server/planner/store';
  * except those quoted, constant identifiers and positional `$n` markers.
  */
 
-type ColumnType = 'text' | 'int' | 'bigint' | 'bool' | 'timestamptz' | 'date' | 'jsonb';
+type ColumnType =
+  | 'text'
+  | 'int'
+  | 'float'
+  | 'bigint'
+  | 'bool'
+  | 'timestamptz'
+  | 'date'
+  | 'jsonb'
+  | 'textarray';
 
 /**
  * How a NULL in the database reads back:
@@ -50,12 +59,26 @@ interface Column {
 
 export type PlannerCollection = keyof PlannerData;
 
-interface TableSpec {
-  collection: PlannerCollection;
+/**
+ * One table of a document store. The engine below is shared by the Planner and
+ * the Travel Content store (ADR 0013): a store is a list of these, parents
+ * first. The key defaults to `id`; content entities are keyed by `slug`.
+ */
+export interface TableSpec<C extends string = string> {
+  collection: C;
   table: string;
+  /** The record field and the column that identify a row. Default `id`. */
+  key?: { field: string; column: string };
   columns: Column[];
   parse: (record: unknown) => Record_;
 }
+
+export type { Column };
+
+const keyOf = (spec: TableSpec): { field: string; column: string } =>
+  spec.key ?? { field: 'id', column: 'id' };
+
+type CollectionsOf = Record<string, unknown[]>;
 
 const col = (
   field: string,
@@ -70,7 +93,7 @@ const createdUpdated = [
 ];
 
 /** Parents first. Deletes walk this list backwards. */
-export const TABLES: readonly TableSpec[] = [
+export const TABLES: readonly TableSpec<PlannerCollection>[] = [
   {
     collection: 'users',
     table: 'planner_users',
@@ -242,6 +265,8 @@ function toDbValue(column: Column, raw: unknown): unknown {
       return JSON.stringify(raw);
     case 'bigint':
       return normalizeVnd(raw, column.column);
+    case 'textarray':
+      return raw as string[];
     default:
       return raw;
   }
@@ -308,15 +333,18 @@ export function fromRow(spec: TableSpec, row: Row): Record_ {
 }
 
 function corrupt(spec: TableSpec, row: Row, reason: string): Error {
-  return new Error(`planner row ${spec.table}/${String(row.id)} is unreadable: ${reason}`);
+  return new Error(`row ${spec.table}/${String(row[keyOf(spec).column])} is unreadable: ${reason}`);
 }
 
-export function rowsToData(rowsByTable: Record<string, Row[]>): PlannerData {
+export function rowsToData<T = PlannerData>(
+  rowsByTable: Record<string, Row[]>,
+  tables: readonly TableSpec[] = TABLES,
+): T {
   const data: Record<string, unknown[]> = {};
-  for (const spec of TABLES) {
+  for (const spec of tables) {
     data[spec.collection] = (rowsByTable[spec.table] ?? []).map((row) => fromRow(spec, row));
   }
-  return data as unknown as PlannerData;
+  return data as unknown as T;
 }
 
 // ---------------------------------------------------------------------------
@@ -345,7 +373,9 @@ function canonical(value: unknown): string {
 }
 
 function placeholder(column: Column, index: number): string {
-  return column.type === 'jsonb' ? `$${index}::jsonb` : `$${index}`;
+  if (column.type === 'jsonb') return `$${index}::jsonb`;
+  if (column.type === 'textarray') return `$${index}::text[]`;
+  return `$${index}`;
 }
 
 function insertStatement(spec: TableSpec, row: Row): Statement {
@@ -361,15 +391,15 @@ function insertStatement(spec: TableSpec, row: Row): Statement {
 
 function updateStatement(spec: TableSpec, before: Row, after: Row): Statement | null {
   const changed = spec.columns.filter(
-    (c) => c.column !== 'id' && canonical(before[c.column]) !== canonical(after[c.column]),
+    (c) => c.column !== keyOf(spec).column && canonical(before[c.column]) !== canonical(after[c.column]),
   );
   if (changed.length === 0) return null;
   const assignments = changed.map((c, i) => `${quote(c.column)} = ${placeholder(c, i + 2)}`);
   return {
     kind: 'update',
     table: spec.table,
-    text: `UPDATE ${quote(spec.table)} SET ${assignments.join(', ')} WHERE "id" = $1`,
-    values: [after.id, ...changed.map((c) => after[c.column])],
+    text: `UPDATE ${quote(spec.table)} SET ${assignments.join(', ')} WHERE ${quote(keyOf(spec).column)} = $1`,
+    values: [after[keyOf(spec).column], ...changed.map((c) => after[c.column])],
   };
 }
 
@@ -377,7 +407,7 @@ function deleteStatement(spec: TableSpec, ids: string[]): Statement {
   return {
     kind: 'delete',
     table: spec.table,
-    text: `DELETE FROM ${quote(spec.table)} WHERE "id" = ANY($1::text[])`,
+    text: `DELETE FROM ${quote(spec.table)} WHERE ${quote(keyOf(spec).column)} = ANY($1::text[])`,
     values: [ids],
   };
 }
@@ -393,20 +423,27 @@ function deleteStatement(spec: TableSpec, ids: string[]): Statement {
  * record's spelling — a timestamp with and without milliseconds, an explicit
  * `null` against an absent optional — is not a change.
  */
-export function planStatements(before: PlannerData, after: PlannerData): Statement[] {
+export function planStatements<T extends object = PlannerData>(
+  before: T,
+  after: T,
+  tables: readonly TableSpec[] = TABLES,
+): Statement[] {
+  const beforeSets = before as unknown as CollectionsOf;
+  const afterSets = after as unknown as CollectionsOf;
   const inserts: Statement[] = [];
   const updates: Statement[] = [];
   const deletes: Statement[] = [];
 
-  for (const spec of TABLES) {
+  for (const spec of tables) {
+    const keyField = keyOf(spec).field;
     const was = new Map<string, Row>();
-    for (const record of before[spec.collection] as Record_[]) {
-      was.set(String(record.id), toRow(spec, record));
+    for (const record of beforeSets[spec.collection] as Record_[]) {
+      was.set(String(record[keyField]), toRow(spec, record));
     }
     const seen = new Set<string>();
 
-    for (const record of after[spec.collection] as Record_[]) {
-      const id = String(record.id);
+    for (const record of afterSets[spec.collection] as Record_[]) {
+      const id = String(record[keyField]);
       if (seen.has(id)) {
         // Two rows with one id would make the diff order-dependent; the
         // repository never does this, so refuse rather than guess.

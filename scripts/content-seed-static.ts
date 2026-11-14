@@ -1,6 +1,9 @@
 import { seedStaticStories } from '@/content/travel/static-stories';
 import { TravelContentRepository } from '@/server/content/repository';
 import { createJsonFileStore } from '@/server/content/store';
+import { migrateOnStartup } from '@/server/persistence/migrate';
+import { createPostgresContentStore } from '@/server/persistence/postgres-content-store';
+import { createPostgresPool } from '@/server/persistence/postgres-pool';
 
 // Adds the seven typed-seed stories (src/content/stories.ts) to an EXISTING content
 // store (ADR 0012 decision 7). Create-only per slug: a slug already in the store is
@@ -17,15 +20,26 @@ if (unknown.length > 0) {
 }
 
 const storePath = process.env.TRAVEL_CONTENT_STORE?.trim() || '.data/travel-content.json';
+// With CONTENT_DATABASE_URL set the app reads PostgreSQL, so this tops up that
+// store instead of the file (ADR 0013).
+const databaseUrl = process.env.CONTENT_DATABASE_URL?.trim();
+const pool = databaseUrl ? createPostgresPool(databaseUrl, { max: 1 }) : null;
 
 try {
-  const repository = new TravelContentRepository({ store: createJsonFileStore(storePath) });
+  if (pool) await migrateOnStartup(pool, undefined, 'Travel Content');
+  const repository = new TravelContentRepository({
+    store: pool ? createPostgresContentStore(pool) : createJsonFileStore(storePath),
+  });
   const result = await seedStaticStories(repository, { dryRun });
-  console.log(`${dryRun ? 'dry run, nothing written' : 'done'} (store: ${storePath})`);
+  console.log(
+    `${dryRun ? 'dry run, nothing written' : 'done'} (store: ${pool ? 'PostgreSQL' : storePath})`,
+  );
   console.log(`  ${dryRun ? 'would create' : 'created'} (${result.created.length}): ${result.created.join(', ') || '-'}`);
   console.log(`  skipped, already present (${result.skipped.length}): ${result.skipped.join(', ') || '-'}`);
+  await pool?.end();
   process.exit(0);
 } catch (error) {
   console.error(`content:seed-static failed: ${error instanceof Error ? error.message : 'unknown error'}`);
+  await pool?.end().catch(() => undefined);
   process.exit(1);
 }

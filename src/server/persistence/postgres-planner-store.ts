@@ -1,6 +1,7 @@
 import { ContentError } from '@/server/content/errors';
 import type { PlannerData, PlannerStore } from '@/server/planner/store';
-import { planStatements, rowsToData, TABLES } from './planner-rows';
+import type { DocumentStore } from './json-store';
+import { planStatements, rowsToData, TABLES, type TableSpec } from './planner-rows';
 
 /**
  * The Planner on PostgreSQL (ADR 0009). One file of parameterised SQL over the
@@ -50,7 +51,7 @@ const SQLSTATE = /^[0-9A-Z]{5}$/;
  *   -> 503 `service_unavailable`. The app never falls back to another store.
  * - any other SQLSTATE -> a generic error carrying only the five-character code.
  */
-export function translateDatabaseError(error: unknown): Error {
+export function translateDatabaseError(error: unknown, label = 'Planner'): Error {
   if (error instanceof ContentError) return error;
   const code =
     typeof error === 'object' && error !== null && 'code' in error
@@ -63,56 +64,83 @@ export function translateDatabaseError(error: unknown): Error {
   if (typeof code === 'string' && SQLSTATE.test(code)) {
     const family = code.slice(0, 2);
     if (['08', '28', '53', '57', '58'].includes(family) || code === '3D000') {
-      return unavailable();
+      return unavailable(label);
     }
-    return new Error(`planner database error (${code})`);
+    return new Error(`${label.toLowerCase()} database error (${code})`);
   }
-  return unavailable();
+  return unavailable(label);
 }
 
-function unavailable(): ContentError {
-  return new ContentError('service_unavailable', 'the Planner database is unavailable');
+function unavailable(label: string): ContentError {
+  return new ContentError('service_unavailable', `the ${label} database is unavailable`);
 }
 
-async function db<R>(task: () => Promise<R>): Promise<R> {
-  try {
-    return await task();
-  } catch (error) {
-    throw translateDatabaseError(error);
-  }
+/**
+ * What distinguishes one store from another (ADR 0013 §2). All of it is a
+ * constant chosen in code — a table list, a lock key, a revision table name —
+ * never a request value, so it is safe to put in SQL text.
+ */
+export interface TableStoreConfig {
+  tables: readonly TableSpec[];
+  lockKey: string;
+  revisionTable: string;
+  /** `Planner` or `Travel Content`: used in error text only. */
+  label: string;
 }
 
-interface Snapshot {
+/** Constant key of the Travel Content write lock. Arbitrary, but fixed forever. */
+export const CONTENT_LOCK_KEY = '8008003';
+
+interface Snapshot<T> {
   revision: string;
-  data: PlannerData;
-}
-
-const REVISION_QUERY = 'SELECT revision FROM planner_revision';
-
-async function loadRevision(client: PgClientLike): Promise<string> {
-  const result = await client.query(REVISION_QUERY);
-  const value = result.rows[0]?.revision;
-  if (value === undefined || value === null) {
-    throw new Error('planner_revision is empty — migration 0003 has not run');
-  }
-  return String(value);
-}
-
-async function loadAll(client: PgClientLike): Promise<PlannerData> {
-  const rowsByTable: Record<string, Record<string, unknown>[]> = {};
-  for (const spec of TABLES) {
-    // Identifiers are constants from `TABLES`; there is nothing to bind.
-    const result = await client.query(`SELECT * FROM "${spec.table}" ORDER BY "seq"`);
-    rowsByTable[spec.table] = result.rows;
-  }
-  return rowsToData(rowsByTable);
+  data: T;
 }
 
 export function createPostgresPlannerStore(pool: PgPoolLike): PlannerStore {
-  let cache: Snapshot | null = null;
+  return createPostgresTableStore<PlannerData>(pool, {
+    tables: TABLES,
+    lockKey: PLANNER_LOCK_KEY,
+    revisionTable: 'planner_revision',
+    label: 'Planner',
+  });
+}
+
+export function createPostgresTableStore<T extends object>(
+  pool: PgPoolLike,
+  config: TableStoreConfig,
+): DocumentStore<T> & { revision(): Promise<string> } {
+  const { tables, lockKey, revisionTable, label } = config;
+  const db = async <R>(task: () => Promise<R>): Promise<R> => {
+    try {
+      return await task();
+    } catch (error) {
+      throw translateDatabaseError(error, label);
+    }
+  };
+
+  async function loadRevision(client: PgClientLike): Promise<string> {
+    const result = await client.query(`SELECT revision FROM ${revisionTable}`);
+    const value = result.rows[0]?.revision;
+    if (value === undefined || value === null) {
+      throw new Error(`${revisionTable} is empty — its migration has not run`);
+    }
+    return String(value);
+  }
+
+  async function loadAll(client: PgClientLike): Promise<T> {
+    const rowsByTable: Record<string, Record<string, unknown>[]> = {};
+    for (const spec of tables) {
+      // Identifiers are constants from the table list; there is nothing to bind.
+      const result = await client.query(`SELECT * FROM "${spec.table}" ORDER BY "seq"`);
+      rowsByTable[spec.table] = result.rows;
+    }
+    return rowsToData<T>(rowsByTable, tables);
+  }
+
+  let cache: Snapshot<T> | null = null;
 
   /** Keep the newest snapshot; an older one from a racing request is ignored. */
-  function remember(snapshot: Snapshot): void {
+  function remember(snapshot: Snapshot<T>): void {
     if (cache === null || BigInt(snapshot.revision) >= BigInt(cache.revision)) cache = snapshot;
   }
 
@@ -130,7 +158,7 @@ export function createPostgresPlannerStore(pool: PgPoolLike): PlannerStore {
   }
 
   /** Cached data when the database is still at its revision, else a fresh load. */
-  async function currentSnapshot(client: PgClientLike): Promise<Snapshot> {
+  async function currentSnapshot(client: PgClientLike): Promise<Snapshot<T>> {
     const revision = await db(() => loadRevision(client));
     if (cache !== null && cache.revision === revision) return cache;
     const snapshot = { revision, data: await db(() => loadAll(client)) };
@@ -162,9 +190,9 @@ export function createPostgresPlannerStore(pool: PgPoolLike): PlannerStore {
       // A whole-document replace, kept for the interface: it is the same diff,
       // so it is atomic and takes the same lock.
       await this.transact((data) => {
-        for (const spec of TABLES) {
+        for (const spec of tables) {
           (data as unknown as Record<string, unknown>)[spec.collection] = structuredClone(
-            next[spec.collection],
+            (next as unknown as Record<string, unknown>)[spec.collection],
           );
         }
       });
@@ -174,7 +202,7 @@ export function createPostgresPlannerStore(pool: PgPoolLike): PlannerStore {
       return withClient(async (client) => {
         try {
           await db(() => client.query('BEGIN'));
-          await db(() => client.query('SELECT pg_advisory_xact_lock($1)', [PLANNER_LOCK_KEY]));
+          await db(() => client.query('SELECT pg_advisory_xact_lock($1)', [lockKey]));
           // Under the lock nobody else commits, so this is exactly the state
           // the diff below is taken against. It is never mutated: the
           // mutation runs on a clone.
@@ -185,13 +213,13 @@ export function createPostgresPlannerStore(pool: PgPoolLike): PlannerStore {
           // must reach the caller unchanged.
           const result = await mutate(working);
 
-          const statements = planStatements(before.data, working);
+          const statements = planStatements(before.data, working, tables);
           for (const statement of statements) {
             await db(() => client.query(statement.text, statement.values));
           }
           // A no-op leaves the data, and so the revision, alone.
           if (statements.length > 0) {
-            await db(() => client.query('UPDATE planner_revision SET revision = revision + 1'));
+            await db(() => client.query(`UPDATE ${revisionTable} SET revision = revision + 1`));
           }
           await db(() => client.query('COMMIT'));
           if (statements.length > 0) cache = null;
