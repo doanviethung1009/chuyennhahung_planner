@@ -150,7 +150,12 @@ The JSON store (`src/server/persistence/json-store.ts`) keeps the parsed documen
 in memory after the first read and replaces it only once a write has reached disk,
 so a read is a `structuredClone` rather than a file read plus `JSON.parse`. This
 rests on the same single-process rule: a hand-edit of the file while the server is
-running is not seen until restart (`tests/json-store.test.ts`).
+running is not seen until restart (`tests/json-store.test.ts`). It also counts its
+writes per file, process-wide, and reports the count as `revision()`: Next.js can load
+the repository module more than once (a page's bundle and a route handler's), and the
+share-token index each copy keeps is rebuilt when that count moves — without it a link
+created through the API answered 404 on the `/shared/[token]` page
+(`tests/planner-sharing.test.ts`).
 
 The Planner's PostgreSQL store ([ADR 0009](adr/0009-postgres-persistence.md))
 keeps the repository unchanged and moves the transaction into the store:
