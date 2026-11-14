@@ -78,18 +78,23 @@ export function MyTrips() {
 
   return (
     <div>
-      <div role="group" aria-label={t('tabsLabel')} className="flex flex-wrap gap-2">
-        {(['active', 'archived'] as const).map((key) => (
-          <button
-            key={key}
-            type="button"
-            aria-pressed={tab === key}
-            onClick={() => switchTab(key)}
-            className={buttonClass({ size: 'sm', variant: tab === key ? 'primary' : 'secondary' })}
-          >
-            {t(key === 'active' ? 'tabActive' : 'tabArchived')}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div role="group" aria-label={t('tabsLabel')} className="flex flex-wrap gap-2">
+          {(['active', 'archived'] as const).map((key) => (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={tab === key}
+              onClick={() => switchTab(key)}
+              className={buttonClass({ size: 'sm', variant: tab === key ? 'primary' : 'secondary' })}
+            >
+              {t(key === 'active' ? 'tabActive' : 'tabArchived')}
+            </button>
+          ))}
+        </div>
+        <Link href="/new-trip" className={buttonClass({ size: 'sm' })}>
+          {t('newTrip')}
+        </Link>
       </div>
 
       <p role="status" className="mt-4 min-h-6 text-sm text-foreground-muted">
@@ -104,9 +109,14 @@ export function MyTrips() {
         <div className="mt-4 rounded-xl border border-border-subtle bg-surface p-6">
           <p className="text-base text-foreground-muted">{tab === 'active' ? t('empty') : t('emptyArchived')}</p>
           {tab === 'active' ? (
-            <Link href="/stories" className={buttonClass({ size: 'md', className: 'mt-4' })}>
-              {t('emptyCta')}
-            </Link>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link href="/stories" className={buttonClass({ size: 'md' })}>
+                {t('emptyCta')}
+              </Link>
+              <Link href="/new-trip" className={buttonClass({ size: 'md', variant: 'secondary' })}>
+                {t('newTrip')}
+              </Link>
+            </div>
           ) : null}
         </div>
       ) : (

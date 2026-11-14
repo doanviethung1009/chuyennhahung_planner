@@ -77,6 +77,7 @@ trong [`src/i18n/routing.ts`](../src/i18n/routing.ts):
 | `/reviews` | `/goc-review` | `/en/reviews` |
 | `/about` | `/ve-nha-hung` | `/en/about` |
 | `/trip-setup/[template]` | `/tao-chuyen-di/[template]` | `/en/trip-setup/[template]` |
+| `/new-trip` | `/chuyen-di-moi` | `/en/new-trip` |
 | `/sign-in` | `/dang-nhap` | `/en/sign-in` |
 | `/account/password` | `/doi-mat-khau` | `/en/account/password` |
 | `/admin` | `/quan-tri` | `/en/admin` |
@@ -283,7 +284,7 @@ flowchart LR
   ([usage → Deploy](usage.vi.md#deploy)). `GET /api/health` là probe liveness của
   container và không đọc store nào.
 - **Trang riêng tư** (`/sign-in`, `/account/password`, `/my-trips`, `/my-trips/[id]`,
-  `/trip-setup/[template]`) là `noindex` và không có trong sitemap; `/shared/[token]` là
+  `/trip-setup/[template]`, `/new-trip`) là `noindex` và không có trong sitemap; `/shared/[token]` là
   `noindex` trừ khi trip là `public`, và gửi `Referrer-Policy: no-referrer`.
 - **Mọi response đều có security header** từ `next.config.ts` (`securityHeaders`):
   `X-Frame-Options: DENY` cùng CSP `frame-ancestors 'none'`, `base-uri`/`form-action

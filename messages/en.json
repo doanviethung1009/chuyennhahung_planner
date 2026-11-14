@@ -372,7 +372,8 @@
     "purgeConfirmLabel": "Confirm deleting {title}",
     "purgeYes": "Delete permanently",
     "purgeNo": "Keep it",
-    "purged": "Trip deleted permanently."
+    "purged": "Trip deleted permanently.",
+    "newTrip": "Start a new trip"
   },
   "tripDetail": {
     "metaTitle": "Trip details",
@@ -739,5 +740,36 @@
     "reviewPros": "What we liked",
     "reviewCons": "What we did not like",
     "costsLabel": "Costs"
+  },
+  "newTrip": {
+    "metaTitle": "Start a new trip",
+    "pageTitle": "Plan a trip from scratch",
+    "description": "Pick a destination and how many days; we set up the empty days for you to fill in. Want a ready-made itinerary? Start from a story instead.",
+    "title": "Trip name",
+    "destination": "Destination",
+    "destinationPlaceholder": "Choose a destination",
+    "durationDays": "Number of days",
+    "durationHint": "1 to 30 days. Nights are worked out from the days.",
+    "startDate": "Departure date",
+    "startDateHint": "No fixed date yet? You can add it later.",
+    "partySize": "Travellers",
+    "budget": "Whole-trip budget (VND)",
+    "budgetHint": "Leave it at 0 and adjust later if you like.",
+    "travelStyle": "Trip style",
+    "pace": "Pace",
+    "unset": "Not set",
+    "note": "Note to yourself",
+    "noteHint": "Only you can see this note.",
+    "save": "Create trip",
+    "saving": "Creating…",
+    "signInNote": "If you are not signed in you will be taken to sign-in, and what you typed is kept.",
+    "draftNote": "We restored the draft you left in this browser.",
+    "errorTitle": "The trip name needs 3 to 120 characters.",
+    "errorDestination": "Choose a destination.",
+    "errorDuration": "Days must be a whole number from 1 to 30.",
+    "errorPartySize": "Travellers must be a whole number from 1 to 50.",
+    "errorBudget": "The budget must be a whole, non-negative amount of dong.",
+    "errorValidation": "Some details are not valid. Check the name, date and note.",
+    "errorGeneric": "We could not create the trip. Your draft is still here, so please try again in a moment."
   }
 }

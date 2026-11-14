@@ -20,6 +20,7 @@ const KEEPS_QUERY: readonly AppPathname[] = [
   '/my-trips',
   '/my-trips/[id]',
   '/trip-setup/[template]',
+  '/new-trip',
   '/account/password',
   '/admin',
   '/admin/content/stories',

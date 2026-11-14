@@ -372,7 +372,8 @@
     "purgeConfirmLabel": "Xác nhận xoá {title}",
     "purgeYes": "Xoá vĩnh viễn",
     "purgeNo": "Giữ lại",
-    "purged": "Đã xoá vĩnh viễn chuyến đi."
+    "purged": "Đã xoá vĩnh viễn chuyến đi.",
+    "newTrip": "Tạo chuyến đi mới"
   },
   "tripDetail": {
     "metaTitle": "Chi tiết chuyến đi",
@@ -739,5 +740,36 @@
     "reviewPros": "Điểm chúng mình thích",
     "reviewCons": "Điểm chưa ổn",
     "costsLabel": "Chi phí"
+  },
+  "newTrip": {
+    "metaTitle": "Tạo chuyến đi mới",
+    "pageTitle": "Tạo chuyến đi từ đầu",
+    "description": "Chọn nơi đến và số ngày, chúng tôi dựng sẵn các ngày trống để bạn tự xếp lịch. Muốn có lịch trình mẫu thì hãy bắt đầu từ một câu chuyện.",
+    "title": "Tên chuyến đi",
+    "destination": "Điểm đến",
+    "destinationPlaceholder": "Chọn điểm đến",
+    "durationDays": "Số ngày",
+    "durationHint": "Từ 1 đến 30 ngày. Số đêm tự tính theo số ngày.",
+    "startDate": "Ngày khởi hành",
+    "startDateHint": "Chưa chốt ngày? Bạn có thể thêm sau.",
+    "partySize": "Số người đi",
+    "budget": "Ngân sách cả chuyến (VND)",
+    "budgetHint": "Có thể để 0 và chỉnh sau.",
+    "travelStyle": "Phong cách chuyến đi",
+    "pace": "Nhịp độ",
+    "unset": "Chưa chọn",
+    "note": "Ghi chú cho riêng bạn",
+    "noteHint": "Chỉ mình bạn thấy ghi chú này.",
+    "save": "Tạo chuyến đi",
+    "saving": "Đang tạo…",
+    "signInNote": "Nếu chưa đăng nhập, bạn sẽ được chuyển sang trang đăng nhập và những gì đã nhập vẫn được giữ lại.",
+    "draftNote": "Chúng tôi đã khôi phục bản nháp bạn để lại trên trình duyệt này.",
+    "errorTitle": "Tên chuyến đi cần từ 3 đến 120 ký tự.",
+    "errorDestination": "Hãy chọn một điểm đến.",
+    "errorDuration": "Số ngày phải là số nguyên từ 1 đến 30.",
+    "errorPartySize": "Số người phải là số nguyên từ 1 đến 50.",
+    "errorBudget": "Ngân sách phải là số đồng nguyên, không âm.",
+    "errorValidation": "Có thông tin chưa hợp lệ. Hãy kiểm tra tên, ngày và ghi chú.",
+    "errorGeneric": "Chưa tạo được chuyến đi. Bản nháp vẫn còn đây, bạn hãy thử lại sau ít phút."
   }
 }

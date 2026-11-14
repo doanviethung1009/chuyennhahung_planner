@@ -75,6 +75,7 @@ folders. The visible URL per locale is defined once, in
 | `/reviews` | `/goc-review` | `/en/reviews` |
 | `/about` | `/ve-nha-hung` | `/en/about` |
 | `/trip-setup/[template]` | `/tao-chuyen-di/[template]` | `/en/trip-setup/[template]` |
+| `/new-trip` | `/chuyen-di-moi` | `/en/new-trip` |
 | `/sign-in` | `/dang-nhap` | `/en/sign-in` |
 | `/account/password` | `/doi-mat-khau` | `/en/account/password` |
 | `/admin` | `/quan-tri` | `/en/admin` |
@@ -280,7 +281,7 @@ flowchart LR
   bind address there. The proxy must overwrite both forwarded headers
   ([usage → Deploy](usage.md#deploy)). `GET /api/health` is the container liveness
   probe and reads no store.
-- **Private pages** (`/sign-in`, `/account/password`, `/my-trips`, `/my-trips/[id]`, `/trip-setup/[template]`)
+- **Private pages** (`/sign-in`, `/account/password`, `/my-trips`, `/my-trips/[id]`, `/trip-setup/[template]`, `/new-trip`)
   are `noindex` and excluded from the sitemap; `/shared/[token]` is `noindex` unless
   the trip is `public`, and sends `Referrer-Policy: no-referrer`.
 - **Every response carries security headers** from `next.config.ts`
