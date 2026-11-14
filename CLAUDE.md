@@ -72,9 +72,11 @@ Documentation is not a fourth role — whoever ships the change writes its docum
    [ADR 0004](docs/adr/0004-planner-identity.md); password and Google sign-in —
    [ADR 0007](docs/adr/0007-password-and-google-sign-in.md)). `/plan-your-trip` is
    still contact-only. Not to be scaffolded without its own ADR: the Planner map,
-   AI suggestions, a **hosted identity provider** (or Auth.js), MFA, SQL for Travel Content. The
-   Planner already runs on PostgreSQL when `PLANNER_DATABASE_URL` is set
-   ([ADR 0009](docs/adr/0009-postgres-persistence.md)); otherwise a JSON file.
+   AI suggestions, a **hosted identity provider** (or Auth.js), MFA, foreign keys between content entities. The
+   Planner runs on PostgreSQL when `PLANNER_DATABASE_URL` is set
+   ([ADR 0009](docs/adr/0009-postgres-persistence.md)) and Travel Content when
+   `CONTENT_DATABASE_URL` is set ([ADR 0013](docs/adr/0013-content-on-postgres-tables.md));
+   otherwise a JSON file each.
 7. **Definition of done** is `typecheck`, `lint` and `test` passing *and the output
    stated*. Never write PASS for a check you did not run — write NOT RUN.
 8. Seed content is realistic; where it needs the owner's real data (handles, phones,

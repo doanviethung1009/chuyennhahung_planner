@@ -82,7 +82,7 @@ The owner opened the Planner backend phase and it shipped: `src/app/api/planner/
 | `PlannerRepository` sharing methods | `duplicateTrip`, `setVisibility`, `rotateShareToken`, `revokeShare`, `getSharedTrip(token): SharedTripView \| null` (allow-list projection), `describeSession`; catalog gains `getLinkedStory` (ADR 0005) |
 | `src/app/api/planner/[id]/{duplicate,share,share/rotate}`, `GET /api/planner/session`, `GET /api/shared/[token]` | Duplicate, share lifecycle, session probe, public read-only view (GET only, identical 404s, `rate_limited` 429 + `Retry-After`) |
 | `src/server/persistence/json-store.ts` | Shared JSON document store (memory + file); `DocumentStore.transact` |
-| `src/server/persistence/postgres-planner-store.ts`, `planner-rows.ts`, `postgres-pool.ts`, `migrate.ts`, `planner-transfer.ts` | ADR 0008/0009: the Planner's PostgreSQL store. Selected in `planner/instance.ts` **only when `PLANNER_DATABASE_URL` is set** (never falls back to the file); unset → `.data/planner.json`. Migrations in `db/migrations/*.sql` run at startup (`npm run db:migrate` by hand); `planner:import` / `planner:export` move data. See `docs/features/planner-postgres-persistence.md`. **Travel Content is still a JSON file** (`content/instance.ts`, `TRAVEL_CONTENT_STORE`) |
+| `src/server/persistence/postgres-planner-store.ts`, `planner-rows.ts`, `postgres-pool.ts`, `migrate.ts`, `planner-transfer.ts` | ADR 0008/0009: the Planner's PostgreSQL store. Selected in `planner/instance.ts` **only when `PLANNER_DATABASE_URL` is set** (never falls back to the file); unset → `.data/planner.json`. Migrations in `db/migrations/*.sql` run at startup (`npm run db:migrate` by hand); `planner:import` / `planner:export` move data. See `docs/features/planner-postgres-persistence.md`. ADR 0013: Travel Content uses the same engine (`content-rows.ts`, `postgres-content-store.ts`, `content-transfer.ts`) when **`CONTENT_DATABASE_URL`** is set — tables `content_*` from `db/migrations/0004_content.sql`, no FKs between content entities, `content:import` / `content:export`, seed under a lock; unset → JSON file (`TRAVEL_CONTENT_STORE`) |
 
 > **Two systems, one vocabulary — do not conflate them.** Travel Content is editorial
 > data owned by the brand with a single `ADMIN_API_TOKEN` principal; the Planner is
@@ -93,7 +93,7 @@ The owner opened the Planner backend phase and it shipped: `src/app/api/planner/
 > header, days, activities and expenses are editable on `/my-trips/[id]` over the
 > existing API, every write with `If-Match`. **Still absent, and not to be
 > scaffolded without an ADR:** the Planner map (`/plan-your-trip` is still the
-> contact-only content page), AI suggestions, a hosted identity provider / Auth.js, MFA, and SQL for Travel Content (the Planner is already on PostgreSQL, ADR 0009). See
+> contact-only content page), AI suggestions, a hosted identity provider / Auth.js, MFA, and foreign keys between content entities (both stores can already run on PostgreSQL, ADR 0009 / 0013). See
 > `docs/architecture.md#phases`.
 
 ## Other critical modules

@@ -135,6 +135,8 @@ export async function runMigrations(
 export async function migrateOnStartup(
   pool: PgPoolLike,
   directory: string = resolve(process.cwd(), 'db/migrations'),
+  /** `Planner` or `Travel Content`: only the wording of the log and the 503. */
+  label = 'Planner',
 ): Promise<MigrationReport> {
   try {
     return await runMigrations(pool, await readMigrationFiles(directory));
@@ -144,7 +146,9 @@ export async function migrateOnStartup(
         ? String((error as { code?: unknown }).code)
         : 'unknown';
     // The code only: a driver message can carry a host or a fragment of SQL.
-    console.error(`[planner] startup migration failed (${code}); run "npm run db:migrate" for detail`);
-    throw new ContentError('service_unavailable', 'the Planner database is unavailable');
+    console.error(
+      `[${label.toLowerCase()}] startup migration failed (${code}); run "npm run db:migrate" for detail`,
+    );
+    throw new ContentError('service_unavailable', `the ${label} database is unavailable`);
   }
 }

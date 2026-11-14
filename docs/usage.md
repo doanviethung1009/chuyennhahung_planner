@@ -30,8 +30,9 @@ closed.
 |---|---|---|
 | `NEXT_PUBLIC_SITE_URL` | `https://chuyennhahung.vn` | Canonicals, `hreflang`, sitemap. Must be set at **build** time |
 | `ADMIN_API_TOKEN` | *unset* | Guards every admin route. Unset, or shorter than 32 chars, and they all answer `503` — never an open default |
-| `TRAVEL_CONTENT_STORE` | `.data/travel-content.json` | Where the content store lives |
-| `TRAVEL_CONTENT_AUTOSEED` | `true` | Set `false` to skip seeding demo content on first use |
+| `TRAVEL_CONTENT_STORE` | `.data/travel-content.json` | Where the content store lives. Ignored when `CONTENT_DATABASE_URL` is set |
+| `CONTENT_DATABASE_URL` | *unset* | PostgreSQL connection string for Travel Content. Set: the content store uses PostgreSQL and never falls back to the file ([ADR 0013](adr/0013-content-on-postgres-tables.md)). May be the Planner's database or its own. A secret — environment only. See *Run Travel Content on PostgreSQL* |
+| `TRAVEL_CONTENT_AUTOSEED` | `true` | Set `false` to skip seeding demo content on first use. In production with PostgreSQL, import your real content and set `false` |
 | `PUBLIC_CONTENT_SOURCE` | `repository` | Read on every call (a restart, not a rebuild). `repository`: public Travel content comes from the content store; `static`: from `src/content/stories.ts` (rollback). Any other value means `repository`. Applies to the home page, `/stories`, story pages, destination pages and the sitemap ([ADR 0012](adr/0012-public-travel-from-content-repository.md)) |
 | `PLANNER_STORE` | `.data/planner.json` | Where Planner trips live. Separate file from the content store by design. Ignored when `PLANNER_DATABASE_URL` is set |
 | `PLANNER_DATABASE_URL` | *unset* | PostgreSQL connection string. Set: the Planner uses PostgreSQL and never falls back to the file ([ADR 0009](adr/0009-postgres-persistence.md)). A secret — environment only. See *Run the Planner on PostgreSQL* |
@@ -66,7 +67,9 @@ Override deliberately with `--no-verify` if you ever really mean it.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint, flat config |
 | `npm run test` | Vitest, run-once |
-| `npm run db:migrate` | Applies `db/migrations/*.sql` to `PLANNER_DATABASE_URL`; idempotent. Optional: the app runs the same code at startup |
+| `npm run db:migrate` | Applies `db/migrations/*.sql` to `PLANNER_DATABASE_URL` and to `CONTENT_DATABASE_URL` (each one that is set); idempotent. Optional: the app runs the same code at startup |
+| `npm run content:import -- <file>` | Loads a `travel-content.json` into empty PostgreSQL content tables, validated, in one transaction |
+| `npm run content:export -- <file>` | Writes the PostgreSQL content out as a `travel-content.json` (backup and rollback) |
 | `npm run planner:import -- <file>` | Loads a `planner.json` into an empty PostgreSQL Planner, validated, in one transaction |
 | `npm run planner:export -- <file>` | Writes the PostgreSQL Planner out as a `planner.json` (backup and rollback) |
 | `npm run verify:ui` | Screenshots 13 routes at 375/768/1440 into `screenshots/`, fails on horizontal overflow |
@@ -470,6 +473,46 @@ database (never one with real data). `npm run test` then also runs
 and drops. Without the variable that file is skipped, and the run should be
 reported as **not run**, not as passing.
 
+### Run Travel Content on PostgreSQL
+
+With `CONTENT_DATABASE_URL` set, the stories, places, collections, reviews and
+templates live in PostgreSQL ([ADR 0013](adr/0013-content-on-postgres-tables.md));
+without it nothing changes — the JSON file in development, the memory store in
+tests. When it is set the app **never falls back** to the file: if the database is
+down, the admin content API and every public page that reads content answer `503`.
+This is what lets the app run as more than one instance (the rate limiter still
+cannot, see the deploy section).
+
+**Database and role.** Use the dedicated role and the connection rules of *Run the
+Planner on PostgreSQL* (TLS `verify-full` across a network, percent-encoded password,
+least privilege). `CONTENT_DATABASE_URL` may point at the Planner's database, or at a
+database of its own (`cnh_content`) if you want a separate backup and blast radius.
+Either way each store runs the whole `db/migrations` set on its database, so the
+tables of the other store may exist there, empty.
+
+**Moving existing content in.** Stop writes first, then:
+
+```bash
+CONTENT_DATABASE_URL='postgres://…' npm run db:migrate
+CONTENT_DATABASE_URL='postgres://…' npm run content:import -- .data/travel-content.json
+```
+
+The import validates the file with the repository's own schemas, runs the integrity
+check, refuses non-empty tables, and inserts in one transaction. Then start the app
+with `CONTENT_DATABASE_URL` set, and `TRAVEL_CONTENT_AUTOSEED=false` so demo content
+is never seeded next to the real content. On a *fresh* database the app seeds the
+demo content once, under a lock. `npm run content:seed-static` tops up the seven
+static stories in whichever store the environment selects.
+
+**Backups and rollback.** `pg_dump --format=custom "$CONTENT_DATABASE_URL" > content.dump`
+and `npm run content:export -- content-$(date +%F).json` (mode `0600`: it holds
+unpublished drafts). To roll back, unset `CONTENT_DATABASE_URL`, point
+`TRAVEL_CONTENT_STORE` at the exported file and restart; writes made after the last
+export are lost, so export first. `db/rollback/0004_content.sql` drops the tables.
+
+**Tests against a real database.** `TEST_DATABASE_URL` (a scratch database) also
+enables `tests/content-postgres.integration.test.ts`, in a throwaway schema.
+
 ### Add a user-visible string
 
 Add the key to **both** `messages/vi.json` and `messages/en.json`, then read it
@@ -638,9 +681,11 @@ the URL.
 
 #### One replica, small host
 
-Run **exactly one** `app` replica, in either layout. The Travel content store is
-still a JSON file on the volume and the rate limiters live in process memory
-(ADR 0008 step 1 for content is not built); a second replica would split both.
+Run **exactly one** `app` replica unless both `PLANNER_DATABASE_URL` and
+`CONTENT_DATABASE_URL` are set, and even then the rate limiters live in process
+memory, so a second replica multiplies the allowed rate. Without `CONTENT_DATABASE_URL`
+the Travel content store is a JSON file on the volume ([ADR 0013](adr/0013-content-on-postgres-tables.md)),
+and a second replica would split it.
 On a small host (2 GB RAM) `next build` is the memory peak — keep swap on, or
 build on another machine and move the image with `docker save | docker load`.
 
@@ -673,6 +718,7 @@ accepts the `NEXT_PUBLIC_SITE_URL` origin. Set it to the exact public origin.
 | `require() of ES Module` from `@tailwindcss/node` | Running on a Node older than `.nvmrc` — run `nvm use` |
 | `npm warn EBADENGINE` on install | Same cause: a Node older than `.nvmrc`. Run `nvm use`, then `npm ci` |
 | `npm warn install-scripts … not yet covered by allowScripts` | A dependency with an install script is new, or an approved one changed version — approvals in `package.json` `allowScripts` are pinned to `pkg@version`. Check the package is the one you expect, then `npm install-scripts approve <pkg>` and commit the `package.json` change. Note that `--dry-run` writes anyway on npm 11.19 |
+| Content API or public story pages answer `503 service_unavailable` | `CONTENT_DATABASE_URL` is set and the database is unreachable or refused the login — same checks as the Planner row below; the app does not fall back to the file |
 | Planner routes answer `503 service_unavailable` | `PLANNER_DATABASE_URL` is set and the database is unreachable or refused the login — check the host, the role and run `npm run db:migrate` to see why the startup migration failed. The app deliberately does not fall back to the JSON file |
 | `relation "trips" does not exist` | The startup migration did not complete for that database — run `npm run db:migrate` and read its message |
 | `/quan-tri` answers 404 for a signed-in user | By design: the account is not `admin`. Promote it with the service token; the role is read on every request |

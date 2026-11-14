@@ -19,12 +19,14 @@ and budgeting — while the Planner *UI* is still a later phase; see
 | Styling | Tailwind v4, CSS-first `@theme` tokens | [`src/app/globals.css`](../src/app/globals.css) |
 | Content | Stories, places and reviews: content repository via `getPublicContent()`; destinations, itineraries, video reviews: typed TypeScript in `src/content/` | [`src/content/`](../src/content) |
 | Tests | Vitest 3 on Node 24 (4/5 now possible, not yet upgraded) | [`tests/`](../tests) |
-| Persistence | Planner: PostgreSQL when `PLANNER_DATABASE_URL` is set ([ADR 0009](adr/0009-postgres-persistence.md)), else a JSON file; Travel content: JSON file | [`src/server/persistence/`](../src/server/persistence) |
+| Persistence | Planner: PostgreSQL when `PLANNER_DATABASE_URL` is set ([ADR 0009](adr/0009-postgres-persistence.md)), else a JSON file; Travel content: PostgreSQL when `CONTENT_DATABASE_URL` is set ([ADR 0013](adr/0013-content-on-postgres-tables.md)), else a JSON file | [`src/server/persistence/`](../src/server/persistence) |
 
 Public pages that show Travel content (home, stories, destination detail, sitemap) are rendered per request from the content repository through one server-only read module, `getPublicContent()` in `src/server/content/public.ts` ([ADR 0012](adr/0012-public-travel-from-content-repository.md)), so a published CMS edit is visible on the next request. The other public pages (`/about`, itineraries, video reviews, `/map`) stay static artefacts built from typed content in the repository. The API side — the Travel Content System and the Planner — runs
-on the Node server, and in production the Planner also needs PostgreSQL
-([ADR 0009](adr/0009-postgres-persistence.md)); without `PLANNER_DATABASE_URL` it falls
-back, by configuration only, to a JSON file for local development.
+on the Node server, and in production both stores need PostgreSQL
+([ADR 0009](adr/0009-postgres-persistence.md),
+[ADR 0013](adr/0013-content-on-postgres-tables.md)); without `PLANNER_DATABASE_URL` or
+`CONTENT_DATABASE_URL` the matching store falls back, by configuration only, to a JSON
+file for local development.
 
 ## Request path
 
@@ -138,7 +140,7 @@ and backup profiles.
 
 | Store | File | Holds | Contract |
 |---|---|---|---|
-| Travel content | `.data/travel-content.json` (`TRAVEL_CONTENT_STORE`) | places, stories, collections, reviews, templates | [travel-content-api.md](travel-content-api.md) |
+| Travel content | PostgreSQL (`CONTENT_DATABASE_URL`, tables `content_*`), else `.data/travel-content.json` (`TRAVEL_CONTENT_STORE`) | places, stories, collections, reviews, templates | [travel-content-api.md](travel-content-api.md) |
 | Planner | PostgreSQL (`PLANNER_DATABASE_URL`), else `.data/planner.json` (`PLANNER_STORE`) | planner users, browser sessions, trips, trip days, trip activities, trip expenses | [features/travel-planner-core.md](features/travel-planner-core.md) |
 
 Money in both is an integer count of đồng, capped at 10^12 — never a float,
@@ -166,6 +168,16 @@ database answers `503` — it never falls back to the JSON file. Schema changes
 are numbered SQL migrations in `db/migrations/`, applied at startup under a
 session advisory lock (ADR 0008 §7), or by hand with `npm run db:migrate`.
 
+The Travel content store ([ADR 0013](adr/0013-content-on-postgres-tables.md)) is the
+same engine with another table list: `content_places`, `content_stories`,
+`content_collections`, `content_reviews`, `content_templates` and its own
+`content_revision` counter and write lock. `ContentRepository` and the 26
+handlers are unchanged. Scalars are columns (with `CHECK`s for the enums), structure
+such as localised text and story blocks is `jsonb`, slug lists are `text[]`, and
+there are no foreign keys between content entities yet. `CONTENT_DATABASE_URL` set
+means Postgres, never a fallback; the first request runs the migrations and seeds
+under a lock. It may point at the Planner's database or its own.
+
 ## Module boundaries
 
 The dependency direction is one-way. Nothing below reaches upward.
@@ -183,7 +195,7 @@ app/api/**           route handlers: parse, authorize, map errors to status
    ↓
 server/content/** · server/planner/**    repositories: all invariants
    ↓
-server/persistence/**                    document store: JSON (atomic write + queue) · PostgreSQL (Planner)
+server/persistence/**                    document store: JSON (atomic write + queue) · PostgreSQL (Planner, Travel content)
 ```
 
 The API side is a second, parallel stack and the two meet in one place only: the
@@ -343,9 +355,13 @@ Deliberately absent, and not to be scaffolded early:
 - **SQL.** The path is decided in
   [ADR 0008](adr/0008-postgres-document-store.md): documents move into Postgres as
   JSONB rows first, normalised tables second. For the Planner, step 2 is built
-  directly by [ADR 0009](adr/0009-postgres-persistence.md). Still open: the Travel
-  content store and the shared rate-limit store (ADR 0008, not built yet), and
-  per-method SQL queries once loading the whole Planner per request becomes slow.
+  directly by [ADR 0009](adr/0009-postgres-persistence.md), and the Travel content
+  store follows the same normalised-table route
+  ([ADR 0013](adr/0013-content-on-postgres-tables.md): one table per collection, one
+  table engine shared with the Planner, no foreign keys between content entities yet).
+  Still open: the shared rate-limit store (ADR 0008, not built yet), foreign keys and a
+  "still referenced" rule for content, and per-method SQL queries once loading a whole
+  store per revision change becomes slow.
 - **Phase 07 — Admin Portal, CMS & RBAC (in progress: slices 1 and 2 shipped).** Slice 2 — browser editing of stories, places and reviews — is built ([ADR 0011](adr/0011-admin-content-cms.md), [features/admin-content-cms.md](features/admin-content-cms.md)). Public pages now read the content repository ([ADR 0012](adr/0012-public-travel-from-content-repository.md)), so a published CMS edit appears on the public site. Still open after slice 2: audit log; templates, collections, create and delete in the browser; editor sign-out on the overview; MFA; HTTPS. Slice 1 — the
   browser user-administration portal — is built ([ADR 0010](adr/0010-admin-portal-session-authorization.md),
   [features/admin-portal.md](features/admin-portal.md)). Everything else below is not
@@ -357,7 +373,7 @@ Deliberately absent, and not to be scaffolded early:
   - **Role model** — `member` / `editor` / `admin` on the one user model, a pure `can(identity, action, resource)`, `ADMIN_API_TOKEN` demoted to a service principal. Enforced for user administration since slice 1; `editor` has no screen yet.
   - **Admin session and CSRF hardening** — done in slice 1 (shorter lifetimes per role; `requireSameOrigin` becomes load-bearing for admin mutations; the token never reaches a Client Component (`tests/client-boundary.test.ts`)); MFA still open.
   - **Audit log** — who changed which template or role, and any support read of a trip.
-  - **SQL and multi-instance** — the admin portal makes a second writer to the stores likely; the Planner is on PostgreSQL ([ADR 0009](adr/0009-postgres-persistence.md)), but the content JSON store and the per-process rate limiter still do not survive more than one instance.
+  - **SQL and multi-instance** — the admin portal makes a second writer to the stores likely; both stores can be on PostgreSQL ([ADR 0009](adr/0009-postgres-persistence.md), [ADR 0013](adr/0013-content-on-postgres-tables.md)), but the per-process rate limiter still does not survive more than one instance.
   - **Rate-limit store** — admin sign-in throttling needs a shared store once there is more than one process.
   - **CMS editing of templates** — through the content store only; versioning prior template revisions versus relying on cloned snapshots is undecided (clones are already independent, so history is optional).
   - **Template/trip boundary** — templates in the content store, trips in the planner store, linked only by the `sourceTemplate` value copy.
