@@ -2201,6 +2201,9 @@ function buildSharedView(view: TripView, visibility: 'unlisted' | 'public'): Sha
       currency: 'VND',
       targetTotalVnd: trip.budget.targetTotalVnd,
       estimatedTotalVnd: view.budget.estimatedTotalVnd,
+      projectedTotalVnd: view.budget.projectedTotalVnd,
+      overrunVnd: view.budget.overrunVnd,
+      overrunPerPersonVnd: view.budget.perPerson.overrunVnd,
     },
     attribution: trip.sourceTemplate
       ? {

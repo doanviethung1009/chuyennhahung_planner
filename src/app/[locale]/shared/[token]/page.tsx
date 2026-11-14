@@ -125,7 +125,33 @@ export default async function SharedTripPage({ params }: Params) {
                 <dt className="text-sm text-foreground-muted">{t('budgetEstimated')}</dt>
                 <dd className="mt-0.5 text-base">{formatVnd(trip.budget.estimatedTotalVnd, locale)}</dd>
               </div>
+              <div>
+                <dt className="text-sm text-foreground-muted">{t('budgetProjected')}</dt>
+                <dd className="mt-0.5 text-base">{formatVnd(trip.budget.projectedTotalVnd, locale)}</dd>
+              </div>
             </dl>
+            {trip.budget.targetTotalVnd ? (
+              trip.budget.overrunVnd > 0 ? (
+                <div className="mt-5 rounded-xl border border-border-subtle bg-surface p-4">
+                  <h3 className="text-base font-semibold text-primary-strong">{t('overrunHeading')}</h3>
+                  <dl className="mt-2 grid gap-x-8 gap-y-3 sm:grid-cols-2">
+                    <div>
+                      <dt className="text-sm text-foreground-muted">{t('overrunTotal')}</dt>
+                      <dd className="mt-0.5 text-base font-medium">{formatVnd(trip.budget.overrunVnd, locale)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm text-foreground-muted">{t('overrunPerPerson')}</dt>
+                      <dd className="mt-0.5 text-base font-medium">
+                        {formatVnd(trip.budget.overrunPerPersonVnd, locale)}
+                      </dd>
+                    </div>
+                  </dl>
+                  <p className="mt-2 text-sm text-foreground-muted">{t('overrunNote', { count: trip.partySize })}</p>
+                </div>
+              ) : (
+                <p className="mt-5 text-base text-foreground-muted">{t('withinBudget')}</p>
+              )
+            ) : null}
           </section>
 
           {story ? (
