@@ -117,6 +117,13 @@ export function TripDetail({ id }: { id: string }) {
               <Row label={t('budgetTarget')} value={formatVnd(budget.targetTotalVnd, locale)} />
               <Row label={t('budgetEstimated')} value={formatVnd(budget.estimatedTotalVnd, locale)} />
               <Row label={t('budgetActual')} value={formatVnd(budget.actualTotalVnd, locale)} />
+              <Row label={t('budgetProjected')} value={formatVnd(budget.projectedTotalVnd, locale)} />
+              {budget.overrunVnd > 0 ? (
+                <>
+                  <Row label={t('overrunTotal')} value={formatVnd(budget.overrunVnd, locale)} />
+                  <Row label={t('overrunPerPerson')} value={formatVnd(budget.perPerson.overrunVnd, locale)} />
+                </>
+              ) : null}
               {trip.travelStyle ? <Row label={t('travelStyle')} value={tStyle(trip.travelStyle)} /> : null}
               {trip.pace ? <Row label={t('pace')} value={tPace(trip.pace)} /> : null}
               {trip.note ? <Row label={t('note')} value={trip.note} /> : null}

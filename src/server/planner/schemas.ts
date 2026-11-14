@@ -630,7 +630,17 @@ export interface SharedTripView {
       note: string | null;
     }>;
   }>;
-  budget: { currency: 'VND'; targetTotalVnd: number | null; estimatedTotalVnd: number };
+  budget: {
+    currency: 'VND';
+    targetTotalVnd: number | null;
+    estimatedTotalVnd: number;
+    /** Paid + the estimate of what is not yet paid. A total only — no expense row. */
+    projectedTotalVnd: number;
+    /** Projection above the target; 0 when it fits or no target is set. */
+    overrunVnd: number;
+    /** Each traveller's share of the overrun, rounded up. */
+    overrunPerPersonVnd: number;
+  };
   attribution: {
     templateTitle: TripTemplateSnapshot['title'];
     story: { slug: string; title: TripTemplateSnapshot['title'] } | null;
