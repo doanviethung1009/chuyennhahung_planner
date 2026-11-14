@@ -1417,6 +1417,17 @@ export class PlannerRepository {
           { path: 'placeSlug', message: `place "${input.placeSlug}" does not exist` },
         ]);
       }
+      // Enforced on create only: a place never changes afterwards (the PATCH
+      // schema omits `placeSlug`), and template clones and imports copy rows
+      // that already exist, so legacy data must stay loadable and editable.
+      if (place && place.destinationSlug !== trip.destinationSlug) {
+        throw invalidReference([
+          {
+            path: 'placeSlug',
+            message: `place "${place.slug}" belongs to destination "${place.destinationSlug}", not "${trip.destinationSlug}"`,
+          },
+        ]);
+      }
 
       const siblings = sortedActivities(data, day.id);
       if (siblings.length >= ACTIVITIES_PER_DAY_LIMIT) {
