@@ -107,6 +107,62 @@ merge — vẫn phải có người xem.
 4. Điểm đến còn cần `coords` WGS84 thật; bản đồ chiếu theo toạ độ đó, sai một con
    số là có một cái ghim trông rất thật nằm sai chỗ.
 
+### Tài khoản và mật khẩu — tóm tắt
+
+Đọc mục này trước nếu bạn chưa rõ đăng nhập thế nào, hoặc bị mất quyền truy cập.
+
+**Ai đăng nhập, bằng gì**
+
+| Vai trò | Làm được gì | Đăng nhập bằng |
+|---|---|---|
+| `member` | Các trip Planner của chính mình | Email + mật khẩu, hoặc Google |
+| `editor` | Nội dung du lịch ở `/quan-tri` | Email + mật khẩu, hoặc Google |
+| `admin` | Nội dung **và** người dùng ở `/quan-tri` | Email + mật khẩu, hoặc Google |
+
+Tài khoản là `member` trừ khi được tạo với vai trò khác (`admin:create` tạo ra `admin`). Chỉ admin (ở `/quan-tri`) hoặc service token mới nâng được ai đó lên `editor` hay `admin`; Google không bao giờ cấp vai trò.
+
+**Các loại bí mật, và mất thì làm gì**
+
+| Bí mật | Là gì | Nằm ở đâu | Bị mất? |
+|---|---|---|---|
+| Mật khẩu của bạn | Thứ bạn gõ ở `/dang-nhap` | Chỉ có bản băm trong store; không ai đọc lại được | Xin một mật khẩu tạm mới — xem bảng bên dưới |
+| Mật khẩu tạm | In ra **một lần** bởi `admin:create`, *Tạo người dùng* hoặc *Đặt lại mật khẩu* | Chỉ trên màn hình của bạn, tới khi bạn đổi | Xin reset lần nữa |
+| Liên kết Google | Đăng nhập bằng tài khoản Google, không cần mật khẩu | Do bạn bật ở `/doi-mat-khau` | Đăng nhập bằng mật khẩu rồi liên kết lại |
+| Service token `ADMIN_API_TOKEN` | Khoá vận hành dùng với `curl`, **không** phải tài khoản | `.env.local` (dev) hoặc `.env` trên server | Đặt giá trị mới rồi khởi động lại app — không gì khác phụ thuộc vào nó |
+| Access token Planner | Khoá API của một người đi chơi | Hiện một lần khi tạo | `rotate-token` cấp token mới |
+
+**Admin đầu tiên, từ con số không tới trang quản trị**
+
+```mermaid
+flowchart LR
+  A["npm run admin:create<br/>--email ban@example.com"] --> B["Mật khẩu tạm<br/>in ra một lần"]
+  B --> C["/dang-nhap<br/>email + mật khẩu tạm"]
+  C --> D["/doi-mat-khau<br/>đặt mật khẩu của bạn"]
+  D --> E["/quan-tri"]
+  D -.-> F["Liên kết Google<br/>(nên làm)"]
+```
+
+Vào được rồi thì liên kết Google ngay: đó là đường thứ hai để vào lại nếu quên mật khẩu.
+
+**Mất quyền truy cập — làm gì**
+
+| Tình huống | Làm thế này |
+|---|---|
+| Tài khoản Google đã liên kết | Đăng nhập bằng Google; không cần gì thêm |
+| Quên mật khẩu và **còn admin khác** | Người đó mở `/quan-tri` → *Đặt lại mật khẩu* ở dòng của bạn rồi đưa bạn mật khẩu tạm mới. Admin không tự reset cho mình được |
+| Quên mật khẩu, bạn là **admin duy nhất**, app đang chạy | Reset bằng service token (bên dưới) |
+| Không còn admin khác, và không biết token hoặc app không chạy | Tạo admin thứ hai bằng `npm run admin:create -- --email <email khác>`, đăng nhập bằng nó, rồi reset tài khoản cũ ở `/quan-tri` |
+| `admin:create` báo *an account with that email or handle already exists* | Email đó đã có tài khoản: dùng một trong các dòng trên, hoặc `admin:create` với email khác |
+| Đăng nhập được nhưng `/quan-tri` trả 404 | Tài khoản không phải `admin` hay `editor`; một admin đổi vai trò cho nó |
+
+Reset bằng service token, một dòng. Lệnh đọc token từ `.env.local`, tìm tài khoản theo email và in ra mật khẩu tạm mới. Sửa email, chạy **từ thư mục app đang chạy**, trong lúc app đang chạy:
+
+```bash
+cd <thư mục app đang chạy> && export ADMIN_API_TOKEN="$(grep '^ADMIN_API_TOKEN=' .env.local | cut -d= -f2- | sed -e "s/^[\"']//" -e "s/[\"']$//")" && USER_ID="$(curl -s http://localhost:3000/api/admin/planner/users -H "authorization: Bearer $ADMIN_API_TOKEN" | jq -r '.. | objects | select(.email? == "ban@example.com") | .id' | head -1)" && echo "userId: ${USER_ID:-KHÔNG TÌM THẤY}" && [ -n "$USER_ID" ] && curl -s -X POST "http://localhost:3000/api/admin/planner/users/$USER_ID/reset-password" -H "authorization: Bearer $ADMIN_API_TOKEN"
+```
+
+**Chạy lệnh tài khoản từ thư mục app đang chạy.** Khi không có `PLANNER_DATABASE_URL`, tài khoản nằm ở `.data/planner.json` *tính từ thư mục hiện tại*, nên một lệnh chạy từ bản checkout khác (ví dụ một git worktree) sẽ đọc và ghi một bộ tài khoản khác. Có `PLANNER_DATABASE_URL` thì mọi thư mục đều thấy cùng một database.
+
 ### Cấp tài khoản cho một người đi chơi trong Planner
 
 Tài khoản nhân viên do người vận hành cấp; access token chỉ hiện ra **một lần**
@@ -235,7 +291,7 @@ curl -s -X POST http://localhost:3000/api/admin/planner/users \
 
 Trên VM dev chạy HTTP thuần qua IP: `NEXT_PUBLIC_SITE_URL` phải đúng origin `http://<ip>` và được nướng vào lúc build, nếu không mutation admin bị từ chối. Cookie không có `Secure` qua HTTP nên mật khẩu và cookie admin đi dạng rõ: chỉ dùng trong LAN, và chuyển sang HTTPS trước khi có người dùng thật.
 
-Khôi phục: nếu admin duy nhất bị khoá, dùng service token để reset mật khẩu (`POST .../users/<userId>/reset-password`) hoặc nâng quyền người khác (`PATCH .../users/<userId>` với `{"role":"admin"}`).
+Khôi phục: nếu mất quyền truy cập, xem mục *Tài khoản và mật khẩu — tóm tắt* ở trên — có đủ trường hợp quên mật khẩu, admin duy nhất bị khoá, và `admin:create` từ chối email đã có.
 
 ### Cấu hình đăng nhập Google
 

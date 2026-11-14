@@ -106,6 +106,62 @@ not stop a merge — a human still has to look.
 4. A destination also needs real WGS84 `coords`; the map projects them and a
    wrong value puts a truthful-looking pin in the wrong place.
 
+### Accounts and passwords at a glance
+
+Read this first if you are unsure how to sign in, or you lost access.
+
+**Who signs in, and with what**
+
+| Role | Can do | Signs in with |
+|---|---|---|
+| `member` | Their own Planner trips | Email + password, or Google |
+| `editor` | Travel content at `/quan-tri` | Email + password, or Google |
+| `admin` | Content **and** users at `/quan-tri` | Email + password, or Google |
+
+An account is a `member` unless it was created with another role (`admin:create` makes an `admin`). Only an admin (in `/quan-tri`) or the service token can make someone `editor` or `admin`; Google never grants a role.
+
+**The secrets, and what to do if one is lost**
+
+| Secret | What it is | Where it lives | Lost it? |
+|---|---|---|---|
+| Your password | What you type at `/dang-nhap` | Only a hash in the store; nobody can read it back | Get a new temporary one — see the table below |
+| Temporary password | Printed **once** by `admin:create`, by *Create user* or by *Reset password* | Only on your screen, until you change it | Ask for another reset |
+| Google link | Signs you in with your Google account, no password | Set by you on `/doi-mat-khau` | Sign in with your password and link again |
+| Service token `ADMIN_API_TOKEN` | An operator key for `curl`, **not** an account | `.env.local` (dev) or the server `.env` | Set a new value and restart the app — nothing else depends on it |
+| Planner access token | A traveller's key for the API | Shown once on creation | `rotate-token` issues a new one |
+
+**The first admin, from nothing to the portal**
+
+```mermaid
+flowchart LR
+  A["npm run admin:create<br/>--email you@example.com"] --> B["Temporary password<br/>printed once"]
+  B --> C["/dang-nhap<br/>email + temporary password"]
+  C --> D["/doi-mat-khau<br/>choose your own password"]
+  D --> E["/quan-tri"]
+  D -.-> F["Link Google<br/>(recommended)"]
+```
+
+Link Google as soon as you are in: it gives you a second way back if you forget the password.
+
+**Lost access — what to do**
+
+| Situation | Do this |
+|---|---|
+| Your Google account is linked | Sign in with Google; nothing else is needed |
+| You forgot the password and **another admin** exists | They open `/quan-tri` → *Reset password* on your row and give you the new temporary password. An admin cannot reset their own |
+| You forgot the password, you are the **only admin**, the app is running | Reset it with the service token (below) |
+| No other admin, and the token is unknown or the app is down | Make a second admin with `npm run admin:create -- --email <another email>`, sign in with it, then reset the old account from `/quan-tri` |
+| `admin:create` says *an account with that email or handle already exists* | That email already has an account: use one of the rows above, or `admin:create` with another email |
+| You sign in but `/quan-tri` answers 404 | The account is not `admin` or `editor`; an admin changes its role |
+
+Reset with the service token, in one line. It reads the token from `.env.local`, finds the account by email and prints a new temporary password. Change the email, run it **from the folder the app runs from**, while the app is running:
+
+```bash
+cd <the folder the app runs from> && export ADMIN_API_TOKEN="$(grep '^ADMIN_API_TOKEN=' .env.local | cut -d= -f2- | sed -e "s/^[\"']//" -e "s/[\"']$//")" && USER_ID="$(curl -s http://localhost:3000/api/admin/planner/users -H "authorization: Bearer $ADMIN_API_TOKEN" | jq -r '.. | objects | select(.email? == "you@example.com") | .id' | head -1)" && echo "userId: ${USER_ID:-NOT FOUND}" && [ -n "$USER_ID" ] && curl -s -X POST "http://localhost:3000/api/admin/planner/users/$USER_ID/reset-password" -H "authorization: Bearer $ADMIN_API_TOKEN"
+```
+
+**Run account commands from the folder the app runs from.** Without `PLANNER_DATABASE_URL`, accounts live in `.data/planner.json` *relative to the current folder*, so a command run from another checkout (a git worktree, say) reads and writes a different set of accounts. With `PLANNER_DATABASE_URL` every folder sees the same database.
+
 ### Provision a Planner traveller
 
 Staff accounts are provisioned by an operator; the access token is shown
@@ -234,7 +290,7 @@ curl -s -X POST http://localhost:3000/api/admin/planner/users \
 
 On the dev VM over plain HTTP on its IP: `NEXT_PUBLIC_SITE_URL` must be the exact `http://<ip>` origin and is baked at build time, or admin mutations are refused. Cookies are not `Secure` over HTTP, so the admin password and cookie travel in clear text: LAN only, and switch to HTTPS before real users.
 
-Recovery: if the only admin is locked out, use the service token to reset the password (`POST .../users/<userId>/reset-password`) or to promote another user (`PATCH .../users/<userId>` with `{"role":"admin"}`).
+Recovery: if you lost access, see *Accounts and passwords at a glance* above — it covers a forgotten password, the only admin locked out, and `admin:create` refusing an existing email.
 
 ### Set up Google sign-in
 
