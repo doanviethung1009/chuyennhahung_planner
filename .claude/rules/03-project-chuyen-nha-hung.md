@@ -22,7 +22,7 @@ Verified stack facts, the module map and the real test list:
 | Styling | Tailwind CSS v4 — CSS-first `@theme` tokens in `src/app/globals.css` |
 | i18n | `next-intl` 4, VI default unprefixed, EN at `/en`, localized pathnames |
 | Content | Typed seed data in `src/content/**` |
-| Backend | Travel Content System — `src/app/api/**`, `src/server/content/**`, JSON document store in `.data/` |
+| Backend | Travel Content System — `src/app/api/**`, `src/server/content/**`, JSON document store in `.data/`; Planner — `src/server/planner/**`, PostgreSQL (`PLANNER_DATABASE_URL`) or JSON file |
 | Runtime | Node 24 LTS, pinned in `.nvmrc` and read by CI — run `nvm use` |
 | Tests | Vitest 3 (Node 24 now permits Vitest 4/5; not yet upgraded) |
 
@@ -88,7 +88,7 @@ cloning. Designed in `docs/adr/0002-planner-core.md`.
 | Planner **UI** (beyond ADR 0005) | ADR 0005 shipped story-to-trip cloning, `/sign-in`, `/my-trips`, read-only `/my-trips/[id]` and `/shared/[token]`. Still absent: an in-browser editor for days/activities/expenses, and `/plan-your-trip` is still the contact-only content page (mailto, Zalo, Messenger). A submit button with nothing behind it is a dead control — rule 4. |
 | Planner map, AI suggestions | Deliberately deferred by the brief that opened the phase |
 | A hosted identity provider | Sign-in is self-managed: access token, email + scrypt password, or Google OIDC + PKCE (signup on first Google sign-in), all issuing the ADR 0004 session (ADR 0007). No self-service password reset, no password signup, no MFA, no Auth.js. Roles are designed in ADR 0006 (Proposed, Phase 07). |
-| SQL | Both stores are single-process. Multi-instance deployment is the trigger. |
+| SQL for Travel Content | The Planner store already has a PostgreSQL adapter, used when `PLANNER_DATABASE_URL` is set (ADR 0008/0009). The Travel Content store is still a single-process JSON file; moving it needs its own change. |
 
 > Two separate systems, one HTTP vocabulary. The **Travel Content System** (26 handlers
 > under `src/app/api/admin/travel/**` and `src/app/api/travel/**`,
