@@ -27,6 +27,7 @@ Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
 | Vai trò admin | [admin-roles.vi.md](admin-roles.vi.md) | `role` trên user, `permissions.ts`, `PATCH /api/admin/planner/users/[userId]` để nâng admin đầu tiên |
 | Cổng quản trị | [admin-portal.vi.md](admin-portal.vi.md) | `/quan-tri` — danh sách, tạo, đổi vai trò và cấp lại mật khẩu người dùng ngay trên trình duyệt, chỉ cho admin (ADR 0010) |
 | Lọc người dùng quản trị | [admin-user-filter.vi.md](admin-user-filter.vi.md) | Tìm kiếm (tên, handle, email) và lọc vai trò trên bảng người dùng `/quan-tri`, phía client |
+| Trình sửa chuyến đi | [trip-editor.vi.md](trip-editor.vi.md) | Sửa trip ở `/my-trips/[id]`: thông tin chung, ngày, hoạt động (thêm, sửa, xoá, sắp xếp, chuyển ngày), khoản chi; mọi thao tác ghi đều gửi `If-Match` |
 | CMS nội dung quản trị | [admin-content-cms.vi.md](admin-content-cms.vi.md) | `/quan-tri/noi-dung/...` — biên tập viên và admin sửa chuyến đi, địa điểm, đánh giá với vi/en song song, xuất bản và duyệt (ADR 0011) |
 | Trang Travel công khai từ kho nội dung | [public-travel-cms.vi.md](public-travel-cms.vi.md) | Trang chủ, chuyến đi, điểm đến và sitemap đọc chuyến đi đã xuất bản từ kho nội dung, động, nên sửa trong CMS hiện ngay ở request kế tiếp (ADR 0012) |
 | Tài khoản trên header | [header-account.vi.md](header-account.vi.md) | Biểu tượng đăng nhập cho khách, menu tài khoản (Chuyến đi của tôi, mật khẩu, quản trị, đăng xuất) cho thành viên, trên máy tính và điện thoại |
@@ -39,7 +40,6 @@ Không phải tính năng, và không được dựng sớm. Xem
 
 | Phase | Đang chờ |
 |---|---|
-| Giao diện soạn Planner đầy đủ | API lõi đã ship trong [travel-planner-core.vi.md](travel-planner-core.vi.md); luồng clone và chia sẻ nằm ở [follow-hung-footsteps.vi.md](follow-hung-footsteps.vi.md), nhưng sửa ngày, activity và chi phí trong trình duyệt thì chưa làm |
 | Map và gợi ý AI cho Planner | Cố ý hoãn lại theo đề bài đã mở phase Planner |
 | Card video bấm được | URL của từng video mà ta chưa có |
 | Ảnh thật | Ảnh của chủ nhà |
