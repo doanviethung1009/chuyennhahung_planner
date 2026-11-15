@@ -183,7 +183,8 @@ Google đã công bố, chỉ dùng `fetch` và `node:crypto`.
   cũng tự gỡ được tài khoản của mình bằng `DELETE /api/planner/google` (nút ở
   trang đổi mật khẩu): bị từ chối `409` khi tài khoản chưa có mật khẩu để không
   bị khoá ngoài; các session khác kết thúc, session hiện tại giữ nguyên; gỡ một
-  tài khoản chưa liên kết vẫn thành công.
+  tài khoản chưa liên kết vẫn thành công. Giới hạn 10 lần mỗi 15 phút cho mỗi
+  người dùng (`429`).
 - **Cấu hình:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, và redirect URI suy
   ra từ `NEXT_PUBLIC_SITE_URL` + `/api/planner/oauth/google/callback`. Chỉ phía
   server, không bao giờ là `NEXT_PUBLIC_*`, được `tests/client-boundary.test.ts`

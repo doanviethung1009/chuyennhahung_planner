@@ -186,7 +186,7 @@ documented endpoints, using `fetch` and `node:crypto` only.
   unlink their own account with `DELETE /api/planner/google` (button on the
   change-password page): refused with `409` while the account has no password,
   so it cannot be locked out; their other sessions end, the current one stays;
-  unlinking an account with no link succeeds.
+  unlinking an account with no link succeeds. Limited to 10 per 15 minutes per user (`429`).
 - **Configuration:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and the redirect
   URI derived from `NEXT_PUBLIC_SITE_URL` + `/api/planner/oauth/google/callback`.
   Server-only, never `NEXT_PUBLIC_*`, guarded by `tests/client-boundary.test.ts`.
