@@ -16,6 +16,7 @@ import { VideoReviewsSection } from '@/components/sections/video-reviews-section
 import { AboutSection } from '@/components/sections/about-section';
 import { CommunityTripsSection } from '@/components/sections/community-trips-section';
 import { getCommunityTrips } from '@/server/community/public';
+import { CommunityReviewsSection } from '@/components/sections/community-reviews-section';
 
 /** Stories come from the content repository per request (ADR 0012). */
 export const dynamic = 'force-dynamic';
@@ -65,6 +66,8 @@ export default async function HomePage({ params }: Params) {
       <FeaturedItineraries itineraries={featuredItineraries} locale={locale} />
 
       <CommunityTripsSection trips={communityTrips} locale={locale} />
+
+      <CommunityReviewsSection locale={locale} />
 
       <PlanTripCta />
 

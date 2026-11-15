@@ -345,7 +345,15 @@ Chủ chuyến `PUT /api/planner/[id]/listing` -> `pending`; staff (`community:m
 hoặc từ chối ở `/admin/community`; chỉ `approved` mới tới `GET /api/community/trips`, gallery
 và trang chủ, qua allow-list `CommunityTripCard`. Mọi thay đổi xếp lại hàng (`touch`), rời
 `public` hoặc lưu trữ thì xoá. Nút vẫn đóng cho tới khi chủ nhà điền `contribution` trong
-`src/content/site.ts`. Đánh giá địa điểm là PR 2.
+`src/content/site.ts`.
+
+Đánh giá địa điểm của người đi (PR 2) là các dòng `CommunityReview` trong store Planner, bảng
+`community_reviews`. `source: planner` (đã đăng nhập, `PUT /api/planner/reviews/[placeSlug]`)
+bắt đầu ở `pending` và cần staff duyệt; `source: homepage` (`POST /api/community/reviews`,
+không cần tài khoản) lên `approved` ngay và staff chỉ có thể gỡ, được chặn bằng giới hạn theo
+client và theo địa điểm, honeypot và văn bản thuần. Đầu ra công khai là allow-list
+`PublicCommunityReview`; điểm trung bình hiện từ 3 đánh giá đã duyệt. Cùng cổng `contribution`
+đóng mọi form đánh giá.
 
 ## Các phase
 

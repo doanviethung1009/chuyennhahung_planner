@@ -1,6 +1,7 @@
 import { ContentError } from '@/server/content/errors';
 import { normalizeVnd } from '@/server/planner/money';
 import {
+  communityReviewSchema,
   oauthAttemptSchema,
   plannerSessionSchema,
   plannerUserSchema,
@@ -231,6 +232,29 @@ export const TABLES: readonly TableSpec<PlannerCollection>[] = [
       col('costScope', 'cost_scope', 'text'),
       col('paidOn', 'paid_on', 'date', 'nullable'),
       col('note', 'note', 'text', 'nullable'),
+      ...createdUpdated,
+    ],
+  },
+  {
+    // ADR 0014 PR 2. No foreign key to planner_users (ADR 0013): a guest review has no author.
+    collection: 'communityReviews',
+    table: 'community_reviews',
+    parse: (r) => communityReviewSchema.parse(r),
+    columns: [
+      col('id', 'id', 'text'),
+      col('source', 'source', 'text'),
+      col('authorId', 'author_id', 'text', 'nullable'),
+      col('placeSlug', 'place_slug', 'text'),
+      col('rating', 'rating', 'int'),
+      col('body', 'body', 'text'),
+      col('lang', 'lang', 'text'),
+      col('visitedOn', 'visited_on', 'date'),
+      col('authorName', 'author_name', 'text', 'nullable'),
+      col('status', 'status', 'text'),
+      col('guestKey', 'guest_key', 'text', 'nullable'),
+      col('decidedAt', 'decided_at', 'timestamptz', 'nullable'),
+      col('decidedBy', 'decided_by', 'text', 'nullable'),
+      col('rejectReason', 'reject_reason', 'text', 'nullable'),
       ...createdUpdated,
     ],
   },

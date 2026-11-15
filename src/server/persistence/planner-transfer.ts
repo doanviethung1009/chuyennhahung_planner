@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { ContentError } from '@/server/content/errors';
 import { PlannerRepository } from '@/server/planner/repository';
 import {
+  communityReviewSchema,
   oauthAttemptSchema,
   plannerSessionSchema,
   plannerUserSchema,
@@ -34,6 +35,7 @@ const documentSchema = z
     tripDays: z.array(tripDaySchema).default([]),
     tripActivities: z.array(tripActivitySchema).default([]),
     tripExpenses: z.array(tripExpenseSchema).default([]),
+    communityReviews: z.array(communityReviewSchema).default([]),
   })
   .strict();
 
@@ -137,6 +139,7 @@ export async function importPlannerDocument(
       tripDays: incoming.tripDays.length,
       tripActivities: incoming.tripActivities.length,
       tripExpenses: incoming.tripExpenses.length,
+      communityReviews: incoming.communityReviews.length,
     },
   };
 }

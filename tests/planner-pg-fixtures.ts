@@ -85,6 +85,20 @@ export async function runScenario(planner: PlannerRepository): Promise<{
   const second = await planner.createTrip(userId, daLatTripInput({ title: 'Mộc Châu cuối tuần' }));
   await planner.archiveTrip(userId, second.trip.id, second.trip.version);
 
+  // ADR 0014 PR 2: one pending Planner review and one published guest review.
+  const reviewBody = 'Hồ rất đẹp vào buổi sáng, nước trong, đi bộ quanh hồ mất khoảng một tiếng, nên đi sớm.';
+  await planner.upsertPlannerReview(userId, 'ho-xuan-huong', {
+    rating: 5,
+    body: reviewBody,
+    lang: 'vi',
+    visitedOn: '2026-02-20',
+    authorDisplay: 'name',
+  });
+  await planner.createGuestReview(
+    { placeSlug: 'ho-xuan-huong', rating: 4, body: reviewBody, lang: 'vi', visitedOn: '2026-02-21', authorName: null },
+    '198.51.100.4',
+  );
+
   return { userId, tripId, activityId, copyId: copy.trip.id };
 }
 

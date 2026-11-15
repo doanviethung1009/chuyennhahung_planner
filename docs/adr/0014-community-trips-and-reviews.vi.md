@@ -2,7 +2,7 @@
 
 🇬🇧 English version: [0014-community-trips-and-reviews.md](0014-community-trips-and-reviews.md)
 
-- **Trạng thái:** Đã chấp nhận — chủ nhà duyệt 2026-11-14; PR 1 (gallery chuyến đi, migration `0005_trip_listing.sql`) đã hiện thực, PR 2 (đánh giá) còn lại
+- **Trạng thái:** Đã chấp nhận — chủ nhà duyệt 2026-11-14; PR 1 (gallery chuyến đi, migration `0005_trip_listing.sql`) và PR 2 (đánh giá, migration `0006_community_reviews.sql`) đã hiện thực
 - **Ngày:** 2026-11-14
 - **Người sở hữu:** system-architect
 - **Người quyết định:** chủ nhà (phạm vi: gallery **và** đánh giá địa điểm; admin duyệt trước khi lên; hiện tên hiển thị, có tuỳ chọn ẩn danh), system-architect (hợp đồng)

@@ -2,7 +2,7 @@
 
 🇻🇳 Bản tiếng Việt: [0014-community-trips-and-reviews.vi.md](0014-community-trips-and-reviews.vi.md)
 
-- **Status:** Accepted — owner approved 2026-11-14; PR 1 (trip gallery, migration `0005_trip_listing.sql`) implemented, PR 2 (reviews) pending
+- **Status:** Accepted — owner approved 2026-11-14; PR 1 (trip gallery, migration `0005_trip_listing.sql`) and PR 2 (reviews, migration `0006_community_reviews.sql`) implemented
 - **Date:** 2026-11-14
 - **Owner:** system-architect
 - **Decided by:** owner (scope: gallery **and** place reviews; admin approves before anything goes live; author shown by display name with an anonymous option), system-architect (contract)

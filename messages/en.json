@@ -966,6 +966,96 @@
       "approve": "Trip approved.",
       "reject": "Rejected.",
       "remove": "Removed from the home page."
+    },
+    "tripsHeading": "Trips",
+    "reviewsHeading": "Place reviews",
+    "reviews": {
+      "empty": "No reviews yet.",
+      "meta": "{place} · {rating} stars · {author} · {source}",
+      "account": "Account: {name}",
+      "anonymous": "anonymous",
+      "sources": {
+        "planner": "written in the Planner",
+        "homepage": "guest on the home page"
+      },
+      "statuses": {
+        "pending": "Pending",
+        "approved": "Live",
+        "rejected": "Rejected",
+        "removed": "Removed"
+      },
+      "visited": "Visited {date}",
+      "created": "Submitted {date}",
+      "remove": "Remove review",
+      "reasonLabel": "Reason (the author will see it)",
+      "reasonLabelGuest": "Reason for removal (kept internally)"
+    }
+  },
+  "communityReviews": {
+    "eyebrow": "From travellers",
+    "title": "Place reviews from travellers",
+    "lead": "Written and self-reported by travellers; Nhà Hưng does not verify each visit.",
+    "writeTitle": "Write your review",
+    "destinationTitle": "What travellers say about this place",
+    "average": "{average}/5 from {count} reviews",
+    "countOnly": "{count} reviews",
+    "ratingLabel": "{rating} out of 5 stars",
+    "anonymous": "Anonymous",
+    "visited": "visited {date}",
+    "selfReported": "Self-reported, not verified.",
+    "planner": {
+      "title": "Review the places in this trip",
+      "intro": "Write a review for the places you visited. Reviews written here are checked by the Nhà Hưng team before they appear.",
+      "write": "Write a review",
+      "edit": "Edit review",
+      "close": "Close",
+      "delete": "Delete",
+      "deleted": "Review deleted.",
+      "loadFailed": "Could not load your reviews.",
+      "reason": "Reason: {reason}",
+      "status": {
+        "pending": "Waiting for review",
+        "approved": "Public",
+        "rejected": "Not approved",
+        "removed": "Removed"
+      }
+    },
+    "form": {
+      "closed": "This is not open yet: Nhà Hưng has not published the contribution terms and the takedown contact.",
+      "termsHeading": "Contribution terms",
+      "takedown": "Send takedown requests to",
+      "place": "Place",
+      "placeHint": "Pick from the list so the details are accurate.",
+      "placeChoose": "Choose a place…",
+      "rating": "Rating",
+      "ratingOption": "{n} stars",
+      "visited": "Date you visited",
+      "visitedHint": "Not a date in the future.",
+      "lang": "Language of your review",
+      "body": "Your review",
+      "bodyHint": "{min} to {max} characters, plain text only; links will not be clickable.",
+      "bodyCount": "{count}/{max}",
+      "name": "Display name (optional)",
+      "nameHint": "Leave empty to appear as anonymous.",
+      "honeypot": "Leave this field empty",
+      "authorLabel": "How to show you",
+      "author": {
+        "name": "My display name",
+        "anonymous": "Anonymous"
+      },
+      "plannerNote": "Your review appears once approved. Editing it sends it back for review.",
+      "guestNote": "Your review appears right away. Nhà Hưng may remove content that breaks the terms.",
+      "submit": "Submit review",
+      "sending": "Sending…",
+      "posted": "Your review is posted. Thank you!",
+      "queued": "Submitted. It will appear once approved.",
+      "errors": {
+        "generic": "Could not send. Please try again.",
+        "rate_limited": "You are sending a lot. Please try again later.",
+        "invalid_state": "This place was already reviewed from your connection in the last 24 hours.",
+        "validation_failed": "Please check the fields: the review needs 60 to 1000 characters.",
+        "invalid_reference": "The place or the visit date is not valid."
+      }
     }
   }
 }

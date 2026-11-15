@@ -28,6 +28,7 @@ Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
 | Vai trò admin | [admin-roles.vi.md](admin-roles.vi.md) | `role` trên user, `permissions.ts`, `PATCH /api/admin/planner/users/[userId]` để nâng admin đầu tiên |
 | Cổng quản trị | [admin-portal.vi.md](admin-portal.vi.md) | `/quan-tri` — danh sách, tạo, đổi vai trò và cấp lại mật khẩu người dùng ngay trên trình duyệt, chỉ cho admin (ADR 0010) |
 | Lọc người dùng quản trị | [admin-user-filter.vi.md](admin-user-filter.vi.md) | Tìm kiếm (tên, handle, email) và lọc vai trò trên bảng người dùng `/quan-tri`, phía client |
+| Đánh giá cộng đồng | [community-reviews.vi.md](community-reviews.vi.md) | Đánh giá địa điểm của người đi: viết trong Planner thì được duyệt, khách viết ở trang chủ thì lên ngay và staff gỡ được; tự khai, văn bản thuần (ADR 0014, PR 2) |
 | Chuyến đi cộng đồng | [community-trips.vi.md](community-trips.vi.md) | Chuyến đi công khai hiện trên trang chủ và `/chuyen-di-cong-dong` sau khi chủ chuyến đồng ý và staff duyệt; mọi sửa đổi xếp lại hàng; tác giả hiện tên hoặc ẩn danh (ADR 0014, PR 1) |
 | Trình sửa chuyến đi | [trip-editor.vi.md](trip-editor.vi.md) | Sửa trip ở `/my-trips/[id]`: thông tin chung, ngày, hoạt động (thêm, sửa, xoá, sắp xếp, chuyển ngày), khoản chi; mọi thao tác ghi đều gửi `If-Match` |
 | Phát sinh ngân sách khi chia sẻ | [shared-budget-overrun.vi.md](shared-budget-overrun.vi.md) | Trang chia sẻ và trang chủ chuyến hiện tổng dự báo, phần vượt và số tiền mỗi người góp thêm |

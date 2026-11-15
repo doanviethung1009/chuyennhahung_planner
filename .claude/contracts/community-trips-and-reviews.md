@@ -10,7 +10,7 @@
 - Interface contract (API, types, DB):
   - `PUT|DELETE /api/planner/[id]/listing` (owner; `{authorDisplay:'name'|'anonymous'}`; 409 unless trip is active + public; no `If-Match`, no version bump; idempotent)
   - `GET /api/community/trips` → `{ items: CommunityTripCard[] }`; `GET /api/community/reviews?placeSlug=` → approved only
-  - `POST /api/planner/reviews`, `PUT|DELETE /api/planner/reviews/[placeSlug]` (own review; session; `source:'planner'` → `pending`)
+  - `GET /api/planner/reviews`, `PUT|DELETE /api/planner/reviews/[placeSlug]` (own review; session; `source:'planner'` → `pending`; PR 2 shipped; the review list is on the home and destination pages, the form on the home page and in the trip detail)
   - `POST /api/community/reviews` (guest, no session; `source:'homepage'` → `approved`; honeypot, 3/h per client key, 1 per place per key per 24 h, 20/day per place; `visitedOn` required; plain text 60–1000)
   - `GET /api/admin/community/queue`, `PATCH /api/admin/community/{trips|reviews}/[id]` `{decision:'approve'|'reject'|'remove', reason?}` (reviews from the homepage can only be `remove`d); action `community:moderate` (editor, admin, service)
   - Types: `TripListing`, `CommunityTripCard`, `CommunityReview` in `src/server/planner/schemas.ts`; migration `db/migrations/0005_community.sql` (`community_reviews` table, `planner_trips.listing` JSONB); JSON keys `communityReviews`, trip `listing`

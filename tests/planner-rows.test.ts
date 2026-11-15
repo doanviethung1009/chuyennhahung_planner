@@ -233,6 +233,7 @@ describe('diff', () => {
     const removal = planStatements(data, emptyPlannerData());
     expect(removal.every((s) => s.kind === 'delete')).toBe(true);
     expect(removal.map((s) => s.table)).toEqual([
+      'community_reviews',
       'trip_expenses',
       'trip_activities',
       'trip_days',
