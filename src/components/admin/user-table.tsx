@@ -5,11 +5,12 @@ import { useFormatter, useTranslations } from "next-intl";
 import { buttonClass } from "@/components/ui/button";
 import { inputClass } from "@/components/planner/field";
 import { filterUsers, type RoleFilter } from "./filter-users";
-import { ADMIN_ROLES, type AdminRole, type AdminUser } from "./types";
+import { ADMIN_ROLES, assignableRoles, type AdminRole, type AdminUser } from "./types";
 
 interface Props {
   users: AdminUser[];
   currentUserId: string;
+  actorRole: AdminRole;
   /** Resolves when the server has answered, success or not. */
   onSaveRole: (user: AdminUser, role: AdminRole) => Promise<void>;
   onReset: (user: AdminUser) => Promise<void>;
@@ -18,6 +19,7 @@ interface Props {
 export function UserTable({
   users,
   currentUserId,
+  actorRole,
   onSaveRole,
   onReset,
 }: Props) {
@@ -130,6 +132,8 @@ export function UserTable({
                 const role = user.role ?? "member";
                 const draft = drafts[user.id] ?? role;
                 const isSelf = user.id === currentUserId;
+                // ADR 0017: an admin does not touch admin or super admin accounts.
+                const manageable = assignableRoles(actorRole).includes(role);
                 const busy = busyId === user.id;
                 return (
                   <tr
@@ -154,12 +158,14 @@ export function UserTable({
                       {user.email || t("noEmail")}
                     </td>
                     <td className="px-4 py-3">
-                      {isSelf ? (
+                      {isSelf || !manageable ? (
                         <>
                           <span className="text-foreground">{tr(role)}</span>
-                          <p className="mt-1 max-w-48 text-sm text-foreground-muted">
-                            {t("selfNote")}
-                          </p>
+                          {isSelf ? (
+                            <p className="mt-1 max-w-48 text-sm text-foreground-muted">
+                              {t("selfNote")}
+                            </p>
+                          ) : null}
                         </>
                       ) : (
                         <div className="flex flex-wrap items-center gap-2">
@@ -177,7 +183,7 @@ export function UserTable({
                               })
                             }
                           >
-                            {ADMIN_ROLES.map((value) => (
+                            {assignableRoles(actorRole).map((value) => (
                               <option key={value} value={value}>
                                 {tr(value)}
                               </option>
@@ -207,7 +213,7 @@ export function UserTable({
                       </time>
                     </td>
                     <td className="px-4 py-3">
-                      {isSelf ? null : confirmId === user.id ? (
+                      {isSelf || !manageable ? null : confirmId === user.id ? (
                         <div
                           role="group"
                           aria-label={t("reset")}

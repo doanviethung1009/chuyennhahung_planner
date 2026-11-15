@@ -41,7 +41,7 @@ export default async function AdminStoriesPage({ params }: Params) {
       <PageHeader title={t('title')} description={t('description')} />
       <Container width="wide">
         <div className="grid gap-8 py-10 md:py-14">
-          <AdminNav current="stories" canUsers={access.canUsers} canContent={access.canContent} />
+          <AdminNav current="stories" canUsers={access.canUsers} canRunbook={access.canRunbook} canContent={access.canContent} />
           <ContentNotice />
           <ContentList kind="stories" />
         </div>

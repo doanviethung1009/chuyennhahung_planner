@@ -44,7 +44,7 @@ export default async function AdminCommunityPage({ params }: Params) {
       <PageHeader title={t('title')} description={t('description')} />
       <Container width="wide">
         <div className="grid gap-8 py-10 md:py-14">
-          <AdminNav current="community" canUsers={access.canUsers} canContent={access.canContent} />
+          <AdminNav current="community" canUsers={access.canUsers} canRunbook={access.canRunbook} canContent={access.canContent} />
           <section aria-labelledby="queue-trips-heading" className="grid gap-4">
             <h2 id="queue-trips-heading" className="font-display text-2xl font-semibold">
               {t('tripsHeading')}

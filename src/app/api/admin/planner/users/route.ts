@@ -19,8 +19,9 @@ export function GET(request: Request) {
  * stored. If it is lost, rotate it — it cannot be read back.
  */
 export function POST(request: Request) {
-  return adminPlannerRoute(request, { action: 'user:provision', session: true }, async (repository) => {
+  return adminPlannerRoute(request, { action: 'user:provision', session: true }, async (repository, principal) => {
     const input = await parseJsonBody(request, plannerUserCreateSchema);
-    return plannerJson(await repository.createUser(input), 201);
+    const actor = principal.kind === 'session' ? { userId: principal.userId } : undefined;
+    return plannerJson(await repository.createUser(input, actor), 201);
   });
 }

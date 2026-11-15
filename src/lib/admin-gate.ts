@@ -11,7 +11,7 @@ import { readStaffPageAccess } from '@/server/planner/admin-page';
  * a role with nothing to do here -> a plain 404. Returns what the shell needs
  * to decide which sections to show. The API stays the authority.
  */
-export async function requireStaff(locale: Locale, returnTo: string, need: 'content' | 'users' | 'any' = 'any') {
+export async function requireStaff(locale: Locale, returnTo: string, need: 'content' | 'users' | 'runbook' | 'any' = 'any') {
   const access = await readStaffPageAccess();
   if (access.status === 'anonymous') {
     redirect({ href: { pathname: '/sign-in', query: { returnTo } }, locale });
@@ -23,8 +23,16 @@ export async function requireStaff(locale: Locale, returnTo: string, need: 'cont
 
   const canUsers = can(access.principal, 'user:provision');
   const canContent = can(access.principal, 'content:write');
-  if ((need === 'content' && !canContent) || (need === 'users' && !canUsers)) notFound();
-  return { principal: access.principal, canUsers, canContent };
+  // ADR 0017: the Runbook belongs to the super admin alone.
+  const canRunbook = can(access.principal, 'runbook:read');
+  if (
+    (need === 'content' && !canContent) ||
+    (need === 'users' && !canUsers) ||
+    (need === 'runbook' && !canRunbook)
+  ) {
+    notFound();
+  }
+  return { principal: access.principal, canUsers, canContent, canRunbook };
 }
 
 /** Admin pages are never indexed, whatever the metadata helper says. */

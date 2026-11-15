@@ -122,7 +122,7 @@ merge — vẫn phải có người xem.
 | `editor` | Nội dung du lịch ở `/quan-tri` | Email + mật khẩu, hoặc Google |
 | `admin` | Nội dung **và** người dùng ở `/quan-tri` | Email + mật khẩu, hoặc Google |
 
-Tài khoản là `member` trừ khi được tạo với vai trò khác (`admin:create` tạo ra `admin`). Chỉ admin (ở `/quan-tri`) hoặc service token mới nâng được ai đó lên `editor` hay `admin`; Google không bao giờ cấp vai trò.
+Tài khoản là `member` trừ khi được tạo với vai trò khác (`admin:create` tạo ra `admin`). Chỉ admin (ở `/quan-tri`) hoặc service token mới nâng được ai đó lên `editor` hay `admin`; Chỉ super admin (hoặc service token) tạo được `admin`/`super_admin` hay đặt lại mật khẩu admin, và chỉ super admin mở được tab Runbook ([ADR 0017](adr/0017-super-admin-role.vi.md)); nâng người đầu tiên bằng `PATCH /api/admin/planner/users/<id>` với `{"role":"super_admin"}` dùng admin token. Google không bao giờ cấp vai trò.
 
 **Các loại bí mật, và mất thì làm gì**
 
@@ -157,6 +157,9 @@ Vào được rồi thì liên kết Google ngay: đó là đường thứ hai �
 | Không còn admin khác, và không biết token hoặc app không chạy | Tạo admin thứ hai bằng `npm run admin:create -- --email <email khác>`, đăng nhập bằng nó, rồi reset tài khoản cũ ở `/quan-tri` |
 | `admin:create` báo *an account with that email or handle already exists* | Email đó đã có tài khoản: dùng một trong các dòng trên, hoặc `admin:create` với email khác |
 | Đăng nhập được nhưng `/quan-tri` trả 404 | Tài khoản không phải `admin` hay `editor`; một admin đổi vai trò cho nó |
+| Đăng nhập được nhưng tab Runbook không có hoặc 404 | Chỉ `super_admin` thấy ([ADR 0017](adr/0017-super-admin-role.vi.md)); service token nâng bạn lên: `PATCH /api/admin/planner/users/<id>` với `{"role":"super_admin"}` |
+| **Super admin** duy nhất quên mật khẩu | Admin không reset được super admin. Reset bằng service token (cùng lệnh một dòng bên dưới) |
+| Mọi super admin đều không đăng nhập được hoặc không còn | Dùng service token nâng tài khoản khác lên `super_admin`; super admin cuối cùng không bao giờ bị hạ hay xóa, nên chỉ xảy ra nếu dữ liệu bị sửa tay |
 
 Reset bằng service token, một dòng. Lệnh đọc token từ `.env.local`, tìm tài khoản theo email và in ra mật khẩu tạm mới. Sửa email, chạy **từ thư mục app đang chạy**, trong lúc app đang chạy:
 

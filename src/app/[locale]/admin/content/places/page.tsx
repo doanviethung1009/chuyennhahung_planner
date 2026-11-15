@@ -41,7 +41,7 @@ export default async function AdminPlacesPage({ params }: Params) {
       <PageHeader title={t('title')} description={t('description')} />
       <Container width="wide">
         <div className="grid gap-8 py-10 md:py-14">
-          <AdminNav current="places" canUsers={access.canUsers} canContent={access.canContent} />
+          <AdminNav current="places" canUsers={access.canUsers} canRunbook={access.canRunbook} canContent={access.canContent} />
           <ContentNotice />
           <ContentList kind="places" />
         </div>

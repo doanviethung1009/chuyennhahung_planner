@@ -121,7 +121,7 @@ Read this first if you are unsure how to sign in, or you lost access.
 | `editor` | Travel content at `/quan-tri` | Email + password, or Google |
 | `admin` | Content **and** users at `/quan-tri` | Email + password, or Google |
 
-An account is a `member` unless it was created with another role (`admin:create` makes an `admin`). Only an admin (in `/quan-tri`) or the service token can make someone `editor` or `admin`; Google never grants a role.
+An account is a `member` unless it was created with another role (`admin:create` makes an `admin`). Only an admin (in `/quan-tri`) or the service token can make someone `editor` or `admin`; Only a super admin (or the service token) can make an `admin` or `super_admin`, or reset an admin's password, and only a super admin opens the Runbook tab ([ADR 0017](adr/0017-super-admin-role.md)); promote the first one with `PATCH /api/admin/planner/users/<id>` and `{"role":"super_admin"}` using the admin token. Google never grants a role.
 
 **The secrets, and what to do if one is lost**
 
@@ -156,6 +156,9 @@ Link Google as soon as you are in: it gives you a second way back if you forget 
 | No other admin, and the token is unknown or the app is down | Make a second admin with `npm run admin:create -- --email <another email>`, sign in with it, then reset the old account from `/quan-tri` |
 | `admin:create` says *an account with that email or handle already exists* | That email already has an account: use one of the rows above, or `admin:create` with another email |
 | You sign in but `/quan-tri` answers 404 | The account is not `admin` or `editor`; an admin changes its role |
+| You sign in but the Runbook tab is missing or 404 | Only `super_admin` sees it ([ADR 0017](adr/0017-super-admin-role.md)); the service token promotes you: `PATCH /api/admin/planner/users/<id>` with `{"role":"super_admin"}` |
+| The only **super admin** forgot the password | An admin cannot reset a super admin. Reset it with the service token (the same one-line command below) |
+| Every super admin is locked out or gone | Use the service token to promote another account to `super_admin`; the last super admin itself can never be demoted or deleted, so this only happens if the rows were edited by hand |
 
 Reset with the service token, in one line. It reads the token from `.env.local`, finds the account by email and prints a new temporary password. Change the email, run it **from the folder the app runs from**, while the app is running:
 

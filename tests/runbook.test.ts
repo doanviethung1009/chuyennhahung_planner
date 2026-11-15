@@ -93,11 +93,11 @@ describe('admin runbook tab', () => {
     expect(documentTitle(await readRunbookDoc('features/admin-roles', 'en'), 'x')).toBe('Admin roles');
   });
 
-  it('is gated to users:provision (admin) and hides the nav link from other roles', () => {
+  it('is gated to runbook:read (super admin) and hides the nav link from other roles', () => {
     const page = readFileSync(join(root, 'src/app/[locale]/admin/runbook/page.tsx'), 'utf8');
-    expect(page).toMatch(/requireStaff\([\s\S]*?'users'\)/);
+    expect(page).toMatch(/requireStaff\([\s\S]*?'runbook'\)/);
     const nav = readFileSync(join(root, 'src/components/admin/admin-nav.tsx'), 'utf8');
-    expect(nav).toMatch(/canUsers \? \(\s*<Link href="\/admin\/runbook"/);
+    expect(nav).toMatch(/canRunbook \? \(\s*<Link href="\/admin\/runbook"/);
   });
 });
 

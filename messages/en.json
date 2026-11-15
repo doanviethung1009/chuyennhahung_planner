@@ -500,7 +500,8 @@
     "roles": {
       "member": "Member",
       "editor": "Editor",
-      "admin": "Admin"
+      "admin": "Admin",
+      "super_admin": "Super admin"
     },
     "users": {
       "heading": "Users",

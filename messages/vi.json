@@ -500,7 +500,8 @@
     "roles": {
       "member": "Thành viên",
       "editor": "Biên tập viên",
-      "admin": "Quản trị viên"
+      "admin": "Quản trị viên",
+      "super_admin": "Quản trị cấp cao"
     },
     "users": {
       "heading": "Người dùng",

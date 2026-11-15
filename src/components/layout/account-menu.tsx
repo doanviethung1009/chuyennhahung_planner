@@ -9,7 +9,7 @@ import { buttonClass } from '@/components/ui/button';
 /** The slice of `GET /api/planner/session`'s `user` the header needs. */
 interface SessionUser {
   displayName: string;
-  role: 'member' | 'editor' | 'admin';
+  role: 'member' | 'editor' | 'admin' | 'super_admin';
   hasPassword: boolean;
 }
 
@@ -274,7 +274,7 @@ function AccountLinks({
           </Link>
         </li>
       ) : null}
-      {user.role === 'admin' ? (
+      {user.role === 'admin' || user.role === 'super_admin' ? (
         <li>
           <Link href="/admin" onClick={onNavigate} className={className}>
             {t('admin')}

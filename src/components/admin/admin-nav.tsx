@@ -16,10 +16,12 @@ const linkCurrent = 'border-primary bg-surface-muted text-primary-strong';
 export function AdminNav({
   current,
   canUsers,
+  canRunbook = false,
   canContent,
 }: {
   current: AdminSection;
   canUsers: boolean;
+  canRunbook?: boolean;
   canContent: boolean;
 }) {
   const t = useTranslations('adminContent.nav');
@@ -54,7 +56,7 @@ export function AdminNav({
           </Link>
         </div>
       ) : null}
-      {canUsers ? (
+      {canRunbook ? (
         <Link href="/admin/runbook" className={cls('runbook')} aria-current={aria('runbook')}>
           {t('runbook')}
         </Link>
