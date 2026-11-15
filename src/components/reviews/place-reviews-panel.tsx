@@ -106,6 +106,15 @@ export function PlaceReviewsPanel({
                         : ''}
                     </p>
                   ) : null}
+                  {mine?.status === 'held' ? (
+                    <div role="note" className="mt-1 grid gap-1 text-sm">
+                      {/* Staff-written: plain text only. */}
+                      <p className="whitespace-pre-line break-words font-medium">
+                        {t('planner.question', { reason: mine.rejectReason ?? '' })}
+                      </p>
+                      <p className="text-foreground-muted">{t('planner.heldHelp')}</p>
+                    </div>
+                  ) : null}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button

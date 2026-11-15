@@ -67,6 +67,7 @@ import {
   MIN_REVIEWS_FOR_AVERAGE,
   type CommunityTripCard,
   type ListingDecision,
+  type ReviewDecision,
   type ListingQueueItem,
   type TripListing,
   type SharedTripView,
@@ -1485,7 +1486,7 @@ export class PlannerRepository {
             review.source === 'planner' &&
             review.authorId === userId &&
             review.placeSlug === placeSlug &&
-            (review.status === 'approved' || review.status === 'pending')
+            (review.status === 'approved' || review.status === 'pending' || review.status === 'held')
           ),
       );
     });
@@ -1559,7 +1560,7 @@ export class PlannerRepository {
   /** The staff queue: pending first, then the rest, newest first. */
   async listReviewQueue(status?: ReviewStatus): Promise<ReviewQueueItem[]> {
     const data = await this.snapshot();
-    const rank: Record<ReviewStatus, number> = { pending: 0, approved: 1, rejected: 2, removed: 3 };
+    const rank: Record<ReviewStatus, number> = { pending: 0, held: 1, approved: 2, rejected: 3, removed: 4 };
     return data.communityReviews
       .filter((review) => !status || review.status === status)
       .sort((a, b) => rank[a.status] - rank[b.status] || b.createdAt.localeCompare(a.createdAt))
@@ -1583,11 +1584,13 @@ export class PlannerRepository {
 
   /**
    * Staff decision. `approve` and `reject` act on a pending (Planner) review,
-   * `remove` on an approved one of either source.
+   * `remove` on a live or held one of either source, and `hold` (ADR 0015) on a
+   * live Planner review: it hides it and `reason` is the question the author
+   * sees. The author's edit republishes a held review; a guest's cannot be held.
    */
   decideReview(
     reviewId: string,
-    decision: ListingDecision,
+    decision: ReviewDecision,
     actor: string,
     reason: string | null,
   ): Promise<ReviewStatus> {
@@ -1595,12 +1598,22 @@ export class PlannerRepository {
       const index = data.communityReviews.findIndex((review) => review.id === reviewId);
       const review = data.communityReviews[index];
       if (!review) throw notFound('review', reviewId);
-      const needed: ReviewStatus = decision === 'remove' ? 'approved' : 'pending';
-      if (review.status !== needed) {
+      const allowed: ReviewStatus[] =
+        decision === 'remove' ? ['approved', 'held'] : decision === 'hold' ? ['approved'] : ['pending'];
+      if (!allowed.includes(review.status)) {
         throw invalidState(`cannot ${decision}: the review is ${review.status}`);
       }
+      if (decision === 'hold' && review.source !== 'planner') {
+        throw invalidState('only a review written in the Planner can be put to its author');
+      }
       const status: ReviewStatus =
-        decision === 'approve' ? 'approved' : decision === 'reject' ? 'rejected' : 'removed';
+        decision === 'approve'
+          ? 'approved'
+          : decision === 'reject'
+            ? 'rejected'
+            : decision === 'hold'
+              ? 'held'
+              : 'removed';
       const at = this.timestamp();
       data.communityReviews[index] = {
         ...review,

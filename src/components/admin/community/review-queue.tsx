@@ -10,7 +10,7 @@ import { LiveNotice } from '@/components/admin/content/notices';
 import { useErrorNotice, type Notice } from '@/components/admin/content/use-record';
 import type { ReviewQueueItem } from '@/server/planner/schemas';
 
-type Decision = 'approve' | 'reject' | 'remove';
+type Decision = 'approve' | 'reject' | 'remove' | 'hold';
 
 /**
  * Staff queue for traveller place reviews (ADR 0014). Planner-written reviews
@@ -25,7 +25,7 @@ export function CommunityReviewQueue() {
   const [items, setItems] = useState<ReviewQueueItem[] | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [asking, setAsking] = useState<{ id: string; decision: 'reject' | 'remove' } | null>(null);
+  const [asking, setAsking] = useState<{ id: string; decision: 'reject' | 'remove' | 'hold' } | null>(null);
   const [reason, setReason] = useState('');
 
   const load = useCallback(async () => {
@@ -126,7 +126,17 @@ export function CommunityReviewQueue() {
                       </button>
                     </>
                   ) : null}
-                  {item.status === 'approved' ? (
+                  {item.status === 'approved' && item.source === 'planner' ? (
+                    <button
+                      type="button"
+                      disabled={busyId === item.id}
+                      className={buttonClass({ variant: 'secondary', size: 'sm' })}
+                      onClick={() => setAsking({ id: item.id, decision: 'hold' })}
+                    >
+                      {tr('hold')}
+                    </button>
+                  ) : null}
+                  {item.status === 'approved' || item.status === 'held' ? (
                     <button
                       type="button"
                       disabled={busyId === item.id}
@@ -147,7 +157,9 @@ export function CommunityReviewQueue() {
                     }}
                   >
                     <label htmlFor={`review-reason-${item.id}`} className="text-sm font-medium">
-                      {tr(item.source === 'homepage' ? 'reasonLabelGuest' : 'reasonLabel')}
+                      {asking.decision === 'hold'
+                        ? tr('reasonLabelHold')
+                        : tr(item.source === 'homepage' ? 'reasonLabelGuest' : 'reasonLabel')}
                     </label>
                     <textarea
                       id={`review-reason-${item.id}`}

@@ -959,13 +959,15 @@
     "reasonLabel": "Lý do (người chia sẻ sẽ thấy)",
     "confirm": {
       "reject": "Xác nhận từ chối",
-      "remove": "Xác nhận gỡ"
+      "remove": "Xác nhận gỡ",
+      "hold": "Ẩn và gửi câu hỏi"
     },
     "cancel": "Hủy",
     "done": {
       "approve": "Đã duyệt chuyến đi.",
       "reject": "Đã từ chối.",
-      "remove": "Đã gỡ khỏi trang chủ."
+      "remove": "Đã gỡ khỏi trang chủ.",
+      "hold": "Đã ẩn đánh giá và gửi câu hỏi cho tác giả."
     },
     "tripsHeading": "Chuyến đi",
     "reviewsHeading": "Đánh giá địa điểm",
@@ -982,11 +984,14 @@
         "pending": "Chờ duyệt",
         "approved": "Đang hiện",
         "rejected": "Từ chối",
-        "removed": "Đã gỡ"
+        "removed": "Đã gỡ",
+        "held": "Đang ẩn, chờ tác giả"
       },
       "visited": "Đến ngày {date}",
       "created": "Gửi lúc {date}",
       "remove": "Gỡ đánh giá",
+      "hold": "Hỏi tác giả",
+      "reasonLabelHold": "Câu hỏi của bạn (tác giả sẽ thấy; đánh giá bị ẩn cho tới khi họ sửa lại)",
       "reasonLabel": "Lý do (tác giả sẽ thấy)",
       "reasonLabelGuest": "Lý do gỡ (chỉ lưu nội bộ)"
     }
@@ -1017,8 +1022,11 @@
         "pending": "Đang chờ duyệt",
         "approved": "Đã hiện công khai",
         "rejected": "Không được duyệt",
-        "removed": "Đã bị gỡ"
-      }
+        "removed": "Đã bị gỡ",
+        "held": "Đang ẩn: Nhà Hưng có câu hỏi"
+      },
+      "question": "Câu hỏi từ Nhà Hưng: {reason}",
+      "heldHelp": "Đánh giá của bạn tạm thời bị ẩn. Hãy sửa lại để trả lời; lưu xong là đánh giá hiện lại."
     },
     "form": {
       "closed": "Tính năng này chưa mở: Nhà Hưng chưa công bố điều khoản đóng góp và đầu mối gỡ nội dung.",
