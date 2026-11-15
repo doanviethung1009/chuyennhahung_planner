@@ -8,7 +8,7 @@ import { ApiError, api, signInUrl } from '@/components/planner/api';
 import { CreateUserForm, type CreateUserInput } from './create-user-form';
 import { SecretPanel } from './secret-panel';
 import { UserTable } from './user-table';
-import type { AdminRole, AdminUser, OneTimeSecret } from './types';
+import type { AccountAction, AdminRole, AdminUser, OneTimeSecret } from './types';
 
 interface Props {
   currentUserId: string;
@@ -138,6 +138,26 @@ export function AdminConsole({ currentUserId, currentHandle, actorRole }: Props)
     }
   }
 
+  async function accountAction(user: AdminUser, kind: AccountAction) {
+    setStatus(null);
+    const base = `/api/admin/planner/users/${encodeURIComponent(user.id)}`;
+    try {
+      if (kind === 'purge') {
+        await api(`${base}?mode=hard`, { method: 'DELETE' });
+        setUsers((current) => current?.filter((u) => u.id !== user.id) ?? current);
+      } else {
+        const result = await api<{ user: AdminUser }>(
+          kind === 'delete' ? `${base}?mode=soft` : `${base}/${kind}`,
+          { method: kind === 'delete' ? 'DELETE' : 'POST', ...(kind === 'delete' ? {} : { body: {} }) },
+        );
+        setUsers((current) => current?.map((u) => (u.id === user.id ? result.user : u)) ?? current);
+      }
+      setStatus({ kind: 'ok', text: t(`status.${kind}Done`, { handle: user.handle }) });
+    } catch (failure) {
+      fail(failure);
+    }
+  }
+
   async function signOut() {
     setSigningOut(true);
     try {
@@ -205,7 +225,7 @@ export function AdminConsole({ currentUserId, currentHandle, actorRole }: Props)
         ) : users.length === 0 ? (
           <p className="text-base text-foreground-muted">{t('users.empty')}</p>
         ) : (
-          <UserTable users={users} currentUserId={currentUserId} actorRole={actorRole} onSaveRole={saveRole} onReset={resetPassword} />
+          <UserTable users={users} currentUserId={currentUserId} actorRole={actorRole} onSaveRole={saveRole} onReset={resetPassword} onAccount={accountAction} />
         )}
         {users === null && status?.kind === 'error' ? (
           <div>

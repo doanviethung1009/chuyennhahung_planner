@@ -156,17 +156,13 @@ describe('principal resolution on the opted-in routes', () => {
     expect(both.status).toBe(401);
   });
 
-  it('keeps rotate-token, DELETE, google unlink and integrity token-only', async () => {
+  it('keeps rotate-token, google unlink and integrity token-only (DELETE is session-capable since ADR 0017)', async () => {
     const admin = await makeUser('admin');
     const target = await makeUser('member');
     const id = target.id;
     const responses = [
       await routes.rotate.POST(
         req({ method: 'POST', path: `/api/admin/planner/users/${id}/rotate-token`, cookie: admin.cookie }),
-        params(id),
-      ),
-      await routes.user.DELETE(
-        req({ method: 'DELETE', path: `/api/admin/planner/users/${id}`, cookie: admin.cookie }),
         params(id),
       ),
       await routes.google.DELETE(
@@ -176,6 +172,12 @@ describe('principal resolution on the opted-in routes', () => {
       await routes.integrity.GET(req({ path: '/api/admin/planner/integrity', cookie: admin.cookie })),
     ];
     for (const response of responses) expect([401, 403]).toContain(response.status);
+    // A session cannot permanently delete a member (nor skip the soft-delete step).
+    const del = await routes.user.DELETE(
+      req({ method: 'DELETE', path: `/api/admin/planner/users/${id}`, cookie: admin.cookie }),
+      params(id),
+    );
+    expect(del.status).toBe(409);
     // And the target is intact.
     const listed = (await (await routes.users.GET(req({ bearer: ADMIN_TOKEN }))).json()).users;
     expect(listed.some((u: { id: string }) => u.id === id)).toBe(true);

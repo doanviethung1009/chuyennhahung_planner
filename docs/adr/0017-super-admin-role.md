@@ -2,7 +2,7 @@
 
 🇻🇳 Bản tiếng Việt: [0017-super-admin-role.vi.md](0017-super-admin-role.vi.md)
 
-- **Status:** Accepted (part 1 implemented; ban/delete in a following PR)
+- **Status:** Accepted (implemented in two PRs)
 - **Date:** 2026-11-16
 - **Owner:** system-architect
 
@@ -19,7 +19,10 @@
 5. `super_admin` uses the admin session lifetime (ADR 0010 §4). No new route, no schema migration: the stored role value is additive.
 6. The first super admin is made with the service token (`PATCH /api/admin/planner/users/:id` with `{"role":"super_admin"}`) — an admin session cannot grant it.
 
-Ban and delete of staff accounts (owner decisions: a ban ends sessions at once and blocks cookie, bearer and Google; delete stays the existing hard delete; an admin may ban or delete an editor, only a super admin acts on admin and super admin) follow in a separate PR and extend this ADR.
+7. **Account lifecycle (second PR).** `bannedAt/bannedBy` and `deletedAt/deletedBy` are optional fields on the user. A banned or soft-deleted account is *disabled*: all its sessions are removed at once, and `identify` (cookie and bearer), access-token sign-in, password sign-in and Google sign-in refuse it (Google reads it as `account_not_found`, so there is no distinct answer and no signup around it). Its trips, reviews and credentials are untouched, and unban or restore re-enables it.
+8. Delete has two modes (owner decision): **soft** (`DELETE ?mode=soft`: disable and mark deleted, restorable with `POST .../restore`) and **hard** (`DELETE ?mode=hard`, the default as before: the row goes, refused while the account owns trips). A session may hard-delete only a staff account that was soft-deleted first; the service token keeps the direct path.
+9. Ban, soft delete and restore apply to staff accounts (editor, admin, super admin) only, never yourself, and an admin acts only on editors (`canManageRole`). A disabled account no longer counts toward "the last admin" or "the last super admin", and a disabled actor cannot act.
+10. No new Action names: the routes reuse `user:provision`. New routes: `POST .../ban`, `.../unban`, `.../restore`; `DELETE` now accepts a session.
 
 ## Options considered
 
@@ -36,4 +39,4 @@ Easier: the Runbook is limited to one trusted role; an admin cannot escalate its
 
 ## Follow-up
 
-Ban/unban and staff delete (next PR, extends this ADR); run `/sec-check`; update `docs/architecture.md`, `docs/usage.md` and the feature document [super-admin-accounts](../features/super-admin-accounts.md).
+Run `/sec-check` on the lifecycle PR; update `docs/architecture.md`, `docs/usage.md` and the feature document [super-admin-accounts](../features/super-admin-accounts.md).

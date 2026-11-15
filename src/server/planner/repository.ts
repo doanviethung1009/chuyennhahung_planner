@@ -271,6 +271,10 @@ export class PlannerRepository {
           throw sessionExpired();
         }
 
+        if (user && isDisabled(user)) {
+          await this.dropSession(session.id);
+          throw disabledAccount();
+        }
         if (user) {
           if (sessionNeedsTouch(session, now, role)) await this.touchSession(session.id, now);
           // Only a session opened *with* the temporary password is held back
@@ -290,7 +294,7 @@ export class PlannerRepository {
       }
     }
 
-    return authorizePlannerUser(request, data.users);
+    return authorizePlannerUser(request, data.users.filter((user) => !isDisabled(user)));
   }
 
   /**
@@ -305,7 +309,7 @@ export class PlannerRepository {
    */
   signIn(accessToken: string): Promise<IssuedSession> {
     return this.transaction((data) => {
-      const user = findUserByAccessToken(data.users, accessToken);
+      const user = findUserByAccessToken(data.users.filter((row) => !isDisabled(row)), accessToken);
       if (!user) {
         throw new ContentError('unauthorized', 'that access token is not valid');
       }
@@ -359,7 +363,7 @@ export class PlannerRepository {
   async signInWithPassword(email: string, password: string): Promise<IssuedSession> {
     const refused = () => new ContentError('unauthorized', 'that email and password do not match');
     const data = await this.snapshot();
-    const candidate = data.users.find((user) => user.email === email) ?? null;
+    const candidate = data.users.find((user) => user.email === email && !isDisabled(user)) ?? null;
     const stored = candidate?.passwordHash ?? null;
 
     const check = await verifyPassword(
@@ -373,7 +377,7 @@ export class PlannerRepository {
 
     return this.transaction((current) => {
       const user = current.users.find((row) => row.id === candidate.id);
-      if (!user || user.passwordHash !== stored) throw refused();
+      if (!user || isDisabled(user) || user.passwordHash !== stored) throw refused();
       if (upgraded) user.passwordHash = upgraded;
       return this.openSession(current, user, 'password');
     });
@@ -392,7 +396,7 @@ export class PlannerRepository {
   ): Promise<void> {
     const data = await this.snapshot();
     const user = data.users.find((row) => row.id === userId);
-    if (!user) throw new ContentError('unauthorized', 'this credential is not valid');
+    if (!user || isDisabled(user)) throw new ContentError('unauthorized', 'this credential is not valid');
     const stored = user.passwordHash ?? null;
     if (!stored) {
       throw invalidState('this account has no password; an operator can issue one');
@@ -413,7 +417,7 @@ export class PlannerRepository {
 
     await this.transaction((current) => {
       const row = current.users.find((candidate) => candidate.id === userId);
-      if (!row || row.passwordHash !== stored) {
+      if (!row || isDisabled(row) || row.passwordHash !== stored) {
         throw invalidState('the password changed while this request was in flight — try again');
       }
       row.passwordHash = nextHash;
@@ -528,6 +532,8 @@ export class PlannerRepository {
   ): Promise<GoogleSignInResult> {
     return this.transaction((data): GoogleSignInResult => {
       const bySub = data.users.find((user) => user.googleSub === identity.sub);
+      // A disabled account reads as not found: no distinct answer, no signup around it.
+      if (bySub && isDisabled(bySub)) return { ok: false, reason: 'account_not_found' };
       if (bySub) return { ok: true, session: this.openSession(data, bySub, 'google'), created: false };
 
       const byEmail = data.users.find((user) => user.email === identity.email);
@@ -569,7 +575,7 @@ export class PlannerRepository {
   linkGoogle(userId: string, identity: GoogleIdentity): Promise<GoogleLinkResult> {
     return this.transaction((data): GoogleLinkResult => {
       const user = data.users.find((row) => row.id === userId);
-      if (!user) throw notFound('planner user', userId);
+      if (!user || isDisabled(user)) throw notFound('planner user', userId);
       const holder = data.users.find((row) => row.googleSub === identity.sub);
       if (holder && holder.id !== userId) return { ok: false, reason: 'account_conflict' };
       if (user.googleSub && user.googleSub !== identity.sub) {
@@ -587,7 +593,7 @@ export class PlannerRepository {
   unlinkGoogle(userId: string): Promise<PublicPlannerUser> {
     return this.transaction((data) => {
       const user = data.users.find((row) => row.id === userId);
-      if (!user) throw notFound('planner user', userId);
+      if (!user || isDisabled(user)) throw notFound('planner user', userId);
       user.googleSub = null;
       user.updatedAt = this.timestamp();
       data.sessions = data.sessions.filter((session) => session.userId !== userId);
@@ -605,7 +611,7 @@ export class PlannerRepository {
     const presented = sessionTokenFromRequest(request);
     return this.transaction((data) => {
       const user = data.users.find((row) => row.id === userId);
-      if (!user) throw notFound('planner user', userId);
+      if (!user || isDisabled(user)) throw notFound('planner user', userId);
       if (!user.googleSub) return toPublicUser(user);
       if (!user.passwordHash) {
         throw invalidState('this account has no password; Google is its only way to sign in');
@@ -753,12 +759,64 @@ export class PlannerRepository {
     });
   }
 
-  /** Refuses while the traveller still has trips — their data is not collateral. */
-  deleteUser(userId: string): Promise<void> {
+  /**
+   * Bans, unbans, soft-deletes or restores a staff account (ADR 0017). All four
+   * disable or re-enable sign-in only: no trip, review or credential is touched.
+   * Disabling ends every session at once, and `identify` refuses the account on
+   * every credential path from then on. Idempotent.
+   */
+  changeAccountState(
+    userId: string,
+    change: 'ban' | 'unban' | 'delete' | 'restore',
+    actor?: AdminActor,
+  ): Promise<PublicPlannerUser> {
+    if (actor && actor.userId === userId) {
+      return Promise.reject(selfAdminAction(`${change} itself`));
+    }
     return this.transaction((data) => {
+      assertActorStillAdmin(data, actor);
+      const index = data.users.findIndex((user) => user.id === userId);
+      const existing = data.users[index];
+      if (index < 0 || !existing) throw notFound('planner user', userId);
+      const role = userRole(existing);
+      assertMayManage(data, actor, role);
+      if (role === 'member') {
+        throw invalidState('only editor, admin and super admin accounts can be banned or soft-deleted');
+      }
+      const disabling = change === 'ban' || change === 'delete';
+      const field = change === 'ban' || change === 'unban' ? 'banned' : 'deleted';
+      if (Boolean(existing[`${field}At`]) === disabling) return toPublicUser(existing);
+      if (disabling && isAdminRole(role) && !isDisabled(existing)) {
+        assertAnotherAdminExists(data, userId, change, role);
+      }
+      const next: PlannerUser = { ...existing, updatedAt: this.timestamp() };
+      next[`${field}At`] = disabling ? this.timestamp() : null;
+      next[`${field}By`] = disabling ? (actor?.userId ?? 'service') : null;
+      data.users[index] = next;
+      if (disabling) data.sessions = data.sessions.filter((session) => session.userId !== userId);
+      return toPublicUser(next);
+    });
+  }
+
+  /** Permanent delete. Refuses while the traveller still has trips — their data is not collateral. */
+  deleteUser(userId: string, actor?: AdminActor): Promise<void> {
+    if (actor && actor.userId === userId) {
+      return Promise.reject(selfAdminAction('delete itself'));
+    }
+    return this.transaction((data) => {
+      assertActorStillAdmin(data, actor);
       const index = data.users.findIndex((user) => user.id === userId);
       const target = data.users[index];
       if (index < 0 || !target) throw notFound('planner user', userId);
+      assertMayManage(data, actor, userRole(target));
+      // A session actor deletes permanently only what was soft-deleted first;
+      // the service token keeps the direct path (ADR 0017).
+      if (actor && !target.deletedAt) {
+        throw invalidState('soft-delete the account first; only a soft-deleted account can be deleted permanently');
+      }
+      if (actor && userRole(target) === 'member') {
+        throw invalidState('only editor, admin and super admin accounts can be deleted from a session');
+      }
       if (isAdminRole(userRole(target))) assertAnotherAdminExists(data, userId, 'delete', userRole(target));
 
       const trips = data.trips.filter((trip) => trip.ownerId === userId).length;
@@ -2977,10 +3035,18 @@ function selfAdminAction(what: string): ContentError {
  * Re-checks, inside the transaction, that the acting session user still exists
  * and is still an admin: the request-time check and the write are not atomic.
  */
+/** A banned or soft-deleted account (ADR 0017): it keeps its data and cannot sign in. */
+function isDisabled(user: PlannerUser): boolean {
+  return Boolean(user.bannedAt) || Boolean(user.deletedAt);
+}
+
+const disabledAccount = (): ContentError =>
+  new ContentError('unauthorized', 'this account is not available');
+
 function assertActorStillAdmin(data: PlannerData, actor: AdminActor | undefined): void {
   if (!actor) return;
   const user = data.users.find((candidate) => candidate.id === actor.userId);
-  if (!user || !isAdminRole(userRole(user))) {
+  if (!user || isDisabled(user) || !isAdminRole(userRole(user))) {
     throw forbidden('the acting account is no longer an admin');
   }
 }
@@ -3003,7 +3069,7 @@ function assertMayManage(data: PlannerData, actor: AdminActor | undefined, targe
 /** Never leave the system without an admin-capable account, nor without a super admin once one exists. */
 function assertAnotherAdminExists(data: PlannerData, userId: string, verb: string, role: Role = 'admin'): void {
   const others = data.users.filter(
-    (candidate) => candidate.id !== userId && isAdminRole(userRole(candidate)),
+    (candidate) => candidate.id !== userId && !isDisabled(candidate) && isAdminRole(userRole(candidate)),
   ).length;
   if (others === 0) {
     throw new ContentError(
@@ -3013,7 +3079,7 @@ function assertAnotherAdminExists(data: PlannerData, userId: string, verb: strin
   }
   if (role === 'super_admin') {
     const supers = data.users.filter(
-      (candidate) => candidate.id !== userId && userRole(candidate) === 'super_admin',
+      (candidate) => candidate.id !== userId && !isDisabled(candidate) && userRole(candidate) === 'super_admin',
     ).length;
     if (supers === 0) {
       throw new ContentError(
