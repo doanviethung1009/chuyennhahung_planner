@@ -1414,8 +1414,8 @@ export class PlannerRepository {
 
   /**
    * Writes the signed-in author's review of a place. One per author per place:
-   * a second call replaces it. Always `pending` — a Planner review waits for
-   * staff, and an edit re-queues it.
+   * a second call replaces it. Published at once, like a guest review (owner
+   * decision, ADR 0014): no pre-moderation, staff can remove it afterwards.
    */
   async upsertPlannerReview(
     userId: string,
@@ -1445,10 +1445,10 @@ export class PlannerRepository {
         lang: input.lang,
         visitedOn: input.visitedOn,
         authorName,
-        status: 'pending',
+        status: 'approved',
         guestKey: null,
-        decidedAt: null,
-        decidedBy: null,
+        decidedAt: at,
+        decidedBy: 'auto',
         rejectReason: null,
         createdAt: existing?.createdAt ?? at,
         updatedAt: at,

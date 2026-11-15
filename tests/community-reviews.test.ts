@@ -28,33 +28,30 @@ const review = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-describe('Planner-written reviews are moderated (ADR 0014)', () => {
-  it('stay pending and invisible until staff approve', async () => {
+describe('Planner-written reviews are published at once (ADR 0014)', () => {
+  it('go live immediately, and staff can remove them afterwards', async () => {
     const planner = makePlanner();
     const { userId } = await makeOwner(planner);
     const own = await planner.upsertPlannerReview(userId, PLACE, { ...review(), authorDisplay: 'name' });
-    expect(own.status).toBe('pending');
-    expect((await planner.listApprovedReviews()).items).toEqual([]);
-
-    const [queued] = await planner.listReviewQueue('pending');
-    await planner.decideReview(queued!.id, 'approve', 'staff', null);
+    expect(own.status).toBe('approved');
     const { items } = await planner.listApprovedReviews([PLACE]);
     expect(items).toHaveLength(1);
     expect(items[0]?.author).toBe('Hưng Trần');
+
+    const [queued] = await planner.listReviewQueue();
+    await planner.decideReview(queued!.id, 'remove', 'staff', 'vi phạm');
+    expect((await planner.listApprovedReviews()).items).toEqual([]);
   });
 
-  it('keeps one review per author per place; an edit re-queues it', async () => {
+  it('keeps one review per author per place; an edit replaces it and stays live', async () => {
     const planner = makePlanner();
     const { userId } = await makeOwner(planner);
     await planner.upsertPlannerReview(userId, PLACE, { ...review(), authorDisplay: 'name' });
-    const [first] = await planner.listReviewQueue();
-    await planner.decideReview(first!.id, 'approve', 'staff', null);
-
     await planner.upsertPlannerReview(userId, PLACE, { ...review({ rating: 3 }), authorDisplay: 'anonymous' });
     expect(await planner.listReviewQueue()).toHaveLength(1);
-    expect((await planner.listApprovedReviews()).items).toEqual([]);
-    const [own] = await planner.listOwnReviews(userId);
-    expect(own).toMatchObject({ status: 'pending', rating: 3, authorDisplay: 'anonymous' });
+    const { items } = await planner.listApprovedReviews();
+    expect(items[0]).toMatchObject({ rating: 3, author: null });
+    expect((await planner.listOwnReviews(userId))[0]).toMatchObject({ status: 'approved', authorDisplay: 'anonymous' });
   });
 
   it('lets the author delete their own, and only theirs', async () => {
@@ -159,10 +156,13 @@ describe('public projection and summary', () => {
     expect((await planner.listApprovedReviews([PLACE])).summary).toEqual({ count: 3, average: 4 });
   });
 
-  it('excludes pending and rejected from the summary', async () => {
+  it('excludes removed reviews from the summary', async () => {
     const planner = makePlanner();
     const { userId } = await makeOwner(planner);
     await planner.upsertPlannerReview(userId, PLACE, { ...review(), authorDisplay: 'name' });
+    expect((await planner.listApprovedReviews()).summary.count).toBe(1);
+    const [row] = await planner.listReviewQueue();
+    await planner.decideReview(row!.id, 'remove', 's', 'spam');
     expect((await planner.listApprovedReviews()).summary.count).toBe(0);
   });
 });

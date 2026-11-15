@@ -1005,7 +1005,7 @@
     "selfReported": "Tự khai, chưa được xác minh.",
     "planner": {
       "title": "Đánh giá các địa điểm trong chuyến",
-      "intro": "Viết đánh giá cho những địa điểm bạn đã đến. Đánh giá viết ở đây sẽ được người của Nhà Hưng duyệt rồi mới hiện.",
+      "intro": "Viết đánh giá cho những địa điểm bạn đã đến. Đánh giá hiện công khai ngay sau khi gửi; Nhà Hưng có thể gỡ nội dung vi phạm.",
       "write": "Viết đánh giá",
       "edit": "Sửa đánh giá",
       "close": "Đóng",
@@ -1043,12 +1043,11 @@
         "name": "Tên hiển thị của tôi",
         "anonymous": "Ẩn danh"
       },
-      "plannerNote": "Đánh giá sẽ hiện sau khi được duyệt. Sửa đánh giá sẽ phải duyệt lại.",
+      "plannerNote": "Đánh giá hiện ngay sau khi gửi và sửa là cập nhật ngay. Nhà Hưng có thể gỡ nội dung vi phạm.",
       "guestNote": "Đánh giá hiện ngay sau khi gửi. Nhà Hưng có thể gỡ nội dung vi phạm.",
       "submit": "Gửi đánh giá",
       "sending": "Đang gửi…",
       "posted": "Đã đăng đánh giá của bạn. Cảm ơn bạn!",
-      "queued": "Đã gửi. Đánh giá sẽ hiện sau khi được duyệt.",
       "errors": {
         "generic": "Chưa gửi được. Hãy thử lại.",
         "rate_limited": "Bạn gửi hơi nhiều. Hãy thử lại sau.",

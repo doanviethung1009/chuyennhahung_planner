@@ -346,7 +346,7 @@ The variables are read at startup. **Restart** `npm run dev` (or recreate the co
 
 ### Moderate community trips (admin or editor)
 
-Open `/quan-tri/cong-dong` (`/en/admin/community`). Pending requests come first: **Approve**, or **Reject** with a reason the owner will see; an approved trip can be **Removed** with a reason. The home page and `/chuyen-di-cong-dong` show only approved trips. The same page lists traveller place reviews: approve or reject the pending ones written in the Planner, and **Remove** any live one (including guest reviews from the home page, which are published without approval). Before travellers can submit anything, fill `contribution.terms` (VI and EN) and `contribution.takedownContact` in `src/content/site.ts`; until then the owner's control is closed.
+Open `/quan-tri/cong-dong` (`/en/admin/community`). Pending requests come first: **Approve**, or **Reject** with a reason the owner will see; an approved trip can be **Removed** with a reason. The home page and `/chuyen-di-cong-dong` show only approved trips. The same page lists traveller place reviews: **Remove** any live review. Reviews, whether written in the Planner or by a visitor on the home page, are published without approval. Before travellers can submit anything, fill `contribution.terms` (VI and EN) and `contribution.takedownContact` in `src/content/site.ts`; until then the owner's control is closed.
 
 ### Edit content in the browser (admin or editor)
 

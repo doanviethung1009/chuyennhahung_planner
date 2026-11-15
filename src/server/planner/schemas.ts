@@ -737,9 +737,9 @@ export const reviewStatusSchema = z.enum(['pending', 'approved', 'rejected', 're
 export const reviewLangSchema = z.enum(['vi', 'en']);
 
 /**
- * A traveller's review of a catalogue place. `source` decides moderation:
- * `planner` (signed in) starts `pending`; `homepage` (anyone) is published at
- * once and staff can only remove it afterwards. Plain text — always rendered as
+ * A traveller's review of a catalogue place. Both sources (`planner`, signed in;
+ * `homepage`, anyone) are published at once and staff can remove them
+ * afterwards. `pending` only exists for rows written before that decision. Plain text — always rendered as
  * text, never HTML.
  */
 export const communityReviewSchema = z.object({

@@ -63,21 +63,21 @@ flagged under Follow-up.
    `authorName` (display text; guests type one or stay "Guest"), `status: 'pending' |
    'approved' | 'rejected' | 'removed'`, moderation fields, timestamps. It lives **beside
    the trips**, not in Travel Content: that has one admin principal, no users.
-7. **Two entry points, two moderation rules (owner decision).**
-   - **Written inside the Planner** (signed-in traveller, `source: 'planner'`): starts
-     `pending` and is shown only after staff approve it. One review per author per place;
-     submitting again replaces it and returns it to `pending`. Authors list and delete their own.
-   - **Written on the home page / place page by a guest or any visitor**
-     (`source: 'homepage'`): published at once (`approved`), **no pre-moderation**. Staff
-     can still `remove` it afterwards. Because nothing is human-reviewed first, this path
-     is bounded in other ways: plain text only (links are shown as text, never clickable),
-     rate limit 3/hour per client key and 20/day global per place, a honeypot field, a
-     60–1000 char body, and the ordinary 429 envelope. One guest review per place per client
-     key per 24 h. The owner accepts the residual risk (spam, abuse stays visible until removed).
-   - **Accurate information, no verified-visit requirement.** The reviewer need not have
-     the place in a trip, but must give structured, checkable data: the place picked from
-     the catalogue (not free text), the visit date, a rating and the body. We show the
-     review as "self-reported", never as "verified".
+7. **Both entry points publish at once (owner decision; amended 2026-11-15).** The
+   owner first asked for Planner reviews to be moderated and guest reviews not; on
+   2026-11-15 they asked for Planner authors to publish without waiting too. So **no
+   review is pre-moderated**; staff can `remove` any live one.
+   - **Written inside the Planner** (signed-in traveller, `source: 'planner'`): `approved`
+     immediately, rate-limited to 5/hour/user. One per author per place; submitting again
+     replaces it. Authors list and delete their own.
+   - **Written on the home page by anyone** (`source: 'homepage'`): `approved` immediately,
+     bounded by plain text only (links never clickable), 3/hour per client key, 20/day per
+     place overall, a honeypot field, a 60–1000 char body, one guest review per place per
+     client key per 24 h. The owner accepts the residual risk (spam and abuse stay visible
+     until removed).
+   - **Accurate information, no verified-visit requirement.** The place is picked from the
+     catalogue, the visit date is required, and the review is shown as "self-reported",
+     never "verified".
 8. **Public reads** are `GET /api/community/trips` and `GET /api/community/reviews`
    (`?placeSlug=`), both returning only `approved` rows, read-only, rate-limited like
    `shareReadLimiter`. Average rating shown on a place counts approved reviews only and
@@ -116,9 +116,8 @@ moderation, roles and admin portal are reused; reviews attach to the existing pl
 
 Harder, and not free:
 
-- **Someone has to moderate** trips and Planner-written reviews; without staff those stay
-  empty. Home-page guest reviews go live unreviewed, so abuse there is cleaned up after the
-  fact. No reporting button for readers (out of scope).
+- **Someone has to moderate** trips; without staff the trip sections stay empty. All
+  reviews go live unreviewed, so abuse there is cleaned up after the fact. No reporting button for readers (out of scope).
 - **First user-generated content on the site.** Defamation, spam, personal data in
   notes and copyright are now possible; pre-moderation reduces but does not remove the
   risk, and takedown is staff-only. A terms/privacy statement for contributors is an
@@ -143,7 +142,8 @@ Harder, and not free:
   phases) and `.claude/context/project-context.md`; feature documents
   `docs/features/community-trips.*` (PR 1) and `docs/features/community-reviews.*` (PR 2).
 - **Owner answers (2026-11-14):** any edit to a listed trip re-queues it; Planner-written
-  reviews are moderated, home-page guest reviews are not; no verified-visit requirement
+  reviews and home-page guest reviews are both published without approval (amended
+  2026-11-15); no verified-visit requirement
   but accurate structured data; terms and takedown contact — **owner to supply, not invented**.
 - **Blocking gate for go-live:** the contribution terms text and the takedown contact are
   read from site configuration (`src/content/site.ts`, owner data). Until both are filled

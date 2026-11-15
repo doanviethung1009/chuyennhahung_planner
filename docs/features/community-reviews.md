@@ -4,7 +4,7 @@
 
 ## Summary
 
-Travellers can review catalogue places. A review written by a signed-in traveller inside the Planner waits for staff approval; a review written by anyone on the home page goes live at once and staff can remove it afterwards. Reviews show on the home page and on the destination page, always labelled self-reported. This is PR 2 of [ADR 0014](../adr/0014-community-trips-and-reviews.md).
+Travellers can review catalogue places, signed in inside the Planner or as a visitor on the home page. Every review goes live at once; there is no pre-moderation, and staff can remove one afterwards. Reviews show on the home page and on the destination page, always labelled self-reported. This is PR 2 of [ADR 0014](../adr/0014-community-trips-and-reviews.md).
 
 ## Routes
 
@@ -16,7 +16,7 @@ API: `GET /api/planner/reviews`, `PUT|DELETE /api/planner/reviews/[placeSlug]` (
 
 ## Data
 
-- `CommunityReview` in the Planner store: `source` (`planner` | `homepage`), `authorId` (null for a guest), `placeSlug` (must be a catalogue place), `rating` 1–5, `body` 60–1000 plain-text characters, `lang`, `visitedOn` (required, not in the future), `authorName` (`null` = anonymous), `status` (`pending | approved | rejected | removed`), `guestKey` (hash, dedupe only), moderation fields.
+- `CommunityReview` in the Planner store: `source` (`planner` | `homepage`), `authorId` (null for a guest), `placeSlug` (must be a catalogue place), `rating` 1–5, `body` 60–1000 plain-text characters, `lang`, `visitedOn` (required, not in the future), `authorName` (`null` = anonymous), `status` (`approved` or `removed`; `pending`/`rejected` exist only for rows from before this decision), `guestKey` (hash, dedupe only), moderation fields.
 - PostgreSQL: migration `0006_community_reviews.sql` adds the `community_reviews` table (no foreign keys); rollback in `db/rollback/`.
 - Public output `PublicCommunityReview`: `placeSlug`, `rating`, `body`, `lang`, `visitedOn`, `author`, `createdAt` only. No id, author id, guest key, source or moderation field.
 - The average is shown only from 3 approved reviews.
@@ -25,7 +25,7 @@ API: `GET /api/planner/reviews`, `PUT|DELETE /api/planner/reviews/[placeSlug]` (
 
 ## How it works
 
-1. **Planner path:** on `/my-trips/[id]` a panel lists the catalogue places in the trip. The author writes or edits a review (`PUT`, rate-limited to 5/hour/user); it is `pending`, one per author per place, and an edit re-queues it. Staff approve or reject in `/admin/community`; rejection shows the reason to the author. The author can delete their own.
+1. **Planner path:** on `/my-trips/[id]` a panel lists the catalogue places in the trip. The author writes or edits a review (`PUT`, rate-limited to 5/hour/user); it is `approved` at once, one per author per place, and an edit replaces it in place. The author can delete their own; staff can **Remove** it.
 2. **Home page path:** anyone can post from the home page without an account. It is `approved` immediately. Bounds instead of pre-moderation: 3 per hour per client, one per place per client per 24 hours, 20 per place per day overall, a hidden honeypot field (a filled one is dropped with a normal-looking 201), and plain text only. Staff can only **Remove** it.
 3. The place is picked from the catalogue and the visit date is required, so the details are checkable; the review is shown as "self-reported", never "verified".
 4. Review text is rendered as text by React: HTML is inert and links are not clickable.
@@ -47,14 +47,14 @@ API: `GET /api/planner/reviews`, `PUT|DELETE /api/planner/reviews/[placeSlug]` (
 
 ## Tests
 
-`tests/community-reviews.test.ts`: Planner reviews are pending and invisible until approved; one per author per place and edits re-queue; own delete only; unknown place and future date refused; removed with the account; guest reviews are public at once, only removable; one per client per 24 h; 20 per place per day; the address is never stored; the public projection names exactly the allowed fields; the average is hidden below three; schemas are strict and HTML stays inert. `tests/planner-pg-fixtures.ts` now writes one review of each kind, so the row-mapping test and the PostgreSQL integration test cover the new table.
+`tests/community-reviews.test.ts`: Planner reviews are live at once and removable by staff; one per author per place and an edit replaces it; own delete only; unknown place and future date refused; removed with the account; guest reviews are public at once, only removable; one per client per 24 h; 20 per place per day; the address is never stored; the public projection names exactly the allowed fields; the average is hidden below three; schemas are strict and HTML stays inert. `tests/planner-pg-fixtures.ts` now writes one review of each kind, so the row-mapping test and the PostgreSQL integration test cover the new table.
 
 Not run here: the PostgreSQL integration test (no database in this environment).
 
 ## Limits and open questions
 
 - Closed until the owner supplies the terms and the takedown contact.
-- Guest reviews are unmoderated by the owner's choice: abuse stays visible until staff remove it, and the per-client limits rest on a forwardable header. Behind no trusted proxy every client shares one key, so only one guest review per place per day gets through.
+- Reviews are unmoderated by the owner's choice (both entry points): abuse stays visible until staff remove it, and the per-client limits rest on a forwardable header. Behind no trusted proxy every client shares one key, so only one guest review per place per day gets through.
 - A Planner author's name is a snapshot taken when they submit; renaming the account does not change it.
 - No reporting button, replies, likes, photos or verified-visit badge. No notification to staff about new reviews.
 - The home page shows the latest 3 reviews and the destination page 6; there is no dedicated list page or paging yet.

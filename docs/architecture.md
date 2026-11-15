@@ -349,10 +349,10 @@ re-queues it (`touch`), leaving `public` or archiving clears it. The control sta
 until the owner fills `contribution` in `src/content/site.ts`.
 
 Traveller place reviews (PR 2) are `CommunityReview` rows in the Planner store, table
-`community_reviews`. `source: planner` (signed in, `PUT /api/planner/reviews/[placeSlug]`)
-starts `pending` and needs staff approval; `source: homepage` (`POST /api/community/reviews`,
-no account) is `approved` at once and staff can only remove it, bounded by per-client and
-per-place rate limits, a honeypot and plain text. Public output is the allow-list
+`community_reviews`. `source: planner` (signed in, `PUT /api/planner/reviews/[placeSlug]`, 5/hour/user)
+and `source: homepage` (`POST /api/community/reviews`, no account) are both `approved` at
+once; staff can only remove them. The guest path is bounded by per-client and per-place
+rate limits, a honeypot and plain text. Public output is the allow-list
 `PublicCommunityReview`; the average shows from 3 approved reviews. The same `contribution`
 gate closes every review form.
 

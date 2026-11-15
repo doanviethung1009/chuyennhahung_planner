@@ -348,10 +348,10 @@ và trang chủ, qua allow-list `CommunityTripCard`. Mọi thay đổi xếp l�
 `src/content/site.ts`.
 
 Đánh giá địa điểm của người đi (PR 2) là các dòng `CommunityReview` trong store Planner, bảng
-`community_reviews`. `source: planner` (đã đăng nhập, `PUT /api/planner/reviews/[placeSlug]`)
-bắt đầu ở `pending` và cần staff duyệt; `source: homepage` (`POST /api/community/reviews`,
-không cần tài khoản) lên `approved` ngay và staff chỉ có thể gỡ, được chặn bằng giới hạn theo
-client và theo địa điểm, honeypot và văn bản thuần. Đầu ra công khai là allow-list
+`community_reviews`. `source: planner` (đã đăng nhập, `PUT /api/planner/reviews/[placeSlug]`, 5 lần/giờ/người dùng)
+và `source: homepage` (`POST /api/community/reviews`, không cần tài khoản) đều lên `approved`
+ngay; staff chỉ có thể gỡ. Đường của khách được chặn bằng giới hạn theo client và theo
+địa điểm, honeypot và văn bản thuần. Đầu ra công khai là allow-list
 `PublicCommunityReview`; điểm trung bình hiện từ 3 đánh giá đã duyệt. Cùng cổng `contribution`
 đóng mọi form đánh giá.
 

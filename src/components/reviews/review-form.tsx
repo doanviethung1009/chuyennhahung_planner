@@ -67,7 +67,7 @@ export function ReviewForm(props: Props) {
           body: { rating, body, lang, visitedOn, authorDisplay },
         });
         props.onSaved(saved);
-        setMessage(t('form.queued'));
+        setMessage(t('form.posted'));
       } else {
         await api('/api/community/reviews', {
           method: 'POST',

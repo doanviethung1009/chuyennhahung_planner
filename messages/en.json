@@ -1005,7 +1005,7 @@
     "selfReported": "Self-reported, not verified.",
     "planner": {
       "title": "Review the places in this trip",
-      "intro": "Write a review for the places you visited. Reviews written here are checked by the Nhà Hưng team before they appear.",
+      "intro": "Write a review for the places you visited. It goes public as soon as you send it; Nhà Hưng may remove content that breaks the terms.",
       "write": "Write a review",
       "edit": "Edit review",
       "close": "Close",
@@ -1043,12 +1043,11 @@
         "name": "My display name",
         "anonymous": "Anonymous"
       },
-      "plannerNote": "Your review appears once approved. Editing it sends it back for review.",
+      "plannerNote": "Your review appears right away and edits update it at once. Nhà Hưng may remove content that breaks the terms.",
       "guestNote": "Your review appears right away. Nhà Hưng may remove content that breaks the terms.",
       "submit": "Submit review",
       "sending": "Sending…",
       "posted": "Your review is posted. Thank you!",
-      "queued": "Submitted. It will appear once approved.",
       "errors": {
         "generic": "Could not send. Please try again.",
         "rate_limited": "You are sending a lot. Please try again later.",
