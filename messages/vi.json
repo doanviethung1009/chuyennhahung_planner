@@ -967,9 +967,11 @@
       "approve": "Đã duyệt chuyến đi.",
       "reject": "Đã từ chối.",
       "remove": "Đã gỡ khỏi trang chủ.",
-      "hold": "Đã ẩn đánh giá và gửi câu hỏi cho tác giả."
+      "hold": "Đã ẩn đánh giá và gửi câu hỏi cho tác giả.",
+      "mute": "Đã tắt tác giả. Đánh giá của họ bị ẩn cho tới khi bạn gỡ."
     },
     "tripsHeading": "Chuyến đi",
+    "restrictionsHeading": "Tác giả bị tắt",
     "reviewsHeading": "Đánh giá địa điểm",
     "reviews": {
       "empty": "Chưa có đánh giá nào.",
@@ -991,9 +993,33 @@
       "created": "Gửi lúc {date}",
       "remove": "Gỡ đánh giá",
       "hold": "Hỏi tác giả",
+      "restrictedBadge": "tác giả đang bị tắt",
+      "mute": "Tắt tác giả",
+      "muteScope": "Tắt đánh giá",
+      "muteScopes": {
+        "place": "chỉ với địa điểm này ({place})",
+        "all": "với mọi địa điểm"
+      },
+      "muteHelp": "Đánh giá mới bị chặn và các đánh giá hiện có của tác giả trong phạm vi này bị ẩn. Tác giả thấy lý do của bạn. Bạn gỡ lúc nào cũng được.",
+      "muteGuestWarning": "Khách này chỉ được nhận diện bằng khoá kết nối, người khác có thể dùng chung. Lệnh chặn kéo dài 30 ngày. Khách sẽ được báo rằng đánh giá từ kết nối này đang tạm dừng.",
+      "muteReasonLabel": "Lý do (tác giả sẽ thấy)",
+      "muteConfirm": "Tắt",
       "reasonLabelHold": "Câu hỏi của bạn (tác giả sẽ thấy; đánh giá bị ẩn cho tới khi họ sửa lại)",
       "reasonLabel": "Lý do (tác giả sẽ thấy)",
       "reasonLabelGuest": "Lý do gỡ (chỉ lưu nội bộ)"
+    },
+    "restrictions": {
+      "empty": "Chưa tắt tác giả nào.",
+      "guest": "Khách",
+      "allPlaces": "mọi địa điểm",
+      "reason": "Lý do: {reason}",
+      "createdBy": "Bởi {by}, {date}",
+      "until": "đến {date}",
+      "liftedBy": "gỡ bởi {by}, {date}",
+      "active": "Đang hiệu lực",
+      "inactive": "Đã kết thúc",
+      "lift": "Gỡ",
+      "lifted": "Đã gỡ hạn chế."
     }
   },
   "communityReviews": {
@@ -1026,6 +1052,9 @@
         "held": "Đang ẩn: Nhà Hưng có câu hỏi"
       },
       "question": "Câu hỏi từ Nhà Hưng: {reason}",
+      "restrictedAll": "Đánh giá đã bị tắt với tài khoản của bạn. Lý do: {reason}",
+      "restrictedPlace": "Đánh giá đã bị tắt với địa điểm này trên tài khoản của bạn. Lý do: {reason}",
+      "restrictedUntil": "Đến {date}.",
       "heldHelp": "Đánh giá của bạn tạm thời bị ẩn. Hãy sửa lại để trả lời; lưu xong là đánh giá hiện lại."
     },
     "form": {
@@ -1060,6 +1089,7 @@
         "generic": "Chưa gửi được. Hãy thử lại.",
         "rate_limited": "Bạn gửi hơi nhiều. Hãy thử lại sau.",
         "invalid_state": "Địa điểm này đã được đánh giá từ kết nối của bạn trong 24 giờ qua.",
+        "forbidden": "Đánh giá từ tài khoản hoặc kết nối này đang tạm dừng.",
         "validation_failed": "Hãy kiểm tra lại các ô: nội dung cần 60 đến 1000 ký tự.",
         "invalid_reference": "Địa điểm hoặc ngày đến không hợp lệ."
       }

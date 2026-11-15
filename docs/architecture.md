@@ -356,6 +356,15 @@ rate limits, a honeypot and plain text. Public output is the allow-list
 `PublicCommunityReview`; the average shows from 3 approved reviews. The same `contribution`
 gate closes every review form.
 
+Author controls ([ADR 0015](adr/0015-community-review-author-controls.md)): staff (`community:moderate`)
+can **hold** a live Planner review (status `held`, hidden, the reason is the question the author
+sees; the author's edit republishes it), and admin/service (`community:restrict`) can switch an
+author off through a `ReviewRestriction` (table `review_restrictions`, never deleted, lifting
+sets `lifted_at`): for the review's place or every place, it blocks new reviews (403) and hides
+the author's existing ones at read time, reversibly. A guest is known only by the hashed
+connection key, so a guest restriction is time-boxed (30 days default, 90 max) and refused for the
+shared `unknown` key. No author id or guest key appears in any response.
+
 ## Phases
 
 Deliberately absent, and not to be scaffolded early:

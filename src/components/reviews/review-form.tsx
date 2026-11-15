@@ -89,7 +89,7 @@ export function ReviewForm(props: Props) {
       setFailed(true);
       const code = error instanceof ApiError ? error.code : 'generic';
       setMessage(
-        code === 'rate_limited' || code === 'invalid_state' || code === 'validation_failed' || code === 'invalid_reference'
+        code === 'rate_limited' || code === 'forbidden' || code === 'invalid_state' || code === 'validation_failed' || code === 'invalid_reference'
           ? t(`form.errors.${code}`)
           : t('form.errors.generic'),
       );

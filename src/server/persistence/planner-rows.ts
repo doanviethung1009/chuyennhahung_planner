@@ -5,6 +5,7 @@ import {
   oauthAttemptSchema,
   plannerSessionSchema,
   plannerUserSchema,
+  reviewRestrictionSchema,
   tripActivitySchema,
   tripDaySchema,
   tripExpenseSchema,
@@ -256,6 +257,25 @@ export const TABLES: readonly TableSpec<PlannerCollection>[] = [
       col('decidedBy', 'decided_by', 'text', 'nullable'),
       col('rejectReason', 'reject_reason', 'text', 'nullable'),
       ...createdUpdated,
+    ],
+  },
+  {
+    // ADR 0015. No foreign keys (ADR 0013). Rows are never deleted by staff: lifting sets lifted_at.
+    collection: 'reviewRestrictions',
+    table: 'review_restrictions',
+    parse: (r) => reviewRestrictionSchema.parse(r),
+    columns: [
+      col('id', 'id', 'text'),
+      col('subject', 'subject', 'text'),
+      col('authorId', 'author_id', 'text', 'nullable'),
+      col('guestKey', 'guest_key', 'text', 'nullable'),
+      col('placeSlug', 'place_slug', 'text', 'nullable'),
+      col('reason', 'reason', 'text'),
+      col('createdAt', 'created_at', 'timestamptz'),
+      col('createdBy', 'created_by', 'text'),
+      col('expiresAt', 'expires_at', 'timestamptz', 'nullable'),
+      col('liftedAt', 'lifted_at', 'timestamptz', 'nullable'),
+      col('liftedBy', 'lifted_by', 'text', 'nullable'),
     ],
   },
 ];

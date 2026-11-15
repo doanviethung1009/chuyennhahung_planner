@@ -2,7 +2,7 @@
 
 🇬🇧 English version: [0015-community-review-author-controls.md](0015-community-review-author-controls.md)
 
-- **Trạng thái:** Đã chấp nhận theo khuyến nghị (chủ nhà duyệt 2026-11-15); PR 1 (hold / hỏi tác giả, migration `0007_review_hold.sql`) đã hiện thực, PR 2 (restriction) chưa làm. Câu hỏi 1–7 ở mục Việc tiếp theo giữ theo đáp án khuyến nghị cho tới khi chủ nhà nói khác
+- **Trạng thái:** Đã chấp nhận theo khuyến nghị (chủ nhà duyệt 2026-11-15); PR 1 (hold / hỏi tác giả, migration `0007_review_hold.sql`) và PR 2 (restriction, migration `0008_review_restrictions.sql`) đã hiện thực. Khác kế hoạch ở PR 2: tác giả thấy restriction qua danh sách `restrictions` trong `GET /api/planner/reviews` thay vì một trường trên `OwnReview`, và không thêm limiter mới cho staff vì thao tác ghi của phiên admin đã qua limiter 30/phút mỗi người dùng (ADR 0010). Câu hỏi 1–7 ở mục Việc tiếp theo giữ theo đáp án khuyến nghị cho tới khi chủ nhà nói khác
 - **Ngày:** 2026-11-15
 - **Người sở hữu:** system-architect
 - **Người quyết định:** chờ chủ nhà (yêu cầu 2026-11-15: staff được hỏi tác giả, và được tắt đánh giá của một tác giả hoặc khách với một địa điểm hay với cả tài khoản Planner đó)

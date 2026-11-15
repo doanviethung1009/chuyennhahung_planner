@@ -6,7 +6,7 @@ import type { Locale } from '@/i18n/routing';
 import { buttonClass } from '@/components/ui/button';
 import { ApiError, api } from '@/components/planner/api';
 import { ReviewForm } from './review-form';
-import type { OwnReview } from '@/server/planner/schemas';
+import type { OwnRestriction, OwnReview } from '@/server/planner/schemas';
 import type { TripView } from '@/server/planner/repository';
 
 /**
@@ -25,6 +25,7 @@ export function PlaceReviewsPanel({
   const t = useTranslations('communityReviews');
   const locale = useLocale() as Locale;
   const [own, setOwn] = useState<Record<string, OwnReview> | null>(null);
+  const [restrictions, setRestrictions] = useState<OwnRestriction[]>([]);
   const [open, setOpen] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const [message, setMessage] = useState('');
@@ -41,7 +42,8 @@ export function PlaceReviewsPanel({
 
   const load = useCallback(async () => {
     try {
-      const data = await api<{ items: OwnReview[] }>('/api/planner/reviews');
+      const data = await api<{ items: OwnReview[]; restrictions?: OwnRestriction[] }>('/api/planner/reviews');
+      setRestrictions(data.restrictions ?? []);
       setOwn(Object.fromEntries(data.items.map((item) => [item.placeSlug, item])));
     } catch (failure) {
       if (failure instanceof ApiError && failure.status === 401) return onUnauthorized();
@@ -93,6 +95,8 @@ export function PlaceReviewsPanel({
         {places.map((place) => {
           const mine = own?.[place.slug] ?? null;
           const isOpen = open === place.slug;
+          // Staff switched reviews off for this place or every place (ADR 0015).
+          const blocked = restrictions.find((row) => row.placeSlug === null || row.placeSlug === place.slug) ?? null;
           return (
             <li key={place.slug} className="rounded-xl border border-border-subtle bg-surface p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -103,6 +107,16 @@ export function PlaceReviewsPanel({
                       {t(`planner.status.${mine.status}`)}
                       {mine.status === 'rejected' && mine.rejectReason
                         ? ` — ${t('planner.reason', { reason: mine.rejectReason })}`
+                        : ''}
+                    </p>
+                  ) : null}
+                  {blocked ? (
+                    <p role="note" className="mt-1 whitespace-pre-line break-words text-sm font-medium">
+                      {t(blocked.placeSlug === null ? 'planner.restrictedAll' : 'planner.restrictedPlace', {
+                        reason: blocked.reason,
+                      })}
+                      {blocked.expiresAt
+                        ? ` ${t('planner.restrictedUntil', { date: new Date(blocked.expiresAt).toLocaleDateString(locale) })}`
                         : ''}
                     </p>
                   ) : null}
@@ -121,6 +135,7 @@ export function PlaceReviewsPanel({
                     type="button"
                     aria-expanded={isOpen}
                     aria-controls={`review-form-${place.slug}`}
+                    disabled={blocked !== null}
                     className={buttonClass({ size: 'sm', variant: mine ? 'secondary' : 'primary' })}
                     onClick={() => setOpen(isOpen ? null : place.slug)}
                   >

@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { isContentError } from '../src/server/content/repository';
 import {
+  createRestrictionSchema,
   guestReviewInputSchema,
   plannerReviewInputSchema,
   reviewDecisionSchema,
 } from '../src/server/planner/schemas';
+import { can } from '../src/server/identity/permissions';
 import { makeClock, makeOwner, makePlanner } from './planner-helpers';
 
 async function expectCode(promise: Promise<unknown>, code: string): Promise<void> {
@@ -154,6 +156,168 @@ describe('staff can hold a review and ask its author (ADR 0015)', () => {
     await expectCode(planner.decideReview(guest!.id, 'hold', 'staff', 'câu hỏi'), 'invalid_state');
     const { planner: other, id } = await held();
     await expectCode(other.decideReview(id, 'hold', 'staff', 'lại'), 'invalid_state');
+  });
+});
+
+describe('staff can switch off a review author (ADR 0015)', () => {
+  const OTHER = 'vuon-ca-phe-me-linh';
+
+  async function twoReviews() {
+    const planner = makePlanner();
+    const { userId } = await makeOwner(planner);
+    await planner.upsertPlannerReview(userId, PLACE, { ...review(), authorDisplay: 'name' });
+    await planner.upsertPlannerReview(userId, OTHER, { ...review(), authorDisplay: 'name' });
+    const queue = await planner.listReviewQueue();
+    const at = (place: string) => queue.find((item) => item.placeSlug === place)!.id;
+    return { planner, userId, atPlace: at(PLACE), atOther: at(OTHER) };
+  }
+
+  it('hides and blocks an author for one place only, and lifting restores it', async () => {
+    const { planner, userId, atPlace } = await twoReviews();
+    const { id } = await planner.createRestriction({ reviewId: atPlace, scope: 'place', reason: 'nội dung sai' }, 'admin_1');
+    expect((await planner.listApprovedReviews()).items.map((item) => item.placeSlug)).toEqual([OTHER]);
+    await expectCode(
+      planner.upsertPlannerReview(userId, PLACE, { ...review({ rating: 2 }), authorDisplay: 'name' }),
+      'forbidden',
+    );
+    // Another place is unaffected.
+    await planner.upsertPlannerReview(userId, OTHER, { ...review({ rating: 3 }), authorDisplay: 'name' });
+    expect((await planner.listOwnRestrictions(userId))[0]).toMatchObject({ placeSlug: PLACE, reason: 'nội dung sai' });
+
+    await planner.liftRestriction(id, 'admin_1');
+    await planner.liftRestriction(id, 'admin_1');
+    expect((await planner.listApprovedReviews()).items).toHaveLength(2);
+    expect(await planner.listOwnRestrictions(userId)).toEqual([]);
+    const [row] = await planner.listRestrictions();
+    expect(row).toMatchObject({ active: false, liftedBy: 'admin_1', createdBy: 'admin_1' });
+  });
+
+  it('with scope all, covers every place of that author only', async () => {
+    const { planner, userId, atPlace } = await twoReviews();
+    const bystander = await makeOwner(planner, 'khac');
+    await planner.upsertPlannerReview(bystander.userId, PLACE, { ...review(), authorDisplay: 'name' });
+    await planner.createRestriction({ reviewId: atPlace, scope: 'all', reason: 'lạm dụng' }, 'service');
+    expect((await planner.listApprovedReviews()).items).toHaveLength(1);
+    await expectCode(
+      planner.upsertPlannerReview(userId, OTHER, { ...review(), authorDisplay: 'name' }),
+      'forbidden',
+    );
+    await planner.upsertPlannerReview(bystander.userId, OTHER, { ...review(), authorDisplay: 'name' });
+  });
+
+  it('lets a restricted author still delete their own live review', async () => {
+    const { planner, userId, atPlace } = await twoReviews();
+    await planner.createRestriction({ reviewId: atPlace, scope: 'all', reason: 'lạm dụng' }, 'service');
+    await planner.deleteOwnReview(userId, PLACE);
+    expect((await planner.listOwnReviews(userId)).map((item) => item.placeSlug)).toEqual([OTHER]);
+  });
+
+  it('refuses a duplicate, and an unknown review', async () => {
+    const { planner, atPlace } = await twoReviews();
+    const body = { reviewId: atPlace, scope: 'place' as const, reason: 'nội dung sai' };
+    await planner.createRestriction(body, 'service');
+    await expectCode(planner.createRestriction(body, 'service'), 'invalid_state');
+    await expectCode(planner.createRestriction({ ...body, reviewId: 'rev_none' }, 'service'), 'not_found');
+  });
+
+  it('never restricts an account that holds a moderation permission', async () => {
+    const planner = makePlanner();
+    const { userId } = await makeOwner(planner);
+    await planner.setUserRole(userId, 'editor');
+    await planner.upsertPlannerReview(userId, PLACE, { ...review(), authorDisplay: 'name' });
+    const [row] = await planner.listReviewQueue();
+    await expectCode(planner.createRestriction({ reviewId: row!.id, scope: 'all', reason: 'thử' }, 'service'), 'forbidden');
+  });
+
+  it('time-boxes a guest, refuses the shared key, and blocks only that key', async () => {
+    const planner = makePlanner();
+    const guest = (key: string) =>
+      planner.createGuestReview({ placeSlug: PLACE, ...review(), authorName: null }, key);
+    await guest('198.51.100.7');
+    await guest('unknown');
+    const queue = await planner.listReviewQueue();
+    const bySource = queue.filter((item) => item.source === 'homepage');
+    expect(bySource).toHaveLength(2);
+
+    const results = await Promise.allSettled(
+      bySource.map((item) => planner.createRestriction({ reviewId: item.id, scope: 'place', reason: 'spam lặp lại' }, 'service')),
+    );
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    const rejected = results.find((r) => r.status === 'rejected') as PromiseRejectedResult;
+    expect((rejected.reason as { code: string }).code).toBe('invalid_state');
+
+    const [row] = await planner.listRestrictions();
+    const days = (Date.parse(row!.expiresAt!) - Date.parse(row!.createdAt)) / 86_400_000;
+    expect(days).toBe(30);
+    expect(JSON.stringify(await planner.listRestrictions())).not.toMatch(/guestKey|authorId/);
+
+    await expectCode(guest('198.51.100.7'), 'forbidden');
+    await guest('198.51.100.8');
+  });
+
+  it('caps a guest restriction at 90 days and rejects a past expiry', async () => {
+    const planner = makePlanner();
+    await planner.createGuestReview({ placeSlug: PLACE, ...review(), authorName: null }, '198.51.100.7');
+    const [row] = await planner.listReviewQueue();
+    const base = { reviewId: row!.id, scope: 'place' as const, reason: 'spam lặp lại' };
+    await expectCode(
+      planner.createRestriction({ ...base, expiresAt: '2027-12-31T00:00:00.000Z' }, 'service'),
+      'invalid_reference',
+    );
+    await expectCode(
+      planner.createRestriction({ ...base, expiresAt: '2026-01-01T00:00:00.000Z' }, 'service'),
+      'invalid_reference',
+    );
+  });
+
+  it('ends on its own at the expiry', async () => {
+    const clock = makeClock();
+    const planner = makePlanner({ now: clock.now });
+    await planner.createGuestReview({ placeSlug: PLACE, ...review(), authorName: null }, '198.51.100.7');
+    const [row] = await planner.listReviewQueue();
+    const { id } = await planner.createRestriction(
+      { reviewId: row!.id, scope: 'place', reason: 'spam lặp lại', expiresAt: '2026-03-02T08:00:00.000Z' },
+      'service',
+    );
+    expect((await planner.listRestrictions(true)).map((r) => r.id)).toEqual([id]);
+    expect((await planner.listApprovedReviews()).items).toEqual([]);
+    clock.advanceMinutes(25 * 60);
+    expect(await planner.listRestrictions(true)).toEqual([]);
+    expect((await planner.listApprovedReviews()).items).toHaveLength(1);
+  });
+
+  it('goes with the account', async () => {
+    const { planner, userId, atPlace } = await twoReviews();
+    await planner.createRestriction({ reviewId: atPlace, scope: 'all', reason: 'lạm dụng' }, 'service');
+    await planner.deleteUser(userId);
+    expect(await planner.listRestrictions()).toEqual([]);
+  });
+
+  it('marks restricted reviews in the staff queue, and keeps the public projection', async () => {
+    const { planner, atPlace } = await twoReviews();
+    await planner.createRestriction({ reviewId: atPlace, scope: 'place', reason: 'nội dung sai' }, 'service');
+    const queue = await planner.listReviewQueue();
+    expect(queue.find((item) => item.id === atPlace)?.restricted).toBe(true);
+    expect(JSON.stringify(queue)).not.toMatch(/authorId|guestKey/);
+    const [item] = (await planner.listApprovedReviews()).items;
+    expect(Object.keys(item!).sort()).toEqual(
+      ['author', 'body', 'createdAt', 'lang', 'placeSlug', 'rating', 'visitedOn'].sort(),
+    );
+  });
+
+  it('is a permission of admin and service, not editor', () => {
+    expect(can({ role: 'editor' }, 'community:restrict')).toBe(false);
+    expect(can({ role: 'admin' }, 'community:restrict')).toBe(true);
+    expect(can({ role: 'service' }, 'community:restrict')).toBe(true);
+    expect(can({ role: 'member' }, 'community:restrict')).toBe(false);
+  });
+
+  it('validates the body strictly', () => {
+    const ok = { reviewId: 'rev_1', scope: 'place', reason: 'nội dung sai' };
+    expect(createRestrictionSchema.safeParse(ok).success).toBe(true);
+    expect(createRestrictionSchema.safeParse({ ...ok, authorId: 'x' }).success).toBe(false);
+    expect(createRestrictionSchema.safeParse({ ...ok, reason: 'a' }).success).toBe(false);
+    expect(createRestrictionSchema.safeParse({ ...ok, scope: 'region' }).success).toBe(false);
   });
 });
 

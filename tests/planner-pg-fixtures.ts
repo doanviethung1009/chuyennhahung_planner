@@ -100,6 +100,9 @@ export async function runScenario(planner: PlannerRepository): Promise<{
     // Unique per run: the integration tests reuse one database, and a guest key may review a place once a day.
     `scenario-${randomUUID()}`,
   );
+  // ADR 0015: one restriction (on the guest, so the Planner review stays public for other tests).
+  const guestReview = (await planner.listReviewQueue()).find((item) => item.source === 'homepage');
+  await planner.createRestriction({ reviewId: guestReview!.id, scope: 'place', reason: 'spam lặp lại' }, 'scenario');
 
   return { userId, tripId, activityId, copyId: copy.trip.id };
 }

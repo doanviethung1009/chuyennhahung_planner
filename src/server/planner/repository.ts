@@ -10,7 +10,7 @@ import {
   slugConflict,
   versionConflict,
 } from '@/server/content/errors';
-import { userRole, type Role } from '@/server/identity/permissions';
+import { can, userRole, type Role } from '@/server/identity/permissions';
 import type { IntegrityIssue } from '@/server/content/repository';
 import type { CostCategory, PlaceCategory } from '@/server/content/schemas';
 import {
@@ -68,6 +68,12 @@ import {
   type CommunityTripCard,
   type ListingDecision,
   type ReviewDecision,
+  type ReviewRestriction,
+  type RestrictionListItem,
+  type OwnRestriction,
+  type CreateRestrictionInput,
+  GUEST_RESTRICTION_DEFAULT_DAYS,
+  GUEST_RESTRICTION_MAX_DAYS,
   type ListingQueueItem,
   type TripListing,
   type SharedTripView,
@@ -729,6 +735,7 @@ export class PlannerRepository {
       data.sessions = data.sessions.filter((session) => session.userId !== userId);
       // Personal data on public pages goes with the account (ADR 0014).
       data.communityReviews = data.communityReviews.filter((review) => review.authorId !== userId);
+      data.reviewRestrictions = data.reviewRestrictions.filter((row) => row.authorId !== userId);
     });
   }
 
@@ -1430,6 +1437,9 @@ export class PlannerRepository {
       this.requireNotFuture(input.visitedOn);
 
       const at = this.timestamp();
+      if (restrictionFor(data, at, { authorId: userId, guestKey: null, placeSlug })) {
+        throw forbidden('reviews are switched off for this account');
+      }
       const authorName = input.authorDisplay === 'name' ? user.displayName : null;
       const index = data.communityReviews.findIndex(
         (review) =>
@@ -1504,7 +1514,10 @@ export class PlannerRepository {
       this.requireNotFuture(input.visitedOn);
       const at = this.timestamp();
       const since = new Date(Date.parse(at) - 24 * 60 * 60_000).toISOString();
-      const guestKey = createHash('sha256').update(clientKey).digest('hex').slice(0, 32);
+      const guestKey = guestKeyOf(clientKey);
+      if (restrictionFor(data, at, { authorId: null, guestKey, placeSlug: input.placeSlug })) {
+        throw forbidden('reviews from this connection are paused');
+      }
 
       const recent = data.communityReviews.filter(
         (review) =>
@@ -1544,8 +1557,15 @@ export class PlannerRepository {
   ): Promise<{ items: PublicCommunityReview[]; summary: PlaceReviewSummary }> {
     const data = await this.snapshot();
     const wanted = placeSlugs ? new Set(placeSlugs) : null;
+    const at = this.timestamp();
     const approved = data.communityReviews
-      .filter((review) => review.status === 'approved' && (!wanted || wanted.has(review.placeSlug)))
+      .filter(
+        (review) =>
+          review.status === 'approved' &&
+          (!wanted || wanted.has(review.placeSlug)) &&
+          // Switched off by staff (ADR 0015): hidden, not changed — lifting restores it.
+          !restrictionFor(data, at, review),
+      )
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     const average =
       approved.length >= MIN_REVIEWS_FOR_AVERAGE
@@ -1561,6 +1581,7 @@ export class PlannerRepository {
   async listReviewQueue(status?: ReviewStatus): Promise<ReviewQueueItem[]> {
     const data = await this.snapshot();
     const rank: Record<ReviewStatus, number> = { pending: 0, held: 1, approved: 2, rejected: 3, removed: 4 };
+    const at = this.timestamp();
     return data.communityReviews
       .filter((review) => !status || review.status === status)
       .sort((a, b) => rank[a.status] - rank[b.status] || b.createdAt.localeCompare(a.createdAt))
@@ -1576,6 +1597,7 @@ export class PlannerRepository {
         author: review.authorName,
         authorAccount:
           data.users.find((user) => user.id === review.authorId)?.displayName ?? null,
+        restricted: restrictionFor(data, at, review) !== null,
         status: review.status,
         rejectReason: review.rejectReason,
         createdAt: review.createdAt,
@@ -1625,6 +1647,128 @@ export class PlannerRepository {
       };
       return status;
     });
+  }
+
+  // -------------------------------------------------------------------------
+  // Review restrictions (ADR 0015)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Switches an author off, for the review's place or for every place. The
+   * subject comes from the review, so staff never see an author id or a guest
+   * key. Active restrictions block new reviews and hide the author's existing
+   * ones at read time; stored reviews are untouched.
+   */
+  createRestriction(input: CreateRestrictionInput, actor: string): Promise<{ id: string }> {
+    return this.transaction((data) => {
+      const review = data.communityReviews.find((candidate) => candidate.id === input.reviewId);
+      if (!review) throw notFound('review', input.reviewId);
+      const at = this.timestamp();
+      const placeSlug = input.scope === 'place' ? review.placeSlug : null;
+      const subject: ReviewRestriction['subject'] = review.authorId ? 'user' : 'guest';
+      let expiresAt: string | null = input.expiresAt ?? null;
+
+      if (subject === 'user') {
+        const target = data.users.find((user) => user.id === review.authorId);
+        if (!target) throw notFound('planner user', review.authorId ?? '');
+        if (can({ role: userRole(target) }, 'community:moderate')) {
+          throw forbidden('staff accounts cannot be switched off');
+        }
+      } else {
+        if (!review.guestKey) throw invalidState('this review has no guest key to restrict');
+        // Blocking the shared key would silence every guest without a trusted proxy.
+        if (review.guestKey === guestKeyOf('unknown')) {
+          throw invalidState('this review has no usable connection key: restricting it would silence every guest');
+        }
+        const day = 24 * 60 * 60_000;
+        const now = Date.parse(at);
+        expiresAt ??= new Date(now + GUEST_RESTRICTION_DEFAULT_DAYS * day).toISOString();
+        if (Date.parse(expiresAt) > now + GUEST_RESTRICTION_MAX_DAYS * day) {
+          throw invalidReference([
+            { path: 'expiresAt', message: `a guest restriction lasts at most ${GUEST_RESTRICTION_MAX_DAYS} days` },
+          ]);
+        }
+      }
+      if (expiresAt !== null && Date.parse(expiresAt) <= Date.parse(at)) {
+        throw invalidReference([{ path: 'expiresAt', message: 'the expiry must be in the future' }]);
+      }
+
+      const duplicate = this.activeRestrictions(data, at).some(
+        (row) =>
+          row.subject === subject &&
+          row.placeSlug === placeSlug &&
+          (subject === 'user' ? row.authorId === review.authorId : row.guestKey === review.guestKey),
+      );
+      if (duplicate) throw invalidState('an equal restriction is already active');
+
+      const row: ReviewRestriction = {
+        id: this.newId('rst'),
+        subject,
+        authorId: subject === 'user' ? review.authorId : null,
+        guestKey: subject === 'guest' ? review.guestKey : null,
+        placeSlug,
+        reason: input.reason,
+        createdAt: at,
+        createdBy: actor.slice(0, 80),
+        expiresAt,
+        liftedAt: null,
+        liftedBy: null,
+      };
+      data.reviewRestrictions.push(row);
+      return { id: row.id };
+    });
+  }
+
+  /** Lifts a restriction. Idempotent; the row stays as the record. */
+  liftRestriction(restrictionId: string, actor: string): Promise<void> {
+    return this.transaction((data) => {
+      const index = data.reviewRestrictions.findIndex((row) => row.id === restrictionId);
+      const row = data.reviewRestrictions[index];
+      if (!row) throw notFound('restriction', restrictionId);
+      if (row.liftedAt) return;
+      data.reviewRestrictions[index] = { ...row, liftedAt: this.timestamp(), liftedBy: actor.slice(0, 80) };
+    });
+  }
+
+  /** Staff list, newest first: no author id, no guest key. */
+  async listRestrictions(activeOnly = false): Promise<RestrictionListItem[]> {
+    const data = await this.snapshot();
+    const at = this.timestamp();
+    const live = new Set(this.activeRestrictions(data, at).map((row) => row.id));
+    return data.reviewRestrictions
+      .filter((row) => !activeOnly || live.has(row.id))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, 200)
+      .map((row) => ({
+        id: row.id,
+        subject: row.subject,
+        placeSlug: row.placeSlug,
+        reason: row.reason,
+        author: data.users.find((user) => user.id === row.authorId)?.displayName ?? null,
+        createdAt: row.createdAt,
+        createdBy: row.createdBy,
+        expiresAt: row.expiresAt,
+        liftedAt: row.liftedAt,
+        liftedBy: row.liftedBy,
+        active: live.has(row.id),
+      }));
+  }
+
+  /** What an author is told: the active restrictions on their account. */
+  async listOwnRestrictions(userId: string): Promise<OwnRestriction[]> {
+    const data = await this.snapshot();
+    return this.activeRestrictions(data, this.timestamp())
+      .filter((row) => row.subject === 'user' && row.authorId === userId)
+      .map((row) => ({
+        placeSlug: row.placeSlug,
+        reason: row.reason,
+        since: row.createdAt,
+        expiresAt: row.expiresAt,
+      }));
+  }
+
+  private activeRestrictions(data: PlannerData, at: string): ReviewRestriction[] {
+    return activeRestrictionsOf(data, at);
   }
 
   private async requireKnownPlace(placeSlug: string): Promise<void> {
@@ -2516,6 +2660,34 @@ function isShareable(
 
 /** A guest can post at most this many reviews of one place per day, across all clients. */
 const GUEST_REVIEWS_PER_PLACE_PER_DAY = 20;
+
+/** The hashed client key stored on a guest review and on a guest restriction. */
+function guestKeyOf(clientKey: string): string {
+  return createHash('sha256').update(clientKey).digest('hex').slice(0, 32);
+}
+
+function activeRestrictionsOf(data: PlannerData, at: string): ReviewRestriction[] {
+  return data.reviewRestrictions.filter(
+    (row) => row.liftedAt === null && (row.expiresAt === null || row.expiresAt > at),
+  );
+}
+
+/** The active restriction covering this author or guest at this place, or null. */
+function restrictionFor(
+  data: PlannerData,
+  at: string,
+  who: { authorId: string | null; guestKey: string | null; placeSlug: string },
+): ReviewRestriction | null {
+  return (
+    activeRestrictionsOf(data, at).find(
+      (row) =>
+        (row.placeSlug === null || row.placeSlug === who.placeSlug) &&
+        (row.subject === 'user'
+          ? who.authorId !== null && row.authorId === who.authorId
+          : who.guestKey !== null && row.guestKey === who.guestKey),
+    ) ?? null
+  );
+}
 
 function ownReviewOf(review: CommunityReview): OwnReview {
   return {

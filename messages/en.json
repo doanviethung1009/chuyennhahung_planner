@@ -967,9 +967,11 @@
       "approve": "Trip approved.",
       "reject": "Rejected.",
       "remove": "Removed from the home page.",
-      "hold": "Review hidden and question sent to the author."
+      "hold": "Review hidden and question sent to the author.",
+      "mute": "Author switched off. Their reviews are hidden until you lift it."
     },
     "tripsHeading": "Trips",
+    "restrictionsHeading": "Switched-off authors",
     "reviewsHeading": "Place reviews",
     "reviews": {
       "empty": "No reviews yet.",
@@ -991,9 +993,33 @@
       "created": "Submitted {date}",
       "remove": "Remove review",
       "hold": "Ask the author",
+      "restrictedBadge": "author switched off",
+      "mute": "Switch off author",
+      "muteScope": "Switch off reviews",
+      "muteScopes": {
+        "place": "for this place only ({place})",
+        "all": "for every place"
+      },
+      "muteHelp": "New reviews are blocked and the author's existing reviews in this scope are hidden. The author sees your reason. You can lift it at any time.",
+      "muteGuestWarning": "This guest is known only by a connection key, which others may share. The block lasts 30 days. The visitor is told reviews from this connection are paused.",
+      "muteReasonLabel": "Reason (the author will see it)",
+      "muteConfirm": "Switch off",
       "reasonLabelHold": "Your question (the author will see it; the review is hidden until they edit it)",
       "reasonLabel": "Reason (the author will see it)",
       "reasonLabelGuest": "Reason for removal (kept internally)"
+    },
+    "restrictions": {
+      "empty": "No author has been switched off.",
+      "guest": "Guest",
+      "allPlaces": "every place",
+      "reason": "Reason: {reason}",
+      "createdBy": "By {by}, {date}",
+      "until": "until {date}",
+      "liftedBy": "lifted by {by}, {date}",
+      "active": "Active",
+      "inactive": "Ended",
+      "lift": "Lift",
+      "lifted": "Restriction lifted."
     }
   },
   "communityReviews": {
@@ -1026,6 +1052,9 @@
         "held": "Hidden: Nhà Hưng has a question"
       },
       "question": "Question from Nhà Hưng: {reason}",
+      "restrictedAll": "Reviews are switched off for your account. Reason: {reason}",
+      "restrictedPlace": "Reviews are switched off for this place on your account. Reason: {reason}",
+      "restrictedUntil": "Until {date}.",
       "heldHelp": "Your review is hidden for now. Edit it to answer; saving publishes it again."
     },
     "form": {
@@ -1060,6 +1089,7 @@
         "generic": "Could not send. Please try again.",
         "rate_limited": "You are sending a lot. Please try again later.",
         "invalid_state": "This place was already reviewed from your connection in the last 24 hours.",
+        "forbidden": "Reviews from this account or connection are paused.",
         "validation_failed": "Please check the fields: the review needs 60 to 1000 characters.",
         "invalid_reference": "The place or the visit date is not valid."
       }
