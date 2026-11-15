@@ -69,6 +69,7 @@ phát hành. Trước khi bất kỳ phase nào lên G7/G8:
   `tools`), `deploy/compose.app.yml` (một replica, volume `.data/`, mạng `edge` +
   `backend`), `GET /api/health`. Chưa build image (máy dev không có Docker — NOT RUN),
   chưa deploy lên VM.
+  Bổ sung (PR `claude/docker-deploy-docs-149845`): `deploy/compose.yml` (nginx + postgres tuỳ chọn), `compose.app.bind.yml` (bind mount), `.env.example`, `scripts/setup-host.sh`, `scripts/backup.sh`; runbook ở `docs/features/docker-deploy.vi.md`. Vẫn NOT RUN: `docker compose config`, build, deploy thật.
 
 ## Checklist deploy cho một phase
 

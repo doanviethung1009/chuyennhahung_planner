@@ -36,6 +36,7 @@ Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
 | Trang Travel công khai từ kho nội dung | [public-travel-cms.vi.md](public-travel-cms.vi.md) | Trang chủ, chuyến đi, điểm đến và sitemap đọc chuyến đi đã xuất bản từ kho nội dung, động, nên sửa trong CMS hiện ngay ở request kế tiếp (ADR 0012) |
 | Tài khoản trên header | [header-account.vi.md](header-account.vi.md) | Biểu tượng đăng nhập cho khách, menu tài khoản (Chuyến đi của tôi, mật khẩu, quản trị, đăng xuất) cho thành viên, trên máy tính và điện thoại |
 | Tạo chuyến đi trống | [create-blank-trip.vi.md](create-blank-trip.vi.md) | `/my-trips/new` — nút và biểu mẫu tạo chuyến đi trên Chuyến đi của tôi, `source: "blank"` |
+| Docker deploy trên một VM | [docker-deploy.vi.md](docker-deploy.vi.md) | Runbook: nginx + app + PostgreSQL tuỳ chọn, trạng thái bind mount, chuẩn bị host, sao lưu |
 
 ## Các phase chưa mở
 
