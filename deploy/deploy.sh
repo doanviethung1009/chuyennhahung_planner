@@ -55,7 +55,11 @@ healthy() {
 release() {
   export APP_IMAGE APP_IMAGE_TAG="$1"
   # Inside `if release …` set -e is off, so a failed `up` must return itself.
-  compose up -d --no-build app || return 1
+  # --no-deps: `app` depends on postgres in the local-db layout, and this checkout's
+  # paths differ from where the stack was started, so Compose would otherwise
+  # RECREATE the database container on every deploy. PostgreSQL and nginx are
+  # started by hand once (docs/deploy-runbook.md, Phase 4) and left alone here.
+  compose up -d --no-build --no-deps app || return 1
   local waited=0
   until healthy; do
     ((waited += 5))

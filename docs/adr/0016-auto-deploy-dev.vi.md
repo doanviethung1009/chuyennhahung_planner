@@ -34,7 +34,7 @@ Các ràng buộc định hình lời giải:
    `sha-<commit>` và `dev`.
 3. **Deploy qua runner tự host trên VM** (chỉ kết nối đi ra).
    `deploy/deploy.sh <tag>` đăng nhập GHCR để pull, chạy
-   `docker compose up -d --no-build app` với các file compose của commit đang
+   `docker compose up -d --no-build --no-deps app` với các file compose của commit đang
    deploy, chờ `/api/health` bên trong container, rồi ghi tag vào
    `/opt/chuyennhahung/.deployed-tag`.
 4. **Rollback:** nếu health probe hỏng, script deploy lại tag trước và làm run thất

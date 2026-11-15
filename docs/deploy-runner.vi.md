@@ -6,7 +6,7 @@ Runbook cài **runner tự host** của GitHub Actions trên VM dev thành một
 đã hardening, để workflow `deploy-dev` deploy được
 ([ADR 0016](adr/0016-auto-deploy-dev.vi.md),
 [tính năng](features/auto-deploy-dev.vi.md)). Không có gì ở đây được chạy giúp bạn:
-mọi bước cần quyền cao do chủ nhà tự làm.
+mọi bước cần quyền cao do chủ nhà tự làm. Cả đường đi từ VM trống xem [deploy-runbook](deploy-runbook.vi.md).
 
 🇬🇧 English version: [deploy-runner.md](deploy-runner.md)
 
@@ -95,7 +95,7 @@ sudo systemctl edit actions.runner.<owner>-<repo>.cnh-dev-vm.service
 [Service]
 PrivateTmp=true
 ProtectHome=read-only
-ReadWritePaths=/home/cnh-runner/actions-runner /opt/chuyennhahung
+ReadWritePaths=/home/cnh-runner/actions-runner /home/cnh-runner/.docker /opt/chuyennhahung
 # Được deploy/deploy.sh đọc; các bước của job kế thừa môi trường của service.
 Environment=STACK_DIR=/opt/chuyennhahung
 Environment=DB_OVERLAY=external-db
@@ -108,7 +108,10 @@ RestartSec=10
 `STACK_DIR` là nơi chứa `.env` (mode `600`) và `.deployed-tag`; `DB_OVERLAY` là
 `external-db` hoặc `local-db` (loại sau còn bật profile `local-db`). Runner chạy như
 service systemd này, không chạy trong Docker, nên các biến được đặt ở đây và không ở
-chỗ nào khác — đổi xong thì restart unit.
+chỗ nào khác — đổi xong thì restart unit. Khối trên ghi `external-db`; dùng
+`DB_OVERLAY=local-db` cho layout cùng stack. [deploy-runbook](deploy-runbook.vi.md) ghi hai
+dòng này vào file drop-in riêng (`environment.conf`) và coi bước hardening là tuỳ chọn: chỉ
+định nghĩa chúng ở một trong hai nơi, không phải cả hai.
 
 **Không** thêm `NoNewPrivileges=true`, `ProtectSystem=strict` hay `PrivateDevices=true`
 khi chưa test: Docker cần socket và cgroup của nó, các tuỳ chọn này có thể làm hỏng

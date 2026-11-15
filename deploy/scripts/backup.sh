@@ -4,6 +4,9 @@
 # local-db  : pg_dump both databases through the postgres container.
 # external-db: run pg_dump on the DB VM (its own cron); this script then only
 #              archives the content store directory.
+# The secrets file is $DEPLOY_ROOT/.env (override with ENV_FILE), the same one the
+# stack and the runner use; without --env-file Compose cannot resolve the
+# required variables and every command fails.
 # Files hold password hashes and token digests — owner-only (umask 077).
 set -euo pipefail
 umask 077
@@ -17,7 +20,7 @@ mkdir -p "$OUT"
 tar -C "$ROOT/data" -czf "$OUT/app-data.tgz" app
 
 if [ "$LAYOUT" = "local-db" ]; then
-  COMPOSE=(docker compose --profile local-db -f compose.yml -f compose.app.yml -f compose.app.bind.yml -f compose.app.local-db.yml)
+  COMPOSE=(docker compose --project-directory . --env-file "${ENV_FILE:-$ROOT/.env}" --profile local-db -f compose.yml)
   for db in cnh_planner cnh_content; do
     "${COMPOSE[@]}" exec -T postgres sh -c "pg_dump -U \"\$POSTGRES_USER\" --format=custom $db" > "$OUT/$db.dump"
     # A failed pg_dump must not leave an empty file that looks like a backup.

@@ -35,7 +35,7 @@ Constraints that shape the answer:
    `sha-<commit>` and `dev`.
 3. **Deploy through a self-hosted runner on the VM** (outbound connection only).
    `deploy/deploy.sh <tag>` logs in to GHCR for the pull, runs
-   `docker compose up -d --no-build app` with the compose files of the commit
+   `docker compose up -d --no-build --no-deps app` with the compose files of the commit
    being deployed, waits for `/api/health` inside the container, and writes the
    tag to `/opt/chuyennhahung/.deployed-tag`.
 4. **Rollback:** if the health probe fails the script re-deploys the previous tag

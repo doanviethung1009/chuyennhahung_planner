@@ -79,6 +79,9 @@ it starts before the app does.
 
 ### New server from zero
 
+For one linear guide that also covers the runner and troubleshooting, see
+[deploy-runbook](../deploy-runbook.md); the list below is the manual path.
+
 Everything you need on a blank Ubuntu 24.04 VM, in order. Placeholders: `<vm-ip>`,
 `<db-ip>`, `<repo-url>`.
 
