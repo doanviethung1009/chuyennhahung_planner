@@ -266,14 +266,13 @@ function AccountLinks({
           {t('myTrips')}
         </Link>
       </li>
-      {/* A Google-only account has no password to change. */}
-      {user.hasPassword ? (
-        <li>
-          <Link href="/account/password" onClick={onNavigate} className={className}>
-            {t('changePassword')}
-          </Link>
-        </li>
-      ) : null}
+      {/* Always shown: the page also hosts Google linking, and explains itself
+          for an account that has no password yet. */}
+      <li>
+        <Link href="/account/password" onClick={onNavigate} className={className}>
+          {t('changePassword')}
+        </Link>
+      </li>
       {user.role === 'admin' || user.role === 'super_admin' ? (
         <li>
           <Link href="/admin" onClick={onNavigate} className={className}>

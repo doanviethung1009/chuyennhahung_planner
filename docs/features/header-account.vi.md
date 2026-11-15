@@ -46,8 +46,8 @@ Không thêm route. Control dẫn tới các route sẵn có:
   hai dòng.
 - **Đã đăng nhập.** Một nút avatar 44px (`aria-expanded`, `aria-controls`, tên
   "Tài khoản của {name}") mở một khung: "Đang đăng nhập: {name}", Chuyến đi của
-  tôi, Đổi mật khẩu (chỉ khi tài khoản có mật khẩu — tài khoản chỉ dùng Google thì
-  không có), Trang quản trị (chỉ khi `role === 'admin'`; trang vẫn kiểm tra vai trò
+  tôi, Đổi mật khẩu (luôn hiện; tài khoản chưa có mật khẩu sẽ thấy lời giải thích và
+  liên kết Google trên trang đó), Trang quản trị (chỉ khi `role === 'admin'`; trang vẫn kiểm tra vai trò
   ở server) và Đăng xuất. Đây là disclosure, không phải ARIA `menu`: các mục vẫn là
   link thường, Tab hoạt động như bình thường, ↓/↑ di chuyển giữa các mục, Escape
   đóng và trả focus về nút, bấm hoặc focus ra ngoài cũng đóng.
