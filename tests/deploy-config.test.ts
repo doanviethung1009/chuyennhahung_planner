@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -75,7 +75,7 @@ describe('deploy/deploy.sh and the one-VM stack (docker-deploy.md)', () => {
   });
 
   it('only (re)creates the app, so nginx and postgres keep running through a deploy', () => {
-    expect(sh).toContain('up -d --no-build app');
+    expect(sh).toContain('up -d --no-build --no-deps app');
   });
 
   it('every overlay the script names exists', () => {
@@ -121,6 +121,42 @@ exit 0
     const { r, state } = run(false);
     expect(r.status).toBe(1);
     expect(state).toBe('sha-old');
+  });
+});
+
+describe('deploy/scripts/backup.sh (fake docker)', () => {
+  function run(dump: string) {
+    const dir = mkdtempSync(join(tmpdir(), 'cnh-backup-'));
+    const bin = join(dir, 'bin');
+    const rootDir = join(dir, 'root');
+    spawnSync('mkdir', ['-p', bin, join(rootDir, 'data', 'app'), join(rootDir, 'backups')]);
+    const log = join(dir, 'docker.log');
+    writeFileSync(join(bin, 'docker'), `#!/usr/bin/env bash\necho "$*" >> "${log}"\n${dump}\nexit 0\n`);
+    chmodSync(join(bin, 'docker'), 0o755);
+    const r = spawnSync('bash', [join(root, 'deploy/scripts/backup.sh'), 'local-db'], {
+      encoding: 'utf8',
+      env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, DEPLOY_ROOT: rootDir },
+    });
+    const calls = existsSync(log) ? readFileSync(log, 'utf8') : '';
+    const made = spawnSync('ls', [join(rootDir, 'backups')], { encoding: 'utf8' }).stdout.trim();
+    return { r, calls, made, rootDir };
+  }
+
+  it('passes the secrets file to Compose and writes non-empty dumps', () => {
+    const { r, calls, made, rootDir } = run('echo DUMPDATA');
+    expect(r.status).toBe(0);
+    expect(calls).toContain(`--env-file ${rootDir}/.env`);
+    expect(calls).toContain('--profile local-db');
+    const dumps = spawnSync('ls', [join(rootDir, 'backups', made)], { encoding: 'utf8' }).stdout;
+    expect(dumps).toContain('cnh_planner.dump');
+    expect(dumps).toContain('cnh_content.dump');
+    expect(dumps).toContain('app-data.tgz');
+  });
+
+  it('fails and leaves no backup directory when pg_dump produces nothing', () => {
+    const { r, made } = run(':');
+    expect(r.status).toBe(1);
+    expect(made).toBe('');
   });
 });
 

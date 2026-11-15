@@ -6,7 +6,8 @@ A runbook to install the GitHub Actions **self-hosted runner** on the dev VM as 
 hardened systemd service, so the `deploy-dev` workflow can deploy
 ([ADR 0016](adr/0016-auto-deploy-dev.md),
 [feature](features/auto-deploy-dev.md)). Nothing here is run for you: every
-privileged step is done by the owner.
+privileged step is done by the owner. For the whole path from a blank VM, see
+[deploy-runbook](deploy-runbook.md).
 
 🇻🇳 Bản tiếng Việt: [deploy-runner.vi.md](deploy-runner.vi.md)
 
@@ -95,7 +96,7 @@ sudo systemctl edit actions.runner.<owner>-<repo>.cnh-dev-vm.service
 [Service]
 PrivateTmp=true
 ProtectHome=read-only
-ReadWritePaths=/home/cnh-runner/actions-runner /opt/chuyennhahung
+ReadWritePaths=/home/cnh-runner/actions-runner /home/cnh-runner/.docker /opt/chuyennhahung
 # Read by deploy/deploy.sh; job steps inherit the service's environment.
 Environment=STACK_DIR=/opt/chuyennhahung
 Environment=DB_OVERLAY=external-db
@@ -108,7 +109,10 @@ RestartSec=10
 `STACK_DIR` is where `.env` (mode `600`) and `.deployed-tag` live; `DB_OVERLAY` is
 `external-db` or `local-db` (the latter also enables the `local-db` profile). The
 runner runs as this systemd service, not in Docker, so these are set here and
-nowhere else — change them and restart the unit.
+nowhere else — change them and restart the unit. The block shows `external-db`; use
+`DB_OVERLAY=local-db` for the same-stack layout. [deploy-runbook](deploy-runbook.md) writes
+these two lines in their own drop-in file (`environment.conf`) and keeps this hardening
+step optional: define them in one of the two, not both.
 
 Do **not** add `NoNewPrivileges=true`, `ProtectSystem=strict` or
 `PrivateDevices=true` without testing: Docker needs its socket and cgroups, and these

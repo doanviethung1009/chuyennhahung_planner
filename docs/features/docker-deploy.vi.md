@@ -78,6 +78,9 @@ nên khởi động được trước app.
 
 ### Server mới từ đầu
 
+Muốn một hướng dẫn đi thẳng, có cả runner và xử lý sự cố, xem
+[deploy-runbook](../deploy-runbook.vi.md); danh sách dưới đây là đường làm tay.
+
 Mọi thứ cần có trên một VM Ubuntu 24.04 trắng, theo thứ tự. Placeholder: `<ip-vm>`,
 `<ip-db>`, `<repo-url>`.
 

@@ -21,6 +21,8 @@ trúc hai bản lệch nhau, hoặc nếu tài liệu chưa được liệt kê 
 | [architecture.vi.md](architecture.vi.md) | Hình dạng runtime, routing, luồng dữ liệu, ranh giới module, các phase |
 | [usage.vi.md](usage.vi.md) | Cài đặt, chạy, test, kiểm tra, deploy và các luồng việc hằng ngày |
 | [travel-content-api.vi.md](travel-content-api.vi.md) | Hợp đồng API của Travel Content System — endpoint, quy ước, mã lỗi, các bất biến |
+| [deploy-operations.vi.md](deploy-operations.vi.md) | Runbook: vận hành app đã deploy — kiểm tra, log, khởi động lại, sao lưu và khôi phục, xoay vòng secret, đĩa, nâng cấp, sự cố |
+| [deploy-runbook.vi.md](deploy-runbook.vi.md) | Runbook: một hướng dẫn đi thẳng từ VM trống đến khi app chạy và tự deploy — chọn layout, host, `.env`, database, runner, deploy lần đầu, xử lý sự cố |
 | [deploy-database.vi.md](deploy-database.vi.md) | Runbook: chuyển dữ liệu JSON sang PostgreSQL trên VM riêng — role, TLS, migrate, import, xác minh, backup, rollback |
 | [deploy-runner.vi.md](deploy-runner.vi.md) | Runbook: cài runner deploy tự host trên VM dev thành service systemd đã hardening — user, ACL, đăng ký, hardening unit, kiểm tra |
 
