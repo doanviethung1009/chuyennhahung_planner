@@ -177,6 +177,14 @@ list` unreadable. Clean up **when the PR is merged**, not "later":
    per entry, proposed to the owner as a table before anything is deleted.
 6. Dev servers started for a browser check (`next dev` on a scratch port) are stopped
    and their scratch stores left in the scratchpad, never in the repository or `.data/`.
+7. **Cleaning a worktree never archives a session.** In the Claude desktop app,
+   archiving a session hides it from the sidebar (its history stays on disk). Do not call
+   `archive_session`, `delete_session` or `clean_up_worktrees`, and do not change the
+   auto-archive settings, unless the owner asked for exactly that. "Check unmerged
+   worktrees" or "clean up" is not that request. If archiving looks useful, propose it
+   naming the sessions and wait for a yes; never batch it. Why: one cleanup run archived
+   ~46 sessions at once and the owner believed their chat history was lost. If it
+   happens, `unarchive_session` restores each one.
 
 Cleanup is a git operation, so the usual authorization applies: the owner asks for it
 (or a skill/rule here says to do it at merge time) before anything is deleted.
