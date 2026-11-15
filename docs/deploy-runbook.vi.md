@@ -39,6 +39,96 @@ PostgreSQL phải chạy sẵn, nên bạn dựng chúng bằng tay một lần 
 
 Chọn một layout trước khi bắt đầu; các phase dưới đây nói rõ chỗ khác nhau.
 
+## Các thành phần được deploy thế nào
+
+Database và app được **deploy riêng**. Mục này cho thấy ai tạo và ai cập nhật từng phần, và điều
+gì xảy ra với database trong một bản phát hành.
+
+### Ai tạo và ai cập nhật cái gì
+
+| Thành phần | Do ai tạo | Do ai cập nhật | Trạng thái nằm ở đâu |
+|---|---|---|---|
+| Container `nginx` | bạn, Phase 4 | bạn, bằng tay, khi `deploy/nginx/` đổi | không có; log ở `logs/nginx` |
+| Container `postgres` | bạn, Phase 4 (script init chạy một lần) | bạn, bằng tay, khi nâng cấp image | `data/postgres` trên host |
+| Container `app` | runner, ở lần deploy đầu | runner, ở mỗi bản phát hành | database, và `data/app` khi content là file JSON |
+| Các bảng trong database (schema) | app, khi nó khởi động | app, khi nó khởi động (migration) | bên trong PostgreSQL |
+| `/opt/chuyennhahung/.env` | bạn | bạn, rồi deploy lại `app` | chính file đó |
+| Runner | bạn, Phase 5 | tự cập nhật | không có |
+
+Một bản phát hành chỉ đổi container `app` (và, qua nó, các bảng). nginx và PostgreSQL vẫn chạy.
+
+### Luồng 1 — Thiết lập một lần
+
+1. **Bạn**: chuẩn bị VM, các thư mục và `.env` (Phase 1 đến 2).
+2. **Bạn**: khởi động PostgreSQL và nginx (Phase 4). Ở lần khởi động đầu, PostgreSQL tạo role
+   `cnh_app` và các database từ một thư mục dữ liệu trống.
+3. **Bạn**: cài runner (Phase 5).
+4. **Runner**: deploy `app` lần đầu (Phase 6). App tự tạo các bảng khi khởi động (Luồng 3).
+5. **Bạn**: tạo admin đầu tiên, thiết lập sao lưu (Phase 7).
+
+### Luồng 2 — Một bản phát hành
+
+```mermaid
+flowchart TD
+  PR["Pull request được merge vào main"] --> CI["CI: typecheck, lint, test, build"]
+  CI -->|xanh| PLAN["plan: tag image = sha-commit"]
+  PLAN --> BUILD["build image trên GitHub và đẩy lên GHCR"]
+  BUILD --> RUN["runner trên VM chạy deploy.sh"]
+  RUN --> PULL["docker login, compose pull app"]
+  PULL --> UP["compose up -d --no-build --no-deps app"]
+  UP --> WAIT{"đang chạy đúng image đích và /api/health OK trong 180 giây?"}
+  WAIT -->|có| OK["ghi .deployed-tag, dọn image dangling, lần chạy xanh"]
+  WAIT -->|không| BACK["in log của app, khởi động lại tag trước, lần chạy đỏ"]
+```
+
+Mỗi lúc chỉ một lần deploy chạy; lần mới hơn chờ. `nginx` và `postgres` không bị đụng tới.
+`/api/health` chỉ nói rằng tiến trình đang phục vụ: nó cố ý không chạm vào database, nên một lần
+deploy xanh **không** chứng minh được migration hay truy vấn Planner chạy tốt. Hãy chạy
+[smoke test](#smoke-test-sau-mỗi-lần-deploy) sau bản phát hành có thêm migration.
+
+### Luồng 3 — Database trong một bản phát hành
+
+Container không bao giờ bị tạo lại. Cái thay đổi là các bảng, và chỉ khi bản mới mang theo các
+file mới trong `db/migrations/`.
+
+```mermaid
+flowchart TD
+  START["container app mới khởi động"] --> LOCK["lấy advisory lock, chờ tối đa 30 giây"]
+  LOCK -->|hết giờ| UNAVAIL["Planner trả 503, thử lại ở request kế tiếp"]
+  LOCK --> CHECK["so schema_migrations với db/migrations"]
+  CHECK -->|không có gì mới| SERVE["phục vụ request"]
+  CHECK -->|có file mới| APPLY["áp dụng từng file trong transaction riêng và ghi lại"]
+  APPLY --> SERVE
+  CHECK -->|một file đã áp dụng bị sửa| REFUSE["từ chối: Planner trả 503"]
+```
+
+- Request đầu tiên sau một bản phát hành có thể chậm hơn trong lúc migration chạy.
+- Migration lỗi không làm container dừng; các route Planner trả `503` và log chỉ có mã lỗi. Chạy
+  `npm run db:migrate` trong container `tools` để thấy thông báo thật.
+- Migration là các file SQL thuần, áp dụng một lần và theo thứ tự, và một file đã áp dụng
+  không bao giờ được sửa.
+
+### Luồng 4 — Rollback
+
+| Tình huống | Làm gì | Ghi chú |
+|---|---|---|
+| Lỗi trong code, bản phát hành **không có migration mới** | **Run workflow** với `tag` = `sha-<commit>` trước đó | Nhanh và an toàn: chỉ image đổi |
+| Bản phát hành **có thêm migration** và bị lỗi | Ưu tiên sửa tiến: merge một bản phát hành đã sửa. Image cũ chỉ chạy được trên các bảng mới nếu migration chỉ thêm (additive) | Viết migration sao cho bản phát hành trước vẫn chạy được trên chúng |
+| Phải hoàn tác các bảng mới | Dừng app, khôi phục bản sao lưu lấy **trước** bản phát hành ([deploy-operations](deploy-operations.vi.md#sao-lưu-và-khôi-phục)), rồi deploy tag cũ | Biện pháp cuối cùng; dữ liệu ghi từ sau bản sao lưu sẽ mất |
+| Một file trong `db/rollback/` | Áp dụng bằng tay; nó **xoá bảng**. Export trước | Chỉ cho các bảng migration đó vừa tạo |
+| Health check lỗi trong lúc deploy | Tự động: `deploy.sh` khởi động lại tag trước | Nó không bao giờ đụng tới schema |
+
+Hãy sao lưu (`backup.sh`) **trước** mọi bản phát hành thêm file vào `db/migrations/`.
+
+### Luồng 5 — Đổi cấu hình
+
+| Thay đổi | Cách làm |
+|---|---|
+| Một giá trị runtime trong `/opt/chuyennhahung/.env` (token, mật khẩu, khoá Google) | Sửa file, rồi **Run workflow** với `tag` = nội dung của `.deployed-tag`: cùng image, được tạo lại với giá trị mới (`docker restart` sẽ giữ môi trường cũ) |
+| Địa chỉ site (`NEXT_PUBLIC_SITE_URL`, `DEV_SITE_URL`) | Nó được nướng vào image: đặt cả hai, rồi **Run workflow** với `tag` **để trống** để build image mới |
+| `deploy/nginx/` hoặc service `postgres` | Deploy không áp dụng; tạo lại service đó bằng tay ([Cập nhật](#cập-nhật-deploy-lại-và-rollback)) |
+| Mật khẩu database | Đổi trong PostgreSQL và trong `.env`, rồi deploy lại `app` ([deploy-operations](deploy-operations.vi.md#xoay-vòng-secret)) |
+
 ## Phase 0 — Chuẩn bị
 
 - Địa chỉ VM, `<ip-app>` (IP cố định hoặc tên miền), và quyền root hoặc `sudo`.
@@ -497,10 +587,13 @@ ghi đúng commit và container `app` chạy image từ registry và healthy.
 
 Lần deploy đó dạy hai điều, nay đều được xử lý trong tài liệu này: runner đã đăng ký mà thiếu
 nhãn `cnh-dev`, nên job nằm `queued` cho tới khi thêm nhãn và khởi động lại service; và
-`depends_on: postgres` của `app` khiến Compose **tạo lại container PostgreSQL** ở lần deploy đó
-(thời điểm `CREATED` của nó là vài giây, không phải vài giờ). Điều sau được sửa bằng
-`--no-deps` trong `deploy.sh`, kèm test; bản sửa **chưa được thấy trên VM**, nên hãy kiểm tra
-mục 5 của smoke test sau lần deploy kế tiếp.
+`depends_on: postgres` của `app` khiến Compose **tạo lại container PostgreSQL** ở lần deploy đầu
+đó (thời điểm `CREATED` của nó là vài giây, không phải vài giờ), vì stack đã được khởi động từ một
+đường dẫn checkout khác. Các lần deploy sau không lặp lại điều này: PostgreSQL giữ nguyên
+`StartedAt` qua hai lần deploy tiếp theo, một lần không có và một lần có `--no-deps`. Vì vậy cờ
+này là một **biện pháp phòng ngừa**, được test bằng Docker giả, và VM **chưa** cho thấy nó tạo ra
+khác biệt; nó bảo vệ khi một bản phát hành sau định nghĩa lại service database. Hãy kiểm tra mục 5
+của smoke test sau một bản phát hành có đụng tới `deploy/compose.yml`.
 
 **Chưa kiểm chứng:** hardening unit, tạo admin, `backup.sh` (lệnh Compose của nó sai với layout
 này, đã được sửa và test bằng Docker giả, nhưng chưa chạy trên VM), mọi bước khôi phục và xoay

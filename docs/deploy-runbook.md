@@ -41,6 +41,99 @@ you start them by hand once (Phase 4).
 
 Pick one before you start; the phases below say where they differ.
 
+## How the pieces are deployed
+
+The database and the app are **deployed separately**. This section shows who creates and
+updates each part, and what happens to the database during a release.
+
+### Who creates and updates what
+
+| Part | Created by | Updated by | Where its state lives |
+|---|---|---|---|
+| `nginx` container | you, Phase 4 | you, by hand, when `deploy/nginx/` changes | none; logs in `logs/nginx` |
+| `postgres` container | you, Phase 4 (the init script runs once) | you, by hand, for an image upgrade | `data/postgres` on the host |
+| `app` container | the runner, at the first deploy | the runner, at every release | the database, and `data/app` when content is a JSON file |
+| Database tables (schema) | the app, when it starts | the app, when it starts (migrations) | inside PostgreSQL |
+| `/opt/chuyennhahung/.env` | you | you, then redeploy `app` | the file |
+| The runner | you, Phase 5 | itself | none |
+
+A release changes only the `app` container (and, through it, the tables). nginx and
+PostgreSQL keep running.
+
+### Flow 1 — One-time setup
+
+1. **You**: prepare the VM, the directories and `.env` (Phases 1 to 2).
+2. **You**: start PostgreSQL and nginx (Phase 4). On its first start PostgreSQL creates the
+   role `cnh_app` and the databases from an empty data directory.
+3. **You**: install the runner (Phase 5).
+4. **The runner**: first deploy of `app` (Phase 6). The app creates the tables itself when it
+   starts (Flow 3).
+5. **You**: create the first admin, set up backups (Phase 7).
+
+### Flow 2 — A release
+
+```mermaid
+flowchart TD
+  PR["Pull request merged into main"] --> CI["CI: typecheck, lint, test, build"]
+  CI -->|green| PLAN["plan: image tag = sha-commit"]
+  PLAN --> BUILD["build the image on GitHub and push it to GHCR"]
+  BUILD --> RUN["runner on the VM runs deploy.sh"]
+  RUN --> PULL["docker login, compose pull app"]
+  PULL --> UP["compose up -d --no-build --no-deps app"]
+  UP --> WAIT{"target image running and /api/health OK within 180 s?"}
+  WAIT -->|yes| OK["write .deployed-tag, prune dangling images, run goes green"]
+  WAIT -->|no| BACK["print the app log, restart the previous tag, run goes red"]
+```
+
+Only one deploy runs at a time; a newer one waits. `nginx` and `postgres` are not touched.
+`/api/health` only says the process is serving: it deliberately touches no database, so a
+green deploy does **not** prove that migrations or Planner queries work. Run the
+[smoke test](#smoke-test-after-a-deploy) after a release that adds migrations.
+
+### Flow 3 — The database during a release
+
+The container is never recreated. What changes is the tables, and only if the new release
+carries new files in `db/migrations/`.
+
+```mermaid
+flowchart TD
+  START["new app container starts"] --> LOCK["take the advisory lock, waiting at most 30 s"]
+  LOCK -->|timeout| UNAVAIL["Planner answers 503, retried on the next request"]
+  LOCK --> CHECK["compare schema_migrations with db/migrations"]
+  CHECK -->|nothing new| SERVE["serve requests"]
+  CHECK -->|new files| APPLY["apply each file in its own transaction and record it"]
+  APPLY --> SERVE
+  CHECK -->|an applied file was edited| REFUSE["refuse: Planner answers 503"]
+```
+
+- The first request after a release can be slower while migrations run.
+- A migration failure does not stop the container; the Planner routes answer `503` and the
+  log carries only an error code. Run `npm run db:migrate` in the `tools` container to see
+  the real message.
+- Migrations are plain SQL files, applied once and in order, and an applied file must never
+  be edited.
+
+### Flow 4 — Rolling back
+
+| Situation | What to do | Note |
+|---|---|---|
+| A bug in the code, **no new migration** in the release | **Run workflow** with `tag` = the previous `sha-<commit>` | Fast and safe: only the image changes |
+| The release **added migrations** and is bad | Prefer a fix forward: merge a corrected release. The old image can run on the new tables only if the migration was additive | Write migrations so the previous release still works on them |
+| The new tables must be undone | Stop the app, restore the backup taken **before** the release ([deploy-operations](deploy-operations.md#backups-and-restore)), then deploy the old tag | The last resort; data written since the backup is lost |
+| A file in `db/rollback/` | Applied by hand; it **drops tables**. Export first | Only for tables that migration just created |
+| The health check fails during a deploy | Automatic: `deploy.sh` restarts the previous tag | It never touches the schema |
+
+Take a backup (`backup.sh`) **before** any release that adds a file to `db/migrations/`.
+
+### Flow 5 — Changing configuration
+
+| Change | How |
+|---|---|
+| A runtime value in `/opt/chuyennhahung/.env` (a token, a password, Google keys) | Edit the file, then **Run workflow** with `tag` = the content of `.deployed-tag`: the same image, recreated with the new values (`docker restart` would keep the old environment) |
+| The site address (`NEXT_PUBLIC_SITE_URL`, `DEV_SITE_URL`) | It is baked into the image: set both, then **Run workflow** with `tag` **empty** so a new image is built |
+| `deploy/nginx/` or the `postgres` service | Not applied by a deploy; recreate that service by hand ([Updating](#updating-redeploying-and-rolling-back)) |
+| A database password | Change it in PostgreSQL and in `.env`, then redeploy `app` ([deploy-operations](deploy-operations.md#rotating-secrets)) |
+
 ## Phase 0 — Prepare
 
 - The VM's address, `<ip-app>` (a fixed IP or a DNS name), and root or `sudo` access.
@@ -510,9 +603,13 @@ held the commit and the `app` container ran the registry image and was healthy.
 Two things that deploy taught, both now handled in this document: the runner registered
 without the `cnh-dev` label, so the job stayed queued until the label was added and the
 service restarted; and `app`'s `depends_on: postgres` made Compose **recreate the
-PostgreSQL container** on that deploy (its `CREATED` time was seconds, not hours). The
-latter is fixed by `--no-deps` in `deploy.sh`, with a test; the fix itself has **not yet
-been seen on the VM**, so check step 5 of the smoke test after the next deploy.
+PostgreSQL container** on that first deploy (its `CREATED` time was seconds, not hours),
+because the stack had been started from another checkout path. Later deploys did not do
+it again: PostgreSQL kept the same `StartedAt` across the next two deploys, one without and
+one with `--no-deps`. So the flag is a **safeguard**, tested with a fake Docker, and the VM
+has **not** shown it making a difference; it protects against the database service being
+redefined in a later release. Check step 5 of the smoke test after a release that touches
+`deploy/compose.yml`.
 
 **Not verified yet:** the unit hardening, creating the admin, `backup.sh` (its Compose call
 was wrong for this layout and is fixed and tested with a fake Docker, but has not run on the
