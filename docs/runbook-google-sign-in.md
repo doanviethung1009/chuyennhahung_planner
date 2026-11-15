@@ -49,13 +49,32 @@ In Google Cloud Console → APIs & Services → Credentials → the OAuth client
 ```
 
 For local development that is `http://localhost:3000/api/planner/oauth/google/callback`.
-For the dev VM it is `http://192.168.100.140/api/planner/oauth/google/callback` **only if
-Google accepts it**: Google normally refuses a bare IP over plain HTTP (only
-`localhost` is exempt). If it is refused, give the VM a real hostname (or an
-`nip.io`-style one), set the repository variable `DEV_SITE_URL` to it and redeploy with
-a build, because `NEXT_PUBLIC_SITE_URL` is baked into the image. `GOOGLE_REDIRECT_URI`
-overrides the derived value but is **not** forwarded by `compose.app.yml` today, so use
-the hostname route.
+
+For the dev VM, Google does not accept the bare IP (`http://192.168.100.140/…`). What
+works, **verified on the dev VM**, is a `nip.io` hostname over plain HTTP: the name
+`192-168-100-140.nip.io` resolves to `192.168.100.140` through nip.io's public DNS, so
+nothing is created or edited, and nginx already accepts any host (`server_name _`). The
+dev URI is therefore:
+
+```
+http://192-168-100-140.nip.io/api/planner/oauth/google/callback
+```
+
+1. Add it under **Authorised redirect URIs**. Leave **Authorised JavaScript origins**
+   empty: the flow runs entirely on the server, and that field rejects any path with
+   `Invalid Origin: URIs must not contain a path or end with "/"`. That message means the
+   URI was pasted into the wrong field.
+2. Set the repository variable `DEV_SITE_URL` to `http://192-168-100-140.nip.io`
+   (`gh variable set DEV_SITE_URL --body …`) and run **Deploy dev** with `tag` empty,
+   because `NEXT_PUBLIC_SITE_URL` is baked into the image at build time.
+3. Set the same value as `NEXT_PUBLIC_SITE_URL` in the VM's `.env` (Step 2). The server
+   derives the redirect URI from it at run time, so a stale value there sends Google the
+   old URI.
+
+`GOOGLE_REDIRECT_URI` overrides the derived value but is **not** forwarded by
+`compose.app.yml` today, so use the hostname route.
+
+Only people on the same LAN reach the site, and the name depends on nip.io staying up.
 
 ## Step 2 — Put the credentials on the VM
 
@@ -83,7 +102,8 @@ Never use the `NEXT_PUBLIC_` prefix for these; `tests/client-boundary.test.ts` g
 The container only reads its environment when it is created. Run **Deploy dev** from
 `main` with `tag` = `sha-<current commit>` (no build): `deploy.sh` runs
 `compose up -d app`, and Compose recreates a service whose resolved configuration
-changed. Check it:
+changed (verified: a run with the same image tag and only `GOOGLE_SIGNUP_ENABLED`
+changed in `.env` recreated the container with the new value). Check it:
 
 ```bash
 docker compose -f /opt/chuyennhahung/app/deploy/compose.yml ps   # app is healthy
@@ -120,8 +140,12 @@ the credentials stay in `.env`.
 
 ## Limits and open questions
 
-- Not verified on the VM yet: Google accepting the VM's origin, and the end-to-end
-  sign-in from a browser on the dev network.
+- Verified on the dev VM: Google accepts the `nip.io` HTTP redirect URI, `start`
+  answers `302` with that `redirect_uri`, and a browser sign-in on the dev network
+  works. Not verified: the unlink and `account_conflict` paths.
+- With `GOOGLE_SIGNUP_ENABLED=false` a Google address with no account gets
+  `account_not_found`; with `true` anyone with a Google account can create a `member`.
+  Set it back to `false` when the dev VM is not for open testing.
 - The rate limits and the signup throttle are in-memory and per process, so a restart
   resets them.
 - `GOOGLE_REDIRECT_URI` is not forwarded by `deploy/compose.app.yml`. Add it there

@@ -48,13 +48,32 @@ Trong Google Cloud Console → APIs & Services → Credentials → OAuth client,
 <NEXT_PUBLIC_SITE_URL>/api/planner/oauth/google/callback
 ```
 
-Với local là `http://localhost:3000/api/planner/oauth/google/callback`. Với VM dev là
-`http://192.168.100.140/api/planner/oauth/google/callback` **chỉ khi Google chấp nhận**:
-Google thường từ chối IP trần qua HTTP (chỉ `localhost` được miễn). Nếu bị từ chối, hãy
-đặt cho VM một hostname thật (hoặc kiểu `nip.io`), gán biến repository `DEV_SITE_URL`
-bằng nó rồi deploy kèm build, vì `NEXT_PUBLIC_SITE_URL` được nhúng vào image.
+Với local là `http://localhost:3000/api/planner/oauth/google/callback`.
+
+Với VM dev, Google không nhận IP trần (`http://192.168.100.140/…`). Cách chạy được,
+**đã kiểm chứng trên VM dev**, là hostname `nip.io` qua HTTP thường: tên
+`192-168-100-140.nip.io` phân giải ra `192.168.100.140` nhờ DNS công khai của nip.io, nên
+không phải tạo hay sửa gì, và nginx vốn đã nhận mọi host (`server_name _`). Vậy URI của dev
+là:
+
+```
+http://192-168-100-140.nip.io/api/planner/oauth/google/callback
+```
+
+1. Thêm nó vào **Authorised redirect URIs**. Để trống **Authorised JavaScript origins**:
+   luồng chạy hoàn toàn ở server, và ô đó từ chối mọi đường dẫn với thông báo
+   `Invalid Origin: URIs must not contain a path or end with "/"`. Thông báo này nghĩa là
+   URI đã dán nhầm ô.
+2. Gán biến repository `DEV_SITE_URL` bằng `http://192-168-100-140.nip.io`
+   (`gh variable set DEV_SITE_URL --body …`) rồi chạy **Deploy dev** với `tag` để trống,
+   vì `NEXT_PUBLIC_SITE_URL` được nhúng vào image lúc build.
+3. Đặt cùng giá trị đó cho `NEXT_PUBLIC_SITE_URL` trong `.env` của VM (Bước 2). Server suy
+   ra redirect URI từ nó lúc chạy, nên giá trị cũ ở đó sẽ gửi cho Google URI cũ.
+
 `GOOGLE_REDIRECT_URI` ghi đè giá trị suy ra nhưng hiện **không** được `compose.app.yml`
 chuyển vào, nên hãy đi đường hostname.
+
+Chỉ người cùng mạng LAN mới vào được site, và cái tên phụ thuộc việc nip.io còn hoạt động.
 
 ## Bước 2 — Đặt credential lên VM
 
@@ -82,7 +101,9 @@ canh chuyện đó.
 
 Container chỉ đọc biến môi trường khi được tạo. Chạy **Deploy dev** từ `main` với
 `tag` = `sha-<commit hiện tại>` (không build): `deploy.sh` chạy `compose up -d app`, và
-Compose tạo lại service có cấu hình đã resolve thay đổi. Kiểm tra:
+Compose tạo lại service có cấu hình đã resolve thay đổi (đã kiểm chứng: một lần chạy cùng
+tag image, chỉ đổi `GOOGLE_SIGNUP_ENABLED` trong `.env`, đã tạo lại container với giá trị
+mới). Kiểm tra:
 
 ```bash
 docker compose -f /opt/chuyennhahung/app/deploy/compose.yml ps   # app healthy
@@ -118,8 +139,12 @@ code, chạy **Deploy dev** với tag `sha-<commit>` cũ hơn; credential vẫn 
 
 ## Giới hạn và câu hỏi còn mở
 
-- Chưa kiểm chứng trên VM: việc Google chấp nhận origin của VM, và đăng nhập đầu-cuối từ
-  trình duyệt trong mạng dev.
+- Đã kiểm chứng trên VM dev: Google chấp nhận redirect URI `nip.io` qua HTTP, `start` trả
+  `302` với đúng `redirect_uri` đó, và đăng nhập từ trình duyệt trong mạng dev chạy được.
+  Chưa kiểm chứng: đường gỡ liên kết và `account_conflict`.
+- Khi `GOOGLE_SIGNUP_ENABLED=false`, địa chỉ Google chưa có tài khoản nhận
+  `account_not_found`; khi `true`, ai có tài khoản Google cũng tạo được `member`. Đặt lại
+  `false` khi VM dev không dùng để test mở.
 - Rate limit và throttle đăng ký nằm trong bộ nhớ, theo từng process, nên khởi động lại
   là reset.
 - `GOOGLE_REDIRECT_URI` không được `deploy/compose.app.yml` chuyển vào. Chỉ thêm nó ở đó

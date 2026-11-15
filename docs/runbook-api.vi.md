@@ -99,7 +99,9 @@ kiểm tra `/api/health`. Migration schema đã chạy sẽ không được hoà
 
 ## Giới hạn và câu hỏi còn mở
 
-- Chưa kiểm chứng trên VM: smoke test với origin nginx thật và overlay database đang dùng.
+- Đã kiểm chứng trên VM dev (overlay external-db, nginx cổng 80): `/api/health` trả `200`
+  và `/api/planner/oauth/google/start` trả `302`. Chưa chạy ở đó: các dòng smoke test còn
+  lại, cần `ADMIN_API_TOKEN` trong shell của chính bạn.
 - File này liệt kê các nhóm và lời gọi của operator; hình dạng request/response chính xác
   nằm ở các hợp đồng liên kết ở đầu file, còn nguồn sự thật cho danh sách route là
   `src/app/api/**/route.ts`.

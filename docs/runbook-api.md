@@ -99,8 +99,9 @@ read [deploy-database.md](deploy-database.md) before rolling back across one.
 
 ## Limits and open questions
 
-- Not verified on the VM yet: the smoke test against the real nginx origin and the
-  database overlay in use.
+- Verified on the dev VM (external-db overlay, nginx on port 80): `/api/health` answers
+  `200` and `/api/planner/oauth/google/start` answers `302`. Not run there yet: the
+  other smoke-test lines, which need `ADMIN_API_TOKEN` in your own shell.
 - This lists the families and the operator calls; the exact request and response
   shapes are in the contracts linked at the top, and the source of truth for the route
   list is `src/app/api/**/route.ts`.
