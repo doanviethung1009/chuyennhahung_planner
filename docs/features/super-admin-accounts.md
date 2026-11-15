@@ -12,7 +12,7 @@ API: `POST /api/admin/planner/users/[userId]/ban`, `/unban`, `/restore`; `DELETE
 
 ## Data
 
-`Role` is `member | editor | admin | super_admin`, stored on the user row (additive, no migration). New action `runbook:read`, held by `super_admin` only. User fields `bannedAt/bannedBy`, `deletedAt/deletedBy` (optional). Message keys under `admin.users` (`ban`, `unban`, `delete`, `restore`, `purge`, `status*`) and `admin.status.*Done`. Message key `admin.roles.super_admin`.
+`Role` is `member | editor | admin | super_admin`, stored on the user row. On PostgreSQL migration `0009_super_admin_and_account_state.sql` widens the role CHECK and adds `banned_at/by`, `deleted_at/by` (mapped in `src/server/persistence/planner-rows.ts`); apply it before using either feature. New action `runbook:read`, held by `super_admin` only. User fields `bannedAt/bannedBy`, `deletedAt/deletedBy` (optional). Message keys under `admin.users` (`ban`, `unban`, `delete`, `restore`, `purge`, `status*`) and `admin.status.*Done`. Message key `admin.roles.super_admin`.
 
 ## How it works
 

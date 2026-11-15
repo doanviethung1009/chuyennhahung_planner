@@ -16,7 +16,7 @@
 2. Trang Runbook được chặn bằng `requireStaff(..., 'runbook')` (`can(role, 'runbook:read')`); người khác nhận 404, nút nav chỉ hiện cho `runbook:read`.
 3. `canManageRole(actor, target)`: `super_admin` hoặc service token thao tác trên mọi tài khoản; `admin` chỉ thao tác trên `member` và `editor`. Áp dụng cho `createUser`, `setUserRole` (cả role hiện tại lẫn role mới) và `resetUserPassword`. Bị từ chối trả `403 forbidden`.
 4. Guard số lượng: `admin` và `super_admin` đều tính là có quyền quản trị khi xét "admin cuối cùng"; `super_admin` cuối cùng không bị hạ role hay xóa, kể cả bằng service token.
-5. `super_admin` dùng vòng đời phiên của admin (ADR 0010 §4). Không thêm route, không migration schema: giá trị role chỉ thêm mới.
+5. `super_admin` dùng vòng đời phiên của admin (ADR 0010 §4). Không thêm route. Giá trị role chỉ thêm mới, nhưng trên PostgreSQL phải nới CHECK của role (migration 0002) và thêm các cột khóa / xóa mềm: **migration 0009** (rollback ở `db/rollback/`). Thiếu nó, đặt `super_admin` sẽ lỗi 500.
 6. Super admin đầu tiên được tạo bằng service token (`PATCH /api/admin/planner/users/:id` với `{"role":"super_admin"}`) — phiên admin không cấp được.
 
 7. **Vòng đời tài khoản (PR thứ hai).** `bannedAt/bannedBy` và `deletedAt/deletedBy` là các trường tùy chọn trên user. Tài khoản bị khóa hoặc xóa mềm là *vô hiệu*: mọi phiên bị xóa ngay, và `identify` (cookie lẫn bearer), đăng nhập bằng access token, bằng mật khẩu và bằng Google đều từ chối (Google coi như `account_not_found`, không có câu trả lời riêng và không đăng ký lách qua). Trip, đánh giá và thông tin đăng nhập giữ nguyên; mở khóa hoặc khôi phục sẽ bật lại.

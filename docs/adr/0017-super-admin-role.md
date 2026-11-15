@@ -16,7 +16,7 @@
 2. The Runbook page is gated by `requireStaff(..., 'runbook')` (`can(role, 'runbook:read')`); anyone else gets a 404, and the nav link is rendered for `runbook:read` only.
 3. `canManageRole(actor, target)`: a `super_admin` or the service token acts on any account; an `admin` acts only on `member` and `editor` accounts. It applies to `createUser`, `setUserRole` (both the current and the new role) and `resetUserPassword`. A refused call is `403 forbidden`.
 4. Head-count guards: `admin` and `super_admin` both count as admin-capable for "the last admin"; the last `super_admin` cannot be demoted or deleted, the service token included.
-5. `super_admin` uses the admin session lifetime (ADR 0010 §4). No new route, no schema migration: the stored role value is additive.
+5. `super_admin` uses the admin session lifetime (ADR 0010 §4). No new route. The stored role value is additive, but on PostgreSQL the role CHECK of migration 0002 must be widened and the ban / soft-delete columns added: **migration 0009** (rollback in `db/rollback/`). Without it, setting `super_admin` fails with a 500.
 6. The first super admin is made with the service token (`PATCH /api/admin/planner/users/:id` with `{"role":"super_admin"}`) — an admin session cannot grant it.
 
 7. **Account lifecycle (second PR).** `bannedAt/bannedBy` and `deletedAt/deletedBy` are optional fields on the user. A banned or soft-deleted account is *disabled*: all its sessions are removed at once, and `identify` (cookie and bearer), access-token sign-in, password sign-in and Google sign-in refuse it (Google reads it as `account_not_found`, so there is no distinct answer and no signup around it). Its trips, reviews and credentials are untouched, and unban or restore re-enables it.

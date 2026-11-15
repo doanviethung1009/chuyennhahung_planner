@@ -80,6 +80,24 @@ describe.skipIf(!url)('Planner on PostgreSQL (TEST_DATABASE_URL)', () => {
       newId: (prefix) => `${prefix}_${randomUUID().slice(0, 8)}`,
     });
 
+  it('stores super_admin and the ban / soft-delete marks (migration 0009, ADR 0017)', async () => {
+    const planner = repository();
+    const boss = await planner.createUser({ handle: 'pg-boss', displayName: 'Boss', email: 'pg-boss@example.test', role: 'super_admin' });
+    const staff = await planner.createUser({ handle: 'pg-staff', displayName: 'Staff', email: 'pg-staff@example.test', role: 'editor' });
+    await planner.changeAccountState(staff.user.id, 'ban', { userId: boss.user.id });
+    const reread = repository(createPostgresPlannerStore(openPool()));
+    const users = await reread.listUsers();
+    expect(users.find((u) => u.id === boss.user.id)?.role).toBe('super_admin');
+    const banned = users.find((u) => u.id === staff.user.id);
+    expect(banned?.bannedAt).toBeTruthy();
+    expect(banned?.bannedBy).toBe(boss.user.id);
+    await planner.changeAccountState(staff.user.id, 'unban', { userId: boss.user.id });
+    await planner.changeAccountState(staff.user.id, 'delete', { userId: boss.user.id });
+    const deleted = (await reread.listUsers()).find((u) => u.id === staff.user.id);
+    expect(deleted?.deletedAt).toBeTruthy();
+    expect(deleted?.bannedAt ?? null).toBeNull();
+  });
+
   it('migrate is idempotent and records the file', async () => {
     const files = await readMigrationFiles('db/migrations');
     const report = await runMigrations(pool, files);

@@ -134,7 +134,7 @@ Trong **cùng terminal**:
 npm run db:migrate
 ```
 
-Mong đợi migration `0001` đến `0008` được áp dụng. Rồi kiểm tra ràng buộc trạng thái
+Mong đợi migration `0001` đến `0009` được áp dụng. Rồi kiểm tra ràng buộc trạng thái
 review có `held` (migration `0007`):
 
 ```bash

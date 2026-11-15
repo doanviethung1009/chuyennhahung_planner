@@ -12,7 +12,7 @@ API: `POST /api/admin/planner/users/[userId]/ban`, `/unban`, `/restore`; `DELETE
 
 ## Data
 
-`Role` là `member | editor | admin | super_admin`, lưu trên dòng user (chỉ thêm, không migration). Action mới `runbook:read`, chỉ `super_admin` có. Trường user `bannedAt/bannedBy`, `deletedAt/deletedBy` (tùy chọn). Khóa message dưới `admin.users` (`ban`, `unban`, `delete`, `restore`, `purge`, `status*`) và `admin.status.*Done`. Khóa message `admin.roles.super_admin`.
+`Role` là `member | editor | admin | super_admin`, lưu trên dòng user. Trên PostgreSQL, migration `0009_super_admin_and_account_state.sql` nới CHECK của role và thêm `banned_at/by`, `deleted_at/by` (ánh xạ trong `src/server/persistence/planner-rows.ts`); áp dụng nó trước khi dùng một trong hai tính năng. Action mới `runbook:read`, chỉ `super_admin` có. Trường user `bannedAt/bannedBy`, `deletedAt/deletedBy` (tùy chọn). Khóa message dưới `admin.users` (`ban`, `unban`, `delete`, `restore`, `purge`, `status*`) và `admin.status.*Done`. Khóa message `admin.roles.super_admin`.
 
 ## How it works
 
