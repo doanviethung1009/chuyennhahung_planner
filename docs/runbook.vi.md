@@ -58,6 +58,7 @@ hay bỏ một route nghĩa là sửa bảng này ở cả hai ngôn ngữ.
 | GET | `/api/planner/session` | Du khách (cookie phiên hoặc access token) | Tôi là ai (kiểm tra phiên) |
 | DELETE | `/api/planner/session` | Du khách (cookie phiên hoặc access token) | Đăng xuất |
 | POST | `/api/planner/password` | Du khách (cookie phiên hoặc access token) | Đổi mật khẩu của mình |
+| DELETE | `/api/planner/google` | Du khách (cookie phiên; tài khoản phải có mật khẩu) | Gỡ liên kết Google của mình |
 | GET | `/api/planner/oauth/google/start` | Công khai, giới hạn tần suất | Bắt đầu đăng nhập Google (404 khi chưa cấu hình) |
 | GET | `/api/planner/oauth/google/callback` | Công khai | Callback đăng nhập Google (404 khi chưa cấu hình) |
 | GET | `/api/planner` | Du khách (cookie phiên hoặc access token) | Danh sách chuyến của mình |
