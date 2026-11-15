@@ -699,7 +699,7 @@ hardening, nhãn `cnh-dev`. Ngoài ra, một lần: đặt biến repository `DE
 origin dev không phải `http://192.168.100.140` (nó bị đóng vào image), và sau khi image
 đầu tiên được đẩy, kiểm tra package `chuyennhahung-app` đọc được bởi Actions của
 repository này. Với layout PostgreSQL khác `external-db`, đặt `DB_OVERLAY=local-db`
-trong môi trường của runner.
+trong `Environment=` của service runner (bước 5 của runbook).
 
 #### Deploy, deploy lại, rollback
 

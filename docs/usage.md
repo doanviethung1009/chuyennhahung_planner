@@ -709,7 +709,7 @@ service, label `cnh-dev`. Also, once: set the repository variable `DEV_SITE_URL`
 the dev origin is not `http://192.168.100.140` (it is baked into the image), and after
 the first image is pushed check that package `chuyennhahung-app` is readable by this
 repository's Actions. For a PostgreSQL layout other than `external-db`, set
-`DB_OVERLAY=local-db` in the runner's environment.
+`DB_OVERLAY=local-db` in the runner service's `Environment=` (step 5 of the runbook).
 
 #### Deploy, redeploy, roll back
 

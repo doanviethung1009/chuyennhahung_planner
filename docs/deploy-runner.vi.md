@@ -93,11 +93,19 @@ sudo systemctl edit actions.runner.<owner>-<repo>.cnh-dev-vm.service
 PrivateTmp=true
 ProtectHome=read-only
 ReadWritePaths=/home/cnh-runner/actions-runner /opt/chuyennhahung
+# Được deploy/deploy.sh đọc; các bước của job kế thừa môi trường của service.
+Environment=STACK_DIR=/opt/chuyennhahung
+Environment=DB_OVERLAY=external-db
 ProtectKernelTunables=true
 ProtectControlGroups=true
 Restart=on-failure
 RestartSec=10
 ```
+
+`STACK_DIR` là nơi chứa `.env` (mode `600`) và `.deployed-tag`; `DB_OVERLAY` là
+`external-db` hoặc `local-db` (loại sau còn bật profile `local-db`). Runner chạy như
+service systemd này, không chạy trong Docker, nên các biến được đặt ở đây và không ở
+chỗ nào khác — đổi xong thì restart unit.
 
 **Không** thêm `NoNewPrivileges=true`, `ProtectSystem=strict` hay `PrivateDevices=true`
 khi chưa test: Docker cần socket và cgroup của nó, các tuỳ chọn này có thể làm hỏng

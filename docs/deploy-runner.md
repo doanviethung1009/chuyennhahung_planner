@@ -93,11 +93,19 @@ sudo systemctl edit actions.runner.<owner>-<repo>.cnh-dev-vm.service
 PrivateTmp=true
 ProtectHome=read-only
 ReadWritePaths=/home/cnh-runner/actions-runner /opt/chuyennhahung
+# Read by deploy/deploy.sh; job steps inherit the service's environment.
+Environment=STACK_DIR=/opt/chuyennhahung
+Environment=DB_OVERLAY=external-db
 ProtectKernelTunables=true
 ProtectControlGroups=true
 Restart=on-failure
 RestartSec=10
 ```
+
+`STACK_DIR` is where `.env` (mode `600`) and `.deployed-tag` live; `DB_OVERLAY` is
+`external-db` or `local-db` (the latter also enables the `local-db` profile). The
+runner runs as this systemd service, not in Docker, so these are set here and
+nowhere else — change them and restart the unit.
 
 Do **not** add `NoNewPrivileges=true`, `ProtectSystem=strict` or
 `PrivateDevices=true` without testing: Docker needs its socket and cgroups, and these
