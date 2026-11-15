@@ -132,6 +132,10 @@ watch it. First-run checks: `docker compose version` works for `cnh-runner`, the
 `ghcr.io` pull succeeds with the job token, and `/opt/chuyennhahung/.deployed-tag`
 gets written.
 
+After the first green deploy, turn on Google sign-in with
+[runbook-google-sign-in.md](runbook-google-sign-in.md) and check the APIs with
+[runbook-api.md](runbook-api.md).
+
 ## Day-to-day
 
 | Task | How |

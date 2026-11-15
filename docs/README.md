@@ -26,6 +26,8 @@ index below.
 | [deploy-runbook.md](deploy-runbook.md) | Runbook: one linear guide from a blank VM to the app running and auto-deployed — layout choice, host, `.env`, database, runner, first deploy, troubleshooting |
 | [deploy-database.md](deploy-database.md) | Runbook: move the JSON data to PostgreSQL on a separate VM — role, TLS, migrate, import, verify, backup, rollback |
 | [deploy-runner.md](deploy-runner.md) | Runbook: install the self-hosted deploy runner on the dev VM as a hardened systemd service — user, ACLs, registration, unit hardening, checks |
+| [runbook-google-sign-in.md](runbook-google-sign-in.md) | Runbook: turn on and operate Google sign-in on the dev VM — redirect URI, `.env`, rollout through deploy, checks, errors, rollback |
+| [runbook-api.md](runbook-api.md) | Runbook: operate the APIs on the dev VM — families and credentials, smoke test after deploy, failure table, operator calls, rollback |
 
 ## Features
 

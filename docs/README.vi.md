@@ -25,6 +25,8 @@ trúc hai bản lệch nhau, hoặc nếu tài liệu chưa được liệt kê 
 | [deploy-runbook.vi.md](deploy-runbook.vi.md) | Runbook: một hướng dẫn đi thẳng từ VM trống đến khi app chạy và tự deploy — chọn layout, host, `.env`, database, runner, deploy lần đầu, xử lý sự cố |
 | [deploy-database.vi.md](deploy-database.vi.md) | Runbook: chuyển dữ liệu JSON sang PostgreSQL trên VM riêng — role, TLS, migrate, import, xác minh, backup, rollback |
 | [deploy-runner.vi.md](deploy-runner.vi.md) | Runbook: cài runner deploy tự host trên VM dev thành service systemd đã hardening — user, ACL, đăng ký, hardening unit, kiểm tra |
+| [runbook-google-sign-in.vi.md](runbook-google-sign-in.vi.md) | Runbook: bật và vận hành đăng nhập Google trên VM dev — redirect URI, `.env`, áp dụng qua deploy, kiểm tra, lỗi, rollback |
+| [runbook-api.vi.md](runbook-api.vi.md) | Runbook: vận hành các API trên VM dev — nhóm API và credential, smoke test sau deploy, bảng lỗi, lời gọi của operator, rollback |
 
 ## Tính năng
 

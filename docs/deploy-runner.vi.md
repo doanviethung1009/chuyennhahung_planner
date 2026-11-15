@@ -130,6 +130,10 @@ Trên GitHub runner hiện **Idle** với nhãn `cnh-dev`. Sau đó chạy tay *
 `docker compose version` chạy được dưới `cnh-runner`, pull `ghcr.io` thành công bằng
 token của job, và `/opt/chuyennhahung/.deployed-tag` được ghi.
 
+Sau lần deploy xanh đầu tiên, bật đăng nhập Google theo
+[runbook-google-sign-in.vi.md](runbook-google-sign-in.vi.md) và kiểm tra API theo
+[runbook-api.vi.md](runbook-api.vi.md).
+
 ## Vận hành hằng ngày
 
 | Việc | Cách làm |
