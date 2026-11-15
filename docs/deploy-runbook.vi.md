@@ -496,6 +496,24 @@ gh api -X POST repos/<owner>/<repo>/actions/runners/<runner-id>/labels -f 'label
   Cách khác, `npm run admin:create` trong container `tools`, build một image trên VM và cần
   `APP_SRC=..` đứng trước lệnh `docker compose`; xem
   [usage → Đăng nhập với tư cách admin](usage.vi.md#đăng-nhập-với-tư-cách-admin).
+- **Vai trò từ VM.** Có thể đặt role khi tạo hoặc đổi sau bằng cùng service token (`$TOKEN` như
+  trên). Chỉ service token mới tạo được `super_admin` đầu tiên, role duy nhất mở tab Runbook
+  ([ADR 0017](adr/0017-super-admin-role.vi.md)). Các role: `member`, `editor`, `admin`, `super_admin`.
+  ```bash
+  # tạo user kèm role (temporaryPassword chỉ hiện một lần)
+  curl -s -X POST http://localhost/api/admin/planner/users \
+    -H "authorization: Bearer $TOKEN" -H 'content-type: application/json' \
+    -d '{"handle":"hung","displayName":"Hưng","email":"you@example.com","role":"super_admin"}'
+  # tìm id của user
+  curl -s http://localhost/api/admin/planner/users -H "authorization: Bearer $TOKEN"
+  # đổi role của user có sẵn
+  curl -s -X PATCH http://localhost/api/admin/planner/users/<userId> \
+    -H "authorization: Bearer $TOKEN" -H 'content-type: application/json' \
+    -d '{"role":"super_admin"}'
+  ```
+  Hoặc không cần token, trong container `tools` (cùng lưu ý `APP_SRC=..` ở trên):
+  `npm run admin:create -- --email you@example.com --name "Hưng" --role super_admin`.
+  `super_admin` cuối cùng không bị hạ role hay xóa.
 - **Sao lưu.** `crontab -e` →
   `15 3 * * * cd /opt/chuyennhahung/src/deploy && ./scripts/backup.sh local-db`.
   Chép `/opt/chuyennhahung/backups` ra ngoài VM. Với `external-db`, dump thêm trên VM database.

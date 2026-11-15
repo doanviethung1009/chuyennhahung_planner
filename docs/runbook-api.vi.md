@@ -89,7 +89,7 @@ curl -si ORIGIN/api/planner/oauth/google/start | head -n 1   # 302 nếu đã c�
 | Đổi vai trò | `PATCH /api/admin/planner/users/:userId` |
 | Kiểm tra toàn vẹn dữ liệu | `GET /api/admin/planner/integrity`, `GET /api/admin/travel/integrity` |
 | Kiểm duyệt nội dung cộng đồng | `/api/admin/community/{queue,reviews,trips,restrictions}` |
-| Tạo admin đầu tiên | `docker compose … run --rm tools npm run admin:create -- --email <email>` (xem [usage.vi.md](usage.vi.md)) |
+| Tạo admin đầu tiên | `docker compose … run --rm tools npm run admin:create -- --email <email> [--role super_admin]` (xem [usage.vi.md](usage.vi.md)) |
 
 ## Rollback
 

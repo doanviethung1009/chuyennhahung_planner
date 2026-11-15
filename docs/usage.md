@@ -121,7 +121,7 @@ Read this first if you are unsure how to sign in, or you lost access.
 | `editor` | Travel content at `/quan-tri` | Email + password, or Google |
 | `admin` | Content **and** users at `/quan-tri` | Email + password, or Google |
 
-An account is a `member` unless it was created with another role (`admin:create` makes an `admin`). Only an admin (in `/quan-tri`) or the service token can make someone `editor` or `admin`; Only a super admin (or the service token) can make an `admin` or `super_admin`, or reset an admin's password, and only a super admin opens the Runbook tab ([ADR 0017](adr/0017-super-admin-role.md)); promote the first one with `PATCH /api/admin/planner/users/<id>` and `{"role":"super_admin"}` using the admin token. In `/quan-tri` a staff account (editor, admin) can be banned (sessions end at once, sign-in refused, undone by *Unban*), soft-deleted (blocked and marked, undone by *Restore*) or deleted permanently, which only works on an already soft-deleted account; you cannot do this to yourself, and an admin only reaches editors. Google never grants a role.
+An account is a `member` unless it was created with another role (`admin:create` makes an `admin` unless `--role` says otherwise). Only an admin (in `/quan-tri`) or the service token can make someone `editor` or `admin`; Only a super admin (or the service token) can make an `admin` or `super_admin`, or reset an admin's password, and only a super admin opens the Runbook tab ([ADR 0017](adr/0017-super-admin-role.md)); promote the first one with `PATCH /api/admin/planner/users/<id>` and `{"role":"super_admin"}` using the admin token. In `/quan-tri` a staff account (editor, admin) can be banned (sessions end at once, sign-in refused, undone by *Unban*), soft-deleted (blocked and marked, undone by *Restore*) or deleted permanently, which only works on an already soft-deleted account; you cannot do this to yourself, and an admin only reaches editors. Google never grants a role.
 
 **The secrets, and what to do if one is lost**
 
@@ -272,7 +272,13 @@ endpoint list.
 The portal is at `/quan-tri` (`/en/admin`). The simplest way to create the first admin is `admin:create`. It writes straight to the store the app uses — PostgreSQL when `PLANNER_DATABASE_URL` is set, else the JSON file — needs no `ADMIN_API_TOKEN` and no running server, and prints a random temporary password once:
 
 ```bash
-npm run admin:create -- --email you@example.com --name "Hưng"            # optional: --handle admin-hung
+npm run admin:create -- --email you@example.com --name "Hưng"            # optional: --handle admin-hung, --role member|editor|admin|super_admin (default admin)
+```
+
+The first `super_admin` can be made the same way (it is the only role that opens the Runbook tab, [ADR 0017](adr/0017-super-admin-role.md)):
+
+```bash
+npm run admin:create -- --email you@example.com --name "Hưng" --role super_admin
 ```
 
 On the deployed stack, run it in the `tools` container with the same `-f` files as your layout, so it reaches the same database:

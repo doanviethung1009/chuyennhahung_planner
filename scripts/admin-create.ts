@@ -4,7 +4,7 @@ import {
 } from '@/server/planner/admin-bootstrap';
 import { getPlannerRepository } from '@/server/planner/instance';
 
-// Creates an admin with a random temporary password in the store the app
+// Creates an account (admin unless --role says otherwise) with a random temporary password in the store the app
 // uses: PostgreSQL when PLANNER_DATABASE_URL is set, else the JSON file.
 // The password is printed once and never stored in clear text.
 let args;
@@ -21,12 +21,13 @@ const store = process.env.PLANNER_DATABASE_URL?.trim()
 
 try {
   const result = await createAdminAccount(await getPlannerRepository(), args);
-  console.log(`admin created in ${store}`);
+  console.log(`${result.role} created in ${store}`);
   console.log(`  handle:             ${result.handle}`);
   console.log(`  email:              ${result.email}`);
+  console.log(`  role:               ${result.role}`);
   console.log(`  temporary password: ${result.temporaryPassword}`);
   console.log('Shown once. Sign in at /dang-nhap?returnTo=/quan-tri — you will be asked');
-  console.log('to choose your own password before the admin page opens.');
+  console.log('to choose your own password before the admin page opens (staff roles only).');
   process.exit(0);
 } catch (error) {
   // Never the connection string: driver errors do not carry it, and ours do not.
