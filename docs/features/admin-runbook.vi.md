@@ -19,12 +19,12 @@ tới việc này: trước đó chưa có danh sách API nào (chỉ có hợp 
 |---|---|---|
 | `/admin/runbook` | `/quan-tri/runbook` | `/en/admin/runbook` |
 
-`?doc=<id>` chọn tài liệu; id lạ quay về trang tổng quan. Đã nằm trong header
+`?doc=<id>` chọn tài liệu (`runbook-api`, hoặc `features/admin-roles`); id lạ quay về trang tổng quan. Đã nằm trong header
 no-index `/quan-tri/:path*`, `/en/admin/:path*` và dòng disallow của `robots.txt`.
 
 ## Dữ liệu
 
-- Đọc Markdown từ `docs/`, không bao giờ từ request: danh sách cho phép đóng `RUNBOOK_DOCS` trong `src/server/runbook/docs.ts` (`runbook`, `deploy-runbook`, `deploy-operations`, `deploy-database`, `deploy-runner`, `runbook-api`, `runbook-google-sign-in`, `travel-content-api`). Ngôn ngữ tiếng Việt đọc bản `.vi.md`.
+- Đọc Markdown từ `docs/`, không bao giờ từ request: tập đóng trong `src/server/runbook/docs.ts`: danh sách lõi `RUNBOOK_DOCS` (`runbook`, `deploy-runbook`, `deploy-operations`, `deploy-database`, `deploy-runner`, `runbook-api`, `runbook-google-sign-in`, `architecture`, `usage`, `travel-content-api`) cộng mọi tài liệu tính năng, gọi bằng `features/<slug>` (liệt kê từ `docs/features/` trên đĩa, slug theo mẫu chặt; có trang đăng ký, không có bản mẫu). Ngôn ngữ tiếng Việt đọc bản `.vi.md`.
 - Không đọc hay hiển thị thông tin xác thực nào; tài liệu chỉ nhắc bí mật bằng tên.
 - Thông điệp: namespace `adminRunbook` và `adminContent.nav.runbook` trong `messages/vi.json`, `messages/en.json`.
 
