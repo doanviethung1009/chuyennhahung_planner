@@ -104,6 +104,59 @@ describe('Planner-written reviews are published at once (ADR 0014)', () => {
   });
 });
 
+describe('staff can hold a review and ask its author (ADR 0015)', () => {
+  async function held() {
+    const planner = makePlanner();
+    const { userId } = await makeOwner(planner);
+    await planner.upsertPlannerReview(userId, PLACE, { ...review(), authorDisplay: 'name' });
+    const [row] = await planner.listReviewQueue();
+    await planner.decideReview(row!.id, 'hold', 'staff', 'Bạn đã đến đó thật chứ?');
+    return { planner, userId, id: row!.id };
+  }
+
+  it('hides the review from public reads and the average, and shows the author the question', async () => {
+    const { planner, userId } = await held();
+    expect((await planner.listApprovedReviews()).items).toEqual([]);
+    expect((await planner.listApprovedReviews()).summary.count).toBe(0);
+    expect((await planner.listOwnReviews(userId))[0]).toMatchObject({
+      status: 'held',
+      rejectReason: 'Bạn đã đến đó thật chứ?',
+    });
+    expect((await planner.listReviewQueue())[0]).toMatchObject({ status: 'held' });
+  });
+
+  it('is republished by the author edit, with the question cleared', async () => {
+    const { planner, userId } = await held();
+    await planner.upsertPlannerReview(userId, PLACE, { ...review({ rating: 4 }), authorDisplay: 'name' });
+    expect((await planner.listApprovedReviews()).items).toHaveLength(1);
+    expect((await planner.listOwnReviews(userId))[0]).toMatchObject({ status: 'approved', rejectReason: null });
+  });
+
+  it('can still be removed by staff, and then stays closed to the author', async () => {
+    const { planner, userId, id } = await held();
+    await planner.decideReview(id, 'remove', 'staff', 'không trả lời');
+    await expectCode(
+      planner.upsertPlannerReview(userId, PLACE, { ...review(), authorDisplay: 'name' }),
+      'invalid_state',
+    );
+  });
+
+  it('lets the author delete a held review of their own', async () => {
+    const { planner, userId } = await held();
+    await planner.deleteOwnReview(userId, PLACE);
+    expect(await planner.listOwnReviews(userId)).toEqual([]);
+  });
+
+  it('refuses to hold a guest review, a non-live review, or a held one twice', async () => {
+    const planner = makePlanner();
+    await planner.createGuestReview({ placeSlug: PLACE, ...review(), authorName: null }, '203.0.113.9');
+    const [guest] = await planner.listReviewQueue();
+    await expectCode(planner.decideReview(guest!.id, 'hold', 'staff', 'câu hỏi'), 'invalid_state');
+    const { planner: other, id } = await held();
+    await expectCode(other.decideReview(id, 'hold', 'staff', 'lại'), 'invalid_state');
+  });
+});
+
 describe('guest reviews are published at once and bounded', () => {
   const guest = (over: Record<string, unknown> = {}) =>
     guestReviewInputSchema.parse({ placeSlug: PLACE, ...review(), authorName: null, ...over });
@@ -208,5 +261,7 @@ describe('review schemas', () => {
   it('needs a reason to reject or remove', () => {
     expect(reviewDecisionSchema.safeParse({ decision: 'approve' }).success).toBe(true);
     expect(reviewDecisionSchema.safeParse({ decision: 'reject' }).success).toBe(false);
+    expect(reviewDecisionSchema.safeParse({ decision: 'hold' }).success).toBe(false);
+    expect(reviewDecisionSchema.safeParse({ decision: 'hold', reason: 'Bạn đã đến đó chưa?' }).success).toBe(true);
   });
 });

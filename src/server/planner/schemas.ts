@@ -733,7 +733,8 @@ export const REVIEW_BODY_MAX = 1_000;
 export const MIN_REVIEWS_FOR_AVERAGE = 3;
 
 export const reviewSourceSchema = z.enum(['planner', 'homepage']);
-export const reviewStatusSchema = z.enum(['pending', 'approved', 'rejected', 'removed']);
+/** `held`: hidden while staff put a question to the author (ADR 0015); the author's edit republishes it. */
+export const reviewStatusSchema = z.enum(['pending', 'approved', 'rejected', 'removed', 'held']);
 export const reviewLangSchema = z.enum(['vi', 'en']);
 
 /**
@@ -792,15 +793,16 @@ export const guestReviewInputSchema = z
 /** `PATCH /api/admin/community/reviews/[id]` body. */
 export const reviewDecisionSchema = z
   .object({
-    decision: z.enum(['approve', 'reject', 'remove']),
+    decision: z.enum(['approve', 'reject', 'remove', 'hold']),
     reason: z.string().trim().min(3).max(500).optional(),
   })
   .strict()
   .refine((value) => value.decision === 'approve' || value.reason !== undefined, {
-    message: 'a reason is required to reject or remove',
+    message: 'a reason (for hold: the question to the author) is required',
     path: ['reason'],
   });
 
+export type ReviewDecision = z.infer<typeof reviewDecisionSchema>['decision'];
 export type CommunityReview = z.infer<typeof communityReviewSchema>;
 export type PlannerReviewInput = z.infer<typeof plannerReviewInputSchema>;
 export type GuestReviewInput = z.infer<typeof guestReviewInputSchema>;

@@ -959,13 +959,15 @@
     "reasonLabel": "Reason (the sharer will see it)",
     "confirm": {
       "reject": "Confirm rejection",
-      "remove": "Confirm removal"
+      "remove": "Confirm removal",
+      "hold": "Hide and send question"
     },
     "cancel": "Cancel",
     "done": {
       "approve": "Trip approved.",
       "reject": "Rejected.",
-      "remove": "Removed from the home page."
+      "remove": "Removed from the home page.",
+      "hold": "Review hidden and question sent to the author."
     },
     "tripsHeading": "Trips",
     "reviewsHeading": "Place reviews",
@@ -982,11 +984,14 @@
         "pending": "Pending",
         "approved": "Live",
         "rejected": "Rejected",
-        "removed": "Removed"
+        "removed": "Removed",
+        "held": "Hidden, waiting for the author"
       },
       "visited": "Visited {date}",
       "created": "Submitted {date}",
       "remove": "Remove review",
+      "hold": "Ask the author",
+      "reasonLabelHold": "Your question (the author will see it; the review is hidden until they edit it)",
       "reasonLabel": "Reason (the author will see it)",
       "reasonLabelGuest": "Reason for removal (kept internally)"
     }
@@ -1017,8 +1022,11 @@
         "pending": "Waiting for review",
         "approved": "Public",
         "rejected": "Not approved",
-        "removed": "Removed"
-      }
+        "removed": "Removed",
+        "held": "Hidden: Nhà Hưng has a question"
+      },
+      "question": "Question from Nhà Hưng: {reason}",
+      "heldHelp": "Your review is hidden for now. Edit it to answer; saving publishes it again."
     },
     "form": {
       "closed": "This is not open yet: Nhà Hưng has not published the contribution terms and the takedown contact.",
