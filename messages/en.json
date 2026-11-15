@@ -954,6 +954,8 @@
       "deploy-operations": "Operations",
       "deploy-database": "PostgreSQL",
       "deploy-runner": "Deploy runner",
+      "runbook-api": "Operate the APIs",
+      "runbook-google-sign-in": "Google sign-in",
       "travel-content-api": "Travel Content API"
     }
   },

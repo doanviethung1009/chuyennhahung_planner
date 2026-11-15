@@ -15,6 +15,8 @@ text is shown to administrators in the browser at `/quan-tri/runbook`
 | Check, restart, back up, restore, rotate a secret, handle an incident | [deploy-operations.md](deploy-operations.md) |
 | Move the JSON data to PostgreSQL on its own VM | [deploy-database.md](deploy-database.md) |
 | Install or repair the self-hosted deploy runner | [deploy-runner.md](deploy-runner.md) |
+| Call, check and troubleshoot the deployed APIs | [runbook-api.md](runbook-api.md) |
+| Turn on and operate Google sign-in on the dev VM | [runbook-google-sign-in.md](runbook-google-sign-in.md) |
 | Read the Travel Content API contract and error codes | [travel-content-api.md](travel-content-api.md) |
 
 ## Quick checks
@@ -33,6 +35,8 @@ The **Who may call** column of the table below uses these terms:
 - **Admin / staff session**: the browser session of a user whose role allows the named action; the admin token also works. Roles and actions: [features/admin-roles.md](features/admin-roles.md).
 
 ## API list
+
+This table is the reference (what exists, who may call it); how to call, check and troubleshoot the APIs on the dev VM is in [runbook-api.md](runbook-api.md).
 
 Paths use the literal bracket form of the route files under `src/app/api/`.
 `tests/runbook.test.ts` fails when this table and the route files disagree, so
@@ -58,7 +62,7 @@ adding or removing a route means editing this table in both languages.
 | GET | `/api/planner/session` | Traveller (session cookie or access token) | Who am I (session probe) |
 | DELETE | `/api/planner/session` | Traveller (session cookie or access token) | Sign out |
 | POST | `/api/planner/password` | Traveller (session cookie or access token) | Change own password |
-| DELETE | `/api/planner/google` | Traveller (session cookie or access token) | Unlink own Google account |
+| DELETE | `/api/planner/google` | Traveller (session cookie or access token) | Unlink own Google account (needs a password set; rate-limited) |
 | GET | `/api/planner/oauth/google/start` | Public, rate-limited | Begin Google sign-in (404 when unset) |
 | GET | `/api/planner/oauth/google/callback` | Public | Google sign-in callback (404 when unset) |
 | GET | `/api/planner` | Traveller (session cookie or access token) | List own trips |

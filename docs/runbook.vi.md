@@ -15,6 +15,8 @@ xem [features/admin-runbook.vi.md](features/admin-runbook.vi.md).
 | Kiểm tra, khởi động lại, sao lưu, khôi phục, xoay bí mật, xử lý sự cố | [deploy-operations.vi.md](deploy-operations.vi.md) |
 | Chuyển dữ liệu JSON sang PostgreSQL trên VM riêng | [deploy-database.vi.md](deploy-database.vi.md) |
 | Cài hoặc sửa runner triển khai tự host | [deploy-runner.vi.md](deploy-runner.vi.md) |
+| Gọi, kiểm tra và xử lý sự cố các API đã triển khai | [runbook-api.vi.md](runbook-api.vi.md) |
+| Bật và vận hành đăng nhập Google trên VM dev | [runbook-google-sign-in.vi.md](runbook-google-sign-in.vi.md) |
 | Đọc hợp đồng API Travel Content và mã lỗi | [travel-content-api.vi.md](travel-content-api.vi.md) |
 
 ## Kiểm tra nhanh
@@ -33,6 +35,8 @@ Cột **Ai được gọi** của bảng bên dưới dùng các thuật ngữ s
 - **Phiên admin / nhân viên**: phiên trình duyệt của người dùng có vai trò cho phép hành động nêu tên; admin token cũng dùng được. Vai trò và hành động: [features/admin-roles.vi.md](features/admin-roles.vi.md).
 
 ## Danh sách API
+
+Bảng này là tham chiếu (có gì, ai được gọi); cách gọi, kiểm tra và xử lý sự cố API trên VM dev nằm ở [runbook-api.vi.md](runbook-api.vi.md).
 
 Đường dẫn dùng đúng dạng ngoặc vuông của các file route dưới `src/app/api/`.
 `tests/runbook.test.ts` báo lỗi khi bảng này và các file route lệch nhau, nên thêm
@@ -58,7 +62,7 @@ hay bỏ một route nghĩa là sửa bảng này ở cả hai ngôn ngữ.
 | GET | `/api/planner/session` | Du khách (cookie phiên hoặc access token) | Tôi là ai (kiểm tra phiên) |
 | DELETE | `/api/planner/session` | Du khách (cookie phiên hoặc access token) | Đăng xuất |
 | POST | `/api/planner/password` | Du khách (cookie phiên hoặc access token) | Đổi mật khẩu của mình |
-| DELETE | `/api/planner/google` | Du khách (cookie phiên hoặc access token) | Huỷ liên kết tài khoản Google của mình |
+| DELETE | `/api/planner/google` | Du khách (cookie phiên hoặc access token) | Gỡ liên kết Google của chính mình (cần đã đặt mật khẩu; có giới hạn tần suất) |
 | GET | `/api/planner/oauth/google/start` | Công khai, giới hạn tần suất | Bắt đầu đăng nhập Google (404 khi chưa cấu hình) |
 | GET | `/api/planner/oauth/google/callback` | Công khai | Callback đăng nhập Google (404 khi chưa cấu hình) |
 | GET | `/api/planner` | Du khách (cookie phiên hoặc access token) | Danh sách chuyến của mình |
