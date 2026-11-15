@@ -12,8 +12,9 @@ interface SignInResponse {
 }
 
 /**
- * Email + password sign-in (ADR 0007), with the original access-token form
- * kept behind a disclosure for travellers who only have a code.
+ * Email + password sign-in (ADR 0007), with the access-token form
+ * always visible, because an account an operator created without an email has
+ * only a code and must be able to find where to use it.
  *
  * `target` is validated on the server (`safeReturnTo`) before it reaches this
  * component, so it is always a known same-site path. A full navigation follows
@@ -102,10 +103,10 @@ export function SignInForm({ target }: { target: string }) {
         </div>
       </form>
 
-      <details className="rounded-md border border-border bg-surface-muted px-4 py-3">
-        <summary className="flex min-h-11 cursor-pointer items-center text-base font-medium text-foreground">
+      <section aria-labelledby="si-token-heading" className="rounded-md border border-border bg-surface-muted px-4 py-5">
+        <h2 id="si-token-heading" className="font-display text-xl text-foreground">
           {t('tokenToggle')}
-        </summary>
+        </h2>
         <form onSubmit={onToken} className="mt-4 grid gap-4" aria-busy={busy}>
           <Field id="si-token" label={t('tokenLabel')} hint={t('tokenHint')}>
             <input
@@ -131,7 +132,7 @@ export function SignInForm({ target }: { target: string }) {
             </button>
           </div>
         </form>
-      </details>
+      </section>
     </div>
   );
 }

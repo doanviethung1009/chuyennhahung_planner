@@ -55,6 +55,38 @@ describe('ownOrigins', () => {
   });
 });
 
+describe('ownOrigins behind a trusted proxy', () => {
+  const env = { TRUST_PROXY_HEADERS: 'true', NEXT_PUBLIC_SITE_URL: 'http://192-168-100-140.nip.io' };
+  const via = (host: string, proto = 'http') =>
+    new Request('http://0.0.0.0:3000/api/planner/session', {
+      headers: { 'x-forwarded-host': host, 'x-forwarded-proto': proto },
+    });
+
+  it('accepts the host the browser used, alongside the site URL', () => {
+    const byIp = ownOrigins(via('192.168.100.140'), env);
+    expect(byIp.has('http://192.168.100.140')).toBe(true);
+    expect(byIp.has('http://192-168-100-140.nip.io')).toBe(true);
+    expect(ownOrigins(via('192-168-100-140.nip.io'), env).has('http://192-168-100-140.nip.io')).toBe(true);
+    expect(ownOrigins(via('Example.COM:8080', 'https'), env).has('https://example.com:8080')).toBe(true);
+  });
+
+  it('ignores the headers unless TRUST_PROXY_HEADERS is true', () => {
+    const origins = ownOrigins(via('192.168.100.140'), { NEXT_PUBLIC_SITE_URL: env.NEXT_PUBLIC_SITE_URL });
+    expect(origins.has('http://192.168.100.140')).toBe(false);
+  });
+
+  it('refuses a malformed host or scheme', () => {
+    for (const host of ['evil.example/path', 'a@evil.example', 'evil.example?x=1', '']) {
+      expect(ownOrigins(via(host), env).size).toBe(2);
+    }
+    expect(ownOrigins(via('192.168.100.140', 'ftp'), env).size).toBe(2);
+  });
+
+  it('does not admit a different origin', () => {
+    expect(ownOrigins(via('192.168.100.140'), env).has('http://evil.example')).toBe(false);
+  });
+});
+
 describe('GET /api/health', () => {
   it('answers 200 without touching a store, uncached', async () => {
     const response = health();
