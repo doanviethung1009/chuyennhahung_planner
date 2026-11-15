@@ -340,7 +340,7 @@ The variables are read at startup. **Restart** `npm run dev` (or recreate the co
 
 - A Google email that **no** account has creates a new `member` account, unless `GOOGLE_SIGNUP_ENABLED=false` (then `account_not_found`). Staff roles are never granted by Google: promote with the service token or from `/quan-tri`.
 - An email that **already** has an account (for example an admin made with `admin:create`) is refused with `link_required` — Google is never linked by email. Sign in with the password, then use "Link your Google account" on `/doi-mat-khau`. From then on either method signs that account in.
-- Unlink with `DELETE /api/admin/planner/users/<userId>/google` (service token).
+- Unlink with `DELETE /api/admin/planner/users/<userId>/google` (service token), or yourself with "Unlink Google" on `/doi-mat-khau` (needs a password on the account; your other devices are signed out).
 
 **HTTP on an IP address does not work.** Google accepts a plain-HTTP redirect URI only for `localhost`. The dev VM served as `http://192.168.x.x` cannot use Google sign-in; it needs a domain with HTTPS first. Until then, use password sign-in there and leave the two variables unset so the button stays hidden.
 

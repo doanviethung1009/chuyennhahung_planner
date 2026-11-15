@@ -200,6 +200,41 @@ describe('resolving a Google identity to an account', () => {
     ).toEqual({ ok: false, reason: 'account_conflict' });
   });
 
+  it('lets a user with a password unlink Google, ending their other sessions but not this one', async () => {
+    const planner = makePlanner();
+    const staff = await planner.createUser({ handle: 'staff-a', displayName: 'Nhân viên A', email: 'staff@example.vn' });
+    await planner.linkGoogle(staff.user.id, identity);
+    const here = await planner.signInWithGoogle(identity, { signupEnabled: true });
+    const elsewhere = await planner.signInWithGoogle(identity, { signupEnabled: true });
+    if (!here.ok || !elsewhere.ok) throw new Error('unreachable');
+    const cookie = (token: string) =>
+      new Request('https://example.test/api/planner/google', { headers: { cookie: `${SESSION_COOKIE}=${token}` } });
+
+    const user = await planner.unlinkOwnGoogle(cookie(here.session.token), staff.user.id);
+    expect(user).toMatchObject({ id: staff.user.id, hasGoogle: false });
+    expect((await planner.identify(cookie(here.session.token))).userId).toBe(staff.user.id);
+    await expect(planner.identify(cookie(elsewhere.session.token))).rejects.toMatchObject({ code: 'unauthorized' });
+    // Google no longer resolves to the account, and unlinking again is a no-op.
+    expect(await planner.signInWithGoogle(identity, { signupEnabled: false })).toEqual({
+      ok: false,
+      reason: 'account_not_found',
+    });
+    expect(await planner.unlinkOwnGoogle(cookie(here.session.token), staff.user.id)).toMatchObject({ hasGoogle: false });
+  });
+
+  it('refuses to unlink Google from an account that has no password', async () => {
+    const planner = makePlanner();
+    const created = await planner.signInWithGoogle(identity, { signupEnabled: true });
+    if (!created.ok) throw new Error('unreachable');
+    const request = new Request('https://example.test/api/planner/google', {
+      headers: { cookie: `${SESSION_COOKIE}=${created.session.token}` },
+    });
+    await expect(planner.unlinkOwnGoogle(request, created.session.user.id)).rejects.toMatchObject({
+      code: 'invalid_state',
+    });
+    expect(await planner.signInWithGoogle(identity, { signupEnabled: true })).toMatchObject({ ok: true });
+  });
+
   it('refuses an email already linked to a different Google account', async () => {
     const planner = makePlanner();
     await planner.signInWithGoogle(identity, { signupEnabled: true });

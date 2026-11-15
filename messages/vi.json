@@ -347,7 +347,13 @@
         "google_unverified": "Email trong tài khoản Google của bạn chưa được Google xác minh.",
         "account_conflict": "Tài khoản Google này đã gắn với một tài khoản khác ở nhà Hưng, hoặc tài khoản của bạn đã gắn với một tài khoản Google khác.",
         "rate_limited": "Bạn thử quá nhiều lần. Hãy đợi ít phút rồi thử lại."
-      }
+      },
+      "unlinkButton": "Gỡ liên kết Google",
+      "unlinking": "Đang gỡ…",
+      "unlinkHint": "Sau khi gỡ, bạn đăng nhập bằng email và mật khẩu. Bạn có thể liên kết lại Google bất cứ lúc nào. Các thiết bị khác sẽ bị đăng xuất.",
+      "unlinkNeedsPassword": "Tài khoản này chưa có mật khẩu nên Google là cách đăng nhập duy nhất và chưa thể gỡ. Hãy nhắn cho nhà Hưng nếu bạn cần một mật khẩu.",
+      "unlinked": "Đã gỡ liên kết Google. Từ giờ bạn đăng nhập bằng email và mật khẩu.",
+      "unlinkFailed": "Chưa gỡ được liên kết Google. Bạn thử lại sau một lát nhé."
     }
   },
   "myTrips": {
