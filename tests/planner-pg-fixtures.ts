@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { PlannerRepository } from '../src/server/planner/repository';
 import type { PlannerData } from '../src/server/planner/store';
 import {
@@ -96,7 +97,8 @@ export async function runScenario(planner: PlannerRepository): Promise<{
   });
   await planner.createGuestReview(
     { placeSlug: 'ho-xuan-huong', rating: 4, body: reviewBody, lang: 'vi', visitedOn: '2026-02-21', authorName: null },
-    '198.51.100.4',
+    // Unique per run: the integration tests reuse one database, and a guest key may review a place once a day.
+    `scenario-${randomUUID()}`,
   );
 
   return { userId, tripId, activityId, copyId: copy.trip.id };
