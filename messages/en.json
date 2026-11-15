@@ -924,7 +924,7 @@
     "metaTitle": "Community trips",
     "title": "Community trips",
     "description": "Real itineraries shared publicly by travellers. Each trip is reviewed before it is shown.",
-    "count": "{count} trips",
+    "count": "{count, plural, one {# trip} other {# trips}}",
     "empty": "No approved trips yet. You could be the first: share a trip from My trips.",
     "days": "{count} days",
     "party": "{count} travellers",
