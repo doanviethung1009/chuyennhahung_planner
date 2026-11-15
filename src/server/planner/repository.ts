@@ -595,6 +595,31 @@ export class PlannerRepository {
   }
 
   /**
+   * The signed-in user removes their own Google link (ADR 0007). Refused while
+   * the account has no password — that would leave it with no way to sign in
+   * and no email sender to recover it. Their other sessions end; the one that
+   * asked stays. Idempotent: unlinking an account that has no link succeeds.
+   */
+  unlinkOwnGoogle(request: Request, userId: string): Promise<PublicPlannerUser> {
+    const presented = sessionTokenFromRequest(request);
+    return this.transaction((data) => {
+      const user = data.users.find((row) => row.id === userId);
+      if (!user) throw notFound('planner user', userId);
+      if (!user.googleSub) return toPublicUser(user);
+      if (!user.passwordHash) {
+        throw invalidState('this account has no password; Google is its only way to sign in');
+      }
+      user.googleSub = null;
+      user.updatedAt = this.timestamp();
+      const keep = presented ? findSessionByToken(data.sessions, presented) : null;
+      data.sessions = data.sessions.filter(
+        (session) => session.userId !== userId || session.id === keep?.id,
+      );
+      return toPublicUser(user);
+    });
+  }
+
+  /**
    * Ends the session the request carries. Idempotent: signing out twice, or
    * with no cookie at all, succeeds — a client retrying a sign-out must not get
    * an error for having already succeeded.

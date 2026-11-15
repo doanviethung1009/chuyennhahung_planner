@@ -340,7 +340,7 @@ Biến chỉ được đọc lúc khởi động. **Khởi động lại** `npm 
 **Cách khớp tài khoản**
 
 - Email Google **chưa** có tài khoản sẽ tạo tài khoản `member` mới, trừ khi `GOOGLE_SIGNUP_ENABLED=false` (khi đó báo `account_not_found`). Google không bao giờ cấp quyền nhân viên: nâng quyền bằng service token hoặc ở `/quan-tri`.
-- Email **đã** có tài khoản (ví dụ admin tạo bằng `admin:create`) bị từ chối với `link_required` — Google không bao giờ được liên kết theo email. Đăng nhập bằng mật khẩu, rồi bấm "Liên kết tài khoản Google" ở `/doi-mat-khau`. Từ đó cả hai cách đều vào được tài khoản đó.
+- Email **đã** có tài khoản (ví dụ admin tạo bằng `admin:create`) bị từ chối với `link_required` — Google không bao giờ được liên kết theo email. Đăng nhập bằng mật khẩu, rồi bấm "Liên kết tài khoản Google" ở `/doi-mat-khau`. Từ đó cả hai cách đều vào được tài khoản đó. Tự gỡ bằng nút "Gỡ liên kết Google" ở `/doi-mat-khau` (tài khoản phải có mật khẩu; các thiết bị khác bị đăng xuất).
 - Gỡ liên kết bằng `DELETE /api/admin/planner/users/<userId>/google` (service token).
 
 **HTTP trên địa chỉ IP không dùng được.** Google chỉ chấp nhận redirect URI HTTP thường cho `localhost`. VM dev chạy dạng `http://192.168.x.x` không dùng được đăng nhập Google; cần tên miền có HTTPS trước. Trong lúc chờ, dùng đăng nhập mật khẩu ở đó và để trống hai biến để nút không hiện.

@@ -124,6 +124,8 @@ export const signInLimiter = createRateLimiter({ limit: 10, windowMs: 60_000 });
  * throttles and never locks, so it cannot be used to lock staff out.
  */
 export const signInAccountLimiter = createRateLimiter({ limit: 5, windowMs: 15 * 60_000 });
+/** Self-service Google unlink: 10 per 15 minutes per user (ADR 0007). */
+export const googleUnlinkLimiter = createRateLimiter({ limit: 10, windowMs: 15 * 60_000 });
 /** Accounts created by a first Google sign-in: 3 per hour per client. */
 export const signupLimiter = createRateLimiter({ limit: 3, windowMs: 60 * 60_000 });
 /**

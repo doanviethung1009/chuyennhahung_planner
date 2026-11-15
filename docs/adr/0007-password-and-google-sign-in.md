@@ -182,7 +182,11 @@ documented endpoints, using `fetch` and `node:crypto` only.
   skipped and the result is `account_not_found` — the owner can close
   self-service without a deploy of new code. It defaults to `true`.
 - **Unlinking:** `DELETE /api/admin/planner/users/:userId/google` clears
-  `googleSub` and deletes that user's sessions.
+  `googleSub` and deletes that user's sessions. A signed-in user can also
+  unlink their own account with `DELETE /api/planner/google` (button on the
+  change-password page): refused with `409` while the account has no password,
+  so it cannot be locked out; their other sessions end, the current one stays;
+  unlinking an account with no link succeeds. Limited to 10 per 15 minutes per user (`429`).
 - **Configuration:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and the redirect
   URI derived from `NEXT_PUBLIC_SITE_URL` + `/api/planner/oauth/google/callback`.
   Server-only, never `NEXT_PUBLIC_*`, guarded by `tests/client-boundary.test.ts`.
