@@ -347,7 +347,7 @@ Biến chỉ được đọc lúc khởi động. **Khởi động lại** `npm 
 
 ### Duyệt chuyến đi cộng đồng (admin hoặc editor)
 
-Mở `/quan-tri/cong-dong` (`/en/admin/community`). Yêu cầu chờ duyệt nằm trên: **Duyệt**, hoặc **Từ chối** kèm lý do để chủ chuyến thấy; chuyến đã duyệt có thể **Gỡ** kèm lý do. Trang chủ và `/chuyen-di-cong-dong` chỉ hiện chuyến đã duyệt. Trước khi người đi gửi được gì, hãy điền `contribution.terms` (VI và EN) và `contribution.takedownContact` trong `src/content/site.ts`; cho tới lúc đó nút của chủ chuyến vẫn đóng.
+Mở `/quan-tri/cong-dong` (`/en/admin/community`). Yêu cầu chờ duyệt nằm trên: **Duyệt**, hoặc **Từ chối** kèm lý do để chủ chuyến thấy; chuyến đã duyệt có thể **Gỡ** kèm lý do. Trang chủ và `/chuyen-di-cong-dong` chỉ hiện chuyến đã duyệt. Cùng trang này liệt kê đánh giá địa điểm của người đi: **Gỡ** bất kỳ đánh giá đang hiện nào. Đánh giá, dù viết trong Planner hay do khách viết ở trang chủ, đều được đăng mà không cần duyệt. Trước khi người đi gửi được gì, hãy điền `contribution.terms` (VI và EN) và `contribution.takedownContact` trong `src/content/site.ts`; cho tới lúc đó nút của chủ chuyến vẫn đóng.
 
 ### Sửa nội dung trên trình duyệt (admin hoặc editor)
 

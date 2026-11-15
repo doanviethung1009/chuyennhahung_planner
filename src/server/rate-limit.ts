@@ -109,6 +109,13 @@ export function clientKey(headers: Pick<Headers, 'get'>): string {
 
 /** Share-link reads: 60 per minute per client. Shared by the API and the page. */
 export const shareReadLimiter = createRateLimiter({ limit: 60, windowMs: 60_000 });
+/** Reviews written by a signed-in traveller: 5 per hour per user (ADR 0014). */
+export const plannerReviewLimiter = createRateLimiter({ limit: 5, windowMs: 60 * 60_000 });
+/**
+ * Reviews from a visitor with no account: 3 per hour per client (ADR 0014). The
+ * key is forgeable, so the repository also caps one place at 20 a day overall.
+ */
+export const guestReviewLimiter = createRateLimiter({ limit: 3, windowMs: 60 * 60_000 });
 /** Sign-in attempts: 10 per minute per client. A separate bucket. */
 export const signInLimiter = createRateLimiter({ limit: 10, windowMs: 60_000 });
 /**

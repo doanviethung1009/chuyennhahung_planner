@@ -13,6 +13,7 @@ import type { TripView } from '@/server/planner/repository';
 import type { PlanningStatus } from '@/server/planner/schemas';
 import { ApiError, api, goToSignIn } from './api';
 import { SharePanel } from './share-panel';
+import { PlaceReviewsPanel } from '@/components/reviews/place-reviews-panel';
 import { StatusSelect } from './status-select';
 import { TripEditor } from './trip-editor/trip-editor';
 
@@ -234,6 +235,8 @@ export function TripDetail({ id }: { id: string }) {
               onBusyChange={setEditorBusy}
             />
           )}
+
+          {!archived ? <PlaceReviewsPanel view={load.view} onUnauthorized={() => goToSignIn(locale)} /> : null}
 
           {!archived ? (
             <SharePanel

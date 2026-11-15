@@ -5,6 +5,7 @@ import {
   invalidReference,
   invalidState,
   notFound,
+  rateLimited,
   preconditionRequired,
   slugConflict,
   versionConflict,
@@ -55,6 +56,15 @@ import {
   SHARE_TOKEN_PATTERN,
   type PublicPlannerUser,
   type ShareState,
+  type CommunityReview,
+  type GuestReviewInput,
+  type OwnReview,
+  type PlaceReviewSummary,
+  type PlannerReviewInput,
+  type PublicCommunityReview,
+  type ReviewQueueItem,
+  type ReviewStatus,
+  MIN_REVIEWS_FOR_AVERAGE,
   type CommunityTripCard,
   type ListingDecision,
   type ListingQueueItem,
@@ -716,6 +726,8 @@ export class PlannerRepository {
       }
       data.users.splice(index, 1);
       data.sessions = data.sessions.filter((session) => session.userId !== userId);
+      // Personal data on public pages goes with the account (ADR 0014).
+      data.communityReviews = data.communityReviews.filter((review) => review.authorId !== userId);
     });
   }
 
@@ -1394,6 +1406,224 @@ export class PlannerRepository {
     return cards
       .sort((a, b) => b.approvedAt.localeCompare(a.approvedAt))
       .slice(0, Math.max(1, Math.min(limit, 100)));
+  }
+
+  // -------------------------------------------------------------------------
+  // Community place reviews (ADR 0014, PR 2)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Writes the signed-in author's review of a place. One per author per place:
+   * a second call replaces it. Published at once, like a guest review (owner
+   * decision, ADR 0014): no pre-moderation, staff can remove it afterwards.
+   */
+  async upsertPlannerReview(
+    userId: string,
+    placeSlug: string,
+    input: PlannerReviewInput,
+  ): Promise<OwnReview> {
+    await this.requireKnownPlace(placeSlug);
+    return this.transaction((data) => {
+      const user = data.users.find((candidate) => candidate.id === userId);
+      if (!user) throw notFound('planner user', userId);
+      this.requireNotFuture(input.visitedOn);
+
+      const at = this.timestamp();
+      const authorName = input.authorDisplay === 'name' ? user.displayName : null;
+      const index = data.communityReviews.findIndex(
+        (review) =>
+          review.source === 'planner' && review.authorId === userId && review.placeSlug === placeSlug,
+      );
+      const existing = data.communityReviews[index];
+      // A staff removal or rejection is a decision, not a draft: the author
+      // cannot overwrite it by submitting again (security review, ADR 0014).
+      if (existing && (existing.status === 'removed' || existing.status === 'rejected')) {
+        throw invalidState('this review was taken down by staff and cannot be resubmitted');
+      }
+      const review: CommunityReview = {
+        id: existing?.id ?? this.newId('rev'),
+        source: 'planner',
+        authorId: userId,
+        placeSlug,
+        rating: input.rating,
+        body: input.body,
+        lang: input.lang,
+        visitedOn: input.visitedOn,
+        authorName,
+        status: 'approved',
+        guestKey: null,
+        decidedAt: at,
+        decidedBy: 'auto',
+        rejectReason: null,
+        createdAt: existing?.createdAt ?? at,
+        updatedAt: at,
+      };
+      if (existing) data.communityReviews[index] = review;
+      else data.communityReviews.push(review);
+      return ownReviewOf(review);
+    });
+  }
+
+  async listOwnReviews(userId: string): Promise<OwnReview[]> {
+    const data = await this.snapshot();
+    return data.communityReviews
+      .filter((review) => review.source === 'planner' && review.authorId === userId)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .map(ownReviewOf);
+  }
+
+  /**
+   * Deletes the author's own live review. Idempotent. A review staff removed or
+   * rejected is kept: deleting it would erase the decision and let the author
+   * write a fresh one.
+   */
+  deleteOwnReview(userId: string, placeSlug: string): Promise<void> {
+    return this.transaction((data) => {
+      data.communityReviews = data.communityReviews.filter(
+        (review) =>
+          !(
+            review.source === 'planner' &&
+            review.authorId === userId &&
+            review.placeSlug === placeSlug &&
+            (review.status === 'approved' || review.status === 'pending')
+          ),
+      );
+    });
+  }
+
+  /**
+   * A visitor's review from the home or a place page: no account, no
+   * pre-moderation (the owner's decision), so it is `approved` at once and staff
+   * can only remove it afterwards. Bounded instead: one per place per client
+   * per 24 hours, and at most `GUEST_REVIEWS_PER_PLACE_PER_DAY` per place.
+   */
+  async createGuestReview(input: GuestReviewInput, clientKey: string): Promise<void> {
+    await this.requireKnownPlace(input.placeSlug);
+    await this.transaction((data) => {
+      this.requireNotFuture(input.visitedOn);
+      const at = this.timestamp();
+      const since = new Date(Date.parse(at) - 24 * 60 * 60_000).toISOString();
+      const guestKey = createHash('sha256').update(clientKey).digest('hex').slice(0, 32);
+
+      const recent = data.communityReviews.filter(
+        (review) =>
+          review.source === 'homepage' && review.placeSlug === input.placeSlug && review.createdAt > since,
+      );
+      if (recent.some((review) => review.guestKey === guestKey)) {
+        throw invalidState('this place was already reviewed from your connection in the last 24 hours');
+      }
+      if (recent.length >= GUEST_REVIEWS_PER_PLACE_PER_DAY) {
+        throw rateLimited(60 * 60);
+      }
+      data.communityReviews.push({
+        id: this.newId('rev'),
+        source: 'homepage',
+        authorId: null,
+        placeSlug: input.placeSlug,
+        rating: input.rating,
+        body: input.body,
+        lang: input.lang,
+        visitedOn: input.visitedOn,
+        authorName: input.authorName,
+        status: 'approved',
+        guestKey,
+        decidedAt: at,
+        decidedBy: 'auto',
+        rejectReason: null,
+        createdAt: at,
+        updatedAt: at,
+      });
+    });
+  }
+
+  /** Approved reviews for the given places (all places when omitted), newest first. */
+  async listApprovedReviews(
+    placeSlugs?: readonly string[],
+    limit = 20,
+  ): Promise<{ items: PublicCommunityReview[]; summary: PlaceReviewSummary }> {
+    const data = await this.snapshot();
+    const wanted = placeSlugs ? new Set(placeSlugs) : null;
+    const approved = data.communityReviews
+      .filter((review) => review.status === 'approved' && (!wanted || wanted.has(review.placeSlug)))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const average =
+      approved.length >= MIN_REVIEWS_FOR_AVERAGE
+        ? Math.round((approved.reduce((sum, review) => sum + review.rating, 0) / approved.length) * 10) / 10
+        : null;
+    return {
+      items: approved.slice(0, Math.max(1, Math.min(limit, 100))).map(publicReviewOf),
+      summary: { count: approved.length, average },
+    };
+  }
+
+  /** The staff queue: pending first, then the rest, newest first. */
+  async listReviewQueue(status?: ReviewStatus): Promise<ReviewQueueItem[]> {
+    const data = await this.snapshot();
+    const rank: Record<ReviewStatus, number> = { pending: 0, approved: 1, rejected: 2, removed: 3 };
+    return data.communityReviews
+      .filter((review) => !status || review.status === status)
+      .sort((a, b) => rank[a.status] - rank[b.status] || b.createdAt.localeCompare(a.createdAt))
+      .slice(0, 200)
+      .map((review) => ({
+        id: review.id,
+        source: review.source,
+        placeSlug: review.placeSlug,
+        rating: review.rating,
+        body: review.body,
+        lang: review.lang,
+        visitedOn: review.visitedOn,
+        author: review.authorName,
+        authorAccount:
+          data.users.find((user) => user.id === review.authorId)?.displayName ?? null,
+        status: review.status,
+        rejectReason: review.rejectReason,
+        createdAt: review.createdAt,
+      }));
+  }
+
+  /**
+   * Staff decision. `approve` and `reject` act on a pending (Planner) review,
+   * `remove` on an approved one of either source.
+   */
+  decideReview(
+    reviewId: string,
+    decision: ListingDecision,
+    actor: string,
+    reason: string | null,
+  ): Promise<ReviewStatus> {
+    return this.transaction((data) => {
+      const index = data.communityReviews.findIndex((review) => review.id === reviewId);
+      const review = data.communityReviews[index];
+      if (!review) throw notFound('review', reviewId);
+      const needed: ReviewStatus = decision === 'remove' ? 'approved' : 'pending';
+      if (review.status !== needed) {
+        throw invalidState(`cannot ${decision}: the review is ${review.status}`);
+      }
+      const status: ReviewStatus =
+        decision === 'approve' ? 'approved' : decision === 'reject' ? 'rejected' : 'removed';
+      const at = this.timestamp();
+      data.communityReviews[index] = {
+        ...review,
+        status,
+        decidedAt: at,
+        decidedBy: actor.slice(0, 80),
+        rejectReason: decision === 'approve' ? null : reason,
+        updatedAt: at,
+      };
+      return status;
+    });
+  }
+
+  private async requireKnownPlace(placeSlug: string): Promise<void> {
+    if (!(await this.catalog.getPlace(placeSlug))) {
+      throw invalidReference([{ path: 'placeSlug', message: `no place "${placeSlug}" in the catalogue` }]);
+    }
+  }
+
+  private requireNotFuture(visitedOn: string): void {
+    if (visitedOn > this.timestamp().slice(0, 10)) {
+      throw invalidReference([{ path: 'visitedOn', message: 'the visit date cannot be in the future' }]);
+    }
   }
 
   /**
@@ -2269,6 +2499,36 @@ function isShareable(
   trip: Trip,
 ): trip is Trip & { shareToken: string; visibility: 'unlisted' | 'public' } {
   return trip.status === 'active' && trip.visibility !== 'private' && trip.shareToken !== null;
+}
+
+/** A guest can post at most this many reviews of one place per day, across all clients. */
+const GUEST_REVIEWS_PER_PLACE_PER_DAY = 20;
+
+function ownReviewOf(review: CommunityReview): OwnReview {
+  return {
+    placeSlug: review.placeSlug,
+    rating: review.rating,
+    body: review.body,
+    lang: review.lang,
+    visitedOn: review.visitedOn,
+    authorDisplay: review.authorName === null ? 'anonymous' : 'name',
+    status: review.status,
+    rejectReason: review.rejectReason,
+    updatedAt: review.updatedAt,
+  };
+}
+
+/** The public projection of a review. Named field by field: no spread. */
+function publicReviewOf(review: CommunityReview): PublicCommunityReview {
+  return {
+    placeSlug: review.placeSlug,
+    rating: review.rating,
+    body: review.body,
+    lang: review.lang,
+    visitedOn: review.visitedOn,
+    author: review.authorName,
+    createdAt: review.createdAt,
+  };
 }
 
 function shareStateOf(trip: Trip): ShareState {

@@ -8,6 +8,7 @@ import { Container } from '@/components/ui/container';
 import { PageHeader } from '@/components/layout/page-header';
 import { AdminNav } from '@/components/admin/admin-nav';
 import { ListingQueue } from '@/components/admin/community/listing-queue';
+import { CommunityReviewQueue } from '@/components/admin/community/review-queue';
 
 // Reads the session cookie on every request: never prerendered or cached.
 export const dynamic = 'force-dynamic';
@@ -41,7 +42,18 @@ export default async function AdminCommunityPage({ params }: Params) {
       <Container width="wide">
         <div className="grid gap-8 py-10 md:py-14">
           <AdminNav current="community" canUsers={access.canUsers} canContent={access.canContent} />
-          <ListingQueue />
+          <section aria-labelledby="queue-trips-heading" className="grid gap-4">
+            <h2 id="queue-trips-heading" className="font-display text-2xl font-semibold">
+              {t('tripsHeading')}
+            </h2>
+            <ListingQueue />
+          </section>
+          <section aria-labelledby="queue-reviews-heading" className="grid gap-4">
+            <h2 id="queue-reviews-heading" className="font-display text-2xl font-semibold">
+              {t('reviewsHeading')}
+            </h2>
+            <CommunityReviewQueue />
+          </section>
         </div>
       </Container>
     </>

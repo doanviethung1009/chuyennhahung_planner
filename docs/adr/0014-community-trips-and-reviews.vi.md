@@ -2,7 +2,7 @@
 
 🇬🇧 English version: [0014-community-trips-and-reviews.md](0014-community-trips-and-reviews.md)
 
-- **Trạng thái:** Đã chấp nhận — chủ nhà duyệt 2026-11-14; PR 1 (gallery chuyến đi, migration `0005_trip_listing.sql`) đã hiện thực, PR 2 (đánh giá) còn lại
+- **Trạng thái:** Đã chấp nhận — chủ nhà duyệt 2026-11-14; PR 1 (gallery chuyến đi, migration `0005_trip_listing.sql`) và PR 2 (đánh giá, migration `0006_community_reviews.sql`) đã hiện thực
 - **Ngày:** 2026-11-14
 - **Người sở hữu:** system-architect
 - **Người quyết định:** chủ nhà (phạm vi: gallery **và** đánh giá địa điểm; admin duyệt trước khi lên; hiện tên hiển thị, có tuỳ chọn ẩn danh), system-architect (hợp đồng)
@@ -60,21 +60,20 @@ và chủ nhà có muốn sửa chuyến đã lên vẫn giữ nguyên trạng t
    tương lai), `authorName` (tên hiển thị; khách tự nhập hoặc để "Khách"), `status: 'pending' |
    'approved' | 'rejected' | 'removed'`, các trường kiểm duyệt, mốc thời gian. Nó nằm **cạnh
    các chuyến đi**, không nằm trong Travel Content: nơi đó chỉ có một principal admin, không có user.
-7. **Hai cửa vào, hai quy tắc duyệt (quyết định của chủ nhà).**
-   - **Viết trong Planner** (người đi đã đăng nhập, `source: 'planner'`): bắt đầu ở
-     `pending` và chỉ hiện sau khi staff duyệt. Mỗi tác giả một đánh giá mỗi địa điểm; gửi
-     lại sẽ thay thế và quay về `pending`. Tác giả xem và xoá đánh giá của mình.
-   - **Viết trên trang chủ / trang địa điểm bởi khách hoặc bất kỳ ai**
-     (`source: 'homepage'`): lên ngay (`approved`), **không duyệt trước**. Staff vẫn có thể
-     `remove` sau đó. Vì không ai xem trước, đường này bị chặn bằng cách khác: chỉ văn bản
-     thuần (link hiện như chữ, không bấm được), giới hạn 3 lần/giờ theo client key và 20
-     lần/ngày tổng cho mỗi địa điểm, một trường honeypot, body 60–1000 ký tự, và phong bì
-     429 thông thường. Mỗi khách một đánh giá mỗi địa điểm trên mỗi client key trong 24 giờ.
-     Chủ nhà chấp nhận rủi ro còn lại (spam, nội dung xấu còn hiện cho tới khi bị gỡ).
-   - **Thông tin chính xác, không bắt buộc đã đến.** Người đánh giá không cần có địa điểm
-     trong chuyến, nhưng phải cung cấp dữ liệu có cấu trúc, kiểm tra được: địa điểm chọn
-     từ danh mục (không gõ tự do), ngày đến, điểm và nội dung. Đánh giá hiển thị là "tự
-     khai", không bao giờ là "đã xác minh".
+7. **Cả hai cửa vào đều đăng ngay (quyết định của chủ nhà; sửa 2026-11-15).** Ban đầu chủ
+   nhà muốn đánh giá viết trong Planner phải duyệt còn của khách thì không; ngày 2026-11-15
+   chủ nhà muốn người viết trong Planner cũng đăng ngay. Vì vậy **không đánh giá nào được
+   duyệt trước**; staff có thể `remove` bất kỳ đánh giá nào đang hiện.
+   - **Viết trong Planner** (người đã đăng nhập, `source: 'planner'`): `approved` ngay,
+     giới hạn 5 lần/giờ/người dùng. Mỗi tác giả một đánh giá mỗi địa điểm; gửi lại sẽ thay
+     thế. Tác giả xem và xoá được đánh giá của mình.
+   - **Viết ở trang chủ bởi bất kỳ ai** (`source: 'homepage'`): `approved` ngay, bị chặn bằng:
+     chỉ văn bản thuần (link không bấm được), 3 lần/giờ theo client key, 20 lần/ngày tổng cho
+     mỗi địa điểm, trường honeypot, body 60–1000 ký tự, mỗi khách một đánh giá mỗi địa điểm
+     trên mỗi client key trong 24 giờ. Chủ nhà chấp nhận rủi ro còn lại (spam, nội dung xấu
+     còn hiện cho tới khi bị gỡ).
+   - **Thông tin chính xác, không bắt buộc đã đến.** Địa điểm chọn từ danh mục, ngày đến
+     bắt buộc, và đánh giá hiện là "tự khai", không bao giờ là "đã xác minh".
 8. **Đọc công khai** là `GET /api/community/trips` và `GET /api/community/reviews`
    (`?placeSlug=`), chỉ trả dòng `approved`, chỉ đọc, giới hạn tần suất như
    `shareReadLimiter`. Điểm trung bình trên địa điểm chỉ tính đánh giá đã duyệt và ẩn khi
@@ -113,9 +112,8 @@ kiểm duyệt, role và cổng admin; đánh giá gắn vào các slug địa �
 
 Khó hơn, và không miễn phí:
 
-- **Phải có người duyệt** chuyến và đánh giá viết trong Planner; không có staff thì các
-  mục đó vẫn trống. Đánh giá của khách trên trang chủ lên ngay không qua duyệt nên nội dung
-  xấu chỉ được dọn sau. Không có nút báo cáo cho người đọc (ngoài phạm vi).
+- **Phải có người duyệt** chuyến đi; không có staff thì các mục chuyến đi vẫn trống. Mọi
+  đánh giá lên ngay không qua duyệt nên nội dung xấu chỉ được dọn sau. Không có nút báo cáo cho người đọc (ngoài phạm vi).
 - **Nội dung do người dùng tạo đầu tiên trên site.** Phỉ báng, spam, dữ liệu cá nhân trong
   ghi chú và bản quyền giờ đã có thể xảy ra; duyệt trước giảm nhưng không loại bỏ rủi ro,
   và việc gỡ chỉ staff làm được. Điều khoản/quyền riêng tư cho người đóng góp là việc của
@@ -138,7 +136,7 @@ Khó hơn, và không miễn phí:
   đoạn) và `.claude/context/project-context.md`; tài liệu tính năng
   `docs/features/community-trips.*` (PR 1) và `docs/features/community-reviews.*` (PR 2).
 - **Chủ nhà đã trả lời (2026-11-14):** mọi sửa đổi trên chuyến đã lên đều xếp lại hàng
-  đợi; đánh giá viết trong Planner được duyệt, đánh giá của khách trên trang chủ thì không;
+  đợi; đánh giá viết trong Planner và đánh giá của khách trên trang chủ đều đăng không cần duyệt (sửa 2026-11-15);
   không bắt buộc đã đến nhưng phải có dữ liệu có cấu trúc chính xác; điều khoản và đầu mối
   gỡ nội dung — **chủ nhà cung cấp, không bịa**.
 - **Cổng chặn trước khi chạy thật:** văn bản điều khoản đóng góp và đầu mối yêu cầu gỡ nội

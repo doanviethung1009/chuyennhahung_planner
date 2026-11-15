@@ -60,4 +60,4 @@ Not run here: the PostgreSQL integration test (no database in this environment),
 - Editing a listed trip always costs the listing; a text-only exception was considered and rejected by the owner.
 - The gallery lists the newest 48 approvals; there is no search or paging.
 - The gallery link carries the share token; that is acceptable only because a listed trip is public.
-- Reporting by readers, and traveller place reviews, are not part of this PR (PR 2).
+- Reporting by readers is not built. Traveller place reviews are a separate feature: [community-reviews.md](community-reviews.md).

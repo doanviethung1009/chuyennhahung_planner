@@ -7,6 +7,8 @@ import { buildPageMetadata } from '@/lib/metadata';
 import { siteConfig } from '@/content/site';
 import { getDestination } from '@/content/destinations';
 import { getPublicContent } from '@/server/content/public';
+import { getApprovedReviews, getReviewPlaces } from '@/server/community/public';
+import { ReviewList } from '@/components/reviews/review-list';
 import { getItinerariesForDestination } from '@/content/itineraries';
 import { formatDate } from '@/lib/format';
 import { Container } from '@/components/ui/container';
@@ -50,6 +52,14 @@ export default async function DestinationPage({ params }: Params) {
 
   const relatedStories = await (await getPublicContent()).listStoriesForDestination(slug);
   const relatedItineraries = getItinerariesForDestination(slug);
+
+  // Traveller reviews of this destination's places (ADR 0014): approved only.
+  const destinationPlaces = (await getReviewPlaces()).filter((place) => place.destinationSlug === slug);
+  const destinationReviews =
+    destinationPlaces.length > 0
+      ? await getApprovedReviews(destinationPlaces.map((place) => place.slug), 6)
+      : { items: [], summary: { count: 0, average: null } };
+  const tReviews = await getTranslations('communityReviews');
 
   return (
     <article>
@@ -182,6 +192,22 @@ export default async function DestinationPage({ params }: Params) {
                 </li>
               ))}
             </ul>
+          </Container>
+        </section>
+      ) : null}
+
+      {destinationReviews.items.length > 0 ? (
+        <section aria-labelledby="destination-reviews-heading" className="border-t border-border-subtle py-12 md:py-16">
+          <Container width="wide">
+            <h2 id="destination-reviews-heading" className="mb-8 font-display text-2xl font-semibold md:text-3xl">
+              {tReviews('destinationTitle')}
+            </h2>
+            <ReviewList
+              reviews={destinationReviews.items}
+              summary={destinationReviews.summary}
+              placeNames={Object.fromEntries(destinationPlaces.map((place) => [place.slug, place.name[locale]]))}
+              locale={locale}
+            />
           </Container>
         </section>
       ) : null}

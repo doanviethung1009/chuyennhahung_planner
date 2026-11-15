@@ -60,4 +60,4 @@ Chưa chạy ở đây: test tích hợp PostgreSQL (môi trường này không 
 - Sửa chuyến đã lên luôn mất listing; ngoại lệ chỉ-văn-bản đã được cân nhắc và chủ nhà không chọn.
 - Gallery liệt kê 48 chuyến duyệt mới nhất; chưa có tìm kiếm hay phân trang.
 - Link gallery mang share token; chấp nhận được chỉ vì chuyến đã listing là public.
-- Báo cáo từ người đọc và đánh giá địa điểm của người đi không nằm trong PR này (PR 2).
+- Chưa có báo cáo từ người đọc. Đánh giá địa điểm của người đi là tính năng riêng: [community-reviews.vi.md](community-reviews.vi.md).

@@ -722,3 +722,135 @@ export interface ShareState {
   shareTokenCreatedAt: string | null;
   listing: TripListing | null;
 }
+
+// ---------------------------------------------------------------------------
+// Community place reviews (ADR 0014, PR 2)
+// ---------------------------------------------------------------------------
+
+export const REVIEW_BODY_MIN = 60;
+export const REVIEW_BODY_MAX = 1_000;
+/** A rating average is only shown from this many approved reviews. */
+export const MIN_REVIEWS_FOR_AVERAGE = 3;
+
+export const reviewSourceSchema = z.enum(['planner', 'homepage']);
+export const reviewStatusSchema = z.enum(['pending', 'approved', 'rejected', 'removed']);
+export const reviewLangSchema = z.enum(['vi', 'en']);
+
+/**
+ * A traveller's review of a catalogue place. Both sources (`planner`, signed in;
+ * `homepage`, anyone) are published at once and staff can remove them
+ * afterwards. `pending` only exists for rows written before that decision. Plain text — always rendered as
+ * text, never HTML.
+ */
+export const communityReviewSchema = z.object({
+  id: plannerIdSchema,
+  source: reviewSourceSchema,
+  /** The signed-in author; `null` for a guest. */
+  authorId: plannerIdSchema.nullable(),
+  placeSlug: slugSchema,
+  rating: z.number().int().min(1).max(5),
+  body: z.string().trim().min(REVIEW_BODY_MIN).max(REVIEW_BODY_MAX),
+  lang: reviewLangSchema,
+  visitedOn: isoDateSchema,
+  /** Shown name; `null` is anonymous. A snapshot — never an email or id. */
+  authorName: z.string().trim().min(2).max(60).nullable(),
+  status: reviewStatusSchema,
+  /** SHA-256 prefix of the guest's client key: dedupe only, never an address. */
+  guestKey: z.string().max(64).nullable().default(null),
+  decidedAt: timestampSchema.nullable().default(null),
+  decidedBy: z.string().max(80).nullable().default(null),
+  rejectReason: z.string().max(500).nullable().default(null),
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+});
+
+const reviewFields = {
+  rating: z.number().int().min(1).max(5),
+  body: z.string().trim().min(REVIEW_BODY_MIN).max(REVIEW_BODY_MAX),
+  lang: reviewLangSchema,
+  visitedOn: isoDateSchema,
+};
+
+/** `PUT /api/planner/reviews/[placeSlug]` body. Strict. */
+export const plannerReviewInputSchema = z
+  .object({ ...reviewFields, authorDisplay: authorDisplaySchema })
+  .strict();
+
+/**
+ * `POST /api/community/reviews` body. `website` is a honeypot: real users never
+ * fill it, a bot usually does — the route drops those silently.
+ */
+export const guestReviewInputSchema = z
+  .object({
+    placeSlug: slugSchema,
+    ...reviewFields,
+    authorName: z.string().trim().min(2).max(60).nullable().default(null),
+    website: z.string().max(200).optional(),
+  })
+  .strict();
+
+/** `PATCH /api/admin/community/reviews/[id]` body. */
+export const reviewDecisionSchema = z
+  .object({
+    decision: z.enum(['approve', 'reject', 'remove']),
+    reason: z.string().trim().min(3).max(500).optional(),
+  })
+  .strict()
+  .refine((value) => value.decision === 'approve' || value.reason !== undefined, {
+    message: 'a reason is required to reject or remove',
+    path: ['reason'],
+  });
+
+export type CommunityReview = z.infer<typeof communityReviewSchema>;
+export type PlannerReviewInput = z.infer<typeof plannerReviewInputSchema>;
+export type GuestReviewInput = z.infer<typeof guestReviewInputSchema>;
+export type ReviewStatus = z.infer<typeof reviewStatusSchema>;
+
+/**
+ * The public review. An allow-list built field by field: no id, author id,
+ * guest key, moderation field or source. Always self-reported, never "verified".
+ */
+export interface PublicCommunityReview {
+  placeSlug: string;
+  rating: number;
+  body: string;
+  lang: 'vi' | 'en';
+  visitedOn: string;
+  author: string | null;
+  createdAt: string;
+}
+
+export interface PlaceReviewSummary {
+  count: number;
+  /** One decimal; `null` below `MIN_REVIEWS_FOR_AVERAGE` approved reviews. */
+  average: number | null;
+}
+
+/** A row of the staff review queue. */
+export interface ReviewQueueItem {
+  id: string;
+  source: 'planner' | 'homepage';
+  placeSlug: string;
+  rating: number;
+  body: string;
+  lang: 'vi' | 'en';
+  visitedOn: string;
+  author: string | null;
+  authorAccount: string | null;
+  status: ReviewStatus;
+  rejectReason: string | null;
+  createdAt: string;
+}
+
+/** What an author sees of their own review. */
+export interface OwnReview {
+  placeSlug: string;
+  rating: number;
+  body: string;
+  lang: 'vi' | 'en';
+  visitedOn: string;
+  authorDisplay: 'name' | 'anonymous';
+  status: ReviewStatus;
+  rejectReason: string | null;
+  updatedAt: string;
+}

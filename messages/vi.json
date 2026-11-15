@@ -966,6 +966,95 @@
       "approve": "Đã duyệt chuyến đi.",
       "reject": "Đã từ chối.",
       "remove": "Đã gỡ khỏi trang chủ."
+    },
+    "tripsHeading": "Chuyến đi",
+    "reviewsHeading": "Đánh giá địa điểm",
+    "reviews": {
+      "empty": "Chưa có đánh giá nào.",
+      "meta": "{place} · {rating} sao · {author} · {source}",
+      "account": "Tài khoản: {name}",
+      "anonymous": "ẩn danh",
+      "sources": {
+        "planner": "viết trong Planner",
+        "homepage": "khách trên trang chủ"
+      },
+      "statuses": {
+        "pending": "Chờ duyệt",
+        "approved": "Đang hiện",
+        "rejected": "Từ chối",
+        "removed": "Đã gỡ"
+      },
+      "visited": "Đến ngày {date}",
+      "created": "Gửi lúc {date}",
+      "remove": "Gỡ đánh giá",
+      "reasonLabel": "Lý do (tác giả sẽ thấy)",
+      "reasonLabelGuest": "Lý do gỡ (chỉ lưu nội bộ)"
+    }
+  },
+  "communityReviews": {
+    "eyebrow": "Từ người đi",
+    "title": "Đánh giá địa điểm từ người đi",
+    "lead": "Do người đi tự viết và tự khai, Nhà Hưng không xác minh từng chuyến đi.",
+    "writeTitle": "Viết đánh giá của bạn",
+    "destinationTitle": "Người đi nói gì về nơi này",
+    "average": "{average}/5 từ {count} đánh giá",
+    "countOnly": "{count} đánh giá",
+    "ratingLabel": "{rating} trên 5 sao",
+    "anonymous": "Ẩn danh",
+    "visited": "đến ngày {date}",
+    "selfReported": "Tự khai, chưa được xác minh.",
+    "planner": {
+      "title": "Đánh giá các địa điểm trong chuyến",
+      "intro": "Viết đánh giá cho những địa điểm bạn đã đến. Đánh giá hiện công khai ngay sau khi gửi; Nhà Hưng có thể gỡ nội dung vi phạm.",
+      "write": "Viết đánh giá",
+      "edit": "Sửa đánh giá",
+      "close": "Đóng",
+      "delete": "Xóa",
+      "deleted": "Đã xóa đánh giá.",
+      "loadFailed": "Chưa tải được đánh giá của bạn.",
+      "reason": "Lý do: {reason}",
+      "status": {
+        "pending": "Đang chờ duyệt",
+        "approved": "Đã hiện công khai",
+        "rejected": "Không được duyệt",
+        "removed": "Đã bị gỡ"
+      }
+    },
+    "form": {
+      "closed": "Tính năng này chưa mở: Nhà Hưng chưa công bố điều khoản đóng góp và đầu mối gỡ nội dung.",
+      "termsHeading": "Điều khoản đóng góp",
+      "takedown": "Yêu cầu gỡ nội dung gửi tới",
+      "place": "Địa điểm",
+      "placeHint": "Chọn từ danh sách để thông tin chính xác.",
+      "placeChoose": "Chọn địa điểm…",
+      "rating": "Điểm",
+      "ratingOption": "{n} sao",
+      "visited": "Ngày bạn đến",
+      "visitedHint": "Không chọn ngày trong tương lai.",
+      "lang": "Ngôn ngữ bài viết",
+      "body": "Nội dung",
+      "bodyHint": "Từ {min} đến {max} ký tự, chỉ văn bản thuần; đường dẫn sẽ không bấm được.",
+      "bodyCount": "{count}/{max}",
+      "name": "Tên hiển thị (không bắt buộc)",
+      "nameHint": "Để trống sẽ hiện là ẩn danh.",
+      "honeypot": "Để trống trường này",
+      "authorLabel": "Hiển thị tác giả",
+      "author": {
+        "name": "Tên hiển thị của tôi",
+        "anonymous": "Ẩn danh"
+      },
+      "plannerNote": "Đánh giá hiện ngay sau khi gửi và sửa là cập nhật ngay. Nhà Hưng có thể gỡ nội dung vi phạm.",
+      "guestNote": "Đánh giá hiện ngay sau khi gửi. Nhà Hưng có thể gỡ nội dung vi phạm.",
+      "submit": "Gửi đánh giá",
+      "sending": "Đang gửi…",
+      "posted": "Đã đăng đánh giá của bạn. Cảm ơn bạn!",
+      "errors": {
+        "generic": "Chưa gửi được. Hãy thử lại.",
+        "rate_limited": "Bạn gửi hơi nhiều. Hãy thử lại sau.",
+        "invalid_state": "Địa điểm này đã được đánh giá từ kết nối của bạn trong 24 giờ qua.",
+        "validation_failed": "Hãy kiểm tra lại các ô: nội dung cần 60 đến 1000 ký tự.",
+        "invalid_reference": "Địa điểm hoặc ngày đến không hợp lệ."
+      }
     }
   }
 }
