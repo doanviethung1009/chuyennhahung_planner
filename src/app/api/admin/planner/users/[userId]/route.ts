@@ -1,3 +1,4 @@
+import { ContentError } from '@/server/content/errors';
 import { parseJsonBody } from '@/server/content/http';
 import { adminPlannerRoute, plannerJson, plannerNoContent } from '@/server/planner/http';
 import { plannerUserRoleUpdateSchema } from '@/server/planner/schemas';
@@ -22,16 +23,30 @@ export function PATCH(
 }
 
 /**
- * Removes a traveller. Refuses while they still own trips — their plans are not
- * collateral damage of a user cleanup.
+ * Removes a traveller (ADR 0017). `?mode=soft` hides and disables the account
+ * but keeps its data, and can be undone with `POST .../restore`; `?mode=hard`
+ * (the default, as before) deletes it for good and refuses while they still
+ * own trips. A session may hard-delete only an account that was soft-deleted
+ * first; the service token keeps the direct path. Staff accounts only from a
+ * session; never yourself.
  */
 export function DELETE(
   request: Request,
   context: { params: Promise<{ userId: string }> },
 ) {
-  return adminPlannerRoute(request, async (repository) => {
+  return adminPlannerRoute(request, { action: 'user:provision', session: true }, async (repository, principal) => {
     const { userId } = await context.params;
-    await repository.deleteUser(userId);
+    const mode = new URL(request.url).searchParams.get('mode') ?? 'hard';
+    if (mode !== 'soft' && mode !== 'hard') {
+      throw new ContentError('validation_failed', 'mode must be "soft" or "hard"', [
+        { path: 'mode', message: 'must be soft or hard' },
+      ]);
+    }
+    const actor = principal.kind === 'session' ? { userId: principal.userId } : undefined;
+    if (mode === 'soft') {
+      return plannerJson({ user: await repository.changeAccountState(userId, 'delete', actor) });
+    }
+    await repository.deleteUser(userId, actor);
     return plannerNoContent();
   });
 }

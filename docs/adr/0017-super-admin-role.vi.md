@@ -2,7 +2,7 @@
 
 🇻🇳 English version: [0017-super-admin-role.md](0017-super-admin-role.md)
 
-- **Status:** Accepted (phần 1 đã hiện thực; ban/xóa ở PR sau)
+- **Status:** Accepted (hiện thực qua hai PR)
 - **Date:** 2026-11-16
 - **Owner:** system-architect
 
@@ -19,7 +19,10 @@
 5. `super_admin` dùng vòng đời phiên của admin (ADR 0010 §4). Không thêm route, không migration schema: giá trị role chỉ thêm mới.
 6. Super admin đầu tiên được tạo bằng service token (`PATCH /api/admin/planner/users/:id` với `{"role":"super_admin"}`) — phiên admin không cấp được.
 
-Khóa và xóa tài khoản staff (quyết định của chủ dự án: khóa kết thúc phiên ngay và chặn cookie, bearer, Google; xóa giữ xóa cứng hiện có; admin khóa/xóa được editor, chỉ super admin thao tác trên admin và super admin) làm ở PR riêng và mở rộng ADR này.
+7. **Vòng đời tài khoản (PR thứ hai).** `bannedAt/bannedBy` và `deletedAt/deletedBy` là các trường tùy chọn trên user. Tài khoản bị khóa hoặc xóa mềm là *vô hiệu*: mọi phiên bị xóa ngay, và `identify` (cookie lẫn bearer), đăng nhập bằng access token, bằng mật khẩu và bằng Google đều từ chối (Google coi như `account_not_found`, không có câu trả lời riêng và không đăng ký lách qua). Trip, đánh giá và thông tin đăng nhập giữ nguyên; mở khóa hoặc khôi phục sẽ bật lại.
+8. Xóa có hai chế độ (quyết định của chủ dự án): **mềm** (`DELETE ?mode=soft`: vô hiệu và đánh dấu đã xóa, khôi phục bằng `POST .../restore`) và **cứng** (`DELETE ?mode=hard`, mặc định như trước: xóa dòng, từ chối khi tài khoản còn trip). Phiên chỉ xóa cứng được tài khoản staff đã xóa mềm trước; service token giữ đường trực tiếp.
+9. Khóa, xóa mềm và khôi phục chỉ áp dụng cho tài khoản staff (editor, admin, super admin), không bao giờ cho chính mình, và admin chỉ thao tác trên editor (`canManageRole`). Tài khoản bị vô hiệu không còn được tính là "admin cuối cùng" hay "super admin cuối cùng", và actor bị vô hiệu không thao tác được.
+10. Không thêm tên Action: các route dùng lại `user:provision`. Route mới: `POST .../ban`, `.../unban`, `.../restore`; `DELETE` nay nhận cả phiên.
 
 ## Options considered
 
@@ -36,4 +39,4 @@ Dễ hơn: Runbook giới hạn cho một role tin cậy; admin không tự leo 
 
 ## Follow-up
 
-Ban/unban và xóa staff (PR kế, mở rộng ADR này); chạy `/sec-check`; cập nhật `docs/architecture.vi.md`, `docs/usage.vi.md` và tài liệu tính năng [super-admin-accounts](../features/super-admin-accounts.vi.md).
+Chạy `/sec-check` cho PR vòng đời tài khoản; cập nhật `docs/architecture.vi.md`, `docs/usage.vi.md` và tài liệu tính năng [super-admin-accounts](../features/super-admin-accounts.vi.md).

@@ -35,5 +35,5 @@
 ## Owner decisions (answered in session)
 1. PR order 3 -> 1 -> 2, three PRs, one branch/PR each (PR A password page, PR B super_admin + Runbook + ADR 0017, PR C ban/delete).
 2. Ban ends sessions at once and blocks cookie + bearer + Google sign-in; unban restores.
-3. Delete stays the existing hard delete (`deleteUser`), plus self / last-super-admin guards.
+3. (Revised by owner mid-PR C) Delete has BOTH modes: soft (`deletedAt`, hidden + sign-in blocked + restorable) and hard (existing `deleteUser`, permanent). `DELETE ?mode=soft|hard`, default `hard` (backward compatible). A session actor may hard-delete only an account already soft-deleted; the service token keeps today's behaviour. Self / last-admin guards on both. Actions reuse `user:provision` + `canManageRole` (no new Action names); ban/soft-delete limited to staff targets (editor/admin/super_admin).
 4. An admin may also ban/delete an editor; only super_admin acts on admin/super_admin targets. First super_admin: via existing `admin-bootstrap` / service token (still to confirm in PR B).

@@ -94,7 +94,10 @@ adding or removing a route means editing this table in both languages.
 | GET | `/api/admin/planner/users` | Admin token or admin session | List users (`user:provision`) |
 | POST | `/api/admin/planner/users` | Admin token or admin session | Create a user, returns a one-time secret (`user:provision`) |
 | PATCH | `/api/admin/planner/users/[userId]` | Admin token or admin session | Set the role (`user:promote`) |
-| DELETE | `/api/admin/planner/users/[userId]` | Admin token only | Delete a user |
+| DELETE | `/api/admin/planner/users/[userId]` | Admin token or admin session | Delete a user: `?mode=soft` disables and marks deleted (restorable), `?mode=hard` (default) removes for good; a session may hard-delete only a soft-deleted staff account (ADR 0017) |
+| POST | `/api/admin/planner/users/[userId]/ban` | Admin token or admin session | Ban a staff account: ends its sessions, blocks every sign-in (ADR 0017) |
+| POST | `/api/admin/planner/users/[userId]/unban` | Admin token or admin session | Lift a ban |
+| POST | `/api/admin/planner/users/[userId]/restore` | Admin token or admin session | Restore a soft-deleted account |
 | POST | `/api/admin/planner/users/[userId]/reset-password` | Admin token or admin session | Reissue a temporary password (`user:provision`) |
 | POST | `/api/admin/planner/users/[userId]/rotate-token` | Admin token only | Rotate the access token |
 | DELETE | `/api/admin/planner/users/[userId]/google` | Admin token only | Unlink Google from the user |

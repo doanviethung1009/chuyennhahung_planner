@@ -178,6 +178,13 @@ export const plannerUserSchema = z.object({
   createdVia: z.enum(['operator', 'google']).optional(),
   // --- ADR 0006. Optional: absent reads as `member` via `userRole`. ---
   role: roleSchema.optional(),
+  // --- ADR 0017. A disabled account cannot sign in; its data is kept. ---
+  /** Set by a ban; cleared by unban. */
+  bannedAt: z.string().nullable().optional(),
+  bannedBy: z.string().nullable().optional(),
+  /** Set by a soft delete; cleared by restore. Hard delete removes the row. */
+  deletedAt: z.string().nullable().optional(),
+  deletedBy: z.string().nullable().optional(),
 });
 
 /**

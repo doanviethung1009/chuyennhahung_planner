@@ -5,7 +5,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { buttonClass } from "@/components/ui/button";
 import { inputClass } from "@/components/planner/field";
 import { filterUsers, type RoleFilter } from "./filter-users";
-import { ADMIN_ROLES, assignableRoles, type AdminRole, type AdminUser } from "./types";
+import { ADMIN_ROLES, assignableRoles, type AccountAction, type AdminRole, type AdminUser } from "./types";
 
 interface Props {
   users: AdminUser[];
@@ -14,7 +14,10 @@ interface Props {
   /** Resolves when the server has answered, success or not. */
   onSaveRole: (user: AdminUser, role: AdminRole) => Promise<void>;
   onReset: (user: AdminUser) => Promise<void>;
+  onAccount: (user: AdminUser, kind: AccountAction) => Promise<void>;
 }
+
+type ConfirmKind = "reset" | AccountAction;
 
 export function UserTable({
   users,
@@ -22,13 +25,14 @@ export function UserTable({
   actorRole,
   onSaveRole,
   onReset,
+  onAccount,
 }: Props) {
   const t = useTranslations("admin.users");
   const tr = useTranslations("admin.roles");
   const format = useFormatter();
   const [drafts, setDrafts] = useState<Record<string, AdminRole>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<{ id: string; kind: ConfirmKind } | null>(null);
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const visible = filterUsers(users, query, roleFilter);
@@ -40,7 +44,7 @@ export function UserTable({
       await action();
     } finally {
       setBusyId(null);
-      setConfirmId(null);
+      setConfirm(null);
     }
   }
 
@@ -145,6 +149,11 @@ export function UserTable({
                       className="px-4 py-3 font-medium text-foreground"
                     >
                       <span className="break-all">{user.handle}</span>
+                      {user.deletedAt || user.bannedAt ? (
+                        <span className="ml-2 rounded-pill bg-surface-muted px-2 py-0.5 text-xs text-primary-strong">
+                          {t(user.deletedAt ? "statusDeleted" : "statusBanned")}
+                        </span>
+                      ) : null}
                       {isSelf ? (
                         <span className="ml-2 rounded-pill bg-surface-muted px-2 py-0.5 text-xs text-primary-strong">
                           {t("you")}
@@ -213,49 +222,55 @@ export function UserTable({
                       </time>
                     </td>
                     <td className="px-4 py-3">
-                      {isSelf || !manageable ? null : confirmId === user.id ? (
-                        <div
-                          role="group"
-                          aria-label={t("reset")}
-                          className="grid max-w-64 gap-2"
-                        >
+                      {isSelf || !manageable ? null : confirm?.id === user.id ? (
+                        <div role="group" aria-label={t(confirm.kind)} className="grid max-w-64 gap-2">
                           <p className="text-sm text-foreground">
-                            {t("resetConfirm", { handle: user.handle })}
+                            {t(`${confirm.kind}Confirm`, { handle: user.handle })}
                           </p>
                           <div className="flex flex-wrap gap-2">
                             <button
                               type="button"
                               disabled={busy}
-                              onClick={() => run(user.id, () => onReset(user))}
+                              onClick={() =>
+                                run(user.id, () =>
+                                  confirm.kind === "reset" ? onReset(user) : onAccount(user, confirm.kind),
+                                )
+                              }
                               className={buttonClass({ size: "sm" })}
                             >
-                              {t("resetYes")}
+                              {t(`${confirm.kind}Yes`)}
                             </button>
                             <button
                               type="button"
                               disabled={busy}
-                              onClick={() => setConfirmId(null)}
-                              className={buttonClass({
-                                variant: "ghost",
-                                size: "sm",
-                              })}
+                              onClick={() => setConfirm(null)}
+                              className={buttonClass({ variant: "ghost", size: "sm" })}
                             >
                               {t("resetNo")}
                             </button>
                           </div>
                         </div>
                       ) : (
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => setConfirmId(user.id)}
-                          className={buttonClass({
-                            variant: "secondary",
-                            size: "sm",
-                          })}
-                        >
-                          {t("reset")}
-                        </button>
+                        <div className="flex flex-wrap gap-2">
+                          {(user.deletedAt
+                            ? (["restore", "purge"] as const)
+                            : user.bannedAt
+                              ? (["unban", "delete"] as const)
+                              : role === "member"
+                                ? (["reset"] as const)
+                                : (["reset", "ban", "delete"] as const)
+                          ).map((kind) => (
+                            <button
+                              key={kind}
+                              type="button"
+                              disabled={busy}
+                              onClick={() => setConfirm({ id: user.id, kind })}
+                              className={buttonClass({ variant: "secondary", size: "sm" })}
+                            >
+                              {t(kind)}
+                            </button>
+                          ))}
+                        </div>
                       )}
                     </td>
                   </tr>

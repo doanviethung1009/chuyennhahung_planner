@@ -11,12 +11,17 @@ export function assignableRoles(actor: AdminRole): AdminRole[] {
   return actor === 'admin' ? ['member', 'editor'] : [];
 }
 
+/** What the staff can do to an account (ADR 0017). `purge` = permanent delete. */
+export type AccountAction = 'ban' | 'unban' | 'delete' | 'restore' | 'purge';
+
 export interface AdminUser {
   id: string;
   handle: string;
   displayName: string;
   email?: string | null;
   role?: AdminRole;
+  bannedAt?: string | null;
+  deletedAt?: string | null;
   createdAt: string;
 }
 
