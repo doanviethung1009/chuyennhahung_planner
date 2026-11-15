@@ -22,6 +22,7 @@ index below.
 | [architecture.md](architecture.md) | Runtime shape, routing, data flow, module boundaries, phases |
 | [usage.md](usage.md) | Install, run, test, verify, deploy, and the day-to-day workflows |
 | [travel-content-api.md](travel-content-api.md) | Travel Content System API contract — endpoints, conventions, error codes, invariants |
+| [deploy-database.md](deploy-database.md) | Runbook: move the JSON data to PostgreSQL on a separate VM — role, TLS, migrate, import, verify, backup, rollback |
 
 ## Features
 

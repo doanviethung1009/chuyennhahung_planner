@@ -21,6 +21,7 @@ trúc hai bản lệch nhau, hoặc nếu tài liệu chưa được liệt kê 
 | [architecture.vi.md](architecture.vi.md) | Hình dạng runtime, routing, luồng dữ liệu, ranh giới module, các phase |
 | [usage.vi.md](usage.vi.md) | Cài đặt, chạy, test, kiểm tra, deploy và các luồng việc hằng ngày |
 | [travel-content-api.vi.md](travel-content-api.vi.md) | Hợp đồng API của Travel Content System — endpoint, quy ước, mã lỗi, các bất biến |
+| [deploy-database.vi.md](deploy-database.vi.md) | Runbook: chuyển dữ liệu JSON sang PostgreSQL trên VM riêng — role, TLS, migrate, import, xác minh, backup, rollback |
 
 ## Tính năng
 
