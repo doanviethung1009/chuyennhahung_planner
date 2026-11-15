@@ -44,10 +44,13 @@ to be readable by the one who runs `docker compose`; check how your stack grants
 and prefer a group that contains only `cnh-runner` over making `.env` world-readable.
 
 ```bash
-sudo setfacl -m u:cnh-runner:rwx /opt/chuyennhahung
+sudo setfacl -m u:cnh-runner:--x /opt/chuyennhahung
 sudo touch /opt/chuyennhahung/.deployed-tag
 sudo chown cnh-runner /opt/chuyennhahung/.deployed-tag
 ```
+
+The directory gets traverse (`--x`) only, never write: the runner must not be able to
+unlink or replace `.env`. It can only rewrite the one pre-created `.deployed-tag`.
 
 `/opt/chuyennhahung/.env` stays mode `600`. If `docker compose` then fails to read
 it as `cnh-runner`, that is the trade-off to decide consciously (give the runner read
