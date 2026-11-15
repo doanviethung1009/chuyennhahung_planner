@@ -58,6 +58,7 @@ adding or removing a route means editing this table in both languages.
 | GET | `/api/planner/session` | Traveller (session cookie or access token) | Who am I (session probe) |
 | DELETE | `/api/planner/session` | Traveller (session cookie or access token) | Sign out |
 | POST | `/api/planner/password` | Traveller (session cookie or access token) | Change own password |
+| DELETE | `/api/planner/google` | Traveller (session cookie or access token) | Unlink own Google account |
 | GET | `/api/planner/oauth/google/start` | Public, rate-limited | Begin Google sign-in (404 when unset) |
 | GET | `/api/planner/oauth/google/callback` | Public | Google sign-in callback (404 when unset) |
 | GET | `/api/planner` | Traveller (session cookie or access token) | List own trips |
