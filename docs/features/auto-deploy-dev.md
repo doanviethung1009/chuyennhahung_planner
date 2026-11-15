@@ -66,6 +66,9 @@ VM and are NOT RUN until the runner is registered.
 
 - A rollback restores the image, not the database schema; migrations must stay
   backward compatible with the previous release.
+- The runner only recreates `app`. First-time setup of the stack (host directories, `.env`,
+  nginx, postgres) and later changes to `deploy/nginx/` are done by hand —
+  [docker-deploy.md](docker-deploy.md#updating-by-the-runner).
 - One app replica, so a deploy has a short gap while the container restarts.
 - The runner user must be in the `docker` group (root-equivalent on the VM); the
   runner never sees PR code only because of the triggers — do not add PR triggers.

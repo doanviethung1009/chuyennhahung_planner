@@ -63,7 +63,7 @@ Hai layout, chọn bằng một file overlay; `compose.app.bind.yml` thêm vào 
    role `cnh_app` và hai database `cnh_planner` / `cnh_content`.
 4. **Kiểm tra**: `curl -i http://<ip-vm>/api/health` → `200 {"status":"ok"}`;
    `docker compose ps` báo `healthy`; mở `/`, `/en`, đăng nhập, tạo trip.
-5. **Cập nhật**: `git pull`, chạy lại đúng lệnh `up -d --build`. Trong lúc app khởi động
+5. **Cập nhật**: bằng tay, `git pull` rồi chạy lại đúng lệnh `up -d --build` (đường tự động xem *Cập nhật bằng runner* bên dưới). Trong lúc app khởi động
    lại, nginx trả `maintenance.html` (503). **Rollback**: checkout commit trước rồi chạy
    lại; khôi phục `backups/<stamp>/` nếu dữ liệu đã đổi.
 6. **Sao lưu**: `./scripts/backup.sh <layout>` từ cron (hằng ngày). local-db dump cả hai
@@ -111,6 +111,28 @@ Mọi thứ cần có trên một VM Ubuntu 24.04 trắng, theo thứ tự. Plac
     ([usage → Cấu hình đăng nhập Google](../usage.vi.md#cấu-hình-đăng-nhập-google)). Trước khi có
     người dùng thật: các việc của chủ nhà ở [usage → Trước khi lên sóng](../usage.vi.md#trước-khi-lên-sóng--việc-của-chủ-nhà).
 
+### Cập nhật bằng runner
+
+Với self-hosted runner ([deploy-runner](../deploy-runner.vi.md),
+[Auto deploy lên dev](auto-deploy-dev.vi.md)), merge vào `main` là VM tự cập nhật. Khác
+đường thủ công ở năm điểm:
+
+| | Bằng tay | Bằng runner |
+|---|---|---|
+| Image | build trên VM (`--build`, cần swap) | build trên GitHub, kéo từ GHCR với tag `sha-<commit>` |
+| File compose | checkout của bạn ở `/opt/chuyennhahung/src/deploy` | checkout của runner tại commit đang deploy |
+| `.env` | `deploy/.env` | **`/opt/chuyennhahung/.env`** (`STACK_DIR`), mode 600 — giữ một bản, hoặc symlink `deploy/.env` tới nó |
+| Cái gì được tạo lại | mọi service mà `up` nêu | **chỉ `app`**: nginx và postgres vẫn chạy |
+| Rollback | checkout commit cũ rồi chạy lại | tự động về tag trước nếu `/api/health` chưa lên sau 180 s; bằng tay: chạy **Deploy dev** với `tag=sha-<cũ>` |
+
+Đặt `DB_OVERLAY=local-db` trong môi trường của runner cho layout cùng stack. Làm **phần
+thiết lập một lần bằng tay trước** (bước 1–8 ở trên): runner không bao giờ chạy
+`setup-host.sh`, không tạo nginx hay postgres, và `NEXT_PUBLIC_SITE_URL` chính là
+`DEV_SITE_URL` đã nướng vào image GHCR. Thay đổi trong `deploy/nginx/` hay service
+postgres **không** được deploy áp dụng: sau đó chạy tay `docker compose … up -d nginx`
+(hoặc `restart nginx`). Đừng trộn hai đường cho một bản phát hành: runner cần image GHCR,
+còn `--build` tay tạo ra image `chuyennhahung/app` cục bộ.
+
 ## File liên quan
 
 | Đường dẫn | Vai trò |
@@ -125,6 +147,7 @@ Mọi thứ cần có trên một VM Ubuntu 24.04 trắng, theo thứ tự. Plac
 | `deploy/postgres/init/10-roles-and-databases.sh` | Tạo role và database ở lần khởi động đầu |
 | `deploy/.env.example` | Mọi biến, cho cả hai layout |
 | `deploy/scripts/setup-host.sh`, `deploy/scripts/backup.sh` | Chuẩn bị host và sao lưu |
+| `deploy/deploy.sh`, `.github/workflows/deploy-dev.yml` | Đường tự động: kéo tag GHCR, khởi động lại `app`, kiểm health, rollback (ADR 0016) |
 
 ## Test
 

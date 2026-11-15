@@ -61,6 +61,29 @@ describe('deploy/deploy.sh', () => {
   });
 });
 
+describe('deploy/deploy.sh and the one-VM stack (docker-deploy.md)', () => {
+  const sh = read('deploy/deploy.sh');
+
+  it('uses the stack files of the deployed commit, bind mounts included', () => {
+    for (const f of ['compose.yml', 'compose.app.yml', 'compose.app.bind.yml']) {
+      expect(sh).toContain(`"$HERE/${f}"`);
+    }
+    expect(sh).toContain('"$HERE/compose.app.$DB_OVERLAY.yml"');
+    expect(sh).toContain('--profile local-db');
+    expect(sh).toContain('--env-file "$STACK_DIR/.env"');
+  });
+
+  it('only (re)creates the app, so nginx and postgres keep running through a deploy', () => {
+    expect(sh).toContain('up -d --no-build app');
+  });
+
+  it('every overlay the script names exists', () => {
+    for (const f of ['compose.yml', 'compose.app.bind.yml', 'compose.app.external-db.yml', 'compose.app.local-db.yml']) {
+      expect(() => read(`deploy/${f}`)).not.toThrow();
+    }
+  });
+});
+
 describe('compose.app.yml', () => {
   it('lets the deploy script choose the image and keeps the local build', () => {
     const c = read('deploy/compose.app.yml');

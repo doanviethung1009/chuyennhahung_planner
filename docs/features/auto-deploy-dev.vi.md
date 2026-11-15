@@ -66,6 +66,9 @@ cho tới khi runner được đăng ký.
 
 - Rollback khôi phục image, không khôi phục schema DB; migration phải tương thích
   ngược với bản phát hành trước.
+- Runner chỉ tạo lại `app`. Thiết lập stack lần đầu (thư mục host, `.env`, nginx, postgres)
+  và các thay đổi sau này trong `deploy/nginx/` làm bằng tay —
+  [docker-deploy.vi.md](docker-deploy.vi.md#cập-nhật-bằng-runner).
 - Một replica app nên khi deploy có khoảng trống ngắn lúc container khởi động lại.
 - User của runner phải thuộc nhóm `docker` (tương đương root trên VM); runner không
   thấy code PR chỉ nhờ các trigger — đừng thêm trigger PR.
