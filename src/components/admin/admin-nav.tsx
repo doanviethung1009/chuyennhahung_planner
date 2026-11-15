@@ -1,7 +1,7 @@
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 
-export type AdminSection = 'overview' | 'stories' | 'places' | 'reviews' | 'community';
+export type AdminSection = 'overview' | 'stories' | 'places' | 'reviews' | 'community' | 'runbook';
 
 const linkBase =
   'inline-flex min-h-11 items-center rounded-pill border px-4 text-sm font-medium transition-colors duration-200 ease-gentle';
@@ -53,6 +53,11 @@ export function AdminNav({
             {t('community')}
           </Link>
         </div>
+      ) : null}
+      {canUsers ? (
+        <Link href="/admin/runbook" className={cls('runbook')} aria-current={aria('runbook')}>
+          {t('runbook')}
+        </Link>
       ) : null}
     </nav>
   );

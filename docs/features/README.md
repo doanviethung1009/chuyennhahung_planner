@@ -38,6 +38,7 @@ New features start from [`_template.md`](_template.md) /
 | Header account | [header-account.md](header-account.md) | Sign-in icon for guests, account menu (My Trips, password, admin, sign out) for members, desktop and mobile |
 | Create a blank trip | [create-blank-trip.md](create-blank-trip.md) | `/my-trips/new` — create-trip button and form on My Trips, `source: "blank"` |
 | Docker deploy on one VM | [docker-deploy.md](docker-deploy.md) | Runbook: nginx + app + optional PostgreSQL, bind-mounted state, host setup, backup |
+| Admin runbook | [admin-runbook.md](admin-runbook.md) | `/quan-tri/runbook` — admin-only tab that shows the API list and the operations guides from `docs/` in the browser |
 
 ## Phases not yet open
 

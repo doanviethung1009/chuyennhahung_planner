@@ -22,6 +22,7 @@ index below.
 | [architecture.md](architecture.md) | Runtime shape, routing, data flow, module boundaries, phases |
 | [usage.md](usage.md) | Install, run, test, verify, deploy, and the day-to-day workflows |
 | [travel-content-api.md](travel-content-api.md) | Travel Content System API contract — endpoints, conventions, error codes, invariants |
+| [runbook.md](runbook.md) | Runbook: where to start — which guide answers which question, quick checks, and the list of every API endpoint; shown to admins at `/quan-tri/runbook` |
 | [deploy-operations.md](deploy-operations.md) | Runbook: running the deployed app — checks, logs, restart, backup and restore, secret rotation, disk, upgrades, incidents |
 | [deploy-runbook.md](deploy-runbook.md) | Runbook: one linear guide from a blank VM to the app running and auto-deployed — layout choice, host, `.env`, database, runner, first deploy, troubleshooting |
 | [deploy-database.md](deploy-database.md) | Runbook: move the JSON data to PostgreSQL on a separate VM — role, TLS, migrate, import, verify, backup, rollback |

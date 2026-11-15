@@ -1,0 +1,140 @@
+# Runbook — tổng quan và danh sách API
+
+🇻🇳 English version: [runbook.md](runbook.md)
+
+Nơi bắt đầu khi vận hành ứng dụng: hướng dẫn nào trả lời câu hỏi nào, các bước
+kiểm tra hằng ngày và danh sách mọi endpoint HTTP. Cùng nội dung này hiển thị cho
+quản trị viên trên trình duyệt tại `/quan-tri/runbook` (`/en/admin/runbook`),
+xem [features/admin-runbook.vi.md](features/admin-runbook.vi.md).
+
+## Mở hướng dẫn nào
+
+| Bạn muốn | Mở |
+|---|---|
+| Dựng VM trống thành ứng dụng chạy và tự triển khai | [deploy-runbook.vi.md](deploy-runbook.vi.md) |
+| Kiểm tra, khởi động lại, sao lưu, khôi phục, xoay bí mật, xử lý sự cố | [deploy-operations.vi.md](deploy-operations.vi.md) |
+| Chuyển dữ liệu JSON sang PostgreSQL trên VM riêng | [deploy-database.vi.md](deploy-database.vi.md) |
+| Cài hoặc sửa runner triển khai tự host | [deploy-runner.vi.md](deploy-runner.vi.md) |
+| Đọc hợp đồng API Travel Content và mã lỗi | [travel-content-api.vi.md](travel-content-api.vi.md) |
+
+## Kiểm tra nhanh
+
+- Sống: `GET /api/health` trả `{"status":"ok"}`. Nó không đụng kho dữ liệu nào, nên sự cố database hiện ra là Planner `503`, không phải health check hỏng.
+- Trang quản trị dành cho vai trò `admin` (và principal dịch vụ). Người khác, kể cả editor, nhận `404` trơn.
+- Bí mật (`ADMIN_API_TOKEN`, `GOOGLE_CLIENT_SECRET`, URL database) không bao giờ xuất hiện trong tài liệu này hay tab trên trình duyệt.
+
+## Ai được gọi gì
+
+Cột **Ai được gọi** của bảng bên dưới dùng các thuật ngữ sau:
+
+- **Công khai**: không cần thông tin xác thực. Nơi có ghi chú thì giới hạn tần suất theo từng tiến trình.
+- **Du khách**: cookie `planner_session` từ lúc đăng nhập, hoặc access token của du khách. Mọi đọc và ghi đều lọc theo dữ liệu của chính du khách đó. Ghi bằng cookie phải cùng origin.
+- **Admin token**: `Authorization: Bearer $ADMIN_API_TOKEN`.
+- **Phiên admin / nhân viên**: phiên trình duyệt của người dùng có vai trò cho phép hành động nêu tên; admin token cũng dùng được. Vai trò và hành động: [features/admin-roles.vi.md](features/admin-roles.vi.md).
+
+## Danh sách API
+
+Đường dẫn dùng đúng dạng ngoặc vuông của các file route dưới `src/app/api/`.
+`tests/runbook.test.ts` báo lỗi khi bảng này và các file route lệch nhau, nên thêm
+hay bỏ một route nghĩa là sửa bảng này ở cả hai ngôn ngữ.
+
+| Method | Đường dẫn | Ai được gọi | Mục đích |
+|---|---|---|---|
+| GET | `/api/health` | Công khai | Probe sống cho healthcheck của container |
+| GET | `/api/travel/places` | Công khai | Danh sách địa điểm đã đăng |
+| GET | `/api/travel/places/[slug]` | Công khai | Một địa điểm |
+| GET | `/api/travel/stories` | Công khai | Danh sách chuyện đã đăng |
+| GET | `/api/travel/stories/[slug]` | Công khai | Một chuyện |
+| GET | `/api/travel/collections` | Công khai | Danh sách bộ sưu tập |
+| GET | `/api/travel/collections/[slug]` | Công khai | Một bộ sưu tập |
+| GET | `/api/travel/reviews` | Công khai | Danh sách đánh giá đã đăng |
+| GET | `/api/travel/templates` | Công khai | Danh sách mẫu chuyến đi |
+| GET | `/api/travel/templates/[slug]` | Công khai | Một mẫu chuyến đi |
+| GET | `/api/shared/[token]` | Công khai, giới hạn tần suất | Chuyến chia sẻ chỉ đọc theo share token |
+| GET | `/api/community/trips` | Công khai, giới hạn tần suất | Chuyến cộng đồng đã duyệt |
+| GET | `/api/community/reviews` | Công khai, giới hạn tần suất | Đánh giá cộng đồng đang hiển thị |
+| POST | `/api/community/reviews` | Công khai, giới hạn tần suất | Đánh giá khách từ trang chủ (hiện ngay) |
+| POST | `/api/planner/session` | Công khai, giới hạn tần suất | Đăng nhập (token hoặc email + mật khẩu), mở cookie phiên |
+| GET | `/api/planner/session` | Du khách (cookie phiên hoặc access token) | Tôi là ai (kiểm tra phiên) |
+| DELETE | `/api/planner/session` | Du khách (cookie phiên hoặc access token) | Đăng xuất |
+| POST | `/api/planner/password` | Du khách (cookie phiên hoặc access token) | Đổi mật khẩu của mình |
+| GET | `/api/planner/oauth/google/start` | Công khai, giới hạn tần suất | Bắt đầu đăng nhập Google (404 khi chưa cấu hình) |
+| GET | `/api/planner/oauth/google/callback` | Công khai | Callback đăng nhập Google (404 khi chưa cấu hình) |
+| GET | `/api/planner` | Du khách (cookie phiên hoặc access token) | Danh sách chuyến của mình |
+| POST | `/api/planner` | Du khách (cookie phiên hoặc access token) | Tạo chuyến (trống hoặc từ mẫu) |
+| GET | `/api/planner/[id]` | Du khách (cookie phiên hoặc access token) | Một chuyến, kèm ETag |
+| PATCH | `/api/planner/[id]` | Du khách (cookie phiên hoặc access token) | Sửa phần đầu chuyến (If-Match) |
+| DELETE | `/api/planner/[id]` | Du khách (cookie phiên hoặc access token) | Lưu trữ chuyến |
+| POST | `/api/planner/[id]/restore` | Du khách (cookie phiên hoặc access token) | Khôi phục chuyến đã lưu trữ |
+| POST | `/api/planner/[id]/duplicate` | Du khách (cookie phiên hoặc access token) | Nhân bản chuyến |
+| GET | `/api/planner/[id]/budget` | Du khách (cookie phiên hoặc access token) | Ngân sách: mục tiêu so với dự toán và thực chi |
+| PATCH | `/api/planner/[id]/days/[dayNumber]` | Du khách (cookie phiên hoặc access token) | Sửa một ngày |
+| PATCH | `/api/planner/[id]/reorder` | Du khách (cookie phiên hoặc access token) | Sắp xếp lại hoặc chuyển hoạt động giữa các ngày |
+| POST | `/api/planner/[id]/activities` | Du khách (cookie phiên hoặc access token) | Thêm hoạt động |
+| PATCH | `/api/planner/[id]/activities/[activityId]` | Du khách (cookie phiên hoặc access token) | Sửa hoạt động |
+| DELETE | `/api/planner/[id]/activities/[activityId]` | Du khách (cookie phiên hoặc access token) | Xóa hoạt động |
+| POST | `/api/planner/[id]/expenses` | Du khách (cookie phiên hoặc access token) | Thêm khoản chi |
+| PATCH | `/api/planner/[id]/expenses/[expenseId]` | Du khách (cookie phiên hoặc access token) | Sửa khoản chi |
+| DELETE | `/api/planner/[id]/expenses/[expenseId]` | Du khách (cookie phiên hoặc access token) | Xóa khoản chi |
+| PUT | `/api/planner/[id]/share` | Du khách (cookie phiên hoặc access token) | Bật chia sẻ (tạo share token) |
+| DELETE | `/api/planner/[id]/share` | Du khách (cookie phiên hoặc access token) | Thu hồi chia sẻ |
+| POST | `/api/planner/[id]/share/rotate` | Du khách (cookie phiên hoặc access token) | Đổi share token |
+| PUT | `/api/planner/[id]/listing` | Du khách (cookie phiên hoặc access token) | Xin đăng lên cộng đồng |
+| DELETE | `/api/planner/[id]/listing` | Du khách (cookie phiên hoặc access token) | Rút khỏi cộng đồng |
+| GET | `/api/planner/reviews` | Du khách (cookie phiên hoặc access token) | Đánh giá địa điểm của mình |
+| PUT | `/api/planner/reviews/[placeSlug]` | Du khách (cookie phiên hoặc access token) | Viết hoặc thay đánh giá (có kiểm duyệt) |
+| DELETE | `/api/planner/reviews/[placeSlug]` | Du khách (cookie phiên hoặc access token) | Xóa đánh giá của mình |
+| GET | `/api/admin/planner/users` | Admin token hoặc phiên admin | Danh sách người dùng (`user:provision`) |
+| POST | `/api/admin/planner/users` | Admin token hoặc phiên admin | Tạo người dùng, trả bí mật một lần (`user:provision`) |
+| PATCH | `/api/admin/planner/users/[userId]` | Admin token hoặc phiên admin | Đặt vai trò (`user:promote`) |
+| DELETE | `/api/admin/planner/users/[userId]` | Chỉ admin token | Xóa người dùng |
+| POST | `/api/admin/planner/users/[userId]/reset-password` | Admin token hoặc phiên admin | Cấp lại mật khẩu tạm (`user:provision`) |
+| POST | `/api/admin/planner/users/[userId]/rotate-token` | Chỉ admin token | Đổi access token |
+| DELETE | `/api/admin/planner/users/[userId]/google` | Chỉ admin token | Gỡ liên kết Google |
+| GET | `/api/admin/planner/integrity` | Chỉ admin token | Báo cáo toàn vẹn kho Planner |
+| GET | `/api/admin/community/queue` | Admin token hoặc phiên admin | Hàng đợi đăng chuyến, chờ duyệt trước (`community:moderate`) |
+| PATCH | `/api/admin/community/trips/[id]` | Admin token hoặc phiên admin | Duyệt hoặc từ chối chuyến (`community:moderate`) |
+| GET | `/api/admin/community/reviews` | Admin token hoặc phiên admin | Hàng đợi kiểm duyệt đánh giá (`community:moderate`) |
+| PATCH | `/api/admin/community/reviews/[id]` | Admin token hoặc phiên admin | Duyệt, từ chối, giữ hoặc gỡ đánh giá (`community:moderate`) |
+| GET | `/api/admin/community/restrictions` | Admin token hoặc phiên admin | Danh sách hạn chế đánh giá (`community:restrict`) |
+| POST | `/api/admin/community/restrictions` | Admin token hoặc phiên admin | Hạn chế một người (`community:restrict`) |
+| DELETE | `/api/admin/community/restrictions/[id]` | Admin token hoặc phiên admin | Gỡ hạn chế (`community:restrict`) |
+| GET | `/api/admin/travel/places` | Admin token hoặc phiên nhân viên | Danh sách địa điểm (mọi trạng thái) |
+| POST | `/api/admin/travel/places` | Admin token hoặc phiên nhân viên | Tạo địa điểm |
+| GET | `/api/admin/travel/places/[slug]` | Admin token hoặc phiên nhân viên | Một địa điểm |
+| PATCH | `/api/admin/travel/places/[slug]` | Admin token hoặc phiên nhân viên | Sửa địa điểm (If-Match tùy chọn) |
+| DELETE | `/api/admin/travel/places/[slug]` | Admin token hoặc phiên nhân viên | Xóa địa điểm |
+| GET | `/api/admin/travel/stories` | Admin token hoặc phiên nhân viên | Danh sách chuyện (mọi trạng thái) |
+| POST | `/api/admin/travel/stories` | Admin token hoặc phiên nhân viên | Tạo chuyện |
+| GET | `/api/admin/travel/stories/[slug]` | Admin token hoặc phiên nhân viên | Một chuyện |
+| PATCH | `/api/admin/travel/stories/[slug]` | Admin token hoặc phiên nhân viên | Sửa chuyện (If-Match tùy chọn) |
+| DELETE | `/api/admin/travel/stories/[slug]` | Admin token hoặc phiên nhân viên | Xóa chuyện |
+| POST | `/api/admin/travel/stories/[slug]/status` | Admin token hoặc phiên nhân viên | Đổi trạng thái chuyện |
+| GET | `/api/admin/travel/reviews` | Admin token hoặc phiên nhân viên | Danh sách đánh giá (mọi trạng thái) |
+| POST | `/api/admin/travel/reviews` | Admin token hoặc phiên nhân viên | Tạo đánh giá |
+| GET | `/api/admin/travel/reviews/[id]` | Admin token hoặc phiên nhân viên | Một đánh giá |
+| PATCH | `/api/admin/travel/reviews/[id]` | Admin token hoặc phiên nhân viên | Sửa đánh giá (If-Match tùy chọn) |
+| DELETE | `/api/admin/travel/reviews/[id]` | Admin token hoặc phiên nhân viên | Xóa đánh giá |
+| POST | `/api/admin/travel/reviews/[id]/status` | Admin token hoặc phiên nhân viên | Đổi trạng thái đánh giá |
+| PATCH | `/api/admin/travel/stories/[slug]/places` | Admin token hoặc phiên nhân viên | Đặt các địa điểm gắn với chuyện |
+| GET | `/api/admin/travel/collections` | Chỉ admin token | Danh sách bộ sưu tập |
+| POST | `/api/admin/travel/collections` | Chỉ admin token | Tạo bộ sưu tập |
+| GET | `/api/admin/travel/collections/[slug]` | Chỉ admin token | Một bộ sưu tập |
+| PATCH | `/api/admin/travel/collections/[slug]` | Chỉ admin token | Sửa bộ sưu tập |
+| DELETE | `/api/admin/travel/collections/[slug]` | Chỉ admin token | Xóa bộ sưu tập |
+| GET | `/api/admin/travel/templates` | Chỉ admin token | Danh sách mẫu |
+| POST | `/api/admin/travel/templates` | Chỉ admin token | Tạo mẫu |
+| GET | `/api/admin/travel/templates/[slug]` | Chỉ admin token | Một mẫu |
+| PATCH | `/api/admin/travel/templates/[slug]` | Chỉ admin token | Sửa mẫu |
+| DELETE | `/api/admin/travel/templates/[slug]` | Chỉ admin token | Xóa mẫu |
+| POST | `/api/admin/travel/collections/[slug]/status` | Chỉ admin token | Đổi trạng thái bộ sưu tập |
+| POST | `/api/admin/travel/templates/[slug]/reorder` | Chỉ admin token | Sắp xếp lại hoạt động của mẫu |
+| POST | `/api/admin/travel/templates/[slug]/move-activity` | Chỉ admin token | Chuyển hoạt động của mẫu giữa các ngày |
+| GET | `/api/admin/travel/integrity` | Chỉ admin token | Báo cáo toàn vẹn nội dung |
+
+## Quy ước
+
+- Lỗi dùng chung một phong bì với `code` ổn định; các mã nằm trong [travel-content-api.vi.md](travel-content-api.vi.md).
+- Ghi vào Planner dùng khóa lạc quan: gửi `ETag` của lần đọc lại trong `If-Match`; lệch là `412 version_conflict`.
+- `429 rate_limited` kèm `Retry-After`. Giới hạn theo từng tiến trình và khóa client có thể bị giả ([ADR 0005](adr/0005-trip-sharing-and-story-cloning.vi.md)).
+- Phản hồi admin là `no-store`.

@@ -77,6 +77,7 @@ folders. The visible URL per locale is defined once, in
 | `/reviews` | `/goc-review` | `/en/reviews` |
 | `/community-trips` | `/chuyen-di-cong-dong` | `/en/community-trips` |
 | `/admin/community` | `/quan-tri/cong-dong` | `/en/admin/community` |
+| `/admin/runbook` | `/quan-tri/runbook` | `/en/admin/runbook` |
 | `/about` | `/ve-nha-hung` | `/en/about` |
 | `/trip-setup/[template]` | `/tao-chuyen-di/[template]` | `/en/trip-setup/[template]` |
 | `/sign-in` | `/dang-nhap` | `/en/sign-in` |
