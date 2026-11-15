@@ -136,7 +136,7 @@ In the **same terminal**:
 npm run db:migrate
 ```
 
-Expect migrations `0001` to `0008` applied. Then check the review status
+Expect migrations `0001` to `0009` applied. Then check the review status
 constraint includes `held` (migration `0007`):
 
 ```bash

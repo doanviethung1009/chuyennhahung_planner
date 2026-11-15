@@ -113,6 +113,11 @@ export const TABLES: readonly TableSpec<PlannerCollection>[] = [
       col('createdVia', 'created_via', 'text', 'optional'),
       // ADR 0006; added by migration 0002.
       col('role', 'role', 'text', 'optional'),
+      // ADR 0017; added by migration 0009. NULL reads as absent (= active).
+      col('bannedAt', 'banned_at', 'timestamptz', 'optional'),
+      col('bannedBy', 'banned_by', 'text', 'optional'),
+      col('deletedAt', 'deleted_at', 'timestamptz', 'optional'),
+      col('deletedBy', 'deleted_by', 'text', 'optional'),
     ],
   },
   {
