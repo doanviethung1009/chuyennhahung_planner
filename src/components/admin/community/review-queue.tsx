@@ -190,7 +190,7 @@ export function CommunityReviewQueue({ canRestrict }: { canRestrict: boolean }) 
                   >
                     <fieldset className="grid gap-2">
                       <legend className="text-sm font-medium">{tr('muteScope')}</legend>
-                      {(['place', 'all'] as const).map((scope) => (
+                      {(item.source === 'homepage' ? (['place'] as const) : (['place', 'all'] as const)).map((scope) => (
                         <label key={scope} className="flex min-h-11 items-center gap-2 text-base">
                           <input
                             type="radio"

@@ -79,8 +79,8 @@ Code cho biết gì, và chưa biết gì:
    `removed` theo từng đánh giá vẫn vĩnh viễn và không bị gỡ chặn hoàn tác.
 6. **Tác giả vẫn xoá được đánh giá đang hiển thị của mình** khi bị hạn chế (dữ liệu của
    họ), nhưng không xoá được đánh giá `removed` (quy tắc ADR 0014 giữ nguyên). Xoá tài
-   khoản xoá luôn restriction cùng với các đánh giá.
-7. **Khách: có thời hạn và có chốt chặn.** Restriction cho khách bắt buộc có `expiresAt`
+   khoản xoá các đánh giá của nó nhưng chỉ *kết thúc* restriction (giữ làm hồ sơ, gỡ bởi "account deleted").
+7. **Khách: có thời hạn và có chốt chặn, chỉ theo địa điểm.** Restriction cho khách bắt buộc có `expiresAt`
    (mặc định 30 ngày, tối đa 90) và bị từ chối khi key của đánh giá là hash của
    `'unknown'` (chặn nó là im tiếng mọi khách). Màn admin cảnh báo địa chỉ có thể dùng
    chung. Lời từ chối với khách bị chặn trung thực ("đánh giá từ kết nối này đang tạm

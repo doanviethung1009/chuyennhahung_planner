@@ -735,7 +735,13 @@ export class PlannerRepository {
       data.sessions = data.sessions.filter((session) => session.userId !== userId);
       // Personal data on public pages goes with the account (ADR 0014).
       data.communityReviews = data.communityReviews.filter((review) => review.authorId !== userId);
-      data.reviewRestrictions = data.reviewRestrictions.filter((row) => row.authorId !== userId);
+      // Restrictions stay as the audit record, but end with the account (security review, ADR 0015).
+      const endedAt = this.timestamp();
+      data.reviewRestrictions = data.reviewRestrictions.map((row) =>
+        row.authorId === userId && row.liftedAt === null
+          ? { ...row, liftedAt: endedAt, liftedBy: 'account deleted' }
+          : row,
+      );
     });
   }
 
@@ -1668,6 +1674,10 @@ export class PlannerRepository {
       const subject: ReviewRestriction['subject'] = review.authorId ? 'user' : 'guest';
       let expiresAt: string | null = input.expiresAt ?? null;
 
+      if (subject === 'guest' && input.scope === 'all') {
+        // A shared key must not silence every place: guests are restricted per place only.
+        throw invalidReference([{ path: 'scope', message: 'a guest can only be restricted for the review\'s place' }]);
+      }
       if (subject === 'user') {
         const target = data.users.find((user) => user.id === review.authorId);
         if (!target) throw notFound('planner user', review.authorId ?? '');

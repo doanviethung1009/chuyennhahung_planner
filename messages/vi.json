@@ -1000,7 +1000,7 @@
         "place": "chỉ với địa điểm này ({place})",
         "all": "với mọi địa điểm"
       },
-      "muteHelp": "Đánh giá mới bị chặn và các đánh giá hiện có của tác giả trong phạm vi này bị ẩn. Tác giả thấy lý do của bạn. Bạn gỡ lúc nào cũng được.",
+      "muteHelp": "Đánh giá mới bị chặn và các đánh giá hiện có của tác giả trong phạm vi này bị ẩn. Tác giả thấy lý do của bạn, nên đừng ghi chú nội bộ vào đó. Bạn gỡ lúc nào cũng được.",
       "muteGuestWarning": "Khách này chỉ được nhận diện bằng khoá kết nối, người khác có thể dùng chung. Lệnh chặn kéo dài 30 ngày. Khách sẽ được báo rằng đánh giá từ kết nối này đang tạm dừng.",
       "muteReasonLabel": "Lý do (tác giả sẽ thấy)",
       "muteConfirm": "Tắt",

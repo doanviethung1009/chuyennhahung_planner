@@ -255,6 +255,16 @@ describe('staff can switch off a review author (ADR 0015)', () => {
     await guest('198.51.100.8');
   });
 
+  it('restricts a guest for the review\'s place only', async () => {
+    const planner = makePlanner();
+    await planner.createGuestReview({ placeSlug: PLACE, ...review(), authorName: null }, '198.51.100.7');
+    const [row] = await planner.listReviewQueue();
+    await expectCode(
+      planner.createRestriction({ reviewId: row!.id, scope: 'all', reason: 'spam lặp lại' }, 'service'),
+      'invalid_reference',
+    );
+  });
+
   it('caps a guest restriction at 90 days and rejects a past expiry', async () => {
     const planner = makePlanner();
     await planner.createGuestReview({ placeSlug: PLACE, ...review(), authorName: null }, '198.51.100.7');
@@ -286,11 +296,14 @@ describe('staff can switch off a review author (ADR 0015)', () => {
     expect((await planner.listApprovedReviews()).items).toHaveLength(1);
   });
 
-  it('goes with the account', async () => {
+  it('ends, but is kept, when the account is deleted', async () => {
     const { planner, userId, atPlace } = await twoReviews();
     await planner.createRestriction({ reviewId: atPlace, scope: 'all', reason: 'lạm dụng' }, 'service');
     await planner.deleteUser(userId);
-    expect(await planner.listRestrictions()).toEqual([]);
+    // The record stays, ended, with no name left to show.
+    expect(await planner.listRestrictions()).toMatchObject([
+      { active: false, liftedBy: 'account deleted', author: null, reason: 'lạm dụng' },
+    ]);
   });
 
   it('marks restricted reviews in the staff queue, and keeps the public projection', async () => {

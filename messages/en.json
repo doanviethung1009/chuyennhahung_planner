@@ -1000,7 +1000,7 @@
         "place": "for this place only ({place})",
         "all": "for every place"
       },
-      "muteHelp": "New reviews are blocked and the author's existing reviews in this scope are hidden. The author sees your reason. You can lift it at any time.",
+      "muteHelp": "New reviews are blocked and the author's existing reviews in this scope are hidden. The author sees your reason, so do not put internal notes in it. You can lift it at any time.",
       "muteGuestWarning": "This guest is known only by a connection key, which others may share. The block lasts 30 days. The visitor is told reviews from this connection are paused.",
       "muteReasonLabel": "Reason (the author will see it)",
       "muteConfirm": "Switch off",
