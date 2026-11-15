@@ -347,7 +347,13 @@
         "google_unverified": "Google has not verified the email on your Google account.",
         "account_conflict": "That Google account already belongs to another account here, or yours is already linked to a different Google account.",
         "rate_limited": "Too many attempts. Wait a few minutes and try again."
-      }
+      },
+      "unlinkButton": "Unlink Google",
+      "unlinking": "Unlinking…",
+      "unlinkHint": "After unlinking, you sign in with your email and password. You can link Google again at any time. Your other devices will be signed out.",
+      "unlinkNeedsPassword": "This account has no password, so Google is its only way to sign in and cannot be unlinked. Message us if you need a password.",
+      "unlinked": "Google is unlinked. You now sign in with your email and password.",
+      "unlinkFailed": "We could not unlink Google. Please try again in a moment."
     }
   },
   "myTrips": {

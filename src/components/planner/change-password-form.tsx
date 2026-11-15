@@ -24,6 +24,9 @@ export type GoogleLinkStatus =
   | 'account_conflict'
   | 'rate_limited';
 
+/** Whether the unlink call is idle, running, or has failed. */
+type UnlinkState = 'idle' | 'busy' | 'failed';
+
 interface Props {
   target: string;
   /** Null when Google is not configured — then the section is not rendered. */
@@ -47,6 +50,8 @@ export function ChangePasswordForm({ target, googleLinkHref, linkStatus }: Props
   const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [unlink, setUnlink] = useState<UnlinkState>('idle');
+  const [unlinked, setUnlinked] = useState(false);
 
   useEffect(() => {
     api<SessionResponse>('/api/planner/session')
@@ -90,6 +95,20 @@ export function ChangePasswordForm({ target, googleLinkHref, linkStatus }: Props
     }
   }
 
+  async function onUnlink() {
+    setUnlink('busy');
+    setUnlinked(false);
+    try {
+      await api('/api/planner/google', { method: 'DELETE' });
+      setHasGoogle(false);
+      setUnlinked(true);
+      setUnlink('idle');
+    } catch (failure) {
+      if (failure instanceof ApiError && failure.status === 401) return goToSignIn(locale);
+      setUnlink('failed');
+    }
+  }
+
   // Linking waits for the temporary password to be changed (the start route
   // refuses it too), and for the session to load so the right state shows.
   const googleSection =
@@ -106,8 +125,37 @@ export function ChangePasswordForm({ target, googleLinkHref, linkStatus }: Props
             {t(`google.status.${linkStatus}`)}
           </p>
         ) : null}
+        {unlinked ? (
+          <p role="status" className="rounded-md border border-border-strong bg-surface px-4 py-3 text-base text-foreground">
+            {t('google.unlinked')}
+          </p>
+        ) : null}
+        {unlink === 'failed' ? (
+          <p role="alert" className="text-base text-primary-strong">
+            {t('google.unlinkFailed')}
+          </p>
+        ) : null}
         {hasGoogle ? (
-          <p className="text-base text-foreground">{t('google.linkedNote')}</p>
+          <>
+            <p className="text-base text-foreground">{t('google.linkedNote')}</p>
+            {hasPassword ? (
+              <div className="grid gap-2">
+                <p className="text-base text-foreground-muted">{t('google.unlinkHint')}</p>
+                <div>
+                  <button
+                    type="button"
+                    onClick={onUnlink}
+                    disabled={unlink === 'busy'}
+                    className={buttonClass({ variant: 'secondary' })}
+                  >
+                    {unlink === 'busy' ? t('google.unlinking') : t('google.unlinkButton')}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-base text-foreground-muted">{t('google.unlinkNeedsPassword')}</p>
+            )}
+          </>
         ) : (
           <>
             <p className="text-base text-foreground-muted">{t('google.intro')}</p>

@@ -179,7 +179,11 @@ Google đã công bố, chỉ dùng `fetch` và `node:crypto`.
   bỏ qua và kết quả là `account_not_found` — chủ dự án đóng tự phục vụ mà không
   cần deploy code mới. Mặc định là `true`.
 - **Huỷ liên kết:** `DELETE /api/admin/planner/users/:userId/google` xoá
-  `googleSub` và xoá mọi session của người dùng đó.
+  `googleSub` và xoá mọi session của người dùng đó. Người dùng đã đăng nhập
+  cũng tự gỡ được tài khoản của mình bằng `DELETE /api/planner/google` (nút ở
+  trang đổi mật khẩu): bị từ chối `409` khi tài khoản chưa có mật khẩu để không
+  bị khoá ngoài; các session khác kết thúc, session hiện tại giữ nguyên; gỡ một
+  tài khoản chưa liên kết vẫn thành công.
 - **Cấu hình:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, và redirect URI suy
   ra từ `NEXT_PUBLIC_SITE_URL` + `/api/planner/oauth/google/callback`. Chỉ phía
   server, không bao giờ là `NEXT_PUBLIC_*`, được `tests/client-boundary.test.ts`
