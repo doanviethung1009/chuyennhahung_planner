@@ -28,7 +28,7 @@
 - Security and migration risks: privilege escalation (admin promoting self/others to super_admin); lock-out (no super_admin left; existing admins lose Runbook until one is promoted); ban bypass via Google sign-in or access token; deletion cascade (trips/reviews, ADR 0014); stored role value migration (additive enum, no data rewrite).
 - Rollback: revert PR; `bannedAt` is optional so old code ignores it; users with `super_admin` role would fail old zod parse — roll back only after demoting them (note in ADR).
 - Budget: 0 subagents. Stop condition: each PR awaits owner approval before commit/push.
-- State: IN_PROGRESS (PR A)
+- State: READY for review — PR B (#85) and PR C (#87) open; PR A dropped (the change-password page already served every user with a password)
 - Feature document owner: main session (BE hat) — `docs/features/super-admin-accounts.md` + `.vi.md`, row in `docs/features/README*`.
 - Architecture/usage doc updates: `docs/architecture.*` (roles/permissions), `docs/usage.*` (admin ops), `docs/runbook.*` API table.
 
@@ -36,4 +36,4 @@
 1. PR order 3 -> 1 -> 2, three PRs, one branch/PR each (PR A password page, PR B super_admin + Runbook + ADR 0017, PR C ban/delete).
 2. Ban ends sessions at once and blocks cookie + bearer + Google sign-in; unban restores.
 3. (Revised by owner mid-PR C) Delete has BOTH modes: soft (`deletedAt`, hidden + sign-in blocked + restorable) and hard (existing `deleteUser`, permanent). `DELETE ?mode=soft|hard`, default `hard` (backward compatible). A session actor may hard-delete only an account already soft-deleted; the service token keeps today's behaviour. Self / last-admin guards on both. Actions reuse `user:provision` + `canManageRole` (no new Action names); ban/soft-delete limited to staff targets (editor/admin/super_admin).
-4. An admin may also ban/delete an editor; only super_admin acts on admin/super_admin targets. First super_admin: via existing `admin-bootstrap` / service token (still to confirm in PR B).
+4. An admin may also ban/delete an editor; only super_admin acts on admin/super_admin targets. First super_admin: made with the service token (`PATCH /api/admin/planner/users/:id` `{"role":"super_admin"}`); `admin-bootstrap` still creates an `admin` only (confirmed in PR B, documented in usage).
