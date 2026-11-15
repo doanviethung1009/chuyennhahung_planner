@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from '@/i18n/navigation';
-import { isRunbookDoc } from '@/server/runbook/docs';
+import { posix } from 'node:path';
 
 /**
  * A small Markdown renderer for the repository's own runbooks (admin-only
@@ -132,17 +132,25 @@ export function parseMarkdown(source: string): Block[] {
   return blocks;
 }
 
-/** The runbook a relative `.md` link points at, or `null` when it is not an allow-listed one. */
-export function runbookTarget(href: string): string | null {
+/**
+ * The document a relative `.md` link points at, resolved against the folder of
+ * the document being shown (`base`: '' or 'features'), or `null` when the
+ * result is not one of the `known` ids (so `../` cannot leave `docs/`).
+ */
+export function runbookTarget(href: string, base: string, known: ReadonlySet<string>): string | null {
   const path = href.split('#')[0] ?? '';
-  const match = /(?:^|\/)([\w-]+?)(?:\.vi)?\.md$/.exec(path);
-  const stem = match?.[1];
-  return stem && isRunbookDoc(stem) ? stem : null;
+  if (!/\.md$/.test(path) || /^[a-z][a-z0-9+.-]*:/i.test(path) || path.startsWith('/')) return null;
+  const joined = posix.normalize(posix.join(base, path));
+  if (joined.startsWith('..')) return null;
+  const id = joined.replace(/(?:\.vi)?\.md$/, '');
+  return known.has(id) ? id : null;
 }
 
 const INLINE = /(`[^`]+`)|(\*\*[^*]+\*\*)|\[((?:[^[\]`]|`[^`]*`)+)\]\(([^)\s]+)\)/g;
 
-function renderInline(text: string, keyBase: string, allowLinks = true): ReactNode[] {
+type LinkContext = { base: string; known: ReadonlySet<string> };
+
+function renderInline(text: string, keyBase: string, ctx: LinkContext, allowLinks = true): ReactNode[] {
   const out: ReactNode[] = [];
   let last = 0;
   let n = 0;
@@ -157,12 +165,12 @@ function renderInline(text: string, keyBase: string, allowLinks = true): ReactNo
         </code>,
       );
     } else if (match[2]) {
-      out.push(<strong key={key}>{renderInline(match[2].slice(2, -2), key, allowLinks)}</strong>);
+      out.push(<strong key={key}>{renderInline(match[2].slice(2, -2), key, ctx, allowLinks)}</strong>);
     } else {
       const label = match[3] ?? '';
       const href = match[4] ?? '';
-      const inner = renderInline(label, key, false);
-      const doc = runbookTarget(href);
+      const inner = renderInline(label, key, ctx, false);
+      const doc = runbookTarget(href, ctx.base, ctx.known);
       if (allowLinks && /^https?:\/\//.test(href)) {
         out.push(
           <a key={key} href={href} rel="noopener noreferrer" target="_blank" className="text-primary-strong underline underline-offset-2">
@@ -189,7 +197,19 @@ function renderInline(text: string, keyBase: string, allowLinks = true): ReactNo
   return out;
 }
 
-export function Markdown({ source, tableLabel }: { source: string; tableLabel: string }) {
+export function Markdown({
+  source,
+  tableLabel,
+  base = '',
+  known,
+}: {
+  source: string;
+  tableLabel: string;
+  /** Folder of the shown document under `docs/`: '' or 'features'. */
+  base?: string;
+  known: ReadonlySet<string>;
+}) {
+  const ctx: LinkContext = { base, known };
   const blocks = parseMarkdown(source);
   return (
     <div className="grid gap-4 leading-relaxed">
@@ -203,7 +223,7 @@ export function Markdown({ source, tableLabel }: { source: string; tableLabel: s
             const size = level <= 2 ? 'text-2xl' : level === 3 ? 'text-xl' : 'text-lg';
             return (
               <Tag key={key} className={`font-display ${size} mt-4 font-semibold`}>
-                {renderInline(block.text, key)}
+                {renderInline(block.text, key, ctx)}
               </Tag>
             );
           }
@@ -225,7 +245,7 @@ export function Markdown({ source, tableLabel }: { source: string; tableLabel: s
                     <tr>
                       {block.head.map((cell, c) => (
                         <th key={c} scope="col" className="border-b border-border-strong px-3 py-2 font-semibold">
-                          {renderInline(cell, `${key}h${c}`)}
+                          {renderInline(cell, `${key}h${c}`, ctx)}
                         </th>
                       ))}
                     </tr>
@@ -235,7 +255,7 @@ export function Markdown({ source, tableLabel }: { source: string; tableLabel: s
                       <tr key={r} className="border-b border-border-subtle align-top">
                         {row.map((cell, c) => (
                           <td key={c} className="px-3 py-2">
-                            {renderInline(cell, `${key}r${r}c${c}`)}
+                            {renderInline(cell, `${key}r${r}c${c}`, ctx)}
                           </td>
                         ))}
                       </tr>
@@ -249,7 +269,7 @@ export function Markdown({ source, tableLabel }: { source: string; tableLabel: s
             return (
               <Tag key={key} className={`grid gap-1.5 pl-6 ${block.ordered ? 'list-decimal' : 'list-disc'}`}>
                 {block.items.map((item, k) => (
-                  <li key={k}>{renderInline(item, `${key}i${k}`)}</li>
+                  <li key={k}>{renderInline(item, `${key}i${k}`, ctx)}</li>
                 ))}
               </Tag>
             );
@@ -257,13 +277,13 @@ export function Markdown({ source, tableLabel }: { source: string; tableLabel: s
           case 'quote':
             return (
               <blockquote key={key} className="border-l-4 border-primary pl-4 text-foreground-muted">
-                {renderInline(block.text, key)}
+                {renderInline(block.text, key, ctx)}
               </blockquote>
             );
           case 'rule':
             return <hr key={key} className="border-border-subtle" />;
           default:
-            return <p key={key}>{renderInline(block.text, key)}</p>;
+            return <p key={key}>{renderInline(block.text, key, ctx)}</p>;
         }
       })}
     </div>

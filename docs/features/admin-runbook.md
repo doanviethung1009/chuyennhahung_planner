@@ -19,13 +19,13 @@ contract in [../travel-content-api.md](../travel-content-api.md)), so
 |---|---|---|
 | `/admin/runbook` | `/quan-tri/runbook` | `/en/admin/runbook` |
 
-`?doc=<id>` picks a document; an unknown id falls back to the overview. Covered by
+`?doc=<id>` picks a document (`runbook-api`, or `features/admin-roles`); an unknown id falls back to the overview. Covered by
 the existing `/quan-tri/:path*` and `/en/admin/:path*` no-index headers and the
 `robots.txt` disallow.
 
 ## Data
 
-- Reads Markdown from `docs/`, never from the request: the closed allow-list `RUNBOOK_DOCS` in `src/server/runbook/docs.ts` (`runbook`, `deploy-runbook`, `deploy-operations`, `deploy-database`, `deploy-runner`, `runbook-api`, `runbook-google-sign-in`, `architecture`, `usage`, `travel-content-api`). Vietnamese locale reads the `.vi.md` twin.
+- Reads Markdown from `docs/`, never from the request: the closed set in `src/server/runbook/docs.ts`: the core list `RUNBOOK_DOCS` (`runbook`, `deploy-runbook`, `deploy-operations`, `deploy-database`, `deploy-runner`, `runbook-api`, `runbook-google-sign-in`, `architecture`, `usage`, `travel-content-api`) plus every feature document, addressed as `features/<slug>` (listed from `docs/features/` on disk, strict slug pattern; the register is included, the template is not). Vietnamese locale reads the `.vi.md` twin.
 - No credential or secret is read or shown; the documents describe secrets by name only.
 - Messages: the `adminRunbook` namespace and `adminContent.nav.runbook` in `messages/vi.json` and `messages/en.json`.
 

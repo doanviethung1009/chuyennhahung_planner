@@ -946,6 +946,8 @@
     "title": "Runbook",
     "description": "The API list and the operations guides, for administrators only. Read straight from the documents in the repository, so it matches what is deployed.",
     "docsLabel": "Runbook documents",
+    "featuresSummary": "Feature documents ({count})",
+    "featuresLabel": "Feature documents",
     "tableLabel": "Table, scroll sideways to read all columns",
     "missing": "This document is not available in this deployment.",
     "docs": {
