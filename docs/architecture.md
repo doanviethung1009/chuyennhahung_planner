@@ -299,7 +299,9 @@ flowchart LR
   origin or the `NEXT_PUBLIC_SITE_URL` origin, because `request.url` carries the
   bind address there. The proxy must overwrite both forwarded headers
   ([usage → Deploy](usage.md#deploy)). `GET /api/health` is the container liveness
-  probe and reads no store.
+  probe and reads no store. Merging into `main` deploys the dev VM through a
+  self-hosted runner ([ADR 0016](adr/0016-auto-deploy-dev.md)); dev and prod images differ
+  because `NEXT_PUBLIC_SITE_URL` is baked at build.
 - **Private pages** (`/sign-in`, `/account/password`, `/my-trips`, `/my-trips/new`, `/my-trips/[id]`, `/trip-setup/[template]`)
   are `noindex` and excluded from the sitemap; `/shared/[token]` is `noindex` unless
   the trip is `public`, and sends `Referrer-Policy: no-referrer`.

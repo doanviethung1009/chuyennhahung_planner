@@ -1,0 +1,18 @@
+# Task Contract: auto-deploy-dev — automatic deploy of `main` to the dev VM
+- Class: L (infrastructure + trust boundary; ADR needed; no application code)
+- Desired outcome / user impact: debug and QC stay on the developer's machine. Once a fix is merged into `main` and CI is green, the dev VM (`192.168.100.140`) runs it with no manual step. Same pipeline is the template for prod later.
+- Scope IN: `.github/workflows/deploy-dev.yml`, `deploy/deploy.sh`, `image:` parameterisation in `deploy/compose.app.yml`, a static test, ADR 0016, feature doc, usage + architecture notes (EN+VI).
+- Scope OUT: prod environment, TLS/HTTPS, registering the runner, creating GHCR tokens or repo variables (owner actions), DB migrations changes, any `src/` change.
+- Evidence: `.github/workflows/ci.yml` (verify only); `deploy/compose.app*.yml`; `Dockerfile` (`runner` target, `NEXT_PUBLIC_SITE_URL` build arg); `docs/usage.md` → Deploy; migrations apply at start under an advisory lock (ADR 0009); VM 1.9 GB RAM so no build there.
+- Constraints / dependencies: VM is LAN-only, so GitHub-hosted runners cannot reach it → self-hosted runner on the VM (outbound only). Repo is private on GitHub Free: no Environment required reviewers, so the prod gate cannot be an approval click. `NEXT_PUBLIC_SITE_URL` is baked at build → one image per environment.
+- Architecture decision / ADR: ADR 0016.
+- Interface contract: workflow `deploy-dev` — triggers `workflow_run` (CI succeeded, push, branch `main`) and `workflow_dispatch` (optional `tag` = redeploy/rollback without build). Image `ghcr.io/<owner>/chuyennhahung-app:{sha-<commit>,dev}`. Repo variable `DEV_SITE_URL`. `deploy/deploy.sh <tag>` env: `APP_IMAGE`, `GHCR_USER`, `GHCR_TOKEN`, optional `STACK_DIR` (default `/opt/chuyennhahung`), `DB_OVERLAY` (default `external-db`). State file `$STACK_DIR/.deployed-tag`.
+- Tasks by owner: Architect (ADR, contract) → Backend/infra (workflow, script, compose) → Docs (feature doc, usage, architecture). No FE.
+- File ownership: all files listed under Scope IN; nothing under `src/`.
+- Acceptance criteria / tests: `tests/deploy-config.test.ts` asserts the workflow has no `pull_request*` trigger, the deploy job runs on a self-hosted runner and is gated to `main`, the script passes `bash -n`, and compose keeps `image:` parameterised. `typecheck`, `lint`, `test` green. Runner behaviour itself is NOT verifiable here (NOT RUN until the owner registers the runner).
+- Security and migration risks: self-hosted runner must never execute PR code → trigger only via `workflow_run` on `main` pushes + manual dispatch on `main`. GHCR credential is the job's `GITHUB_TOKEN`, used for one `docker login`/`logout` inside the script, never persisted. Migrations are forward-only: a rollback restores the old image, not the schema, so migrations must stay backward compatible with the previous release (expand/contract).
+- Rollback approach: script auto-restores the previous tag when the health probe fails; manual rollback = `workflow_dispatch` with `tag=sha-<old>`. Reverting the PR removes the automation and leaves the manual `docker compose` flow in usage.md intact.
+- Budget: 0 subagents; stop condition = owner approval needed before commit.
+- State: IN_PROGRESS
+- Feature document owner: main session (`docs/features/auto-deploy-dev.md` + `.vi.md`)
+- Architecture/usage doc updates needed: `docs/usage.*` (Deploy → automatic deploy), `docs/architecture.*` (one paragraph in the deploy note), `docs/adr/README.*`, `docs/features/README.*`

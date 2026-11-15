@@ -21,7 +21,7 @@ lives in `docs/` and is bilingual and test-enforced — see CLAUDE.md "Documenta
 | Tests | Vitest `^3.2.7`. Node 24 now permits Vitest 4/5 (they need Vite 7/8 and Node ≥ 20.19); **not yet upgraded** — that is the path to the remaining dev-only advisories |
 | CI | `.github/workflows/ci.yml` — typecheck, lint, test, build on every PR into `main`. **Advisory only:** required checks need branch protection, unavailable while the repo is private on GitHub Free |
 | Local git guards | `.githooks/pre-commit` + `pre-push` refuse commits/pushes that move `main`; opt in per clone with `git config core.hooksPath .githooks` |
-| Deployment | No deploy workflow. `NEXT_PUBLIC_SITE_URL` must be set at **build** time |
+| Deployment | `.github/workflows/deploy-dev.yml` deploys green `main` to the dev VM via a self-hosted runner (ADR 0016; not yet run end to end). `NEXT_PUBLIC_SITE_URL` must be set at **build** time |
 
 ## Commands (the real ones — do not invent others)
 ```bash
