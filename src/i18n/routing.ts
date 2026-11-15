@@ -44,6 +44,7 @@ export const pathnames = {
   },
   '/admin/content/reviews': { vi: '/quan-tri/noi-dung/danh-gia', en: '/admin/content/reviews' },
   '/admin/community': { vi: '/quan-tri/cong-dong', en: '/admin/community' },
+  '/admin/runbook': { vi: '/quan-tri/runbook', en: '/admin/runbook' },
   '/about': { vi: '/ve-nha-hung', en: '/about' },
 } as const;
 

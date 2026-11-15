@@ -348,6 +348,8 @@ The variables are read at startup. **Restart** `npm run dev` (or recreate the co
 
 Open `/quan-tri/cong-dong` (`/en/admin/community`). Pending requests come first: **Approve**, or **Reject** with a reason the owner will see; an approved trip can be **Removed** with a reason. The home page and `/chuyen-di-cong-dong` show only approved trips. The same page lists traveller place reviews: **Remove** any live review. Reviews, whether written in the Planner or by a visitor on the home page, are published without approval. Before travellers can submit anything, fill `contribution.terms` (VI and EN) and `contribution.takedownContact` in `src/content/site.ts`; until then the owner's control is closed.
 
+Admins also get a **Runbook** tab at `/quan-tri/runbook` (`/en/admin/runbook`): the API list and the operations guides, read from `docs/`. Editors do not see it. In Docker the image carries a copy of `docs/`, so the tab matches the deployed version ([features/admin-runbook.md](features/admin-runbook.md)).
+
 ### Edit content in the browser (admin or editor)
 
 Sign in as in the section above (an `editor` account has the role `editor`; an admin can set it from `/quan-tri`) and open `/quan-tri/noi-dung/chuyen-di` (`/en/admin/content/stories`). The five pages are stories, a story, places, a place and reviews (`/quan-tri/noi-dung/dia-diem`, `/quan-tri/noi-dung/danh-gia`). Edit a record and save; publishing or archiving a story or review is a separate action. Create, delete, templates and collections are not in the browser yet — use the token API ([travel-content-api.md](travel-content-api.md)).

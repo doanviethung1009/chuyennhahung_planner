@@ -587,7 +587,8 @@
       "stories": "Stories",
       "places": "Places",
       "reviews": "Reviews",
-      "community": "Community trips"
+      "community": "Community trips",
+      "runbook": "Runbook"
     },
     "overview": {
       "heading": "Welcome to the admin area",
@@ -933,6 +934,22 @@
     "byAnonymous": "An anonymous traveller",
     "moderationNote": "Every trip is reviewed by Nhà Hưng before it is shown. The content is written by travellers and does not speak for Nhà Hưng.",
     "takedown": "Want a trip removed? Send a request to"
+  },
+  "adminRunbook": {
+    "metaTitle": "Runbook",
+    "title": "Runbook",
+    "description": "The API list and the operations guides, for administrators only. Read straight from the documents in the repository, so it matches what is deployed.",
+    "docsLabel": "Runbook documents",
+    "tableLabel": "Table, scroll sideways to read all columns",
+    "missing": "This document is not available in this deployment.",
+    "docs": {
+      "runbook": "Overview and API list",
+      "deploy-runbook": "Deploy from a blank VM",
+      "deploy-operations": "Operations",
+      "deploy-database": "PostgreSQL",
+      "deploy-runner": "Deploy runner",
+      "travel-content-api": "Travel Content API"
+    }
   },
   "adminCommunity": {
     "metaTitle": "Community trip review",

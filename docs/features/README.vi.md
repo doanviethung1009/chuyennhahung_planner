@@ -38,6 +38,7 @@ Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
 | Tài khoản trên header | [header-account.vi.md](header-account.vi.md) | Biểu tượng đăng nhập cho khách, menu tài khoản (Chuyến đi của tôi, mật khẩu, quản trị, đăng xuất) cho thành viên, trên máy tính và điện thoại |
 | Tạo chuyến đi trống | [create-blank-trip.vi.md](create-blank-trip.vi.md) | `/my-trips/new` — nút và biểu mẫu tạo chuyến đi trên Chuyến đi của tôi, `source: "blank"` |
 | Docker deploy trên một VM | [docker-deploy.vi.md](docker-deploy.vi.md) | Runbook: nginx + app + PostgreSQL tuỳ chọn, trạng thái bind mount, chuẩn bị host, sao lưu |
+| Runbook cho admin | [admin-runbook.vi.md](admin-runbook.vi.md) | `/quan-tri/runbook` — tab chỉ admin, hiển thị danh sách API và các hướng dẫn vận hành từ `docs/` trên trình duyệt |
 
 ## Các phase chưa mở
 

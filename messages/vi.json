@@ -587,7 +587,8 @@
       "stories": "Chuyến đi",
       "places": "Địa điểm",
       "reviews": "Đánh giá",
-      "community": "Chuyến đi cộng đồng"
+      "community": "Chuyến đi cộng đồng",
+      "runbook": "Runbook"
     },
     "overview": {
       "heading": "Chào mừng đến khu quản trị",
@@ -933,6 +934,22 @@
     "byAnonymous": "Một người đi ẩn danh",
     "moderationNote": "Mỗi chuyến đều do Nhà Hưng duyệt trước khi hiển thị. Nội dung do người đi tự viết và không đại diện cho Nhà Hưng.",
     "takedown": "Muốn gỡ một chuyến đi? Gửi yêu cầu tới"
+  },
+  "adminRunbook": {
+    "metaTitle": "Runbook",
+    "title": "Runbook",
+    "description": "Danh sách API và các hướng dẫn vận hành, chỉ dành cho quản trị viên. Đọc thẳng từ tài liệu trong repository nên khớp với bản đang triển khai.",
+    "docsLabel": "Tài liệu runbook",
+    "tableLabel": "Bảng, cuộn ngang để xem đủ các cột",
+    "missing": "Tài liệu này không có trong bản triển khai hiện tại.",
+    "docs": {
+      "runbook": "Tổng quan và danh sách API",
+      "deploy-runbook": "Triển khai từ VM trống",
+      "deploy-operations": "Vận hành",
+      "deploy-database": "PostgreSQL",
+      "deploy-runner": "Runner triển khai",
+      "travel-content-api": "API Travel Content"
+    }
   },
   "adminCommunity": {
     "metaTitle": "Duyệt chuyến đi cộng đồng",

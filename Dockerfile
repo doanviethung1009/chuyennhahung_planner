@@ -47,6 +47,9 @@ COPY --from=builder --chown=node:node /app/public ./public
 # Startup migrations read process.cwd()/db/migrations (ADR 0009). Output
 # tracing usually carries them; copying states the dependency outright.
 COPY --from=builder --chown=node:node /app/db/migrations ./db/migrations
+# The admin Runbook tab (docs/features/admin-runbook.md) reads these Markdown
+# files at request time; output tracing cannot see a computed path.
+COPY --from=builder --chown=node:node /app/docs ./docs
 # Story pages render per request (ADR 0012), so the build should leave no
 # .data/; clearing it guards against a stray store being traced into the
 # image. The runtime store belongs to the mounted volume alone.
