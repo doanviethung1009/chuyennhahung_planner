@@ -24,7 +24,7 @@ no-index `/quan-tri/:path*`, `/en/admin/:path*` và dòng disallow của `robots
 
 ## Dữ liệu
 
-- Đọc Markdown từ `docs/`, không bao giờ từ request: danh sách cho phép đóng `RUNBOOK_DOCS` trong `src/server/runbook/docs.ts` (`runbook`, `deploy-runbook`, `deploy-operations`, `deploy-database`, `deploy-runner`, `travel-content-api`). Ngôn ngữ tiếng Việt đọc bản `.vi.md`.
+- Đọc Markdown từ `docs/`, không bao giờ từ request: danh sách cho phép đóng `RUNBOOK_DOCS` trong `src/server/runbook/docs.ts` (`runbook`, `deploy-runbook`, `deploy-operations`, `deploy-database`, `deploy-runner`, `runbook-api`, `runbook-google-sign-in`, `travel-content-api`). Ngôn ngữ tiếng Việt đọc bản `.vi.md`.
 - Không đọc hay hiển thị thông tin xác thực nào; tài liệu chỉ nhắc bí mật bằng tên.
 - Thông điệp: namespace `adminRunbook` và `adminContent.nav.runbook` trong `messages/vi.json`, `messages/en.json`.
 
