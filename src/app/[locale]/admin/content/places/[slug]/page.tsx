@@ -41,7 +41,7 @@ export default async function AdminPlaceEditPage({ params }: Params) {
       <PageHeader title={t('editTitle')} description={t('editDescription')} />
       <Container width="wide">
         <div className="grid gap-8 py-10 md:py-14">
-          <AdminNav current="places" canUsers={access.canUsers} canContent={access.canContent} />
+          <AdminNav current="places" canUsers={access.canUsers} canRunbook={access.canRunbook} canContent={access.canContent} />
           <ContentNotice />
           <PlaceEditor slug={slug} />
         </div>

@@ -10,7 +10,7 @@ import {
   slugConflict,
   versionConflict,
 } from '@/server/content/errors';
-import { can, userRole, type Role } from '@/server/identity/permissions';
+import { can, canManageRole, isAdminRole, userRole, type Role } from '@/server/identity/permissions';
 import type { IntegrityIssue } from '@/server/content/repository';
 import type { CostCategory, PlaceCategory } from '@/server/content/schemas';
 import {
@@ -443,6 +443,7 @@ export class PlannerRepository {
       assertActorStillAdmin(data, actor);
       const user = data.users.find((row) => row.id === userId);
       if (!user) throw notFound('planner user', userId);
+      assertMayManage(data, actor, userRole(user));
       if (!user.email) {
         throw invalidState(`planner user "${userId}" has no email, so cannot sign in with a password`);
       }
@@ -662,13 +663,15 @@ export class PlannerRepository {
    * email, a temporary password is issued too (ADR 0007), shown once, and the
    * user must change it before using the Planner.
    */
-  async createUser(input: PlannerUserCreateInput): Promise<IssuedPlannerUserWithPassword> {
+  async createUser(input: PlannerUserCreateInput, actor?: AdminActor): Promise<IssuedPlannerUserWithPassword> {
     const temporaryPassword = input.email ? generateTemporaryPassword() : null;
     const passwordHash = temporaryPassword
       ? await hashPassword(temporaryPassword, this.scryptCostLog2)
       : null;
 
     return this.transaction((data) => {
+      assertActorStillAdmin(data, actor);
+      assertMayManage(data, actor, input.role ?? 'member');
       if (data.users.some((user) => user.handle === input.handle)) {
         throw slugConflict('planner user', input.handle);
       }
@@ -711,10 +714,18 @@ export class PlannerRepository {
       const index = data.users.findIndex((user) => user.id === userId);
       const existing = data.users[index];
       if (index < 0 || !existing) throw notFound('planner user', userId);
+      // Both the current and the new role must be within the actor's reach,
+      // so an admin can neither demote a super admin nor promote anyone to one.
+      assertMayManage(data, actor, userRole(existing));
+      assertMayManage(data, actor, role);
       if (userRole(existing) === role) return toPublicUser(existing);
       // Never leave the system without an admin — the service token is held to
       // this too (ADR 0010 §6).
-      if (userRole(existing) === 'admin') assertAnotherAdminExists(data, userId, 'demote');
+      // Moving between admin-capable roles keeps the head-count, except that
+      // the last super admin may not step down.
+      const current = userRole(existing);
+      if (isAdminRole(current) && !isAdminRole(role)) assertAnotherAdminExists(data, userId, 'demote', current);
+      else if (current === 'super_admin') assertAnotherAdminExists(data, userId, 'demote', current);
       const next: PlannerUser = { ...existing, role, updatedAt: this.timestamp() };
       data.users[index] = next;
       return toPublicUser(next);
@@ -748,7 +759,7 @@ export class PlannerRepository {
       const index = data.users.findIndex((user) => user.id === userId);
       const target = data.users[index];
       if (index < 0 || !target) throw notFound('planner user', userId);
-      if (userRole(target) === 'admin') assertAnotherAdminExists(data, userId, 'delete');
+      if (isAdminRole(userRole(target))) assertAnotherAdminExists(data, userId, 'delete', userRole(target));
 
       const trips = data.trips.filter((trip) => trip.ownerId === userId).length;
       if (trips > 0) {
@@ -2969,20 +2980,47 @@ function selfAdminAction(what: string): ContentError {
 function assertActorStillAdmin(data: PlannerData, actor: AdminActor | undefined): void {
   if (!actor) return;
   const user = data.users.find((candidate) => candidate.id === actor.userId);
-  if (!user || userRole(user) !== 'admin') {
+  if (!user || !isAdminRole(userRole(user))) {
     throw forbidden('the acting account is no longer an admin');
   }
 }
 
-function assertAnotherAdminExists(data: PlannerData, userId: string, verb: string): void {
+/**
+ * ADR 0017 §3: an admin session may only act on member and editor accounts.
+ * The service token (no actor) and a super admin may act on any.
+ */
+function assertMayManage(data: PlannerData, actor: AdminActor | undefined, target: Role): void {
+  if (!actor) return;
+  const user = data.users.find((candidate) => candidate.id === actor.userId);
+  // Call after `assertActorStillAdmin`; a missing actor is refused, never defaulted.
+  if (!user) throw forbidden('the acting account no longer exists');
+  const role = userRole(user);
+  if (!canManageRole(role, target)) {
+    throw forbidden('only a super admin can manage admin and super admin accounts');
+  }
+}
+
+/** Never leave the system without an admin-capable account, nor without a super admin once one exists. */
+function assertAnotherAdminExists(data: PlannerData, userId: string, verb: string, role: Role = 'admin'): void {
   const others = data.users.filter(
-    (candidate) => candidate.id !== userId && userRole(candidate) === 'admin',
+    (candidate) => candidate.id !== userId && isAdminRole(userRole(candidate)),
   ).length;
   if (others === 0) {
     throw new ContentError(
       'invalid_state',
       `cannot ${verb} the last admin: at least one admin must remain`,
     );
+  }
+  if (role === 'super_admin') {
+    const supers = data.users.filter(
+      (candidate) => candidate.id !== userId && userRole(candidate) === 'super_admin',
+    ).length;
+    if (supers === 0) {
+      throw new ContentError(
+        'invalid_state',
+        `cannot ${verb} the last super admin: at least one super admin must remain`,
+      );
+    }
   }
 }
 
@@ -2998,7 +3036,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  */
 function sessionIsExpired(session: PlannerSession, now: Date, role: Role = 'member'): boolean {
   const nowMs = now.getTime();
-  if (role === 'admin') {
+  if (isAdminRole(role)) {
     // Admin lifetime (ADR 0010 §4): absolute counted from sign-in, never longer
     // than the stored expiry; idle window much shorter.
     const absoluteEnd = Math.min(
@@ -3023,7 +3061,7 @@ function roleOfSessionUser(data: PlannerData, session: PlannerSession): Role {
 /** Throttles the `lastSeenAt` write so a read is not usually a write. */
 function sessionNeedsTouch(session: PlannerSession, now: Date, role: Role = 'member'): boolean {
   const minutes =
-    role === 'admin' ? ADMIN_SESSION_TOUCH_INTERVAL_MINUTES : SESSION_TOUCH_INTERVAL_MINUTES;
+    isAdminRole(role) ? ADMIN_SESSION_TOUCH_INTERVAL_MINUTES : SESSION_TOUCH_INTERVAL_MINUTES;
   return now.getTime() - Date.parse(session.lastSeenAt) >= minutes * 60_000;
 }
 

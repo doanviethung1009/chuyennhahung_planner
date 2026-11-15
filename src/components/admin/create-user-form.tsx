@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { buttonClass } from '@/components/ui/button';
 import { Field, inputClass } from '@/components/planner/field';
-import { ADMIN_ROLES, type AdminRole } from './types';
+import { assignableRoles, type AdminRole } from './types';
 
 export interface CreateUserInput {
   handle: string;
@@ -14,7 +14,7 @@ export interface CreateUserInput {
 }
 
 /** Returns true when the user was created, so the form can clear itself. */
-export function CreateUserForm({ onCreate }: { onCreate: (input: CreateUserInput) => Promise<boolean> }) {
+export function CreateUserForm({ onCreate, actorRole }: { onCreate: (input: CreateUserInput) => Promise<boolean>; actorRole: AdminRole }) {
   const t = useTranslations('admin.create');
   const tr = useTranslations('admin.roles');
   const [handle, setHandle] = useState('');
@@ -97,7 +97,7 @@ export function CreateUserForm({ onCreate }: { onCreate: (input: CreateUserInput
             value={role}
             onChange={(e) => setRole(e.target.value as AdminRole)}
           >
-            {ADMIN_ROLES.map((value) => (
+            {assignableRoles(actorRole).map((value) => (
               <option key={value} value={value}>
                 {tr(value)}
               </option>

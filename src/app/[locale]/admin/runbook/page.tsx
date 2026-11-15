@@ -31,13 +31,13 @@ export async function generateMetadata({ params }: Pick<Params, 'params'>): Prom
   );
 }
 
-/** Admin-only runbook: the API list and the operations guides, read from `docs/`. */
+/** Super-admin-only runbook: the API list and the operations guides, read from `docs/`. */
 export default async function AdminRunbookPage({ params, searchParams }: Params) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  // `users` = `user:provision` = admin (and the service principal); editors get a 404.
-  const access = await requireStaff(locale, getPathname({ href: '/admin/runbook' as const, locale }), 'users');
+  // `runbook:read` = super admin only (ADR 0017); admins and editors get a 404.
+  const access = await requireStaff(locale, getPathname({ href: '/admin/runbook' as const, locale }), 'runbook');
   const t = await getTranslations('adminRunbook');
 
   const raw = (await searchParams).doc;
@@ -50,7 +50,7 @@ export default async function AdminRunbookPage({ params, searchParams }: Params)
       <PageHeader title={t('title')} description={t('description')} />
       <Container width="wide">
         <div className="grid gap-8 py-10 md:py-14">
-          <AdminNav current="runbook" canUsers={access.canUsers} canContent={access.canContent} />
+          <AdminNav current="runbook" canUsers={access.canUsers} canRunbook={access.canRunbook} canContent={access.canContent} />
           <nav aria-label={t('docsLabel')} className="flex flex-wrap items-center gap-2">
             {RUNBOOK_DOCS.map((doc) => (
               <Link

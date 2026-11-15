@@ -254,13 +254,11 @@ describe('lockout guards', () => {
     expect((await resetPw(admin.id, { cookie: admin.cookie })).status).toBe(409);
   });
 
-  it('allows admin-to-admin password reset and role change', async () => {
+  it('refuses admin-to-admin reset and role change (ADR 0017; a super admin may, see super-admin.test.ts)', async () => {
     const a = await makeUser('admin');
     const b = await makeUser('admin', { email: `peer${Date.now()}@example.test` });
-    const reset = await resetPw(b.id, { cookie: a.cookie });
-    expect(reset.status).toBe(200);
-    expect(typeof (await reset.json()).temporaryPassword).toBe('string');
-    expect((await patchRole(b.id, 'editor', { cookie: a.cookie })).status).toBe(200);
+    expect((await resetPw(b.id, { cookie: a.cookie })).status).toBe(403);
+    expect((await patchRole(b.id, 'editor', { cookie: a.cookie })).status).toBe(403);
   });
 
   it('never leaves zero admins: demoting or deleting the last one is 409, token included', async () => {
@@ -284,14 +282,14 @@ describe('lockout guards', () => {
 
   it('concurrent demotion of two admins leaves exactly one', async () => {
     const planner = makePlanner();
-    const a = await planner.createUser({ handle: 'conc-a', displayName: 'Admin A', role: 'admin' });
-    const b = await planner.createUser({ handle: 'conc-b', displayName: 'Admin B', role: 'admin' });
+    const a = await planner.createUser({ handle: 'conc-a', displayName: 'Admin A', role: 'super_admin' });
+    const b = await planner.createUser({ handle: 'conc-b', displayName: 'Admin B', role: 'super_admin' });
     const results = await Promise.allSettled([
       planner.setUserRole(a.user.id, 'member', { userId: b.user.id }),
       planner.setUserRole(b.user.id, 'member', { userId: a.user.id }),
     ]);
     expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
-    const admins = (await planner.listUsers()).filter((u) => u.role === 'admin');
+    const admins = (await planner.listUsers()).filter((u) => u.role === 'super_admin');
     expect(admins).toHaveLength(1);
   });
 

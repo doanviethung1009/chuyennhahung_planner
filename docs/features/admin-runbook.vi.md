@@ -30,7 +30,7 @@ no-index `/quan-tri/:path*`, `/en/admin/:path*` và dòng disallow của `robots
 
 ## Cách hoạt động
 
-1. `src/app/[locale]/admin/runbook/page.tsx` gọi `requireStaff(..., 'users')`: chưa đăng nhập thì chuyển tới đăng nhập kèm `returnTo`, mật khẩu tạm thì chuyển tới đổi mật khẩu, vai trò không có `user:provision` nhận `notFound()`. Trang là `force-dynamic` và `noindex`.
+1. `src/app/[locale]/admin/runbook/page.tsx` gọi `requireStaff(..., 'runbook')`: chưa đăng nhập thì chuyển tới đăng nhập kèm `returnTo`, mật khẩu tạm thì chuyển tới đổi mật khẩu, vai trò không có `runbook:read` (mọi vai trò trừ `super_admin`, ADR 0017) nhận `notFound()`. Trang là `force-dynamic` và `noindex`.
 2. `readRunbookDoc` đọc `docs/<id>[.vi].md` từ `process.cwd()`. Tầng runner của Docker sao chép `docs/` vào `/app/docs` cho việc này.
 3. `src/components/runbook/markdown.tsx` phân tích Markdown thành phần tử React (không chuỗi HTML, không `dangerouslySetInnerHTML`). Liên kết chỉ được giữ nếu là `http(s)` hoặc runbook khác trong danh sách cho phép; còn lại hiện thành chữ thường. `#` của tài liệu hiện thành `h2` vì trang giữ `<h1>` duy nhất.
 4. `AdminNav` chỉ hiện tab khi người xem quản lý được người dùng. Ẩn không phải là phân quyền: cổng của trang kiểm tra lại.

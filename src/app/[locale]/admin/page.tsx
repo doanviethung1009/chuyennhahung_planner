@@ -47,9 +47,9 @@ export default async function AdminPage({ params }: Params) {
       <PageHeader title={t('title')} description={t('shellDescription')} />
       <Container width="wide">
         <div className="grid gap-10 py-10 md:py-14">
-          <AdminNav current="overview" canUsers={access.canUsers} canContent={access.canContent} />
+          <AdminNav current="overview" canUsers={access.canUsers} canRunbook={access.canRunbook} canContent={access.canContent} />
           {access.canUsers ? (
-            <AdminConsole currentUserId={access.principal.userId} currentHandle={access.principal.handle} />
+            <AdminConsole currentUserId={access.principal.userId} actorRole={access.principal.role} currentHandle={access.principal.handle} />
           ) : (
             <section aria-labelledby="admin-overview-heading" className="grid gap-4">
               <h2 id="admin-overview-heading" className="font-display text-2xl text-foreground">

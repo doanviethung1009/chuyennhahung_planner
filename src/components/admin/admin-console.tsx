@@ -12,6 +12,7 @@ import type { AdminRole, AdminUser, OneTimeSecret } from './types';
 
 interface Props {
   currentUserId: string;
+  actorRole: AdminRole;
   currentHandle: string;
 }
 
@@ -35,7 +36,7 @@ const FIELD_NAMES = ['handle', 'displayName', 'email', 'role'] as const;
  * heading, metadata) stays on the server. It never sees a service token: the
  * browser authenticates with the session cookie alone.
  */
-export function AdminConsole({ currentUserId, currentHandle }: Props) {
+export function AdminConsole({ currentUserId, currentHandle, actorRole }: Props) {
   const t = useTranslations('admin');
   const locale = useLocale() as Locale;
   const [users, setUsers] = useState<AdminUser[] | null>(null);
@@ -204,7 +205,7 @@ export function AdminConsole({ currentUserId, currentHandle }: Props) {
         ) : users.length === 0 ? (
           <p className="text-base text-foreground-muted">{t('users.empty')}</p>
         ) : (
-          <UserTable users={users} currentUserId={currentUserId} onSaveRole={saveRole} onReset={resetPassword} />
+          <UserTable users={users} currentUserId={currentUserId} actorRole={actorRole} onSaveRole={saveRole} onReset={resetPassword} />
         )}
         {users === null && status?.kind === 'error' ? (
           <div>
@@ -215,7 +216,7 @@ export function AdminConsole({ currentUserId, currentHandle }: Props) {
         ) : null}
       </section>
 
-      <CreateUserForm onCreate={createUser} />
+      <CreateUserForm actorRole={actorRole} onCreate={createUser} />
     </div>
   );
 }

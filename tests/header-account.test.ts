@@ -39,7 +39,7 @@ describe('header account control', () => {
 
   it('shows the admin entry only to the admin role', () => {
     const source = read('components/layout/account-menu.tsx');
-    expect(source).toMatch(/user\.role === 'admin' \?[\s\S]{0,120}href="\/admin"/);
+    expect(source).toMatch(/user\.role === 'admin' \|\| user\.role === 'super_admin' \?[\s\S]{0,120}href="\/admin"/);
   });
 
   it('is mounted on desktop and in the mobile drawer', () => {
