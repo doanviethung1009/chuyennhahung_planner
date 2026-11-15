@@ -44,10 +44,13 @@ Script deploy dùng các file compose của commit đã checkout và ghi một f
 ưu tiên một nhóm chỉ chứa `cnh-runner` thay vì mở `.env` cho mọi người đọc.
 
 ```bash
-sudo setfacl -m u:cnh-runner:rwx /opt/chuyennhahung
+sudo setfacl -m u:cnh-runner:--x /opt/chuyennhahung
 sudo touch /opt/chuyennhahung/.deployed-tag
 sudo chown cnh-runner /opt/chuyennhahung/.deployed-tag
 ```
+
+Thư mục chỉ cấp quyền đi qua (`--x`), không cấp ghi: runner không được xoá hay thay
+`.env`. Nó chỉ ghi lại được đúng file `.deployed-tag` đã tạo sẵn.
 
 `/opt/chuyennhahung/.env` giữ mode `600`. Nếu `docker compose` không đọc được nó dưới
 `cnh-runner`, đó là đánh đổi phải quyết có chủ đích (cho runner quyền đọc `.env`, hoặc

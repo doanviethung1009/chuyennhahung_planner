@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -81,6 +82,45 @@ describe('deploy/deploy.sh and the one-VM stack (docker-deploy.md)', () => {
     for (const f of ['compose.yml', 'compose.app.bind.yml', 'compose.app.external-db.yml', 'compose.app.local-db.yml']) {
       expect(() => read(`deploy/${f}`)).not.toThrow();
     }
+  });
+});
+
+describe('deploy/deploy.sh rollback logic (fake docker)', () => {
+  // A failed `up` leaves the old container running and healthy; the script must
+  // not mistake that for a successful deploy or record the new tag.
+  function run(failUp: boolean) {
+    const dir = mkdtempSync(join(tmpdir(), 'cnh-deploy-'));
+    const bin = join(dir, 'bin');
+    const stack = join(dir, 'stack');
+    spawnSync('mkdir', ['-p', bin, stack]);
+    writeFileSync(join(stack, '.deployed-tag'), 'sha-old\n');
+    const fake = `#!/usr/bin/env bash
+case " $* " in
+  *" up "*) ${failUp ? 'exit 1' : 'exit 0'} ;;
+  *" ps "*) echo cid ;;
+  *" inspect "*) echo "ghcr.io/x/y:sha-old" ;;
+esac
+exit 0
+`;
+    writeFileSync(join(bin, 'docker'), fake);
+    chmodSync(join(bin, 'docker'), 0o755);
+    const r = spawnSync('bash', [join(root, 'deploy/deploy.sh'), 'sha-new'], {
+      encoding: 'utf8',
+      env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, APP_IMAGE: 'ghcr.io/x/y', STACK_DIR: stack, WAIT_SECONDS: '0' },
+    });
+    return { r, state: readFileSync(join(stack, '.deployed-tag'), 'utf8').trim() };
+  }
+
+  it('fails and keeps the old tag when `up` fails', () => {
+    const { r, state } = run(true);
+    expect(r.status).toBe(1);
+    expect(state).toBe('sha-old');
+  });
+
+  it('fails when the container still runs another image, even if it is healthy', () => {
+    const { r, state } = run(false);
+    expect(r.status).toBe(1);
+    expect(state).toBe('sha-old');
   });
 });
 

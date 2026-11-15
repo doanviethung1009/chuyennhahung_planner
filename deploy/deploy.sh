@@ -37,7 +37,16 @@ compose() {
     -f "$HERE/compose.app.$DB_OVERLAY.yml" "$@"
 }
 
+# The image the app container is actually running. A failed `up` leaves the OLD
+# container in place, and its health check would pass: compare before trusting it.
+running_image() {
+  local id
+  id="$(compose ps -q app 2>/dev/null)" || return 1
+  [[ -n "$id" ]] && docker inspect -f '{{.Config.Image}}' "$id" 2>/dev/null
+}
+
 healthy() {
+  [[ "$(running_image)" == "$APP_IMAGE:$APP_IMAGE_TAG" ]] || return 1
   compose exec -T app node -e \
     "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))" \
     >/dev/null 2>&1
@@ -45,7 +54,8 @@ healthy() {
 
 release() {
   export APP_IMAGE APP_IMAGE_TAG="$1"
-  compose up -d --no-build app
+  # Inside `if release …` set -e is off, so a failed `up` must return itself.
+  compose up -d --no-build app || return 1
   local waited=0
   until healthy; do
     ((waited += 5))
