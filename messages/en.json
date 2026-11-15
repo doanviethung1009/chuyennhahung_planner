@@ -289,7 +289,7 @@
   "signIn": {
     "metaTitle": "Sign in",
     "title": "Sign in to save your trip",
-    "description": "Sign in with Google, or with the email and password we gave you, to save your trips and see them again.",
+    "description": "Sign in with Google, with an email and password, or with the access code we gave you, to save your trips and see them again.",
     "googleButton": "Sign in with Google",
     "googleHint": "The first time you sign in with Google, your account is created for you. We keep your Google name and email to hold on to your trips.",
     "divider": "or use your email",

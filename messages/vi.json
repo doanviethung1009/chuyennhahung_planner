@@ -289,7 +289,7 @@
   "signIn": {
     "metaTitle": "Đăng nhập",
     "title": "Đăng nhập để lưu chuyến đi",
-    "description": "Đăng nhập bằng Google, hoặc bằng email và mật khẩu nhà Hưng cấp cho bạn, để lưu và xem lại các chuyến đi của bạn.",
+    "description": "Đăng nhập bằng Google, bằng email và mật khẩu, hoặc bằng mã truy cập nhà Hưng cấp cho bạn, để lưu và xem lại các chuyến đi của bạn.",
     "googleButton": "Đăng nhập bằng Google",
     "googleHint": "Lần đầu đăng nhập bằng Google, tài khoản của bạn được tạo tự động. Nhà Hưng lưu tên và email Google của bạn để giữ các chuyến đi của bạn.",
     "divider": "hoặc dùng email",

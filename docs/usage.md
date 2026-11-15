@@ -41,7 +41,7 @@ closed.
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | *unset* | Google sign-in ([ADR 0007](adr/0007-password-and-google-sign-in.md)). Both required; without them the Google routes answer 404 and the button is hidden. Server-only — never `NEXT_PUBLIC_*` |
 | `GOOGLE_SIGNUP_ENABLED` | `true` | `false` stops a first Google sign-in from creating an account; existing accounts still sign in |
 | `GOOGLE_REDIRECT_URI` | *derived* | Override for the callback URL; otherwise `NEXT_PUBLIC_SITE_URL` (or the request origin) + `/api/planner/oauth/google/callback`. Must match Google Cloud Console exactly |
-| `TRUST_PROXY_HEADERS` | *unset* | `true` only behind a reverse proxy that **overwrites** `X-Forwarded-Proto` and `X-Forwarded-For` (see *Deploy*). Lets the session and OAuth cookies take `Secure` from `X-Forwarded-Proto` |
+| `TRUST_PROXY_HEADERS` | *unset* | `true` only behind a reverse proxy that **overwrites** `X-Forwarded-Proto` and `X-Forwarded-For` (see *Deploy*). Lets the session and OAuth cookies take `Secure` from `X-Forwarded-Proto`, and makes the same-origin check on sign-in accept the host in `X-Forwarded-Host` too, so a site reachable by an IP and a name signs in on both |
 
 `.data/` is gitignored. Nothing in it is seeded for the Planner — see
 *Provision a Planner traveller* below.

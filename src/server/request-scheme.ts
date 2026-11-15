@@ -37,6 +37,13 @@ export function isSecureRequest(request: Request, env: Env = process.env): boole
  * carries the address the server is bound to (`https://0.0.0.0:3000`), not the
  * one the browser used, so the public site URL — which is our origin by
  * definition, and is configuration rather than request input — counts too.
+ *
+ * `NEXT_PUBLIC_SITE_URL` is one address, fixed at build time. A site reachable
+ * by two (an IP and a name) would refuse sign-in on the other one, so behind a
+ * declared proxy (`TRUST_PROXY_HEADERS=true`) the host the browser used —
+ * `X-Forwarded-Host` with `X-Forwarded-Proto`, both overwritten by the proxy —
+ * counts as well. A cross-site page cannot choose either header on the
+ * victim's request, so this never admits an attacker's origin.
  */
 export function ownOrigins(request: Request, env: Env = process.env): Set<string> {
   const origins = new Set([new URL(request.url).origin]);
@@ -48,5 +55,23 @@ export function ownOrigins(request: Request, env: Env = process.env): Set<string
       // A malformed site URL adds nothing; the request's own origin still holds.
     }
   }
+  const forwarded = forwardedOrigin(request, env);
+  if (forwarded) origins.add(forwarded);
   return origins;
+}
+
+/** `proto://host` the browser used, from the proxy's headers; null if absent or malformed. */
+function forwardedOrigin(request: Request, env: Env): string | null {
+  if (!trustsProxyHeaders(env)) return null;
+  const first = (name: string) => request.headers.get(name)?.split(',')[0]?.trim().toLowerCase();
+  const host = first('x-forwarded-host');
+  const proto = first('x-forwarded-proto');
+  if (!host || (proto !== 'http' && proto !== 'https')) return null;
+  try {
+    const url = new URL(`${proto}://${host}`);
+    // A host with a path, userinfo or query is not a bare host: refuse it.
+    return url.host === host ? url.origin : null;
+  } catch {
+    return null;
+  }
 }
