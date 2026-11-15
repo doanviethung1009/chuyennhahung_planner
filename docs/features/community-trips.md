@@ -21,7 +21,7 @@ API: `PUT|DELETE /api/planner/[id]/listing` (owner), `GET /api/community/trips` 
 - `CommunityTripCard` — the public allow-list: `shareToken`, `title`, `destinationSlug`, `durationDays`, `partySize`, `travelStyle`, `activityCount`, `author` (`null` when anonymous), `approvedAt`. Never email, user id or `ownerId`.
 - PostgreSQL: migration `0005_trip_listing.sql` adds a nullable `trips.listing` JSONB column; rollback in `db/rollback/`.
 - Message namespaces: `community`, `home.community`, `share.listing*`, `adminCommunity`, `adminContent.nav.community`, `nav.communityTrips`.
-- **Owner data required:** `contribution.terms` (VI and EN) and `contribution.takedownContact` in `src/content/site.ts`. Both are `null` today and nothing is invented.
+- **Owner data required:** `contribution.terms` (VI and EN) and `contribution.takedownContact` in `src/content/site.ts`. Both are now filled in (the terms, and the takedown email supplied by the owner); the feature is open. Change them there if the owner's wording or contact changes.
 
 ## How it works
 

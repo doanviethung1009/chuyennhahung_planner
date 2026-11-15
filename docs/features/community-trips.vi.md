@@ -21,7 +21,7 @@ API: `PUT|DELETE /api/planner/[id]/listing` (chủ chuyến), `GET /api/communit
 - `CommunityTripCard` — allow-list công khai: `shareToken`, `title`, `destinationSlug`, `durationDays`, `partySize`, `travelStyle`, `activityCount`, `author` (`null` khi ẩn danh), `approvedAt`. Không bao giờ có email, user id hay `ownerId`.
 - PostgreSQL: migration `0005_trip_listing.sql` thêm cột JSONB `trips.listing` cho phép null; rollback trong `db/rollback/`.
 - Namespace thông điệp: `community`, `home.community`, `share.listing*`, `adminCommunity`, `adminContent.nav.community`, `nav.communityTrips`.
-- **Cần dữ liệu thật của chủ nhà:** `contribution.terms` (VI và EN) và `contribution.takedownContact` trong `src/content/site.ts`. Hiện cả hai là `null` và không có gì được bịa.
+- **Cần dữ liệu thật của chủ nhà:** `contribution.terms` (VI và EN) và `contribution.takedownContact` trong `src/content/site.ts`. Hiện cả hai đã được điền (điều khoản, và email gỡ nội dung do chủ nhà cung cấp); tính năng đã mở. Đổi tại đó nếu lời văn hoặc đầu mối thay đổi.
 
 ## Cách hoạt động
 
