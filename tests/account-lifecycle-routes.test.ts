@@ -114,13 +114,13 @@ describe('ban / unban / restore routes', () => {
     await expect(repo.signIn(editor.accessToken)).resolves.toBeTruthy();
   });
 
-  it('refuses yourself (409), an admin acting on an admin (403), a member target (409) and an unknown id (404)', async () => {
+  it('refuses yourself (409), an admin acting on an admin (403) and an unknown id (404); a member can be banned', async () => {
     const admin = await makeUser('admin');
     const peer = await makeUser('admin');
     const member = await makeUser('member');
     expect((await post('ban', admin.id, { cookie: admin.cookie })).status).toBe(409);
     expect((await post('ban', peer.id, { cookie: admin.cookie })).status).toBe(403);
-    expect((await post('ban', member.id, { cookie: admin.cookie })).status).toBe(409);
+    expect((await post('ban', member.id, { cookie: admin.cookie })).status).toBe(200);
     expect((await post('ban', 'usr_missing', { cookie: admin.cookie })).status).toBe(404);
   });
 

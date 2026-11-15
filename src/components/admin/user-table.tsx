@@ -139,6 +139,8 @@ export function UserTable({
                 // ADR 0017: an admin does not touch admin or super admin accounts.
                 const manageable = assignableRoles(actorRole).includes(role);
                 const busy = busyId === user.id;
+                // A banned or deleted account keeps its role until it is unbanned / restored.
+                const disabled = Boolean(user.bannedAt || user.deletedAt);
                 return (
                   <tr
                     key={user.id}
@@ -167,7 +169,7 @@ export function UserTable({
                       {user.email || t("noEmail")}
                     </td>
                     <td className="px-4 py-3">
-                      {isSelf || !manageable ? (
+                      {isSelf || !manageable || disabled ? (
                         <>
                           <span className="text-foreground">{tr(role)}</span>
                           {isSelf ? (
@@ -256,9 +258,7 @@ export function UserTable({
                             ? (["restore", "purge"] as const)
                             : user.bannedAt
                               ? (["unban", "delete"] as const)
-                              : role === "member"
-                                ? (["reset"] as const)
-                                : (["reset", "ban", "delete"] as const)
+                              : (["reset", "ban", "delete"] as const)
                           ).map((kind) => (
                             <button
                               key={kind}

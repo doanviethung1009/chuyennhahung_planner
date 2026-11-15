@@ -64,10 +64,9 @@ describe('ban', () => {
     expect(again.bannedAt).toBe(first.bannedAt);
   });
 
-  it('refuses self, members, and an admin acting on admin/super_admin', async () => {
-    const { planner, admin, admin2, superA, member } = await seed();
+  it('refuses self and an admin acting on admin/super_admin', async () => {
+    const { planner, admin, admin2, superA } = await seed();
     expect(await code(planner.changeAccountState(admin.id, 'ban', { userId: admin.id }))).toBe('invalid_state');
-    expect(await code(planner.changeAccountState(member.id, 'ban', { userId: admin.id }))).toBe('invalid_state');
     expect(await code(planner.changeAccountState(admin2.id, 'ban', { userId: admin.id }))).toBe('forbidden');
     expect(await code(planner.changeAccountState(superA.id, 'ban', { userId: admin.id }))).toBe('forbidden');
     expect(await code(planner.changeAccountState(admin2.id, 'ban', { userId: superA.id }))).toBe('ok');
@@ -104,15 +103,29 @@ describe('soft delete, restore and permanent delete', () => {
     expect(await code(planner.signIn(editor.token))).toBe('ok');
   });
 
-  it('a session can purge only a soft-deleted staff account; the service token keeps the direct path', async () => {
+  it('a session can purge only a soft-deleted account; the service token keeps the direct path', async () => {
     const { planner, editor, admin, member } = await seed();
     expect(await code(planner.deleteUser(editor.id, { userId: admin.id }))).toBe('invalid_state');
     await planner.changeAccountState(editor.id, 'delete', { userId: admin.id });
     expect(await code(planner.deleteUser(editor.id, { userId: admin.id }))).toBe('ok');
     expect((await planner.listUsers()).some((u) => u.id === editor.id)).toBe(false);
-    // Members: no session path; service token deletes as before.
+    // Members: the same two-step path for a session; the service token deletes directly.
     expect(await code(planner.deleteUser(member.id, { userId: admin.id }))).toBe('invalid_state');
-    expect(await code(planner.deleteUser(member.id))).toBe('ok');
+    await planner.changeAccountState(member.id, 'delete', { userId: admin.id });
+    expect(await code(planner.deleteUser(member.id, { userId: admin.id }))).toBe('ok');
+  });
+
+  it('members can be banned, restored and purged by an admin; a disabled account cannot change role', async () => {
+    const { planner, member, admin, superA } = await seed();
+    await planner.changeAccountState(member.id, 'ban', { userId: admin.id });
+    expect(await code(planner.signIn(member.token))).toBe('unauthorized');
+    expect(await code(planner.setUserRole(member.id, 'editor', { userId: admin.id }))).toBe('invalid_state');
+    await planner.changeAccountState(member.id, 'unban', { userId: admin.id });
+    expect(await code(planner.setUserRole(member.id, 'editor', { userId: admin.id }))).toBe('ok');
+    // The owner of a trip is refused a permanent delete until the trip is gone.
+    await planner.createTrip(member.id, daLatTripInput());
+    await planner.changeAccountState(member.id, 'delete', { userId: superA.id });
+    expect(await code(planner.deleteUser(member.id, { userId: superA.id }))).toBe('invalid_state');
   });
 
   it('refuses to purge yourself, or an admin as an admin', async () => {

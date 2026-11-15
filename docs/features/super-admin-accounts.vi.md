@@ -4,7 +4,7 @@
 
 ## Summary
 
-Role `super_admin` cao hơn `admin` ([ADR 0017](../adr/0017-super-admin-role.vi.md)). Chỉ super admin mở được tab Runbook, và admin không còn chiếm được tài khoản admin khác. Tài khoản staff (editor, admin, super admin) còn khóa, xóa mềm, khôi phục hoặc xóa vĩnh viễn được.
+Role `super_admin` cao hơn `admin` ([ADR 0017](../adr/0017-super-admin-role.vi.md)). Chỉ super admin mở được tab Runbook, và admin không còn chiếm được tài khoản admin khác. Mọi tài khoản (member, editor, admin, super admin) còn khóa, xóa mềm, khôi phục hoặc xóa vĩnh viễn được.
 
 ## Routes
 
@@ -21,7 +21,7 @@ API: `POST /api/admin/planner/users/[userId]/ban`, `/unban`, `/restore`; `DELETE
 3. `canManageRole(actor, target)`: phiên admin chỉ tạo, đổi role hoặc đặt lại mật khẩu cho tài khoản `member` và `editor`; super admin hoặc service token thao tác trên mọi tài khoản. Kiểm tra chạy lại trong transaction nên actor đã bị hạ role bị từ chối.
 4. `super_admin` cuối cùng không bị hạ role hay xóa; `admin` và `super_admin` đều tính khi xét "admin cuối cùng".
 4a. `npm run admin:create -- --email … --name … --role member|editor|admin|super_admin` (mặc định `admin`) tạo tài khoản với role đó thẳng trong store, không cần token. Lệnh curl tương đương nằm ở `docs/deploy-runbook.vi.md` Phase 7.
-5. Khóa và xóa mềm đánh dấu user *bị vô hiệu*: phiên bị xóa ngay và đăng nhập bằng cookie, access token, mật khẩu hay Google đều bị từ chối; dữ liệu giữ nguyên. Mở khóa và khôi phục bật lại. Xóa mềm chỉ vô hiệu và đánh dấu tài khoản (vẫn nằm trong danh sách staff với nhãn "Đã xóa"), xóa cứng (`?mode=hard`, mặc định) xóa dòng và từ chối khi user còn trip; phiên chỉ xóa cứng được tài khoản staff đã xóa mềm. Chỉ tài khoản staff, không bao giờ chính mình, admin chỉ với editor, và tài khoản bị vô hiệu không còn tính là "admin cuối cùng". Trong bảng user mỗi dòng có Cấp lại mật khẩu / Khóa / Xóa (mềm), hoặc Mở khóa, hoặc Khôi phục / Xóa vĩnh viễn, đều có bước xác nhận.
+5. Khóa và xóa mềm đánh dấu user *bị vô hiệu*: phiên bị xóa ngay và đăng nhập bằng cookie, access token, mật khẩu hay Google đều bị từ chối; dữ liệu giữ nguyên. Mở khóa và khôi phục bật lại. Xóa mềm chỉ vô hiệu và đánh dấu tài khoản (vẫn nằm trong danh sách staff với nhãn "Đã xóa"), xóa cứng (`?mode=hard`, mặc định) xóa dòng và từ chối khi user còn trip; phiên chỉ xóa cứng được tài khoản đã xóa mềm. Không bao giờ với chính mình, admin chỉ với member và editor, và tài khoản bị vô hiệu không còn tính là "admin cuối cùng". Trong bảng user mỗi dòng có Cấp lại mật khẩu / Khóa / Xóa (mềm), hoặc Mở khóa, hoặc Khôi phục / Xóa vĩnh viễn, đều có bước xác nhận.
 6. Tạo super admin đầu tiên bằng service token: `PATCH /api/admin/planner/users/:id` body `{"role":"super_admin"}`.
 
 ## Files
@@ -48,5 +48,5 @@ API: `POST /api/admin/planner/users/[userId]/ban`, `/unban`, `/restore`; `DELETE
 - Admin hiện tại mất Runbook và quyền quản lý admin khác cho tới khi có super admin đầu tiên.
 - Xóa mềm vẫn giữ email và handle; chưa có job tự xóa vĩnh viễn sau N ngày.
 - Nội dung công khai (trip niêm yết, đánh giá đã duyệt) của user bị khóa hoặc xóa mềm vẫn hiển thị; chỉ chặn đăng nhập. Muốn ẩn cần một thay đổi riêng.
-- Không khóa hay xóa mềm được member (dùng hạn chế đánh giá, ADR 0015).
+- Khóa và xóa mềm áp dụng cả cho member; hạn chế đánh giá (ADR 0015) vẫn là công cụ nhẹ hơn cho một tác giả.
 - Khuyến nghị review `/sec-check`, chưa chạy.
