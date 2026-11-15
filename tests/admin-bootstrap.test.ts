@@ -26,12 +26,34 @@ describe('parseAdminBootstrapArgs', () => {
     expect(() => parseAdminBootstrapArgs([])).toThrow(/usage/);
     expect(() => parseAdminBootstrapArgs(['--email', 'a@b.vn'])).toThrow(/usage/);
     expect(() => parseAdminBootstrapArgs(['--email', '--name', 'x'])).toThrow(/needs a value/);
-    expect(() => parseAdminBootstrapArgs(['--role', 'member'])).toThrow(/unknown argument/);
+    expect(() => parseAdminBootstrapArgs(['--bogus', 'x'])).toThrow(/unknown argument/);
+  });
+
+  it('accepts --role, defaults to admin, and refuses an unknown role', () => {
+    const base = ['--email', 'a@b.vn', '--name', 'x'];
+    expect(parseAdminBootstrapArgs(base).role).toBeUndefined();
+    expect(parseAdminBootstrapArgs([...base, '--role', 'super_admin']).role).toBe('super_admin');
+    expect(() => parseAdminBootstrapArgs([...base, '--role', 'root'])).toThrow(/--role must be/);
+    expect(() => parseAdminBootstrapArgs([...base, '--role'])).toThrow(/needs a value/);
   });
 
   it('falls back to "admin" for a too-short local part', () => {
     expect(handleFromEmail('a@b.vn')).toBe('admin');
     expect(handleFromEmail('Hung.Tran+x@site.vn')).toBe('hung-tran-x');
+  });
+});
+
+describe('createAdminAccount role', () => {
+  it('creates the requested role, and admin when none is given', async () => {
+    const store = createMemoryPlannerStore();
+    const planner = makePlanner({ store });
+    const boss = await createAdminAccount(planner, { email: 'boss@example.vn', displayName: 'Boss', handle: 'boss', role: 'super_admin' });
+    const plain = await createAdminAccount(planner, { email: 'plain@example.vn', displayName: 'Plain', handle: 'plain' });
+    expect(boss.role).toBe('super_admin');
+    expect(plain.role).toBe('admin');
+    const users = (await store.read()).users;
+    expect(users.find((u) => u.handle === 'boss')?.role).toBe('super_admin');
+    expect(users.find((u) => u.handle === 'plain')?.role).toBe('admin');
   });
 });
 

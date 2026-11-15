@@ -89,7 +89,7 @@ curl -si ORIGIN/api/planner/oauth/google/start | head -n 1   # 302 if Google is 
 | Change a role | `PATCH /api/admin/planner/users/:userId` |
 | Check data integrity | `GET /api/admin/planner/integrity`, `GET /api/admin/travel/integrity` |
 | Moderate community content | `/api/admin/community/{queue,reviews,trips,restrictions}` |
-| Create the first admin | `docker compose … run --rm tools npm run admin:create -- --email <email>` (see [usage.md](usage.md)) |
+| Create the first admin | `docker compose … run --rm tools npm run admin:create -- --email <email> [--role super_admin]` (see [usage.md](usage.md)) |
 
 ## Rollback
 

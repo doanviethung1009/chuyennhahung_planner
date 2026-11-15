@@ -1,5 +1,6 @@
 import { ContentError } from '@/server/content/errors';
 import type { PlannerRepository } from './repository';
+import { roleSchema, type Role } from '@/server/identity/permissions';
 import { plannerUserCreateSchema } from './schemas';
 
 /**
@@ -13,18 +14,20 @@ export interface AdminBootstrapArgs {
   email: string;
   displayName: string;
   handle: string;
+  /** Absent means `admin`, as before `--role` existed. */
+  role?: Role;
 }
 
 export const ADMIN_CREATE_USAGE =
-  'usage: npm run admin:create -- --email <email> --name "<display name>" [--handle <handle>]';
+  'usage: npm run admin:create -- --email <email> --name "<display name>" [--handle <handle>] [--role member|editor|admin|super_admin]';
 
-/** Parses `--email`, `--name` and the optional `--handle`. Throws on anything else. */
+/** Parses `--email`, `--name` and the optional `--handle` and `--role`. Throws on anything else. */
 export function parseAdminBootstrapArgs(argv: readonly string[]): AdminBootstrapArgs {
   const values = new Map<string, string>();
   for (let index = 0; index < argv.length; index += 1) {
     const flag = argv[index];
     const value = argv[index + 1];
-    if (flag !== '--email' && flag !== '--name' && flag !== '--handle') {
+    if (flag !== '--email' && flag !== '--name' && flag !== '--handle' && flag !== '--role') {
       throw new Error(`unknown argument "${flag}"\n${ADMIN_CREATE_USAGE}`);
     }
     if (value === undefined || value.startsWith('--')) {
@@ -37,7 +40,17 @@ export function parseAdminBootstrapArgs(argv: readonly string[]): AdminBootstrap
   const email = values.get('--email')?.trim().toLowerCase();
   const displayName = values.get('--name')?.trim();
   if (!email || !displayName) throw new Error(ADMIN_CREATE_USAGE);
-  return { email, displayName, handle: values.get('--handle') ?? handleFromEmail(email) };
+  const rawRole = values.get('--role');
+  const role = rawRole === undefined ? undefined : roleSchema.safeParse(rawRole);
+  if (role && !role.success) {
+    throw new Error(`--role must be member, editor, admin or super_admin\n${ADMIN_CREATE_USAGE}`);
+  }
+  return {
+    email,
+    displayName,
+    handle: values.get('--handle') ?? handleFromEmail(email),
+    ...(role?.success ? { role: role.data } : {}),
+  };
 }
 
 /** `Hung.Tran+x@site.vn` → `hung-tran-x`; too short → `admin`. */
@@ -56,6 +69,7 @@ export interface AdminBootstrapResult {
   userId: string;
   handle: string;
   email: string;
+  role: Role;
   temporaryPassword: string;
 }
 
@@ -67,7 +81,7 @@ export async function createAdminAccount(
     handle: args.handle,
     displayName: args.displayName,
     email: args.email,
-    role: 'admin',
+    role: args.role ?? 'admin',
   });
   if (!parsed.success) {
     const fields = parsed.error.issues.map((issue) => issue.path.join('.') || 'input');
@@ -83,6 +97,7 @@ export async function createAdminAccount(
       userId: issued.user.id,
       handle: issued.user.handle,
       email: parsed.data.email ?? args.email,
+      role: parsed.data.role ?? 'admin',
       temporaryPassword: issued.temporaryPassword,
     };
   } catch (error) {

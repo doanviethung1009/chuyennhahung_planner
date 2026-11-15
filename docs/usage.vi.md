@@ -122,7 +122,7 @@ merge — vẫn phải có người xem.
 | `editor` | Nội dung du lịch ở `/quan-tri` | Email + mật khẩu, hoặc Google |
 | `admin` | Nội dung **và** người dùng ở `/quan-tri` | Email + mật khẩu, hoặc Google |
 
-Tài khoản là `member` trừ khi được tạo với vai trò khác (`admin:create` tạo ra `admin`). Chỉ admin (ở `/quan-tri`) hoặc service token mới nâng được ai đó lên `editor` hay `admin`; Chỉ super admin (hoặc service token) tạo được `admin`/`super_admin` hay đặt lại mật khẩu admin, và chỉ super admin mở được tab Runbook ([ADR 0017](adr/0017-super-admin-role.vi.md)); nâng người đầu tiên bằng `PATCH /api/admin/planner/users/<id>` với `{"role":"super_admin"}` dùng admin token. Trong `/quan-tri` tài khoản staff (editor, admin) khóa được (phiên kết thúc ngay, không đăng nhập được, hoàn tác bằng *Mở khóa*), xóa mềm được (chặn và đánh dấu, hoàn tác bằng *Khôi phục*) hoặc xóa vĩnh viễn, chỉ làm được với tài khoản đã xóa mềm; không làm với chính mình, và admin chỉ với editor. Google không bao giờ cấp vai trò.
+Tài khoản là `member` trừ khi được tạo với vai trò khác (`admin:create` tạo ra `admin`, trừ khi `--role` nói khác). Chỉ admin (ở `/quan-tri`) hoặc service token mới nâng được ai đó lên `editor` hay `admin`; Chỉ super admin (hoặc service token) tạo được `admin`/`super_admin` hay đặt lại mật khẩu admin, và chỉ super admin mở được tab Runbook ([ADR 0017](adr/0017-super-admin-role.vi.md)); nâng người đầu tiên bằng `PATCH /api/admin/planner/users/<id>` với `{"role":"super_admin"}` dùng admin token. Trong `/quan-tri` tài khoản staff (editor, admin) khóa được (phiên kết thúc ngay, không đăng nhập được, hoàn tác bằng *Mở khóa*), xóa mềm được (chặn và đánh dấu, hoàn tác bằng *Khôi phục*) hoặc xóa vĩnh viễn, chỉ làm được với tài khoản đã xóa mềm; không làm với chính mình, và admin chỉ với editor. Google không bao giờ cấp vai trò.
 
 **Các loại bí mật, và mất thì làm gì**
 
@@ -273,7 +273,13 @@ danh sách endpoint đầy đủ.
 Cổng quản trị ở `/quan-tri` (`/en/admin`). Cách đơn giản nhất để tạo admin đầu tiên là `admin:create`. Lệnh ghi thẳng vào kho mà app đang dùng — PostgreSQL khi đặt `PLANNER_DATABASE_URL`, nếu không thì tệp JSON — không cần `ADMIN_API_TOKEN`, không cần server đang chạy, và in ra một mật khẩu tạm ngẫu nhiên đúng một lần:
 
 ```bash
-npm run admin:create -- --email you@example.com --name "Hưng"            # tuỳ chọn: --handle admin-hung
+npm run admin:create -- --email you@example.com --name "Hưng"            # tuỳ chọn: --handle admin-hung, --role member|editor|admin|super_admin (mặc định admin)
+```
+
+`super_admin` đầu tiên cũng tạo được cùng cách (đây là role duy nhất mở tab Runbook, [ADR 0017](adr/0017-super-admin-role.vi.md)):
+
+```bash
+npm run admin:create -- --email you@example.com --name "Hưng" --role super_admin
 ```
 
 Trên stack đã deploy, chạy trong container `tools` với đúng các file `-f` của layout, để lệnh tới cùng database:

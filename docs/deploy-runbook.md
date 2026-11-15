@@ -515,6 +515,25 @@ gh api -X POST repos/<owner>/<repo>/actions/runners/<runner-id>/labels -f 'label
   The alternative, `npm run admin:create` in the `tools` container, builds an image on
   the VM and needs `APP_SRC=..` in front of the `docker compose` command; see
   [usage → Sign in as admin](usage.md#sign-in-as-admin).
+- **Roles from the VM.** The role can be set on creation or changed later with the same
+  service token (`$TOKEN` as above). Only the service token can make the first
+  `super_admin`, the only role that opens the Runbook tab
+  ([ADR 0017](adr/0017-super-admin-role.md)). Roles: `member`, `editor`, `admin`, `super_admin`.
+  ```bash
+  # create a user with a role (temporaryPassword is shown once)
+  curl -s -X POST http://localhost/api/admin/planner/users \
+    -H "authorization: Bearer $TOKEN" -H 'content-type: application/json' \
+    -d '{"handle":"hung","displayName":"Hưng","email":"you@example.com","role":"super_admin"}'
+  # find a user id
+  curl -s http://localhost/api/admin/planner/users -H "authorization: Bearer $TOKEN"
+  # change an existing user's role
+  curl -s -X PATCH http://localhost/api/admin/planner/users/<userId> \
+    -H "authorization: Bearer $TOKEN" -H 'content-type: application/json' \
+    -d '{"role":"super_admin"}'
+  ```
+  Or without the token, in the `tools` container (same `APP_SRC=..` note as above):
+  `npm run admin:create -- --email you@example.com --name "Hưng" --role super_admin`.
+  The last `super_admin` cannot be demoted or deleted.
 - **Backups.** `crontab -e` →
   `15 3 * * * cd /opt/chuyennhahung/src/deploy && ./scripts/backup.sh local-db`.
   Copy `/opt/chuyennhahung/backups` off the VM. With `external-db`, dump on the DB VM too.
