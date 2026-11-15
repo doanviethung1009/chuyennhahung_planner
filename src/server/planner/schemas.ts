@@ -802,6 +802,67 @@ export const reviewDecisionSchema = z
     path: ['reason'],
   });
 
+/** A guest restriction lasts 30 days unless staff say otherwise, and never more than 90 (ADR 0015). */
+export const GUEST_RESTRICTION_DEFAULT_DAYS = 30;
+export const GUEST_RESTRICTION_MAX_DAYS = 90;
+
+/**
+ * Staff switch an author off (ADR 0015). `placeSlug: null` is every place. The
+ * subject is derived from a review by the server: staff never type an author id
+ * or a guest key. Rows are never deleted — lifting sets `liftedAt` — so the
+ * table is the audit trail.
+ */
+export const reviewRestrictionSchema = z.object({
+  id: plannerIdSchema,
+  subject: z.enum(['user', 'guest']),
+  authorId: plannerIdSchema.nullable().default(null),
+  /** Same SHA-256 prefix as `CommunityReview.guestKey`: pseudonymous personal data, never returned. */
+  guestKey: z.string().max(64).nullable().default(null),
+  placeSlug: slugSchema.nullable().default(null),
+  reason: z.string().trim().min(3).max(500),
+  createdAt: timestampSchema,
+  createdBy: z.string().max(80),
+  expiresAt: timestampSchema.nullable().default(null),
+  liftedAt: timestampSchema.nullable().default(null),
+  liftedBy: z.string().max(80).nullable().default(null),
+});
+
+/** `POST /api/admin/community/restrictions` body. Strict. */
+export const createRestrictionSchema = z
+  .object({
+    reviewId: plannerIdSchema,
+    scope: z.enum(['place', 'all']),
+    reason: z.string().trim().min(3).max(500),
+    expiresAt: timestampSchema.optional(),
+  })
+  .strict();
+
+export type ReviewRestriction = z.infer<typeof reviewRestrictionSchema>;
+export type CreateRestrictionInput = z.infer<typeof createRestrictionSchema>;
+
+/** A staff row: no author id and no guest key. */
+export interface RestrictionListItem {
+  id: string;
+  subject: 'user' | 'guest';
+  placeSlug: string | null;
+  reason: string;
+  author: string | null;
+  createdAt: string;
+  createdBy: string;
+  expiresAt: string | null;
+  liftedAt: string | null;
+  liftedBy: string | null;
+  active: boolean;
+}
+
+/** What the restricted author sees: why, where, and until when. */
+export interface OwnRestriction {
+  placeSlug: string | null;
+  reason: string;
+  since: string;
+  expiresAt: string | null;
+}
+
 export type ReviewDecision = z.infer<typeof reviewDecisionSchema>['decision'];
 export type CommunityReview = z.infer<typeof communityReviewSchema>;
 export type PlannerReviewInput = z.infer<typeof plannerReviewInputSchema>;
@@ -839,6 +900,8 @@ export interface ReviewQueueItem {
   visitedOn: string;
   author: string | null;
   authorAccount: string | null;
+  /** An active restriction covers this review's author and place (ADR 0015). */
+  restricted: boolean;
   status: ReviewStatus;
   rejectReason: string | null;
   createdAt: string;

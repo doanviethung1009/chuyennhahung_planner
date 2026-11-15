@@ -66,7 +66,7 @@ describe.skipIf(!url)('Planner on PostgreSQL (TEST_DATABASE_URL)', () => {
     // what tells every cached store so, exactly as a real commit would.
     await pool.query('UPDATE planner_revision SET revision = revision + 1');
     await pool.query(
-      'TRUNCATE community_reviews, trip_expenses, trip_activities, trip_days, trips, planner_oauth_attempts, planner_sessions, planner_users RESTART IDENTITY CASCADE',
+      'TRUNCATE review_restrictions, community_reviews, trip_expenses, trip_activities, trip_days, trips, planner_oauth_attempts, planner_sessions, planner_users RESTART IDENTITY CASCADE',
     );
   });
 

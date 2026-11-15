@@ -2,7 +2,7 @@
 
 🇻🇳 Bản tiếng Việt: [0015-community-review-author-controls.vi.md](0015-community-review-author-controls.vi.md)
 
-- **Status:** Accepted as recommended (owner approved 2026-11-15); PR 1 (hold / ask the author, migration `0007_review_hold.sql`) implemented, PR 2 (restrictions) pending. Question 1–7 under Follow-up stand on the recommended answers until the owner says otherwise
+- **Status:** Accepted as recommended (owner approved 2026-11-15); PR 1 (hold / ask the author, migration `0007_review_hold.sql`) and PR 2 (restrictions, migration `0008_review_restrictions.sql`) implemented. PR 2 deviations: the author sees restrictions through a `restrictions` list on `GET /api/planner/reviews` rather than a field on `OwnReview`, and no new staff limiter was added because session admin writes already pass the 30/min per user limiter (ADR 0010). Question 1–7 under Follow-up stand on the recommended answers until the owner says otherwise
 - **Date:** 2026-11-15
 - **Owner:** system-architect
 - **Decided by:** pending (owner request 2026-11-15: staff may ask the author, and may switch off a given author's or guest's reviews for a place or for that Planner account)
@@ -78,9 +78,9 @@ Proposed — to be confirmed by the owner.
    lifting restores them with no mass update. Hiding is not "removal": the per-review
    `removed` decision stays permanent and is never undone by a lift.
 6. **The author may still delete their own live review** while restricted (their data),
-   but not a `removed` one (ADR 0014 rule stays). Deleting the account deletes its
-   restrictions with its reviews.
-7. **Guests: time-boxed and guarded.** A guest restriction requires `expiresAt`
+   but not a `removed` one (ADR 0014 rule stays). Deleting the account deletes its reviews
+   but only *ends* its restrictions (kept as the audit record, lifted by "account deleted").
+7. **Guests: time-boxed and guarded, per place only.** A guest restriction requires `expiresAt`
    (default 30 days, maximum 90) and is refused when the review's key is the hash of
    `'unknown'` (blocking it would silence every guest). The admin screen warns that an
    address may be shared. The refusal to a blocked guest is honest ("reviews from this

@@ -9,6 +9,8 @@ import { PageHeader } from '@/components/layout/page-header';
 import { AdminNav } from '@/components/admin/admin-nav';
 import { ListingQueue } from '@/components/admin/community/listing-queue';
 import { CommunityReviewQueue } from '@/components/admin/community/review-queue';
+import { RestrictionList } from '@/components/admin/community/restriction-list';
+import { can } from '@/server/identity/permissions';
 
 // Reads the session cookie on every request: never prerendered or cached.
 export const dynamic = 'force-dynamic';
@@ -35,6 +37,7 @@ export default async function AdminCommunityPage({ params }: Params) {
 
   const access = await requireStaff(locale, getPathname({ href: '/admin/community' as const, locale }), 'content');
   const t = await getTranslations('adminCommunity');
+  const canRestrict = can(access.principal, 'community:restrict');
 
   return (
     <>
@@ -52,8 +55,16 @@ export default async function AdminCommunityPage({ params }: Params) {
             <h2 id="queue-reviews-heading" className="font-display text-2xl font-semibold">
               {t('reviewsHeading')}
             </h2>
-            <CommunityReviewQueue />
+            <CommunityReviewQueue canRestrict={canRestrict} />
           </section>
+          {canRestrict ? (
+            <section aria-labelledby="queue-restrictions-heading" className="grid gap-4">
+              <h2 id="queue-restrictions-heading" className="font-display text-2xl font-semibold">
+                {t('restrictionsHeading')}
+              </h2>
+              <RestrictionList />
+            </section>
+          ) : null}
         </div>
       </Container>
     </>

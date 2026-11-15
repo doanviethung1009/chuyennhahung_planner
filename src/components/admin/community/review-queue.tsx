@@ -17,7 +17,7 @@ type Decision = 'approve' | 'reject' | 'remove' | 'hold';
  * wait here as `pending`; guest reviews are already live and can only be
  * removed. Review text is shown as plain text.
  */
-export function CommunityReviewQueue() {
+export function CommunityReviewQueue({ canRestrict }: { canRestrict: boolean }) {
   const t = useTranslations('adminCommunity');
   const tr = useTranslations('adminCommunity.reviews');
   const locale = useLocale() as Locale;
@@ -27,6 +27,8 @@ export function CommunityReviewQueue() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [asking, setAsking] = useState<{ id: string; decision: 'reject' | 'remove' | 'hold' } | null>(null);
   const [reason, setReason] = useState('');
+  const [muting, setMuting] = useState<{ id: string; scope: 'place' | 'all' } | null>(null);
+  const [muteReason, setMuteReason] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -54,6 +56,25 @@ export function CommunityReviewQueue() {
       setAsking(null);
       setReason('');
       setNotice({ kind: 'ok', text: t(`done.${decision}`) });
+      await load();
+    } catch (failure) {
+      setNotice(describe(failure));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function mute(item: ReviewQueueItem, scope: 'place' | 'all', why: string) {
+    setBusyId(item.id);
+    setNotice(null);
+    try {
+      await api('/api/admin/community/restrictions', {
+        method: 'POST',
+        body: { reviewId: item.id, scope, reason: why },
+      });
+      setMuting(null);
+      setMuteReason('');
+      setNotice({ kind: 'ok', text: t('done.mute') });
       await load();
     } catch (failure) {
       setNotice(describe(failure));
@@ -102,6 +123,7 @@ export function CommunityReviewQueue() {
                   </div>
                   <span className="inline-flex items-center rounded-pill border border-border-strong bg-surface-muted px-3 py-1 text-xs font-medium">
                     {tr(`statuses.${item.status}`)}
+                    {item.restricted ? ` · ${tr('restrictedBadge')}` : ''}
                   </span>
                 </div>
 
@@ -146,7 +168,73 @@ export function CommunityReviewQueue() {
                       {tr('remove')}
                     </button>
                   ) : null}
+                  {canRestrict && !item.restricted && item.status !== 'pending' ? (
+                    <button
+                      type="button"
+                      disabled={busyId === item.id}
+                      className={buttonClass({ variant: 'ghost', size: 'sm' })}
+                      onClick={() => setMuting({ id: item.id, scope: 'place' })}
+                    >
+                      {tr('mute')}
+                    </button>
+                  ) : null}
                 </div>
+
+                {muting?.id === item.id ? (
+                  <form
+                    className="grid gap-3 border-t border-border-subtle pt-4"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void mute(item, muting.scope, muteReason.trim());
+                    }}
+                  >
+                    <fieldset className="grid gap-2">
+                      <legend className="text-sm font-medium">{tr('muteScope')}</legend>
+                      {(item.source === 'homepage' ? (['place'] as const) : (['place', 'all'] as const)).map((scope) => (
+                        <label key={scope} className="flex min-h-11 items-center gap-2 text-base">
+                          <input
+                            type="radio"
+                            name={`mute-scope-${item.id}`}
+                            checked={muting.scope === scope}
+                            onChange={() => setMuting({ id: item.id, scope })}
+                          />
+                          {tr(`muteScopes.${scope}`, { place: item.placeSlug })}
+                        </label>
+                      ))}
+                    </fieldset>
+                    <p className="text-sm text-foreground-muted">
+                      {tr(item.source === 'homepage' ? 'muteGuestWarning' : 'muteHelp')}
+                    </p>
+                    <label htmlFor={`mute-reason-${item.id}`} className="text-sm font-medium">
+                      {tr('muteReasonLabel')}
+                    </label>
+                    <textarea
+                      id={`mute-reason-${item.id}`}
+                      className={inputClass}
+                      rows={3}
+                      required
+                      minLength={3}
+                      maxLength={500}
+                      value={muteReason}
+                      onChange={(e) => setMuteReason(e.target.value)}
+                    />
+                    <div className="flex flex-wrap gap-3">
+                      <button type="submit" disabled={busyId === item.id} className={buttonClass({ size: 'sm' })}>
+                        {tr('muteConfirm')}
+                      </button>
+                      <button
+                        type="button"
+                        className={buttonClass({ variant: 'ghost', size: 'sm' })}
+                        onClick={() => {
+                          setMuting(null);
+                          setMuteReason('');
+                        }}
+                      >
+                        {t('cancel')}
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
 
                 {isAsking && asking ? (
                   <form

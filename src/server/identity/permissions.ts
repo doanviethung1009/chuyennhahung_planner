@@ -17,6 +17,7 @@ export type Action =
   | 'story:publish'
   | 'content:write'
   | 'community:moderate'
+  | 'community:restrict'
   | 'trip:support-read';
 
 export type Principal = { role: Role | 'service' };
@@ -35,8 +36,9 @@ const EDITOR_ACTIONS = [
 export const ROLE_ACTIONS: Record<Role | 'service', readonly Action[]> = {
   member: [],
   editor: EDITOR_ACTIONS,
-  admin: [...EDITOR_ACTIONS, 'user:provision', 'user:promote'],
-  service: ['user:provision', 'user:promote', ...EDITOR_ACTIONS],
+  // `community:restrict` (ADR 0015) switches a person off: heavier than removing one review, so not for editors.
+  admin: [...EDITOR_ACTIONS, 'user:provision', 'user:promote', 'community:restrict'],
+  service: ['user:provision', 'user:promote', 'community:restrict', ...EDITOR_ACTIONS],
 };
 
 /** The one place an absent stored role reads as `member`. Never writes. */

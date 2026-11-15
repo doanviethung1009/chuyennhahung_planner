@@ -12,6 +12,7 @@ import type {
   TripDay,
   TripExpense,
   CommunityReview,
+  ReviewRestriction,
 } from './schemas';
 
 /**
@@ -41,6 +42,8 @@ export interface PlannerData {
   tripExpenses: TripExpense[];
   /** ADR 0014, PR 2. Absent in older files; reads as empty. */
   communityReviews: CommunityReview[];
+  /** ADR 0015. Absent in older files; reads as empty. */
+  reviewRestrictions: ReviewRestriction[];
 }
 
 export type PlannerStore = DocumentStore<PlannerData>;
@@ -55,6 +58,7 @@ export function emptyPlannerData(): PlannerData {
     tripActivities: [],
     tripExpenses: [],
     communityReviews: [],
+    reviewRestrictions: [],
   };
 }
 
@@ -69,6 +73,7 @@ function normalize(partial: Partial<PlannerData>): PlannerData {
     tripActivities: partial.tripActivities ?? [],
     tripExpenses: partial.tripExpenses ?? [],
     communityReviews: partial.communityReviews ?? [],
+    reviewRestrictions: partial.reviewRestrictions ?? [],
   };
 }
 

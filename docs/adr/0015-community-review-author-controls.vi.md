@@ -2,7 +2,7 @@
 
 🇬🇧 English version: [0015-community-review-author-controls.md](0015-community-review-author-controls.md)
 
-- **Trạng thái:** Đã chấp nhận theo khuyến nghị (chủ nhà duyệt 2026-11-15); PR 1 (hold / hỏi tác giả, migration `0007_review_hold.sql`) đã hiện thực, PR 2 (restriction) chưa làm. Câu hỏi 1–7 ở mục Việc tiếp theo giữ theo đáp án khuyến nghị cho tới khi chủ nhà nói khác
+- **Trạng thái:** Đã chấp nhận theo khuyến nghị (chủ nhà duyệt 2026-11-15); PR 1 (hold / hỏi tác giả, migration `0007_review_hold.sql`) và PR 2 (restriction, migration `0008_review_restrictions.sql`) đã hiện thực. Khác kế hoạch ở PR 2: tác giả thấy restriction qua danh sách `restrictions` trong `GET /api/planner/reviews` thay vì một trường trên `OwnReview`, và không thêm limiter mới cho staff vì thao tác ghi của phiên admin đã qua limiter 30/phút mỗi người dùng (ADR 0010). Câu hỏi 1–7 ở mục Việc tiếp theo giữ theo đáp án khuyến nghị cho tới khi chủ nhà nói khác
 - **Ngày:** 2026-11-15
 - **Người sở hữu:** system-architect
 - **Người quyết định:** chờ chủ nhà (yêu cầu 2026-11-15: staff được hỏi tác giả, và được tắt đánh giá của một tác giả hoặc khách với một địa điểm hay với cả tài khoản Planner đó)
@@ -79,8 +79,8 @@ Code cho biết gì, và chưa biết gì:
    `removed` theo từng đánh giá vẫn vĩnh viễn và không bị gỡ chặn hoàn tác.
 6. **Tác giả vẫn xoá được đánh giá đang hiển thị của mình** khi bị hạn chế (dữ liệu của
    họ), nhưng không xoá được đánh giá `removed` (quy tắc ADR 0014 giữ nguyên). Xoá tài
-   khoản xoá luôn restriction cùng với các đánh giá.
-7. **Khách: có thời hạn và có chốt chặn.** Restriction cho khách bắt buộc có `expiresAt`
+   khoản xoá các đánh giá của nó nhưng chỉ *kết thúc* restriction (giữ làm hồ sơ, gỡ bởi "account deleted").
+7. **Khách: có thời hạn và có chốt chặn, chỉ theo địa điểm.** Restriction cho khách bắt buộc có `expiresAt`
    (mặc định 30 ngày, tối đa 90) và bị từ chối khi key của đánh giá là hash của
    `'unknown'` (chặn nó là im tiếng mọi khách). Màn admin cảnh báo địa chỉ có thể dùng
    chung. Lời từ chối với khách bị chặn trung thực ("đánh giá từ kết nối này đang tạm

@@ -355,6 +355,16 @@ ngay; staff chỉ có thể gỡ. Đường của khách được chặn bằng 
 `PublicCommunityReview`; điểm trung bình hiện từ 3 đánh giá đã duyệt. Cùng cổng `contribution`
 đóng mọi form đánh giá.
 
+Quyền với tác giả ([ADR 0015](adr/0015-community-review-author-controls.vi.md)): staff
+(`community:moderate`) có thể **hold** một đánh giá Planner đang hiện (trạng thái `held`, bị ẩn,
+lý do chính là câu hỏi tác giả thấy; tác giả sửa là đăng lại), và admin/service
+(`community:restrict`) có thể tắt một tác giả bằng `ReviewRestriction` (bảng
+`review_restrictions`, không bao giờ xoá, gỡ là đặt `lifted_at`): theo địa điểm của đánh giá hoặc
+mọi địa điểm, chặn đánh giá mới (403) và ẩn đánh giá hiện có của tác giả lúc đọc, đảo ngược được.
+Khách chỉ được nhận diện bằng khoá kết nối đã băm, nên restriction cho khách có thời hạn (mặc định
+30 ngày, tối đa 90) và bị từ chối với khoá `unknown` dùng chung. Không có id tác giả hay guest key
+trong bất kỳ phản hồi nào.
+
 ## Các phase
 
 Những thứ vắng mặt có chủ đích, và không được dựng sớm:
