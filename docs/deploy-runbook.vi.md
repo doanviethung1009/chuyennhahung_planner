@@ -484,6 +484,12 @@ gh api -X POST repos/<owner>/<repo>/actions/runners/<runner-id>/labels -f 'label
 
 ## Phase 7 — Sau lần deploy đầu
 
+> **Định nghĩa `dc` trước.** `dc` (và mọi lệnh `docker compose` trong phase này và bảng xử lý
+> sự cố) chỉ chạy trong shell mà bạn đã gõ hàm một dòng ở
+> [Phase 4](#phase-4--khởi-động-nginx-và-postgresql) trong phiên đó; shell mới hoặc lần đăng nhập SSH
+> mới thì mất. Thiếu `--env-file /opt/chuyennhahung/.env`, lệnh `docker compose` trần sẽ báo
+> *required variable CNH_APP_PASSWORD is missing*.
+
 - **Admin đầu tiên.** Dùng service token, qua nginx (app không publish cổng riêng). Giữ lại
   `temporaryPassword` trong phản hồi; nó chỉ hiện một lần.
   ```bash

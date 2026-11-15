@@ -497,6 +497,12 @@ gh api -X POST repos/<owner>/<repo>/actions/runners/<runner-id>/labels -f 'label
 
 ## Phase 7 — After the first deploy
 
+> **Define `dc` first.** `dc` (and every `docker compose` command in this phase and the
+> troubleshooting table) only works in a shell where you ran the one-line function from
+> [Phase 4](#phase-4--start-nginx-and-postgresql) in this session; in a new shell or a new SSH
+> login it is gone. Without `--env-file /opt/chuyennhahung/.env`, a bare `docker compose`
+> fails with *required variable CNH_APP_PASSWORD is missing*.
+
 - **First admin.** With the service token, through nginx (the app publishes no port of
   its own). Keep the `temporaryPassword` from the response; it is shown once.
   ```bash
