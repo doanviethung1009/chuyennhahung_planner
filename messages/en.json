@@ -956,6 +956,8 @@
       "deploy-runner": "Deploy runner",
       "runbook-api": "Operate the APIs",
       "runbook-google-sign-in": "Google sign-in",
+      "architecture": "Architecture",
+      "usage": "Usage",
       "travel-content-api": "Travel Content API"
     }
   },

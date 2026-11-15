@@ -956,6 +956,8 @@
       "deploy-runner": "Runner triển khai",
       "runbook-api": "Vận hành API",
       "runbook-google-sign-in": "Đăng nhập Google",
+      "architecture": "Kiến trúc",
+      "usage": "Hướng dẫn sử dụng",
       "travel-content-api": "API Travel Content"
     }
   },

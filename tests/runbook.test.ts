@@ -97,6 +97,17 @@ describe('runbook markdown renderer', () => {
     expect(html).toContain('npm test');
   });
 
+  it.each(RUNBOOK_DOCS)('renders %s (both languages) without losing text or emitting raw HTML', async (id) => {
+    const { Markdown } = await import('../src/components/runbook/markdown');
+    for (const file of [`${id}.md`, `${id}.vi.md`]) {
+      const source = readFileSync(join(root, 'docs', file), 'utf8');
+      const html = renderToStaticMarkup(createElement(Markdown, { tableLabel: 'tbl', source }));
+      expect(html.length).toBeGreaterThan(source.length / 4);
+      expect(html).not.toMatch(/<(script|iframe|style)\b/i);
+      expect(html).not.toContain('<h1');
+    }
+  });
+
   it('never emits raw HTML or unsafe links', async () => {
     const { Markdown } = await import('../src/components/runbook/markdown');
     const html = renderToStaticMarkup(

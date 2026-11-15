@@ -25,7 +25,7 @@ the existing `/quan-tri/:path*` and `/en/admin/:path*` no-index headers and the
 
 ## Data
 
-- Reads Markdown from `docs/`, never from the request: the closed allow-list `RUNBOOK_DOCS` in `src/server/runbook/docs.ts` (`runbook`, `deploy-runbook`, `deploy-operations`, `deploy-database`, `deploy-runner`, `runbook-api`, `runbook-google-sign-in`, `travel-content-api`). Vietnamese locale reads the `.vi.md` twin.
+- Reads Markdown from `docs/`, never from the request: the closed allow-list `RUNBOOK_DOCS` in `src/server/runbook/docs.ts` (`runbook`, `deploy-runbook`, `deploy-operations`, `deploy-database`, `deploy-runner`, `runbook-api`, `runbook-google-sign-in`, `architecture`, `usage`, `travel-content-api`). Vietnamese locale reads the `.vi.md` twin.
 - No credential or secret is read or shown; the documents describe secrets by name only.
 - Messages: the `adminRunbook` namespace and `adminContent.nav.runbook` in `messages/vi.json` and `messages/en.json`.
 

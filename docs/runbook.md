@@ -17,6 +17,8 @@ text is shown to administrators in the browser at `/quan-tri/runbook`
 | Install or repair the self-hosted deploy runner | [deploy-runner.md](deploy-runner.md) |
 | Call, check and troubleshoot the deployed APIs | [runbook-api.md](runbook-api.md) |
 | Turn on and operate Google sign-in on the dev VM | [runbook-google-sign-in.md](runbook-google-sign-in.md) |
+| Understand how the app is built: routes, data flow, modules, phases | [architecture.md](architecture.md) |
+| Install, run, test and deploy, and the day-to-day workflows | [usage.md](usage.md) |
 | Read the Travel Content API contract and error codes | [travel-content-api.md](travel-content-api.md) |
 
 ## Quick checks

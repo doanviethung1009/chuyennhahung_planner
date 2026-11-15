@@ -17,6 +17,8 @@ xem [features/admin-runbook.vi.md](features/admin-runbook.vi.md).
 | Cài hoặc sửa runner triển khai tự host | [deploy-runner.vi.md](deploy-runner.vi.md) |
 | Gọi, kiểm tra và xử lý sự cố các API đã triển khai | [runbook-api.vi.md](runbook-api.vi.md) |
 | Bật và vận hành đăng nhập Google trên VM dev | [runbook-google-sign-in.vi.md](runbook-google-sign-in.vi.md) |
+| Hiểu app được xây thế nào: route, luồng dữ liệu, module, giai đoạn | [architecture.vi.md](architecture.vi.md) |
+| Cài đặt, chạy, kiểm thử, triển khai và các quy trình hằng ngày | [usage.vi.md](usage.vi.md) |
 | Đọc hợp đồng API Travel Content và mã lỗi | [travel-content-api.vi.md](travel-content-api.vi.md) |
 
 ## Kiểm tra nhanh
