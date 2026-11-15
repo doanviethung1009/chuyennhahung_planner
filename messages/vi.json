@@ -954,6 +954,8 @@
       "deploy-operations": "Vận hành",
       "deploy-database": "PostgreSQL",
       "deploy-runner": "Runner triển khai",
+      "runbook-api": "Vận hành API",
+      "runbook-google-sign-in": "Đăng nhập Google",
       "travel-content-api": "API Travel Content"
     }
   },

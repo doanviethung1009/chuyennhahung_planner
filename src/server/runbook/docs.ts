@@ -14,6 +14,8 @@ export const RUNBOOK_DOCS = [
   'deploy-operations',
   'deploy-database',
   'deploy-runner',
+  'runbook-api',
+  'runbook-google-sign-in',
   'travel-content-api',
 ] as const;
 
