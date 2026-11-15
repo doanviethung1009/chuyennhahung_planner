@@ -924,7 +924,7 @@
     "metaTitle": "Chuyến đi từ cộng đồng",
     "title": "Chuyến đi từ cộng đồng",
     "description": "Lịch trình thật do người đi chia sẻ công khai. Mỗi chuyến được duyệt trước khi hiển thị.",
-    "count": "{count} chuyến đi",
+    "count": "{count, plural, other {# chuyến đi}}",
     "empty": "Chưa có chuyến đi nào được duyệt. Bạn có thể là người đầu tiên: chia sẻ chuyến đi của mình ở mục Chuyến đi của tôi.",
     "days": "{count} ngày",
     "party": "{count} người",
