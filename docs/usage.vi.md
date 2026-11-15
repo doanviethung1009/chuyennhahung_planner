@@ -708,6 +708,23 @@ healthy trong 180 giây; nếu không, tag trước được khôi phục và ru
 lại hoặc rollback tay, chạy **Deploy dev** từ `main` với `tag` = `sha-<commit>` (không
 build). Tag đang chạy nằm trong `/opt/chuyennhahung/.deployed-tag`. Rollback không hoàn
 tác migration DB.
+### Stack một VM với bind mount
+
+Nếu VM chưa có stack, [`deploy/compose.yml`](../deploy/compose.yml) là một stack như vậy:
+nginx, service `postgres` tuỳ chọn (profile `local-db`) và các mạng, cùng
+[`deploy/compose.app.bind.yml`](../deploy/compose.app.bind.yml) đặt content store trên host.
+Mọi trạng thái là bind mount dưới `DEPLOY_ROOT` (mặc định `/opt/chuyennhahung`):
+`data/app`, `data/postgres`, `logs/nginx`, `import`, `secrets/pg-ca.crt`, `backups`. Chạy
+`sudo deploy/scripts/setup-host.sh <layout>` trước (tạo chúng với chủ sở hữu mà container
+cần), điền `deploy/.env` từ `deploy/.env.example`, rồi từ `deploy/`:
+
+```bash
+docker compose -f compose.yml -f compose.app.yml -f compose.app.bind.yml -f compose.app.external-db.yml up -d --build
+docker compose --profile local-db -f compose.yml -f compose.app.yml -f compose.app.bind.yml -f compose.app.local-db.yml up -d --build
+```
+
+Sao lưu bằng `deploy/scripts/backup.sh <layout>`. Runbook đầy đủ, bước cập nhật, rollback
+và các giới hạn còn mở nằm ở [Deploy bằng Docker trên một VM](features/docker-deploy.vi.md).
 
 ### Header của reverse proxy
 

@@ -718,6 +718,24 @@ container reports healthy within 180 s; otherwise the previous tag is restored a
 the run fails. To redeploy or roll back by hand, run **Deploy dev** from `main` with
 `tag` = `sha-<commit>` (no build). The tag now running is in
 `/opt/chuyennhahung/.deployed-tag`. A rollback does not undo database migrations.
+### One-VM stack with bind mounts
+
+If the VM has no stack yet, [`deploy/compose.yml`](../deploy/compose.yml) is one:
+nginx, an optional `postgres` service (profile `local-db`) and the networks, with
+[`deploy/compose.app.bind.yml`](../deploy/compose.app.bind.yml) putting the content store
+on the host. Every piece of state is a bind mount under `DEPLOY_ROOT`
+(default `/opt/chuyennhahung`): `data/app`, `data/postgres`, `logs/nginx`, `import`,
+`secrets/pg-ca.crt`, `backups`. Run `sudo deploy/scripts/setup-host.sh <layout>` first (it
+creates them with the owners the containers need), fill `deploy/.env` from
+`deploy/.env.example`, then from `deploy/`:
+
+```bash
+docker compose -f compose.yml -f compose.app.yml -f compose.app.bind.yml -f compose.app.external-db.yml up -d --build
+docker compose --profile local-db -f compose.yml -f compose.app.yml -f compose.app.bind.yml -f compose.app.local-db.yml up -d --build
+```
+
+Back up with `deploy/scripts/backup.sh <layout>`. The full runbook, update and rollback
+steps and the open limits are in [Docker deploy on one VM](features/docker-deploy.md).
 
 ### Reverse proxy headers
 

@@ -1,0 +1,70 @@
+# Self-contained stack for ONE VM: nginx in front, the app behind it, and —
+# optionally — PostgreSQL. Every piece of state is a BIND MOUNT under
+# ${DEPLOY_ROOT} (default /opt/chuyennhahung), so it is visible on the host,
+# easy to back up and survives `docker compose down -v`.
+# Runbook: docs/features/docker-deploy.md · usage: docs/usage.md → Deploy.
+#
+# Run from this directory (deploy/ of the checkout, or the stack directory
+# the checkout is copied into), with one database overlay:
+#
+#   PostgreSQL on a SEPARATE VM:
+#     docker compose -f compose.yml -f compose.app.yml -f compose.app.bind.yml \
+#                    -f compose.app.external-db.yml up -d --build
+#   PostgreSQL in THIS stack (profile local-db):
+#     docker compose --profile local-db -f compose.yml -f compose.app.yml \
+#                    -f compose.app.bind.yml -f compose.app.local-db.yml up -d --build
+#
+# Values come from .env next to this file (copy .env.example, chmod 600).
+
+name: chuyennhahung
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    volumes:
+      # Bind mounts: config is read-only, logs go to the host.
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/maintenance.html:/usr/share/nginx/html/maintenance.html:ro
+      - ${DEPLOY_ROOT:-/opt/chuyennhahung}/logs/nginx:/var/log/nginx
+    networks:
+      - edge
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/nginx-health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Only with `--profile local-db` (the local-db overlay makes app depend on it).
+  postgres:
+    image: postgres:17-alpine
+    profiles: ["local-db"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_ADMIN_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?set POSTGRES_ADMIN_PASSWORD in .env}
+      PGDATA: /var/lib/postgresql/data/pgdata
+      CNH_APP_PASSWORD: ${CNH_APP_PASSWORD:?set CNH_APP_PASSWORD in .env}
+    volumes:
+      # Bind mount: the cluster lives on the host, owned by uid 70 (postgres
+      # in the alpine image) — deploy/scripts/setup-host.sh creates it.
+      - ${DEPLOY_ROOT:-/opt/chuyennhahung}/data/postgres:/var/lib/postgresql/data
+      # First start only: creates the cnh_app role and the databases.
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - backend
+    # No published port: only services on `backend` reach it.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_ADMIN_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  edge: {}
+  # `internal`: no route out, so the database can never be reached from or
+  # reach beyond this host's containers.
+  backend:
+    internal: true

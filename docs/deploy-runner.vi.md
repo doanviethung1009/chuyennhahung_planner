@@ -38,13 +38,12 @@ cho runner.
 
 ## Bước 2 — Cấp tối thiểu trên stack
 
-Script deploy đọc `compose.yml` của stack và ghi một file trạng thái. Nó **không** được
+Script deploy dùng các file compose của commit đã checkout và ghi một file trạng thái. Nó **không** được
 đọc `.env` — nhưng Docker Compose tự đọc file đó dưới user của runner, nên file phải
 đọc được bởi người chạy `docker compose`; hãy xem stack của bạn cấp quyền thế nào và
 ưu tiên một nhóm chỉ chứa `cnh-runner` thay vì mở `.env` cho mọi người đọc.
 
 ```bash
-sudo setfacl -m u:cnh-runner:r /opt/chuyennhahung/compose.yml
 sudo setfacl -m u:cnh-runner:rwx /opt/chuyennhahung
 sudo touch /opt/chuyennhahung/.deployed-tag
 sudo chown cnh-runner /opt/chuyennhahung/.deployed-tag

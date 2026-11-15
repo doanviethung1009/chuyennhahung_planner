@@ -39,6 +39,8 @@ services:
     environment:
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
       PLANNER_DATABASE_URL: ${PLANNER_DATABASE_URL:?set PLANNER_DATABASE_URL in .env}
+      # Optional: Travel Content on PostgreSQL (ADR 0013). Empty = JSON file on the volume.
+      CONTENT_DATABASE_URL: ${CONTENT_DATABASE_URL:-}
       ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:-}
       TRUST_PROXY_HEADERS: ${TRUST_PROXY_HEADERS:-true}
       DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-5}
@@ -75,6 +77,7 @@ services:
     profiles: ["tools"]
     environment:
       PLANNER_DATABASE_URL: ${PLANNER_DATABASE_URL:?set PLANNER_DATABASE_URL in .env}
+      CONTENT_DATABASE_URL: ${CONTENT_DATABASE_URL:-}
     volumes:
       # The import checks places against the same content store the app uses.
       - app-data:/app/.data

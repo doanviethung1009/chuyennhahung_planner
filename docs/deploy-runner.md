@@ -38,13 +38,12 @@ runner.
 
 ## Step 2 — Give it the minimum on the stack
 
-The deploy script reads the stack's `compose.yml` and writes one state file. It must
+The deploy script uses the compose files of the checked-out commit and writes one state file. It must
 **not** read `.env` — Docker Compose reads it for the runner user, so the file needs
 to be readable by the one who runs `docker compose`; check how your stack grants this
 and prefer a group that contains only `cnh-runner` over making `.env` world-readable.
 
 ```bash
-sudo setfacl -m u:cnh-runner:r /opt/chuyennhahung/compose.yml
 sudo setfacl -m u:cnh-runner:rwx /opt/chuyennhahung
 sudo touch /opt/chuyennhahung/.deployed-tag
 sudo chown cnh-runner /opt/chuyennhahung/.deployed-tag

@@ -7,8 +7,10 @@
 #     ./deploy/deploy.sh sha-<commit>
 #
 # The compose files used are the ones next to this script (the commit being
-# deployed), while `.env`, `compose.yml` and the volumes stay in STACK_DIR.
-# Nothing here reads or prints .env.
+# deployed: compose.yml, compose.app.yml, the bind-mount overlay and the
+# database overlay); `$STACK_DIR/.env` (mode 600) is passed to Compose and the
+# state lives under DEPLOY_ROOT bind mounts. This script never reads or prints
+# .env itself.
 set -euo pipefail
 
 TAG="${1:?usage: deploy.sh <image-tag>}"
@@ -23,9 +25,15 @@ case "$DB_OVERLAY" in external-db | local-db) ;; *) echo "DB_OVERLAY must be ext
 [[ "$TAG" =~ ^[A-Za-z0-9_.-]+$ ]] || { echo "invalid image tag: $TAG" >&2; exit 2; }
 
 compose() {
-  docker compose --project-directory "$STACK_DIR" \
-    -f "$STACK_DIR/compose.yml" \
+  # Files and relative paths come from the commit being deployed; the
+  # secrets file stays in STACK_DIR. Only `app` is ever (re)created here, so
+  # the running nginx keeps the mounts it was started with.
+  local profile=()
+  [[ "$DB_OVERLAY" == local-db ]] && profile=(--profile local-db)
+  docker compose --project-directory "$HERE" --env-file "$STACK_DIR/.env" ${profile[@]+"${profile[@]}"} \
+    -f "$HERE/compose.yml" \
     -f "$HERE/compose.app.yml" \
+    -f "$HERE/compose.app.bind.yml" \
     -f "$HERE/compose.app.$DB_OVERLAY.yml" "$@"
 }
 
