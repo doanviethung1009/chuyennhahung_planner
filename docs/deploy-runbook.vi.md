@@ -528,7 +528,12 @@ Rồi kiểm tra bằng tay trên trình duyệt:
    `X-Frame-Options` và `X-Content-Type-Options`.
 2. **Đăng nhập.** Đăng nhập bằng tài khoản admin, mở `/quan-tri`, và thấy danh sách người dùng.
 3. **Planner.** Tạo một chuyến đi, thêm một ngày và một hoạt động, tải lại trang: dữ liệu vẫn còn.
-   Mở link chia sẻ của nó trong cửa sổ ẩn danh: nó hiện chuyến đi mà không cần đăng nhập.
+   Mở link chia sẻ của nó trong cửa sổ ẩn danh: nó hiện chuyến đi mà không cần đăng nhập. Planner
+   chưa có trình soạn thảo trong trình duyệt, nên để kiểm tra bằng `curl`, hãy gửi mọi thao tác
+   ghi dùng cookie với `Origin` bằng giá trị của `NEXT_PUBLIC_SITE_URL` (đọc bằng
+   `docker exec chuyennhahung-app-1 printenv NEXT_PUBLIC_SITE_URL`). Trên VM dev nó là
+   `http://192-168-100-140.nip.io`, **không phải** IP; `Origin` là IP sẽ bị từ chối với
+   `403 a cross-site POST is refused`. Riêng đăng nhập thì không cần `Origin`.
 4. **Cả hai ngôn ngữ.** `/` và `/en` đều hiển thị, và nút chuyển ngôn ngữ giữ nguyên trang.
 5. **Database sống sót qua lần deploy.**
    ```bash
@@ -573,7 +578,7 @@ trước được khôi phục và lần chạy thất bại. Rollback **không*
 | Deploy lỗi ở bước đọc `.env` | `chgrp cnh-runner` / `chmod 640` (Phase 5 bước 2) |
 | Pull từ registry bị từ chối | Trên GitHub → Packages → `chuyennhahung-app` → settings, cấp cho repository này quyền đọc |
 | Các route Planner trả `503` | Database không kết nối được hoặc từ chối đăng nhập: kiểm tra `dc ps`, URL và mật khẩu |
-| Một thao tác admin trả `403` | `NEXT_PUBLIC_SITE_URL` không phải origin chính xác của trang (scheme, host, port) |
+| Một thao tác admin, hoặc một thao tác ghi Planner dùng cookie, trả `403` | `NEXT_PUBLIC_SITE_URL` không phải origin chính xác của trang (scheme, host, port); với `curl`, `Origin` phải bằng nó, và trên VM dev đó là host `nip.io`, không phải IP |
 | PostgreSQL từ chối mật khẩu sau khi bạn sinh lại `.env` | Nó giữ mật khẩu từ lần khởi động đầu; nếu chưa có dữ liệu thật, dừng nó và làm rỗng `/opt/chuyennhahung/data/postgres`, rồi `up` lại |
 
 ## Những gì đã được kiểm chứng
