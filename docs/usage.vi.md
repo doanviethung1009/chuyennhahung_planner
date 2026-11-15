@@ -683,6 +683,31 @@ sẽ chia đôi nó. Trên host nhỏ
 (2 GB RAM) `next build` là lúc tốn bộ nhớ nhất — giữ swap, hoặc build ở máy khác
 rồi chuyển image bằng `docker save | docker load`.
 
+### Tự động deploy lên dev
+
+Merge vào `main` sẽ deploy lên VM dev khi CI xanh
+([ADR 0016](adr/0016-auto-deploy-dev.vi.md), [tính năng](features/auto-deploy-dev.vi.md)).
+Debug và QC vẫn ở local; không có gì ở đây chạy cho pull request. Runner của GitHub
+build image (VM không build nổi) và đẩy
+`ghcr.io/<owner>/chuyennhahung-app:sha-<commit>`; runner trên VM chạy
+[`deploy/deploy.sh`](../deploy/deploy.sh).
+
+#### Cài runner (chủ nhà, một lần)
+
+Làm theo [deploy-runner.vi.md](deploy-runner.vi.md): user riêng, service systemd đã
+hardening, nhãn `cnh-dev`. Ngoài ra, một lần: đặt biến repository `DEV_SITE_URL` khi
+origin dev không phải `http://192.168.100.140` (nó bị đóng vào image), và sau khi image
+đầu tiên được đẩy, kiểm tra package `chuyennhahung-app` đọc được bởi Actions của
+repository này. Với layout PostgreSQL khác `external-db`, đặt `DB_OVERLAY=local-db`
+trong `Environment=` của service runner (bước 5 của runbook).
+
+#### Deploy, deploy lại, rollback
+
+Merge một PR; theo dõi **Actions → Deploy dev**. Run chỉ thành công khi container báo
+healthy trong 180 giây; nếu không, tag trước được khôi phục và run thất bại. Để deploy
+lại hoặc rollback tay, chạy **Deploy dev** từ `main` với `tag` = `sha-<commit>` (không
+build). Tag đang chạy nằm trong `/opt/chuyennhahung/.deployed-tag`. Rollback không hoàn
+tác migration DB.
 ### Stack một VM với bind mount
 
 Nếu VM chưa có stack, [`deploy/compose.yml`](../deploy/compose.yml) là một stack như vậy:

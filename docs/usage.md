@@ -693,6 +693,31 @@ and a second replica would split it.
 On a small host (2 GB RAM) `next build` is the memory peak — keep swap on, or
 build on another machine and move the image with `docker save | docker load`.
 
+### Auto deploy to dev
+
+Merging into `main` deploys to the dev VM once CI is green
+([ADR 0016](adr/0016-auto-deploy-dev.md), [feature](features/auto-deploy-dev.md)).
+Debug and QC stay local; nothing here runs for a pull request. A hosted runner
+builds the image (the VM cannot build) and pushes
+`ghcr.io/<owner>/chuyennhahung-app:sha-<commit>`; the runner on the VM runs
+[`deploy/deploy.sh`](../deploy/deploy.sh).
+
+#### Set up the runner (owner, once)
+
+Follow [deploy-runner.md](deploy-runner.md): a dedicated user, a hardened systemd
+service, label `cnh-dev`. Also, once: set the repository variable `DEV_SITE_URL` when
+the dev origin is not `http://192.168.100.140` (it is baked into the image), and after
+the first image is pushed check that package `chuyennhahung-app` is readable by this
+repository's Actions. For a PostgreSQL layout other than `external-db`, set
+`DB_OVERLAY=local-db` in the runner service's `Environment=` (step 5 of the runbook).
+
+#### Deploy, redeploy, roll back
+
+Merge a PR; watch **Actions → Deploy dev**. The run succeeds only when the
+container reports healthy within 180 s; otherwise the previous tag is restored and
+the run fails. To redeploy or roll back by hand, run **Deploy dev** from `main` with
+`tag` = `sha-<commit>` (no build). The tag now running is in
+`/opt/chuyennhahung/.deployed-tag`. A rollback does not undo database migrations.
 ### One-VM stack with bind mounts
 
 If the VM has no stack yet, [`deploy/compose.yml`](../deploy/compose.yml) is one:

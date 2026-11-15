@@ -64,7 +64,7 @@ Two layouts, picked by one overlay file; `compose.app.bind.yml` is added to both
    directory, creating `cnh_app` and the `cnh_planner` / `cnh_content` databases.
 4. **Verify**: `curl -i http://<vm-ip>/api/health` → `200 {"status":"ok"}`;
    `docker compose ps` shows `healthy`; open `/`, `/en`, sign in, create a trip.
-5. **Update**: `git pull`, rerun the same `up -d --build`. nginx serves
+5. **Update**: by hand, `git pull` and rerun the same `up -d --build` (below, *Updating by the runner* is the automatic path). nginx serves
    `maintenance.html` (503) while the app restarts. **Rollback**: check out the
    previous commit and rerun; restore `backups/<stamp>/` if data changed.
 6. **Back up**: `./scripts/backup.sh <layout>` from cron (daily). Local-db dumps both
@@ -112,6 +112,29 @@ Everything you need on a blank Ubuntu 24.04 VM, in order. Placeholders: `<vm-ip>
     ([usage → Set up Google sign-in](../usage.md#set-up-google-sign-in)). Before real users:
     the owner actions in [usage → Before going live](../usage.md#before-going-live--owner-actions).
 
+### Updating by the runner
+
+With the self-hosted runner ([deploy-runner](../deploy-runner.md),
+[Auto deploy to dev](auto-deploy-dev.md)) a merge into `main` updates the VM by itself.
+It differs from the manual path in five ways:
+
+| | By hand | By the runner |
+|---|---|---|
+| Image | built on the VM (`--build`, needs the swap) | built on GitHub, pulled from GHCR as `sha-<commit>` |
+| Compose files | your checkout in `/opt/chuyennhahung/src/deploy` | the runner's checkout of the deployed commit |
+| `.env` | `deploy/.env` | **`/opt/chuyennhahung/.env`** (`STACK_DIR`), mode 600 — keep one copy, or symlink `deploy/.env` to it |
+| What is recreated | everything `up` names | **only `app`**: nginx and postgres keep running |
+| Rollback | check out the old commit and rerun | automatic to the previous tag if `/api/health` is not up in 180 s; by hand: run **Deploy dev** with `tag=sha-<old>` |
+
+Set `DB_OVERLAY=local-db` in the runner's environment for the same-stack layout.
+Do the **one-time setup first, by hand** (steps 1–8 above): the runner never runs
+`setup-host.sh`, never creates nginx or postgres, and `NEXT_PUBLIC_SITE_URL` is the
+`DEV_SITE_URL` baked into the GHCR image. A change to `deploy/nginx/` or to the
+postgres service is **not** applied by a deploy: run
+`docker compose … up -d nginx` (or `restart nginx`) by hand afterwards. Do not mix
+the two paths for one release: the runner expects the GHCR image, a manual `--build`
+produces a local `chuyennhahung/app` one.
+
 ## Files
 
 | Path | Role |
@@ -126,6 +149,7 @@ Everything you need on a blank Ubuntu 24.04 VM, in order. Placeholders: `<vm-ip>
 | `deploy/postgres/init/10-roles-and-databases.sh` | First-start role and database creation |
 | `deploy/.env.example` | Every variable, both layouts |
 | `deploy/scripts/setup-host.sh`, `deploy/scripts/backup.sh` | Host preparation and backups |
+| `deploy/deploy.sh`, `.github/workflows/deploy-dev.yml` | Automatic path: pull a GHCR tag, restart `app`, health check, rollback (ADR 0016) |
 
 ## Tests
 

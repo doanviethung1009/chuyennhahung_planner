@@ -299,7 +299,9 @@ flowchart LR
   request hoặc origin của `NEXT_PUBLIC_SITE_URL`, vì khi đó `request.url` mang địa
   chỉ bind. Proxy phải ghi đè cả hai header forwarded
   ([usage → Deploy](usage.vi.md#deploy)). `GET /api/health` là probe liveness của
-  container và không đọc store nào.
+  container và không đọc store nào. Merge vào `main` sẽ deploy VM dev qua runner tự host
+  ([ADR 0016](adr/0016-auto-deploy-dev.vi.md)); image dev và prod khác nhau vì
+  `NEXT_PUBLIC_SITE_URL` bị đóng lúc build.
 - **Trang riêng tư** (`/sign-in`, `/account/password`, `/my-trips`, `/my-trips/new`, `/my-trips/[id]`,
   `/trip-setup/[template]`) là `noindex` và không có trong sitemap; `/shared/[token]` là
   `noindex` trừ khi trip là `public`, và gửi `Referrer-Policy: no-referrer`.

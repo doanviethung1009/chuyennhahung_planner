@@ -21,7 +21,10 @@
 
 services:
   app:
-    image: chuyennhahung/app:${APP_IMAGE_TAG:-latest}
+    # APP_IMAGE / APP_IMAGE_TAG are set by deploy/deploy.sh (ADR 0016) to pull
+    # the image the `deploy-dev` workflow built; unset, the local build below
+    # is used as before.
+    image: ${APP_IMAGE:-chuyennhahung/app}:${APP_IMAGE_TAG:-latest}
     build:
       context: ${APP_SRC:-./app}
       target: runner
