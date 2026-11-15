@@ -1,0 +1,20 @@
+# Overlay: bind-mount the Travel content store (/app/.data) on the host instead
+# of the named volume `app-data` declared by compose.app.yml. Add it to every
+# command of the layout, e.g.
+#
+#   docker compose -f compose.yml -f compose.app.yml -f compose.app.bind.yml \
+#                  -f compose.app.external-db.yml up -d
+#
+# Compose merges volumes by target path, so this replaces `app-data:/app/.data`
+# for `app` and `tools` alike. The directory must exist and belong to uid 1000
+# (`node` in the image) BEFORE `up` — deploy/scripts/setup-host.sh does both;
+# otherwise Docker creates it as root and the app cannot write the store.
+
+services:
+  app:
+    volumes:
+      - ${DEPLOY_ROOT:-/opt/chuyennhahung}/data/app:/app/.data
+  tools:
+    volumes:
+      - ${DEPLOY_ROOT:-/opt/chuyennhahung}/data/app:/app/.data
+      - ${DEPLOY_ROOT:-/opt/chuyennhahung}/import:/import:ro
