@@ -8,7 +8,21 @@ import { Container } from '@/components/ui/container';
 import { PageHeader } from '@/components/layout/page-header';
 import { AdminNav } from '@/components/admin/admin-nav';
 import { Markdown } from '@/components/runbook/markdown';
-import { DEFAULT_RUNBOOK_DOC, RUNBOOK_DOCS, isRunbookDoc, readRunbookDoc } from '@/server/runbook/docs';
+import {
+  DEFAULT_RUNBOOK_DOC,
+  RUNBOOK_DOCS,
+  documentTitle,
+  isCoreRunbookDoc,
+  knownRunbookDocs,
+  listFeatureSlugs,
+  readRunbookDoc,
+  resolveRunbookDoc,
+} from '@/server/runbook/docs';
+
+const linkBase =
+  'inline-flex min-h-11 items-center rounded-pill border px-4 text-sm font-medium transition-colors duration-200 ease-gentle';
+const linkIdle = 'border-border-strong bg-surface text-foreground hover:border-primary hover:text-primary-strong';
+const linkCurrent = 'border-primary bg-surface-muted text-primary-strong';
 
 // Gated by the session cookie on every request: never prerendered or cached.
 export const dynamic = 'force-dynamic';
@@ -42,8 +56,20 @@ export default async function AdminRunbookPage({ params, searchParams }: Params)
 
   const raw = (await searchParams).doc;
   const requested = Array.isArray(raw) ? raw[0] : raw;
-  const current = isRunbookDoc(requested) ? requested : DEFAULT_RUNBOOK_DOC;
+  const current = (await resolveRunbookDoc(requested)) ?? DEFAULT_RUNBOOK_DOC;
   const source = await readRunbookDoc(current, locale);
+  const known = await knownRunbookDocs();
+  const featureSlugs = await listFeatureSlugs();
+  const featureTitles = await Promise.all(
+    featureSlugs.map(async (slug) => ({
+      id: `features/${slug}`,
+      title: documentTitle(await readRunbookDoc(`features/${slug}`, locale), slug),
+    })),
+  );
+  const isFeature = !isCoreRunbookDoc(current);
+  const currentTitle = isCoreRunbookDoc(current)
+    ? t(`docs.${current}`)
+    : (featureTitles.find((f) => f.id === current)?.title ?? current);
 
   return (
     <>
@@ -57,19 +83,39 @@ export default async function AdminRunbookPage({ params, searchParams }: Params)
                 key={doc}
                 href={{ pathname: '/admin/runbook', query: { doc } }}
                 aria-current={doc === current ? 'page' : undefined}
-                className={`inline-flex min-h-11 items-center rounded-pill border px-4 text-sm font-medium transition-colors duration-200 ease-gentle ${
-                  doc === current
-                    ? 'border-primary bg-surface-muted text-primary-strong'
-                    : 'border-border-strong bg-surface text-foreground hover:border-primary hover:text-primary-strong'
-                }`}
+                className={`${linkBase} ${doc === current ? linkCurrent : linkIdle}`}
               >
                 {t(`docs.${doc}`)}
               </Link>
             ))}
           </nav>
-          <article aria-label={t(`docs.${current}`)} className="max-w-5xl">
+          {featureTitles.length > 0 ? (
+            <details open={isFeature} className="rounded-md border border-border-subtle p-4">
+              <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">
+                {t('featuresSummary', { count: featureTitles.length })}
+              </summary>
+              <nav aria-label={t('featuresLabel')} className="mt-3 flex flex-wrap items-center gap-2">
+                {featureTitles.map(({ id, title }) => (
+                  <Link
+                    key={id}
+                    href={{ pathname: '/admin/runbook', query: { doc: id } }}
+                    aria-current={id === current ? 'page' : undefined}
+                    className={`${linkBase} ${id === current ? linkCurrent : linkIdle}`}
+                  >
+                    {title}
+                  </Link>
+                ))}
+              </nav>
+            </details>
+          ) : null}
+          <article aria-label={currentTitle} className="max-w-5xl">
             {source ? (
-              <Markdown source={source} tableLabel={t('tableLabel')} />
+              <Markdown
+                source={source}
+                tableLabel={t('tableLabel')}
+                base={isFeature ? 'features' : ''}
+                known={known}
+              />
             ) : (
               <p role="status">{t('missing')}</p>
             )}

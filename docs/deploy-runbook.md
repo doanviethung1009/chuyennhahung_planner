@@ -541,7 +541,12 @@ Then check by hand in a browser:
    `X-Frame-Options` and `X-Content-Type-Options`.
 2. **Sign-in.** Sign in with the admin account, open `/quan-tri`, and see the user list.
 3. **Planner.** Create a trip, add a day and an activity, reload: it is still there. Open
-   its share link in a private window: it shows the trip without signing in.
+   its share link in a private window: it shows the trip without signing in. The Planner
+   has no in-browser editor yet, so to check it with `curl`, send every cookie-authenticated
+   write with `Origin` set to the value of `NEXT_PUBLIC_SITE_URL` (read it with
+   `docker exec chuyennhahung-app-1 printenv NEXT_PUBLIC_SITE_URL`). On the dev VM that is
+   `http://192-168-100-140.nip.io`, **not** the IP; an `Origin` of the IP is refused with
+   `403 a cross-site POST is refused`. Sign-in alone needs no `Origin`.
 4. **Both languages.** `/` and `/en` render, and the language switch keeps the page.
 5. **The database survived the deploy.**
    ```bash
@@ -587,7 +592,7 @@ release: the runner expects the GHCR image.
 | The deploy fails on the `.env` read | `chgrp cnh-runner` / `chmod 640` (Phase 5 step 2) |
 | The registry pull is denied | In GitHub → Packages → `chuyennhahung-app` → settings, grant this repository read access |
 | Planner routes answer `503` | The database is unreachable or refused the login: check `dc ps`, the URL and the password |
-| An admin mutation answers `403` | `NEXT_PUBLIC_SITE_URL` is not the exact origin of the page (scheme, host, port) |
+| An admin mutation, or a Planner write with a cookie, answers `403` | `NEXT_PUBLIC_SITE_URL` is not the exact origin of the page (scheme, host, port); with `curl`, `Origin` must equal it, and on the dev VM that is the `nip.io` host, not the IP |
 | PostgreSQL rejects the password after you regenerated `.env` | It keeps the password from its first start; with no real data yet, stop it and empty `/opt/chuyennhahung/data/postgres`, then `up` again |
 
 ## What has been verified

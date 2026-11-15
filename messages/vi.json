@@ -947,6 +947,8 @@
     "title": "Runbook",
     "description": "Danh sách API và các hướng dẫn vận hành, chỉ dành cho quản trị viên. Đọc thẳng từ tài liệu trong repository nên khớp với bản đang triển khai.",
     "docsLabel": "Tài liệu runbook",
+    "featuresSummary": "Tài liệu tính năng ({count})",
+    "featuresLabel": "Tài liệu tính năng",
     "tableLabel": "Bảng, cuộn ngang để xem đủ các cột",
     "missing": "Tài liệu này không có trong bản triển khai hiện tại.",
     "docs": {
@@ -957,6 +959,8 @@
       "deploy-runner": "Runner triển khai",
       "runbook-api": "Vận hành API",
       "runbook-google-sign-in": "Đăng nhập Google",
+      "architecture": "Kiến trúc",
+      "usage": "Hướng dẫn sử dụng",
       "travel-content-api": "API Travel Content"
     }
   },
