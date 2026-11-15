@@ -1435,6 +1435,11 @@ export class PlannerRepository {
           review.source === 'planner' && review.authorId === userId && review.placeSlug === placeSlug,
       );
       const existing = data.communityReviews[index];
+      // A staff removal or rejection is a decision, not a draft: the author
+      // cannot overwrite it by submitting again (security review, ADR 0014).
+      if (existing && (existing.status === 'removed' || existing.status === 'rejected')) {
+        throw invalidState('this review was taken down by staff and cannot be resubmitted');
+      }
       const review: CommunityReview = {
         id: existing?.id ?? this.newId('rev'),
         source: 'planner',
@@ -1467,12 +1472,21 @@ export class PlannerRepository {
       .map(ownReviewOf);
   }
 
-  /** Deletes the author's own review. Idempotent. */
+  /**
+   * Deletes the author's own live review. Idempotent. A review staff removed or
+   * rejected is kept: deleting it would erase the decision and let the author
+   * write a fresh one.
+   */
   deleteOwnReview(userId: string, placeSlug: string): Promise<void> {
     return this.transaction((data) => {
       data.communityReviews = data.communityReviews.filter(
         (review) =>
-          !(review.source === 'planner' && review.authorId === userId && review.placeSlug === placeSlug),
+          !(
+            review.source === 'planner' &&
+            review.authorId === userId &&
+            review.placeSlug === placeSlug &&
+            (review.status === 'approved' || review.status === 'pending')
+          ),
       );
     });
   }

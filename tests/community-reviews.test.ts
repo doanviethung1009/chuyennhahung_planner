@@ -65,6 +65,23 @@ describe('Planner-written reviews are published at once (ADR 0014)', () => {
     expect(await planner.listOwnReviews(userId)).toEqual([]);
   });
 
+  it('does not let an author overwrite or delete a staff removal', async () => {
+    const planner = makePlanner();
+    const { userId } = await makeOwner(planner);
+    await planner.upsertPlannerReview(userId, PLACE, { ...review(), authorDisplay: 'name' });
+    const [row] = await planner.listReviewQueue();
+    await planner.decideReview(row!.id, 'remove', 'staff', 'vi phạm');
+
+    await expectCode(
+      planner.upsertPlannerReview(userId, PLACE, { ...review(), authorDisplay: 'name' }),
+      'invalid_state',
+    );
+    await planner.deleteOwnReview(userId, PLACE);
+    const [after] = await planner.listReviewQueue();
+    expect(after).toMatchObject({ status: 'removed', rejectReason: 'vi phạm' });
+    expect((await planner.listApprovedReviews()).items).toEqual([]);
+  });
+
   it('rejects an unknown place and a future visit date', async () => {
     const planner = makePlanner();
     const { userId } = await makeOwner(planner);
