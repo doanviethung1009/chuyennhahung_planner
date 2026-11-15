@@ -10,7 +10,7 @@ LAYOUT="${1:-external-db}"
 # A bind mount of a missing path makes Docker create it as root; create each
 # directory first with the owner its container user needs.
 install -d -m 750 -o 1000 -g 1000 "$ROOT/data/app"       # node (app image)
-install -d -m 755 "$ROOT/logs/nginx"
+install -d -m 750 "$ROOT/logs/nginx"
 install -d -m 750 -o 1000 -g 1000 "$ROOT/import"          # planner:import input
 install -d -m 750 "$ROOT/backups"
 install -d -m 755 "$ROOT/secrets"                          # pg-ca.crt (public cert)

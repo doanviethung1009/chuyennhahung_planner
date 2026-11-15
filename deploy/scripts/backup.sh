@@ -20,6 +20,8 @@ if [ "$LAYOUT" = "local-db" ]; then
   COMPOSE=(docker compose --profile local-db -f compose.yml -f compose.app.yml -f compose.app.bind.yml -f compose.app.local-db.yml)
   for db in cnh_planner cnh_content; do
     "${COMPOSE[@]}" exec -T postgres sh -c "pg_dump -U \"\$POSTGRES_USER\" --format=custom $db" > "$OUT/$db.dump"
+    # A failed pg_dump must not leave an empty file that looks like a backup.
+    [ -s "$OUT/$db.dump" ] || { echo "pg_dump of $db produced no data" >&2; rm -rf "$OUT"; exit 1; }
   done
 fi
 

@@ -77,6 +77,41 @@ route out). Only nginx publishes a port. nginx **overwrites** `X-Forwarded-For` 
 `X-Forwarded-Proto` (the rate limiter keys on them) and resolves `app` per request so
 it starts before the app does.
 
+### New server from zero
+
+Everything you need on a blank Ubuntu 24.04 VM, in order. Placeholders: `<vm-ip>`,
+`<db-ip>`, `<repo-url>`.
+
+1. **VM**: 2 vCPU, 2 GB RAM (4 GB is safer), 20 GB disk; add 2 GB swap
+   (`fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile`,
+   plus an `/etc/fstab` line). A static IP or DNS name. SSH with a key, password login off.
+2. **Firewall**: allow 22 and 80 (443 once TLS is on), deny the rest
+   (`ufw default deny incoming && ufw allow 22 && ufw allow 80 && ufw enable`). On a LAN, restrict
+   to your subnet. Docker-published ports bypass `ufw`: the stack publishes only nginx's.
+3. **Docker**: install Docker Engine and the Compose v2 plugin from Docker's apt repository,
+   `usermod -aG docker <you>`, log in again, check `docker compose version`.
+4. **Code**: `git clone <repo-url> /opt/chuyennhahung/src && cd /opt/chuyennhahung/src/deploy`.
+   (Use a deploy key or read-only token for a private repository.)
+5. **Database** — pick one:
+   - *Separate VM* (`external-db`): on the DB VM install PostgreSQL 16/17, create the
+     `cnh_app` role and the `cnh_planner` (and optionally `cnh_content`) databases, a server
+     certificate whose SAN contains `<db-ip>`, a `hostssl` line in `pg_hba.conf` for `<vm-ip>/32`
+     only, and open 5432 to `<vm-ip>` only ([usage → Run the Planner on PostgreSQL](../usage.md#run-the-planner-on-postgresql)).
+     Copy the CA (public) to the app VM's `/opt/chuyennhahung/secrets/pg-ca.crt`, mode 644.
+   - *Same stack* (`local-db`): nothing to install; the init script creates the role and databases.
+6. **Host**: `sudo ./scripts/setup-host.sh <layout>`.
+7. **Env**: `cp .env.example .env && chmod 600 .env`; set `NEXT_PUBLIC_SITE_URL`
+   (`http://<vm-ip>` or the https domain), `ADMIN_API_TOKEN`, the database values.
+8. **Up**: the `up -d --build` command of your layout (first build takes minutes).
+9. **Verify**: `curl -i http://<vm-ip>/api/health`; open the site; then create the first admin
+   with the admin token ([usage → Accounts](../usage.md#accounts-and-passwords-at-a-glance)).
+10. **Backups**: `crontab -e` → `15 3 * * * cd /opt/chuyennhahung/src/deploy && ./scripts/backup.sh <layout>`;
+    copy `/opt/chuyennhahung/backups` off the VM.
+11. **Later**: TLS (certbot, or a load balancer plus `real_ip_header`), set
+    `NEXT_PUBLIC_SITE_URL` to the https origin and rebuild, then Google sign-in
+    ([usage → Set up Google sign-in](../usage.md#set-up-google-sign-in)). Before real users:
+    the owner actions in [usage → Before going live](../usage.md#before-going-live--owner-actions).
+
 ## Files
 
 | Path | Role |

@@ -17,8 +17,8 @@
 services:
   app:
     volumes:
-      - /opt/chuyennhahung/secrets/pg-ca.crt:/run/secrets/pg-ca.crt:ro
+      - ${DEPLOY_ROOT:-/opt/chuyennhahung}/secrets/pg-ca.crt:/run/secrets/pg-ca.crt:ro
 
   tools:
     volumes:
-      - /opt/chuyennhahung/secrets/pg-ca.crt:/run/secrets/pg-ca.crt:ro
+      - ${DEPLOY_ROOT:-/opt/chuyennhahung}/secrets/pg-ca.crt:/run/secrets/pg-ca.crt:ro

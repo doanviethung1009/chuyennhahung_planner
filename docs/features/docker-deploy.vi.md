@@ -76,6 +76,41 @@ ngoài). Chỉ nginx publish port. nginx **ghi đè** `X-Forwarded-For` và
 `X-Forwarded-Proto` (rate limiter dựa vào chúng) và phân giải `app` theo từng request
 nên khởi động được trước app.
 
+### Server mới từ đầu
+
+Mọi thứ cần có trên một VM Ubuntu 24.04 trắng, theo thứ tự. Placeholder: `<ip-vm>`,
+`<ip-db>`, `<repo-url>`.
+
+1. **VM**: 2 vCPU, 2 GB RAM (4 GB an toàn hơn), ổ 20 GB; thêm 2 GB swap
+   (`fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile`,
+   thêm một dòng vào `/etc/fstab`). IP tĩnh hoặc tên miền. SSH bằng key, tắt đăng nhập mật khẩu.
+2. **Firewall**: mở 22 và 80 (thêm 443 khi có TLS), chặn phần còn lại
+   (`ufw default deny incoming && ufw allow 22 && ufw allow 80 && ufw enable`). Trong LAN thì giới hạn
+   theo subnet. Port do Docker publish bỏ qua `ufw`: stack chỉ publish port của nginx.
+3. **Docker**: cài Docker Engine và plugin Compose v2 từ apt repository của Docker,
+   `usermod -aG docker <user>`, đăng nhập lại, kiểm `docker compose version`.
+4. **Code**: `git clone <repo-url> /opt/chuyennhahung/src && cd /opt/chuyennhahung/src/deploy`.
+   (Repository private thì dùng deploy key hoặc token chỉ đọc.)
+5. **Database** — chọn một:
+   - *VM riêng* (`external-db`): trên VM DB cài PostgreSQL 16/17, tạo role `cnh_app` và database
+     `cnh_planner` (tuỳ chọn `cnh_content`), chứng chỉ server có SAN chứa `<ip-db>`, một dòng
+     `hostssl` trong `pg_hba.conf` chỉ cho `<ip-vm>/32`, và chỉ mở 5432 cho `<ip-vm>`
+     ([usage → Chạy Planner trên PostgreSQL](../usage.vi.md#chạy-planner-trên-postgresql)).
+     Chép CA (công khai) sang VM app tại `/opt/chuyennhahung/secrets/pg-ca.crt`, mode 644.
+   - *Cùng stack* (`local-db`): không cần cài gì; script init tạo role và database.
+6. **Host**: `sudo ./scripts/setup-host.sh <layout>`.
+7. **Env**: `cp .env.example .env && chmod 600 .env`; đặt `NEXT_PUBLIC_SITE_URL`
+   (`http://<ip-vm>` hoặc tên miền https), `ADMIN_API_TOKEN`, các giá trị database.
+8. **Up**: lệnh `up -d --build` của layout bạn chọn (lần build đầu mất vài phút).
+9. **Kiểm tra**: `curl -i http://<ip-vm>/api/health`; mở site; rồi tạo admin đầu tiên bằng
+   admin token ([usage → Tài khoản và mật khẩu](../usage.vi.md#tài-khoản-và-mật-khẩu--tóm-tắt)).
+10. **Sao lưu**: `crontab -e` → `15 3 * * * cd /opt/chuyennhahung/src/deploy && ./scripts/backup.sh <layout>`;
+    chép `/opt/chuyennhahung/backups` ra ngoài VM.
+11. **Sau đó**: TLS (certbot, hoặc load balancer cùng `real_ip_header`), đặt
+    `NEXT_PUBLIC_SITE_URL` thành origin https và build lại, rồi đăng nhập Google
+    ([usage → Cấu hình đăng nhập Google](../usage.vi.md#cấu-hình-đăng-nhập-google)). Trước khi có
+    người dùng thật: các việc của chủ nhà ở [usage → Trước khi lên sóng](../usage.vi.md#trước-khi-lên-sóng--việc-của-chủ-nhà).
+
 ## File liên quan
 
 | Đường dẫn | Vai trò |
