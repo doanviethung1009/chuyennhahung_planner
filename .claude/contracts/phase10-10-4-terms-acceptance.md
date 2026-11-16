@@ -1,0 +1,24 @@
+# Task Contract 10.4 — Creator Terms Acceptance
+- Task ID: P10-2
+- Class: L (new gate on live writes, new personal-data table) · State: READY (owner approved D1-D12 as recommended, 2026-11-16) · Subagents: 0
+- Objective: a signed-in member must have accepted the **current version** of the Creator Terms before their community writes are accepted; acceptance is recorded and logged.
+- Scope:
+  - Version identifier for `contribution.terms` (`src/content/site.ts:47-100`; no version exists today). Recommended (D5): explicit `termsVersion` string in `site.ts`, bumped by the owner, plus a test that fails when the text changes without a bump.
+  - Table `terms_acceptances (user_id, version, accepted_at, lang)`, pk `(user_id, version)`, `db/migrations/0012_terms_acceptances.sql` + rollback; JSON key `termsAcceptances`; mirrored in rows/transfer/store/fixtures.
+  - `POST /api/planner/terms {version}` (session-bound; cross-origin refused for a cookie session, ADR 0010), idempotent; `GET` current status for the UI.
+  - Gate (D6): `PUT /api/planner/[id]/listing` and `PUT /api/planner/reviews/[placeSlug]` refuse with `403 forbidden`, reason code `terms_not_accepted` (same pattern as `repository.ts:747`, no new error code), when the current version is not accepted. Reads, withdraw, delete-own-review are never blocked.
+  - Event `terms_accepted` via the 10.2 helper.
+  - UI: accept control in the existing share panel and review form (`src/components/planner/share-panel.tsx:189`, `src/components/reviews/review-form.tsx:54`), strings VI/EN.
+  - Text fix so Terms match the product (mentions of images/video while no upload exists, Q8): **owner supplies/approves the exact text**; nothing is invented.
+- Out of Scope: guest reviews (no account), re-acceptance emails/notifications, profile (Phase 11), the per-trip copy flag (Phase 11; Điều 3 already exists, `site.ts:68`), changing Điều 3, report flow (10.5).
+- Architecture Reference: `docs/specs-community-security.md` (Terms), ADR 0014 (gate), ADR 0010 (CSRF); `.claude/roadmap/backlog.md` P10-2.
+- Dependencies: 10.2 merged (helper, migration order); owner D5, D6. Soft: 10.3 (accept endpoint limiter, optional).
+- API/Data Contract: `TermsAcceptance { userId, version, acceptedAt, lang }`; `POST /api/planner/terms` → `204/200 {accepted:true,version}`; gate error body `{ error: { code: 'forbidden', reason: 'terms_not_accepted' } }` in the project envelope.
+- Files Affected: `src/content/site.ts` (version only; text only if the owner supplies it), `db/migrations/0012_*`, `db/rollback/0012_*`, `src/server/planner/{schemas,store,repository}.ts`, `src/server/persistence/{planner-rows,planner-transfer}.ts`, `tests/planner-pg-fixtures.ts`, `src/app/api/planner/terms/route.ts` (new), the two write routes, `src/components/planner/share-panel.tsx`, `src/components/reviews/review-form.tsx`, `messages/vi.json`, `messages/en.json`, tests, `docs/features/creator-terms.md` + `.vi.md`, `docs/features/README.*`, `docs/architecture.*`, `docs/specs-community-database.*`.
+- FE/BE Responsibilities: BE: table, repository, routes, gate, feature document `creator-terms`. FE (after the API contract is merged-ready, same PR): accept control, VI/EN messages, ≥44px targets, labels tied to inputs. Architect hat: architecture/spec numbering.
+- QC Requirements: no acceptance → listing/review write 403 with the reason; accept → allowed; version bump → blocked again; idempotent accept; accept is per user; failed write after accept still writes no event; text-without-bump test; both stores; `tests/i18n.test.ts` parity; existing community tests that write must accept first via a helper **without editing assertions** (state any fixture change explicitly); a11y checks per rule 5.
+- Security Requirements: CSRF for the cookie session; acceptance is bound to the session user only (no `userId` in the body); version validated against the current constant; no IP/UA stored; table is personal data (privacy statement).
+- Acceptance Criteria: QC list passes; gate closed → a member can still read and withdraw; owner-approved text is the only text change.
+- Verification Commands: `npm run typecheck`, `npm run lint`, `npm run test`; Postgres cases with `TEST_DATABASE_URL`.
+- Rollback Strategy: remove the gate calls and the route (writes work as before); rollback SQL drops `terms_acceptances`; stored rows inert.
+- Definition of Done: criteria met, outputs stated, docs/README/architecture in the same PR, handoff `phase10-10.4.md`.
