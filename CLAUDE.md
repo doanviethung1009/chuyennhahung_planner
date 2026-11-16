@@ -115,6 +115,12 @@ caching). Read only the files the change touches, never scan the whole repositor
 not re-read or re-review what is already settled. Never claim a savings percentage
 without measured usage.
 
+## Executing a Task Contract
+Start every contract in its own new session with
+`.claude/templates/UNIVERSAL_TASK_EXECUTION.md`: one contract = one session = one
+branch = one PR, single agent, dependencies checked before code, self QC/Security,
+no merge or production deploy, handoff ≤25 lines.
+
 ## Safety
 No invented tests, APIs, schema, credentials, prices, dependencies or success status.
 No permission bypass, no secret exposure; respect `.gitignore` and the deny list in
