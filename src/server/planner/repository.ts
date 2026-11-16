@@ -797,7 +797,23 @@ export class PlannerRepository {
   }
 
   /** Permanent delete. Refuses while the traveller still has trips — their data is not collateral. */
-  deleteUser(userId: string, actor?: AdminActor): Promise<void> {
+  /**
+   * What a permanent delete would take with the account: shown in the
+   * confirmation, counted fresh from the store (ADR 0017).
+   */
+  async accountImpact(userId: string, actor?: AdminActor): Promise<{ trips: number; reviews: number }> {
+    const data = await this.store.read();
+    assertActorStillAdmin(data, actor);
+    const target = data.users.find((user) => user.id === userId);
+    if (!target) throw notFound('planner user', userId);
+    assertMayManage(data, actor, userRole(target));
+    return {
+      trips: data.trips.filter((trip) => trip.ownerId === userId).length,
+      reviews: data.communityReviews.filter((review) => review.authorId === userId).length,
+    };
+  }
+
+  deleteUser(userId: string, actor?: AdminActor, confirmHandle?: string): Promise<void> {
     if (actor && actor.userId === userId) {
       return Promise.reject(selfAdminAction('delete itself'));
     }
@@ -814,11 +830,36 @@ export class PlannerRepository {
       }
       if (isAdminRole(userRole(target))) assertAnotherAdminExists(data, userId, 'delete', userRole(target));
 
-      const trips = data.trips.filter((trip) => trip.ownerId === userId).length;
-      if (trips > 0) {
-        throw invalidState(
-          `planner user "${userId}" still owns ${trips} trip(s) — delete or reassign them first`,
-        );
+      // An account that holds data is destroyed only by a super admin who types its
+      // handle; an empty account needs neither (ADR 0017). The service token is direct.
+      const holdsData =
+        data.trips.some((trip) => trip.ownerId === userId) ||
+        data.communityReviews.some((review) => review.authorId === userId);
+      if (actor && holdsData) {
+        const acting = data.users.find((candidate) => candidate.id === actor.userId);
+        if (!acting || userRole(acting) !== 'super_admin') {
+          throw forbidden('only a super admin can permanently delete an account that still holds trips or reviews');
+        }
+        if (confirmHandle !== target.handle) {
+          throw invalidState('type the account handle to confirm a permanent delete');
+        }
+      }
+
+      // A permanent delete takes the account's own plans with it (personal data,
+      // ADR 0014/0017). Copies other travellers made keep their content and only
+      // lose the pointer to the source.
+      const doomed = new Set(data.trips.filter((trip) => trip.ownerId === userId).map((trip) => trip.id));
+      if (doomed.size > 0) {
+        data.trips = data.trips
+          .filter((trip) => !doomed.has(trip.id))
+          .map((trip) =>
+            trip.duplicatedFromTripId && doomed.has(trip.duplicatedFromTripId)
+              ? { ...trip, duplicatedFromTripId: null }
+              : trip,
+          );
+        data.tripDays = data.tripDays.filter((row) => !doomed.has(row.tripId));
+        data.tripActivities = data.tripActivities.filter((row) => !doomed.has(row.tripId));
+        data.tripExpenses = data.tripExpenses.filter((row) => !doomed.has(row.tripId));
       }
       data.users.splice(index, 1);
       data.sessions = data.sessions.filter((session) => session.userId !== userId);

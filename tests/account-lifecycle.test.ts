@@ -122,10 +122,11 @@ describe('soft delete, restore and permanent delete', () => {
     expect(await code(planner.setUserRole(member.id, 'editor', { userId: admin.id }))).toBe('invalid_state');
     await planner.changeAccountState(member.id, 'unban', { userId: admin.id });
     expect(await code(planner.setUserRole(member.id, 'editor', { userId: admin.id }))).toBe('ok');
-    // The owner of a trip is refused a permanent delete until the trip is gone.
+    // A permanent delete takes the account's own trips with it.
     await planner.createTrip(member.id, daLatTripInput());
     await planner.changeAccountState(member.id, 'delete', { userId: superA.id });
-    expect(await code(planner.deleteUser(member.id, { userId: superA.id }))).toBe('invalid_state');
+    expect(await code(planner.deleteUser(member.id, { userId: superA.id }, 'member-a'))).toBe('ok');
+    expect((await planner.listUsers()).some((u) => u.id === member.id)).toBe(false);
   });
 
   it('refuses to purge yourself, or an admin as an admin', async () => {
@@ -134,5 +135,34 @@ describe('soft delete, restore and permanent delete', () => {
     await planner.changeAccountState(admin2.id, 'delete', { userId: superA.id });
     expect(await code(planner.deleteUser(admin2.id, { userId: admin.id }))).toBe('forbidden');
     expect(await code(planner.deleteUser(admin2.id, { userId: superA.id }))).toBe('ok');
+  });
+});
+
+describe('permanent delete of an account that holds data (ADR 0017)', () => {
+  it('counts trips and reviews for the confirmation', async () => {
+    const { planner, member, admin } = await seed();
+    expect(await planner.accountImpact(member.id, { userId: admin.id })).toEqual({ trips: 0, reviews: 0 });
+    await planner.createTrip(member.id, daLatTripInput());
+    expect(await planner.accountImpact(member.id, { userId: admin.id })).toEqual({ trips: 1, reviews: 0 });
+    expect(await code(planner.accountImpact('usr_nope'))).toBe('not_found');
+  });
+
+  it('lets an admin purge only an empty account', async () => {
+    const { planner, member, editor, admin } = await seed();
+    await planner.createTrip(member.id, daLatTripInput());
+    await planner.changeAccountState(member.id, 'delete', { userId: admin.id });
+    await planner.changeAccountState(editor.id, 'delete', { userId: admin.id });
+    expect(await code(planner.deleteUser(member.id, { userId: admin.id }, 'member-a'))).toBe('forbidden');
+    expect(await code(planner.deleteUser(editor.id, { userId: admin.id }))).toBe('ok');
+  });
+
+  it('makes a super admin type the handle, and the service token needs neither', async () => {
+    const { planner, member, superA } = await seed();
+    await planner.createTrip(member.id, daLatTripInput());
+    await planner.changeAccountState(member.id, 'delete', { userId: superA.id });
+    expect(await code(planner.deleteUser(member.id, { userId: superA.id }))).toBe('invalid_state');
+    expect(await code(planner.deleteUser(member.id, { userId: superA.id }, 'wrong'))).toBe('invalid_state');
+    expect((await planner.listUsers()).some((u) => u.id === member.id)).toBe(true);
+    expect(await code(planner.deleteUser(member.id))).toBe('ok');
   });
 });

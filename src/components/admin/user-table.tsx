@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { buttonClass } from "@/components/ui/button";
 import { inputClass } from "@/components/planner/field";
-import { filterUsers, type RoleFilter } from "./filter-users";
-import { ADMIN_ROLES, assignableRoles, type AccountAction, type AdminRole, type AdminUser } from "./types";
+import { filterUsers, type RoleFilter, type StatusView } from "./filter-users";
+import { ADMIN_ROLES, assignableRoles, type AccountAction, type AccountImpact, type AdminRole, type AdminUser } from "./types";
 
 interface Props {
   users: AdminUser[];
@@ -14,7 +14,9 @@ interface Props {
   /** Resolves when the server has answered, success or not. */
   onSaveRole: (user: AdminUser, role: AdminRole) => Promise<void>;
   onReset: (user: AdminUser) => Promise<void>;
-  onAccount: (user: AdminUser, kind: AccountAction) => Promise<void>;
+  onAccount: (user: AdminUser, kind: AccountAction, confirmHandle?: string) => Promise<void>;
+  /** Counts what a permanent delete would remove; null when it could not be read. */
+  onLoadImpact: (user: AdminUser) => Promise<AccountImpact | null>;
 }
 
 type ConfirmKind = "reset" | AccountAction;
@@ -26,6 +28,7 @@ export function UserTable({
   onSaveRole,
   onReset,
   onAccount,
+  onLoadImpact,
 }: Props) {
   const t = useTranslations("admin.users");
   const tr = useTranslations("admin.roles");
@@ -33,9 +36,13 @@ export function UserTable({
   const [drafts, setDrafts] = useState<Record<string, AdminRole>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<{ id: string; kind: ConfirmKind } | null>(null);
+  const [impact, setImpact] = useState<AccountImpact | null>(null);
+  const [typed, setTyped] = useState("");
+  const [view, setView] = useState<StatusView>("active");
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
-  const visible = filterUsers(users, query, roleFilter);
+  const visible = filterUsers(users, query, roleFilter, view);
+  const deletedCount = users.filter((user) => user.deletedAt).length;
   const filtering = query.trim() !== "" || roleFilter !== "all";
 
   async function run(id: string, action: () => Promise<void>) {
@@ -45,11 +52,40 @@ export function UserTable({
     } finally {
       setBusyId(null);
       setConfirm(null);
+      setImpact(null);
+      setTyped("");
+    }
+  }
+
+  async function ask(user: AdminUser, kind: ConfirmKind) {
+    setTyped("");
+    setImpact(null);
+    if (kind !== "purge") return setConfirm({ id: user.id, kind });
+    setBusyId(user.id);
+    const counted = await onLoadImpact(user);
+    setBusyId(null);
+    // Without the numbers the confirmation cannot say what is lost: do not open it.
+    if (counted) {
+      setImpact(counted);
+      setConfirm({ id: user.id, kind });
     }
   }
 
   return (
     <div className="grid gap-3">
+      <div role="group" aria-label={t("viewLabel")} className="flex flex-wrap gap-2">
+        {(["active", "deleted"] as const).map((value) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={view === value}
+            onClick={() => setView(value)}
+            className={buttonClass({ variant: view === value ? "primary" : "secondary", size: "sm" })}
+          >
+            {value === "active" ? t("viewActive") : t("viewDeleted", { count: deletedCount })}
+          </button>
+        ))}
+      </div>
       <div className="flex flex-wrap items-end gap-3">
         <div className="min-w-56 flex-1">
           <label
@@ -141,6 +177,7 @@ export function UserTable({
                 const busy = busyId === user.id;
                 // A banned or deleted account keeps its role until it is unbanned / restored.
                 const disabled = Boolean(user.bannedAt || user.deletedAt);
+                const needsTyping = confirm?.kind === "purge" && Boolean(impact && (impact.trips > 0 || impact.reviews > 0));
                 return (
                   <tr
                     key={user.id}
@@ -227,15 +264,37 @@ export function UserTable({
                       {isSelf || !manageable ? null : confirm?.id === user.id ? (
                         <div role="group" aria-label={t(confirm.kind)} className="grid max-w-64 gap-2">
                           <p className="text-sm text-foreground">
-                            {t(`${confirm.kind}Confirm`, { handle: user.handle })}
+                            {confirm.kind === "purge" && impact && (impact.trips > 0 || impact.reviews > 0)
+                              ? t("purgeImpact", { handle: user.handle, trips: impact.trips, reviews: impact.reviews })
+                              : t(`${confirm.kind}Confirm`, { handle: user.handle })}
                           </p>
+                          {needsTyping ? (
+                            actorRole === "super_admin" ? (
+                              <div>
+                                <label htmlFor={`purge-type-${user.id}`} className="block text-sm font-medium text-foreground">
+                                  {t("purgeTypeLabel", { handle: user.handle })}
+                                </label>
+                                <input
+                                  id={`purge-type-${user.id}`}
+                                  className={`${inputClass} mt-1.5`}
+                                  value={typed}
+                                  onChange={(e) => setTyped(e.target.value)}
+                                  autoComplete="off"
+                                />
+                              </div>
+                            ) : (
+                              <p className="text-sm text-foreground-muted">{t("purgeSuperOnly")}</p>
+                            )
+                          ) : null}
                           <div className="flex flex-wrap gap-2">
                             <button
                               type="button"
-                              disabled={busy}
+                              disabled={busy || (needsTyping && (actorRole !== "super_admin" || typed !== user.handle))}
                               onClick={() =>
                                 run(user.id, () =>
-                                  confirm.kind === "reset" ? onReset(user) : onAccount(user, confirm.kind),
+                                  confirm.kind === "reset"
+                                    ? onReset(user)
+                                    : onAccount(user, confirm.kind, needsTyping ? typed : undefined),
                                 )
                               }
                               className={buttonClass({ size: "sm" })}
@@ -264,7 +323,7 @@ export function UserTable({
                               key={kind}
                               type="button"
                               disabled={busy}
-                              onClick={() => setConfirm({ id: user.id, kind })}
+                              onClick={() => void ask(user, kind)}
                               className={buttonClass({ variant: "secondary", size: "sm" })}
                             >
                               {t(kind)}

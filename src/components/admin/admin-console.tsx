@@ -8,7 +8,7 @@ import { ApiError, api, signInUrl } from '@/components/planner/api';
 import { CreateUserForm, type CreateUserInput } from './create-user-form';
 import { SecretPanel } from './secret-panel';
 import { UserTable } from './user-table';
-import type { AccountAction, AdminRole, AdminUser, OneTimeSecret } from './types';
+import type { AccountAction, AccountImpact, AdminRole, AdminUser, OneTimeSecret } from './types';
 
 interface Props {
   currentUserId: string;
@@ -138,12 +138,25 @@ export function AdminConsole({ currentUserId, currentHandle, actorRole }: Props)
     }
   }
 
-  async function accountAction(user: AdminUser, kind: AccountAction) {
+  async function loadImpact(user: AdminUser): Promise<AccountImpact | null> {
+    try {
+      const result = await api<{ impact: AccountImpact }>(
+        `/api/admin/planner/users/${encodeURIComponent(user.id)}/impact`,
+      );
+      return result.impact;
+    } catch (failure) {
+      fail(failure);
+      return null;
+    }
+  }
+
+  async function accountAction(user: AdminUser, kind: AccountAction, confirmHandle?: string) {
     setStatus(null);
     const base = `/api/admin/planner/users/${encodeURIComponent(user.id)}`;
     try {
       if (kind === 'purge') {
-        await api(`${base}?mode=hard`, { method: 'DELETE' });
+        const confirmQuery = confirmHandle ? `&confirm=${encodeURIComponent(confirmHandle)}` : '';
+        await api(`${base}?mode=hard${confirmQuery}`, { method: 'DELETE' });
         setUsers((current) => current?.filter((u) => u.id !== user.id) ?? current);
       } else {
         const result = await api<{ user: AdminUser }>(
@@ -155,7 +168,7 @@ export function AdminConsole({ currentUserId, currentHandle, actorRole }: Props)
       setStatus({ kind: 'ok', text: t(`status.${kind}Done`, { handle: user.handle }) });
     } catch (failure) {
       // `invalid_state` here is one of several lifecycle refusals (own account, last
-      // admin, still owns trips), unlike the role / reset wording of `errors.invalid_state`.
+      // admin, not soft-deleted first, handle not confirmed), unlike the role / reset wording of `errors.invalid_state`.
       if (failure instanceof ApiError && failure.code === 'invalid_state') {
         return setStatus({ kind: 'error', text: t('errors.account_state') });
       }
@@ -230,7 +243,7 @@ export function AdminConsole({ currentUserId, currentHandle, actorRole }: Props)
         ) : users.length === 0 ? (
           <p className="text-base text-foreground-muted">{t('users.empty')}</p>
         ) : (
-          <UserTable users={users} currentUserId={currentUserId} actorRole={actorRole} onSaveRole={saveRole} onReset={resetPassword} onAccount={accountAction} />
+          <UserTable users={users} currentUserId={currentUserId} actorRole={actorRole} onSaveRole={saveRole} onReset={resetPassword} onAccount={accountAction} onLoadImpact={loadImpact} />
         )}
         {users === null && status?.kind === 'error' ? (
           <div>

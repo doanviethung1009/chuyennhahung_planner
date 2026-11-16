@@ -35,8 +35,8 @@ reads back in the order the JSON array had.
   deferred, so a reorder can commit).
 - Foreign keys: sessions and OAuth attempts cascade from users; days,
   activities and expenses cascade from trips; activities cascade from days. A
-  trip's `owner_id` is not cascading — the repository refuses to delete a user
-  who owns trips, and the database agrees.
+  trip's `owner_id` is not cascading — the repository deletes the user's trips
+  first (ADR 0017), so the database never sees an orphan.
 - Expenses copy the repository exactly: deleting an activity keeps the expense
   and its day (`activity_id ON DELETE SET NULL`); a day that still holds an
   expense cannot be deleted (`day_id` NO ACTION), mirroring `dropDays`. Both are

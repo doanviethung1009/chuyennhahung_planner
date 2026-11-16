@@ -25,6 +25,12 @@ export interface AdminUser {
   createdAt: string;
 }
 
+/** What a permanent delete removes with the account (GET .../impact). */
+export interface AccountImpact {
+  trips: number;
+  reviews: number;
+}
+
 /** A one-time credential set, held in component state only. */
 export interface OneTimeSecret {
   key: string;
