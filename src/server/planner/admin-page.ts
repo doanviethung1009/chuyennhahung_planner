@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { ContentError } from '@/server/content/errors';
 import { can, type Role } from '@/server/identity/permissions';
@@ -58,8 +59,9 @@ export async function readAdminPageAccess(): Promise<AdminPageAccess> {
 
 /**
  * Page gate for the whole admin shell (ADR 0011 §5): any role that can do
- * something there. `forbidden` -> `notFound()`; the shell hides sections by
- * `can(role, ...)`, but the API stays the authority.
+ * something there. `forbidden` -> `notFound()`. Every page calls `requireStaff`
+ * itself; the sidebar only hides links by `can(role, ...)`, and the API stays
+ * the authority.
  */
 export type StaffPageAccess =
   | { status: 'anonymous' }
@@ -70,7 +72,7 @@ export type StaffPageAccess =
       principal: { kind: 'session'; userId: string; handle: string; role: Role };
     };
 
-export async function readStaffPageAccess(): Promise<StaffPageAccess> {
+export const readStaffPageAccess = cache(async (): Promise<StaffPageAccess> => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return { status: 'anonymous' };
 
@@ -101,4 +103,4 @@ export async function readStaffPageAccess(): Promise<StaffPageAccess> {
     }
     throw error;
   }
-}
+});

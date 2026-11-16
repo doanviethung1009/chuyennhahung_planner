@@ -6,7 +6,6 @@ import { buildPageMetadata } from '@/lib/metadata';
 import { noIndex, requireStaff } from '@/lib/admin-gate';
 import { Container } from '@/components/ui/container';
 import { PageHeader } from '@/components/layout/page-header';
-import { AdminNav } from '@/components/admin/admin-nav';
 import { ContentNotice } from '@/components/admin/content-notice';
 import { ContentList } from '@/components/admin/content/content-list';
 
@@ -33,7 +32,7 @@ export default async function AdminPlacesPage({ params }: Params) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const access = await requireStaff(locale, getPathname({ href: '/admin/content/places' as const, locale }), 'content');
+  await requireStaff(locale, getPathname({ href: '/admin/content/places' as const, locale }), 'content');
   const t = await getTranslations('adminContent.places');
 
   return (
@@ -41,7 +40,6 @@ export default async function AdminPlacesPage({ params }: Params) {
       <PageHeader title={t('title')} description={t('description')} />
       <Container width="wide">
         <div className="grid gap-8 py-10 md:py-14">
-          <AdminNav current="places" canUsers={access.canUsers} canRunbook={access.canRunbook} canContent={access.canContent} />
           <ContentNotice />
           <ContentList kind="places" />
         </div>

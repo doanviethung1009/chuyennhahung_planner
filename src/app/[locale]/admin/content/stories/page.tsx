@@ -6,7 +6,6 @@ import { buildPageMetadata } from '@/lib/metadata';
 import { noIndex, requireStaff } from '@/lib/admin-gate';
 import { Container } from '@/components/ui/container';
 import { PageHeader } from '@/components/layout/page-header';
-import { AdminNav } from '@/components/admin/admin-nav';
 import { ContentNotice } from '@/components/admin/content-notice';
 import { ContentList } from '@/components/admin/content/content-list';
 
@@ -33,7 +32,7 @@ export default async function AdminStoriesPage({ params }: Params) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const access = await requireStaff(locale, getPathname({ href: '/admin/content/stories' as const, locale }), 'content');
+  await requireStaff(locale, getPathname({ href: '/admin/content/stories' as const, locale }), 'content');
   const t = await getTranslations('adminContent.stories');
 
   return (
@@ -41,7 +40,6 @@ export default async function AdminStoriesPage({ params }: Params) {
       <PageHeader title={t('title')} description={t('description')} />
       <Container width="wide">
         <div className="grid gap-8 py-10 md:py-14">
-          <AdminNav current="stories" canUsers={access.canUsers} canRunbook={access.canRunbook} canContent={access.canContent} />
           <ContentNotice />
           <ContentList kind="stories" />
         </div>

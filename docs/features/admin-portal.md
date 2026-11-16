@@ -4,6 +4,8 @@
 
 ## Summary
 
+> Since ADR 0020 the user console lives at `/admin/users` (`/quan-tri/nguoi-dung`); `/admin` is the overview. See [admin-shell.md](admin-shell.md).
+
 A browser page where a signed-in administrator manages Planner users without
 `curl`: list users, create one, change a role, reissue a password. It serves the
 owner and nobody else; it is not linked from any public navigation. Design

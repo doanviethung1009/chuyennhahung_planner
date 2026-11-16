@@ -647,13 +647,28 @@
       "places": "Places",
       "reviews": "Reviews",
       "community": "Community",
-      "runbook": "Runbook"
+      "runbook": "Runbook",
+      "groups": {
+        "overview": "Overview",
+        "content": "Content",
+        "community": "Community",
+        "people": "People",
+        "operations": "Operations"
+      },
+      "skip": "Skip to admin content",
+      "openMenu": "Menu",
+      "closeMenu": "Close menu",
+      "breadcrumb": "Breadcrumb",
+      "home": "Admin"
     },
     "overview": {
       "heading": "Welcome to the admin area",
       "signedInAs": "Signed in as {handle}.",
       "body": "As an editor you can edit stories, places and reviews. Managing users is for administrators only.",
-      "goStories": "Open the stories list"
+      "goStories": "Open the stories list",
+      "title": "Admin",
+      "metaTitle": "Admin",
+      "description": "Everything you can manage on the site, in one place."
     },
     "notice": {
       "title": "Note: published edits go live on the public site",

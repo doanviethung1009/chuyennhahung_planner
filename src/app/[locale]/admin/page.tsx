@@ -6,8 +6,6 @@ import { buildPageMetadata } from '@/lib/metadata';
 import { noIndex, requireStaff } from '@/lib/admin-gate';
 import { Container } from '@/components/ui/container';
 import { PageHeader } from '@/components/layout/page-header';
-import { AdminConsole } from '@/components/admin/admin-console';
-import { AdminNav } from '@/components/admin/admin-nav';
 
 // Reads the session cookie on every request: never prerendered or cached.
 export const dynamic = 'force-dynamic';
@@ -16,47 +14,42 @@ type Params = { params: Promise<{ locale: Locale }> };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'admin' });
+  const tc = await getTranslations({ locale, namespace: 'adminContent.overview' });
   return noIndex(
     buildPageMetadata({
       href: '/admin',
       locale,
-      title: t('metaTitle'),
-      description: t('shellDescription'),
+      title: tc('metaTitle'),
+      description: tc('description'),
     }),
   );
 }
 
 /**
- * Admin shell (ADR 0010, ADR 0011 §5). The server decides who may see anything:
- * anonymous visitors go to sign-in and come back, a user on a temporary
- * password goes to change it, and a role with nothing to do here gets a plain
- * 404. Editors see the Content section only; admins also see Users. Only then
- * are the client islands rendered.
+ * Admin overview (ADR 0020). Minimal for now — the dashboard counts arrive
+ * with P07-11. The server gate is unchanged: anonymous visitors go to sign-in
+ * and come back, a temporary password goes to change it, a role with nothing
+ * to do here gets a plain 404. The user console moved to `/admin/users`.
  */
 export default async function AdminPage({ params }: Params) {
   const { locale } = await params;
   setRequestLocale(locale);
 
   const access = await requireStaff(locale, getPathname({ href: '/admin', locale }));
-  const t = await getTranslations('admin');
   const tc = await getTranslations('adminContent.overview');
 
   return (
     <>
-      <PageHeader title={t('title')} description={t('shellDescription')} />
+      <PageHeader title={tc('title')} description={tc('description')} />
       <Container width="wide">
         <div className="grid gap-10 py-10 md:py-14">
-          <AdminNav current="overview" canUsers={access.canUsers} canRunbook={access.canRunbook} canContent={access.canContent} />
-          {access.canUsers ? (
-            <AdminConsole currentUserId={access.principal.userId} actorRole={access.principal.role} currentHandle={access.principal.handle} />
-          ) : (
-            <section aria-labelledby="admin-overview-heading" className="grid gap-4">
-              <h2 id="admin-overview-heading" className="font-display text-2xl text-foreground">
-                {tc('heading')}
-              </h2>
-              <p className="text-base text-foreground-muted">{tc('signedInAs', { handle: access.principal.handle })}</p>
-              <p className="text-base text-foreground-muted">{tc('body')}</p>
+          <section aria-labelledby="admin-overview-heading" className="grid gap-4">
+            <h2 id="admin-overview-heading" className="font-display text-2xl text-foreground">
+              {tc('heading')}
+            </h2>
+            <p className="text-base text-foreground-muted">{tc('signedInAs', { handle: access.principal.handle })}</p>
+            <p className="text-base text-foreground-muted">{tc('body')}</p>
+            {access.canContent ? (
               <div>
                 <Link
                   href="/admin/content/stories"
@@ -65,8 +58,8 @@ export default async function AdminPage({ params }: Params) {
                   {tc('goStories')}
                 </Link>
               </div>
-            </section>
-          )}
+            ) : null}
+          </section>
         </div>
       </Container>
     </>

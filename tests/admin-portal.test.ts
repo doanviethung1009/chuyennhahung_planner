@@ -1,10 +1,16 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, type Dirent } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import nextConfig, { adminPaths } from '../next.config';
 import robots from '../src/app/robots';
 import { pathnames } from '../src/i18n/routing';
 import { safeReturnTo } from '../src/lib/return-to';
+import { adminSidebarGroups } from '../src/lib/admin-gate';
+// `adminSidebarGroups` is pure; the gate's server-only imports are stubbed out.
+vi.mock('../src/i18n/navigation', () => ({ redirect: vi.fn() }));
+vi.mock('../src/server/planner/admin-page', () => ({ readStaffPageAccess: vi.fn() }));
+
+import type { Role } from '../src/server/identity/permissions';
 
 const adminDir = resolve(import.meta.dirname, '../src/components/admin');
 
@@ -62,6 +68,66 @@ describe('admin portal (frontend, ADR 0010)', () => {
       expect(source, name).not.toMatch(/ADMIN_API_TOKEN|process\.env/);
       expect(source, name).not.toMatch(/from\s+['"](?:@\/server|\.\.?\/.*server)/);
       expect(source, name).not.toMatch(/localStorage|sessionStorage/);
+    }
+  });
+
+  it('routes the moved user console at /quan-tri/nguoi-dung and /en/admin/users (ADR 0020)', () => {
+    expect(pathnames['/admin/users']).toEqual({ vi: '/quan-tri/nguoi-dung', en: '/admin/users' });
+    for (const ok of ['/quan-tri/nguoi-dung', '/en/admin/users', '/en/admin/users?x=1']) {
+      expect(safeReturnTo(ok), ok).toBe(ok);
+    }
+    expect(safeReturnTo('/quan-tri/nguoi-dung/x')).toBe('/my-trips');
+    expect(safeReturnTo('/quan-tri/nguoi-dungx')).toBe('/my-trips');
+    expect(safeReturnTo('/en/admin/userss')).toBe('/my-trips');
+  });
+
+  it('gives every admin page one frame: a layout, and no page draws its own nav', () => {
+    const base = resolve(import.meta.dirname, '../src/app/[locale]/admin');
+    expect(readFileSync(join(base, 'layout.tsx'), 'utf8')).toMatch(/AdminSidebar/);
+    expect(readFileSync(join(base, 'users/page.tsx'), 'utf8')).toMatch(/requireStaff\([\s\S]*?'users'\)/);
+    expect(readFileSync(join(base, 'page.tsx'), 'utf8')).not.toMatch(/AdminConsole|AdminNav/);
+  });
+});
+
+describe('admin page gates (ADR 0020)', () => {
+  it('has every admin page call requireStaff itself, whatever the layout draws', () => {
+    const base = resolve(import.meta.dirname, '../src/app/[locale]/admin');
+    const pages = (readdirSync(base, { recursive: true, withFileTypes: true }) as Dirent[])
+      .filter((entry) => entry.isFile() && entry.name === 'page.tsx')
+      .map((entry) => join(entry.parentPath, entry.name));
+    expect(pages.length).toBeGreaterThanOrEqual(9);
+    for (const file of pages) {
+      expect(readFileSync(file, 'utf8'), file).toMatch(/requireStaff\(/);
+    }
+  });
+});
+
+describe('admin sidebar visibility (ADR 0020 §2)', () => {
+  const hrefs = (role: Role | 'service') =>
+    adminSidebarGroups({ role }).flatMap((group) => group.links.map((link) => link.href));
+
+  it('shows an editor Overview, Content and Community — never People or Operations', () => {
+    const links = hrefs('editor');
+    expect(links).toEqual([
+      '/admin',
+      '/admin/content/stories',
+      '/admin/content/places',
+      '/admin/content/reviews',
+      '/admin/community',
+    ]);
+    expect(adminSidebarGroups({ role: 'editor' }).map((group) => group.id)).not.toContain('people');
+  });
+
+  it('adds People for an admin and Operations (Runbook) for a super admin only', () => {
+    expect(hrefs('admin')).toContain('/admin/users');
+    expect(hrefs('admin')).not.toContain('/admin/runbook');
+    expect(hrefs('super_admin')).toEqual(expect.arrayContaining(['/admin/users', '/admin/runbook']));
+  });
+
+  it('drops a group with no visible link and renders no Media group yet', () => {
+    expect(adminSidebarGroups({ role: 'member' }).map((group) => group.id)).toEqual(['overview']);
+    for (const role of ['editor', 'admin', 'super_admin'] as const) {
+      expect(adminSidebarGroups({ role }).map((group) => group.id as string)).not.toContain('media');
     }
   });
 });
