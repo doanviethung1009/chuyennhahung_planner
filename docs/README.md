@@ -33,6 +33,8 @@ index below.
 | [specs-community-security.md](specs-community-security.md) | Community Platform spec (proposed): RBAC, ownership, privacy, threat model |
 | [specs-community-qc.md](specs-community-qc.md) | Community Platform spec (proposed): test strategy, acceptance per phase, regression net |
 | [specs-community-roadmap.md](specs-community-roadmap.md) | Community Platform spec (proposed): phases C1-C7, agent plan, risk register, decision log |
+| [specs-home-personalization.md](specs-home-personalization.md) | Spec (proposed): personalized home page — guest / new member / returning member IA, flows, wireframes, components, rule matrix, server/client data boundary, API, acceptance, roadmap mapping |
+| [specs-home-mvp.md](specs-home-mvp.md) | Spec (proposed): personalized home MVP — first-trip and Continue Planning band read on the server, impact assessment, Task Contract, files to change, acceptance |
 | [usage.md](usage.md) | Install, run, test, verify, deploy, and the day-to-day workflows |
 | [travel-content-api.md](travel-content-api.md) | Travel Content System API contract — endpoints, conventions, error codes, invariants |
 | [runbook.md](runbook.md) | Runbook: where to start — which guide answers which question, quick checks, and the list of every API endpoint; shown to admins at `/quan-tri/runbook` |

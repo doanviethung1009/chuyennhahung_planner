@@ -36,6 +36,7 @@ Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
 | CMS nội dung quản trị | [admin-content-cms.vi.md](admin-content-cms.vi.md) | `/quan-tri/noi-dung/...` — biên tập viên và admin sửa chuyến đi, địa điểm, đánh giá với vi/en song song, xuất bản và duyệt (ADR 0011) |
 | Trang Travel công khai từ kho nội dung | [public-travel-cms.vi.md](public-travel-cms.vi.md) | Trang chủ, chuyến đi, điểm đến và sitemap đọc chuyến đi đã xuất bản từ kho nội dung, động, nên sửa trong CMS hiện ngay ở request kế tiếp (ADR 0012) |
 | Tài khoản trên header | [header-account.vi.md](header-account.vi.md) | Biểu tượng đăng nhập cho khách, menu tài khoản (Chuyến đi của tôi, mật khẩu, quản trị, đăng xuất) cho thành viên, trên máy tính và điện thoại |
+| Continue Planning trên trang chủ | [home-continue-planning.vi.md](home-continue-planning.vi.md) | Dải phía trên hero cho thành viên đã đăng nhập: tạo chuyến đầu tiên, hoặc Continue Planning chuyến chưa xong kế tiếp; khách thấy trang không đổi |
 | Tạo chuyến đi trống | [create-blank-trip.vi.md](create-blank-trip.vi.md) | `/my-trips/new` — nút và biểu mẫu tạo chuyến đi trên Chuyến đi của tôi, `source: "blank"` |
 | Docker deploy trên một VM | [docker-deploy.vi.md](docker-deploy.vi.md) | Runbook: nginx + app + PostgreSQL tuỳ chọn, trạng thái bind mount, chuẩn bị host, sao lưu |
 | Tài khoản super admin | [super-admin-accounts.vi.md](super-admin-accounts.vi.md) | Role `super_admin` (ADR 0017): chỉ nó mở được Runbook, admin không quản lý được tài khoản admin |

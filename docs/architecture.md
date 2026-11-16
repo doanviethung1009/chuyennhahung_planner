@@ -232,6 +232,14 @@ The travel map is deliberately **not** a client component: an SVG silhouette
 with real `<a>` anchors positioned by [`lib/map.ts`](../src/lib/map.ts), so it is
 keyboard-navigable and crawlable with JavaScript disabled.
 
+The layout, header and page metadata never read request data. **One named
+exception:** the home page `/` reads the session cookie on the server through
+[`readHomeMember`](../src/server/planner/home-page.ts) to show a signed-in member a
+first-trip or Continue Planning band ([ADR 0021](adr/0021-home-mvp-server-session.md),
+[feature](features/home-continue-planning.md)). A request without the cookie gets
+exactly the public page; a request with it is answered `private, no-store`. Any
+shared cache in front of `/` must bypass it for cookie requests.
+
 ## SEO
 
 SEO is structural here, not a polish pass.

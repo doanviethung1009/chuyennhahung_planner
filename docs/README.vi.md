@@ -32,6 +32,8 @@ trúc hai bản lệch nhau, hoặc nếu tài liệu chưa được liệt kê 
 | [specs-community-security.vi.md](specs-community-security.vi.md) | Spec Community Platform (đề xuất): bảo mật — RBAC, sở hữu, riêng tư, mô hình đe dọa |
 | [specs-community-qc.vi.md](specs-community-qc.vi.md) | Spec Community Platform (đề xuất): QC — chiến lược test, nghiệm thu theo phase, lưới hồi quy |
 | [specs-community-roadmap.vi.md](specs-community-roadmap.vi.md) | Spec Community Platform (đề xuất): roadmap — phase C1–C7, kế hoạch agent, sổ rủi ro, nhật ký quyết định |
+| [specs-home-personalization.vi.md](specs-home-personalization.vi.md) | Spec (đề xuất): trang chủ cá nhân hóa — IA, luồng, wireframe, component, ma trận luật, ranh giới dữ liệu server/client, API, nghiệm thu, ánh xạ roadmap cho khách / thành viên mới / thành viên quay lại |
+| [specs-home-mvp.vi.md](specs-home-mvp.vi.md) | Spec (đề xuất): MVP trang chủ cá nhân hóa — dải chuyến đầu tiên và Continue Planning đọc ở server, đánh giá tác động, Task Contract, tệp cần đổi, nghiệm thu |
 | [usage.vi.md](usage.vi.md) | Cài đặt, chạy, test, kiểm tra, deploy và các luồng việc hằng ngày |
 | [travel-content-api.vi.md](travel-content-api.vi.md) | Hợp đồng API của Travel Content System — endpoint, quy ước, mã lỗi, các bất biến |
 | [runbook.vi.md](runbook.vi.md) | Runbook: nơi bắt đầu — hướng dẫn nào trả lời câu hỏi nào, kiểm tra nhanh và danh sách mọi endpoint API; hiển thị cho admin tại `/quan-tri/runbook` |

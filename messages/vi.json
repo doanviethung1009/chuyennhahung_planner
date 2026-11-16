@@ -99,6 +99,21 @@
       "title": "Lịch trình mình đã đi thật",
       "lead": "Chia theo ngày, kèm chi phí thật và những đoạn mình khuyên nên bỏ."
     },
+    "member": {
+      "continueEyebrow": "Tiếp tục lên kế hoạch",
+      "continueCta": "Tiếp tục chỉnh sửa",
+      "allTrips": "Tất cả chuyến đi",
+      "days": "{count} ngày",
+      "countdown": "Còn {count} ngày",
+      "leavingToday": "Khởi hành hôm nay",
+      "noDate": "Chưa chọn ngày",
+      "startEyebrow": "Bắt đầu",
+      "firstTitle": "Tạo chuyến đầu tiên của bạn",
+      "firstLead": "Bắt đầu từ trang trắng, hoặc mở một chuyện của Hưng và dùng lịch trình thật làm mẫu.",
+      "nextTitle": "Bắt đầu một chuyến mới",
+      "nextLead": "Các chuyến trước đã xong hoặc đã cất đi. Lên kế hoạch cho chuyến tiếp theo nhé.",
+      "createCta": "Tạo chuyến đi"
+    },
     "plan": {
       "eyebrow": "Tự thiết kế",
       "title": "Muốn một chuyến đi của riêng bạn?",
