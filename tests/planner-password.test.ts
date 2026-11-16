@@ -234,6 +234,9 @@ describe('sign-in rate-limit key (ADR 0018)', () => {
     );
     expect(new Set(keys).size).toBe(1);
     expect(await planner.signInBucketKey('khong-co')).not.toBe(keys[0]);
+    // An identifier shaped like the account's id must not share its bucket.
+    const id = keys[0]!.replace('account:id:', '');
+    expect(await planner.signInBucketKey(id)).not.toBe(keys[0]);
   });
 });
 

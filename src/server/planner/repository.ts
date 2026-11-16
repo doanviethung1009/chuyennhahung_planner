@@ -360,7 +360,9 @@ export class PlannerRepository {
     const byEmail = key.includes('@');
     const data = await this.snapshot();
     const user = data.users.find((row) => (byEmail ? row.email === key : row.handle === key));
-    return `account:${user ? user.id : key}`;
+    // Separate namespaces: an identifier that merely looks like a user id must
+    // not land in that account's bucket.
+    return user ? `account:id:${user.id}` : `account:ident:${key}`;
   }
 
   /**
