@@ -814,11 +814,21 @@ export class PlannerRepository {
       }
       if (isAdminRole(userRole(target))) assertAnotherAdminExists(data, userId, 'delete', userRole(target));
 
-      const trips = data.trips.filter((trip) => trip.ownerId === userId).length;
-      if (trips > 0) {
-        throw invalidState(
-          `planner user "${userId}" still owns ${trips} trip(s) — delete or reassign them first`,
-        );
+      // A permanent delete takes the account's own plans with it (personal data,
+      // ADR 0014/0017). Copies other travellers made keep their content and only
+      // lose the pointer to the source.
+      const doomed = new Set(data.trips.filter((trip) => trip.ownerId === userId).map((trip) => trip.id));
+      if (doomed.size > 0) {
+        data.trips = data.trips
+          .filter((trip) => !doomed.has(trip.id))
+          .map((trip) =>
+            trip.duplicatedFromTripId && doomed.has(trip.duplicatedFromTripId)
+              ? { ...trip, duplicatedFromTripId: null }
+              : trip,
+          );
+        data.tripDays = data.tripDays.filter((row) => !doomed.has(row.tripId));
+        data.tripActivities = data.tripActivities.filter((row) => !doomed.has(row.tripId));
+        data.tripExpenses = data.tripExpenses.filter((row) => !doomed.has(row.tripId));
       }
       data.users.splice(index, 1);
       data.sessions = data.sessions.filter((session) => session.userId !== userId);

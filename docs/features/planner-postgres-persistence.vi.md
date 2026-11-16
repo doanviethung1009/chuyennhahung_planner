@@ -35,7 +35,7 @@ thứ tự của mảng JSON.
   `(day_id, sort_order)` (hai cái sau là deferred để việc đổi thứ tự commit được).
 - Khoá ngoại: session và lượt OAuth cascade từ user; ngày, activity và chi phí
   cascade từ trip; activity cascade từ ngày. `owner_id` của trip không cascade —
-  repository từ chối xoá user còn trip, và database cũng vậy.
+  repository xoá trip của user trước (ADR 0017) nên database không bao giờ thấy dòng mồ côi.
 - Chi phí sao chép đúng repository: xoá activity thì giữ chi phí và ngày của nó
   (`activity_id ON DELETE SET NULL`); ngày còn chi phí thì không xoá được
   (`day_id` NO ACTION), giống `dropDays`. Cả hai đều có test ghim.

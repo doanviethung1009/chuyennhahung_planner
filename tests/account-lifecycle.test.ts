@@ -122,10 +122,11 @@ describe('soft delete, restore and permanent delete', () => {
     expect(await code(planner.setUserRole(member.id, 'editor', { userId: admin.id }))).toBe('invalid_state');
     await planner.changeAccountState(member.id, 'unban', { userId: admin.id });
     expect(await code(planner.setUserRole(member.id, 'editor', { userId: admin.id }))).toBe('ok');
-    // The owner of a trip is refused a permanent delete until the trip is gone.
+    // A permanent delete takes the account's own trips with it.
     await planner.createTrip(member.id, daLatTripInput());
     await planner.changeAccountState(member.id, 'delete', { userId: superA.id });
-    expect(await code(planner.deleteUser(member.id, { userId: superA.id }))).toBe('invalid_state');
+    expect(await code(planner.deleteUser(member.id, { userId: superA.id }))).toBe('ok');
+    expect((await planner.listUsers()).some((u) => u.id === member.id)).toBe(false);
   });
 
   it('refuses to purge yourself, or an admin as an admin', async () => {

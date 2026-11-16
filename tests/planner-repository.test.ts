@@ -650,16 +650,17 @@ describe('planner users', () => {
     await expectCode(planner.identify(authed(first.accessToken)), 'unauthorized');
   });
 
-  it('refuses to delete a traveller who still owns trips', async () => {
+  it('deletes a traveller together with their trips and unlinks copies others made', async () => {
     const planner = makePlanner();
     const { userId } = await makeOwner(planner);
-    await planner.createTrip(userId, daLatTripInput());
-
-    await expectCode(planner.deleteUser(userId), 'invalid_state');
-
+    const trip = await planner.createTrip(userId, daLatTripInput());
     const other = await planner.createUser({ handle: 'mai-nguyen', displayName: 'Mai' });
-    await planner.deleteUser(other.user.id);
-    expect((await planner.listUsers()).map((user) => user.handle)).toEqual(['hung-tran']);
+
+    await planner.deleteUser(userId);
+
+    expect((await planner.listUsers()).map((user) => user.handle)).toEqual(['mai-nguyen']);
+    expect((await planner.listTrips(other.user.id)).length).toBe(0);
+    await expectCode(planner.getTrip(userId, trip.trip.id), 'not_found');
   });
 
   it('rejects an unknown or malformed bearer token', async () => {

@@ -504,7 +504,7 @@ describe('archive, restore and permanent delete', () => {
 });
 
 describe('provisioning', () => {
-  it('refuses to delete a traveller who still owns trips, and 404s on an unknown one', async () => {
+  it('deletes a traveller together with their trips, and 404s on an unknown one', async () => {
     const token = await provision('still-owns');
     await routes.trips.POST(req('POST', { token, body: tripBody() }));
 
@@ -515,7 +515,9 @@ describe('provisioning', () => {
       req('DELETE', { token: ADMIN_TOKEN }),
       params({ userId: user.id }),
     );
-    expect(blocked.status).toBe(409);
+    expect(blocked.status).toBe(204);
+    const after = await json(await routes.adminUsers.GET(req('GET', { token: ADMIN_TOKEN })));
+    expect(after.users.some((row: { handle: string }) => row.handle === 'still-owns')).toBe(false);
 
     const unknown = await routes.adminUser.DELETE(
       req('DELETE', { token: ADMIN_TOKEN }),
