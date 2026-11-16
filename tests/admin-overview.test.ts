@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { SESSION_COOKIE } from '../src/server/planner/auth';
-import { buildOverview, OVERVIEW_CARD_IDS, type OverviewSources } from '../src/server/admin/overview';
+import { buildOverview, OVERVIEW_CARD_IDS, REVIEW_QUEUE_CAP, type OverviewSources } from '../src/server/admin/overview';
 import { storyFixture } from './travel-content-helpers';
 
 vi.mock('../src/server/planner/password', async (importOriginal) => ({
@@ -76,9 +76,9 @@ describe('GET /api/admin/overview role matrix', () => {
     expect(await ids(response)).toEqual(['listingsPending', 'reviewsPending', 'contentDrafts']);
   });
 
-  it('admin adds user and integrity cards; the service token matches; no runtime card', async () => {
+  it('admin adds the two user cards (no integrity card); the service token matches; no runtime card', async () => {
     const admin = await makeUser('admin');
-    const expected = ['listingsPending', 'reviewsPending', 'contentDrafts', 'usersActive', 'usersDisabled', 'integrity'];
+    const expected = ['listingsPending', 'reviewsPending', 'contentDrafts', 'usersActive', 'usersDisabled'];
     expect(await ids(await route.GET(req({ cookie: admin.cookie })))).toEqual(expected);
     expect(await ids(await route.GET(req({ bearer: ADMIN_TOKEN })))).not.toContain('runtime');
   });
@@ -111,6 +111,7 @@ describe('counts equal the underlying lists', () => {
     expect(card('contentDrafts').count).toBeGreaterThanOrEqual(2);
     expect(disabled).toBeGreaterThanOrEqual(1);
     expect(card('usersDisabled').count).toBe(disabled);
+    expect(body.cards.map((c: { id: string }) => c.id)).not.toContain('integrity');
     expect(card('usersActive').count + card('usersDisabled').count).toBe((await planner_.listUsers()).length);
     expect(card('reviewsPending').count).toBe((await planner_.listReviewQueue('pending')).length);
     expect(card('listingsPending').count).toBe(
@@ -125,7 +126,6 @@ describe('buildOverview degraded and empty paths', () => {
     pendingReviews: async () => 0,
     contentDrafts: async () => 3,
     users: async () => ({ active: 5, disabled: 1 }),
-    integrityFindings: async () => 0,
     runtime: () => 'file',
   };
 
@@ -158,6 +158,37 @@ describe('buildOverview degraded and empty paths', () => {
 
   it('zero counts carry no severity', async () => {
     const overview = await buildOverview({ role: 'admin' }, ok);
-    expect(overview.cards.find((c) => c.id === 'integrity')).not.toHaveProperty('severity');
+    expect(overview.cards.find((c) => c.id === 'reviewsPending')).not.toHaveProperty('severity');
+  });
+
+  it('a pending-review count at the cap is a lower bound, below it is exact', async () => {
+    const capped = await buildOverview({ role: 'editor' }, { ...ok, pendingReviews: async () => REVIEW_QUEUE_CAP });
+    expect(capped.cards.find((c) => c.id === 'reviewsPending')).toMatchObject({ count: 200, atLeast: true });
+    const exact = await buildOverview({ role: 'editor' }, { ...ok, pendingReviews: async () => REVIEW_QUEUE_CAP - 1 });
+    expect(exact.cards.find((c) => c.id === 'reviewsPending')).not.toHaveProperty('atLeast');
+  });
+
+  it('state and detail come from closed sets; a thrown message never reaches the payload', async () => {
+    const overview = await buildOverview(
+      { role: 'super_admin' },
+      {
+        ...ok,
+        contentDrafts: async () => {
+          throw new Error('postgres://user:secret@host/db stack');
+        },
+      },
+    );
+    for (const card of overview.cards) {
+      expect(['ok', 'unavailable']).toContain(card.state);
+      if (card.detail) expect(['postgres', 'file', 'mixed']).toContain(card.detail);
+    }
+    expect(JSON.stringify(overview)).not.toMatch(/secret|postgres:\/\/|stack/);
+  });
+
+  it('only the super admin gets the runtime card', async () => {
+    for (const role of ['editor', 'admin'] as const) {
+      expect((await buildOverview({ role }, ok)).cards.map((c) => c.id)).not.toContain('runtime');
+    }
+    expect((await buildOverview({ role: 'super_admin' }, ok)).cards.map((c) => c.id)).toContain('runtime');
   });
 });

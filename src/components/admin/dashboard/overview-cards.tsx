@@ -23,8 +23,10 @@ export async function OverviewCards({ overview }: { overview: Overview }) {
           ) : card.detail ? (
             <p className="mt-2 font-display text-2xl text-foreground">{t(`runtimeValue.${card.detail}`)}</p>
           ) : (
-            <p className="mt-2 font-display text-4xl text-foreground">{card.count}</p>
+            <p className="mt-2 font-display text-4xl text-foreground">{card.count}
+              {card.atLeast ? '+' : ''}</p>
           )}
+          {card.atLeast ? <p className="mt-1 text-sm text-foreground-muted">{t('atLeast')}</p> : null}
           {card.severity === 'attention' ? (
             <p className="mt-1 text-sm font-medium text-primary-strong">{t('attention')}</p>
           ) : null}

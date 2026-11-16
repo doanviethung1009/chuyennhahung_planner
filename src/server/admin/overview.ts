@@ -12,7 +12,6 @@ export const OVERVIEW_CARD_IDS = [
   'contentDrafts',
   'usersActive',
   'usersDisabled',
-  'integrity',
   'runtime',
 ] as const;
 export type OverviewCardId = (typeof OVERVIEW_CARD_IDS)[number];
@@ -23,12 +22,17 @@ export type OverviewHref =
   | '/admin/users'
   | '/admin/runbook';
 
+/** `listReviewQueue` returns at most this many rows, so a count at the cap is a minimum. */
+export const REVIEW_QUEUE_CAP = 200;
+
 export interface OverviewCard {
   id: OverviewCardId;
   href: OverviewHref;
   /** Absent when the source failed (`state: 'unavailable'`) or the card is not a count. */
   count?: number;
   state: 'ok' | 'unavailable';
+  /** The count is a lower bound ("200+"): the source list was capped. */
+  atLeast?: boolean;
   severity?: 'attention';
   /** Runtime card only: where the two stores live. */
   detail?: 'postgres' | 'file' | 'mixed';
@@ -44,7 +48,6 @@ export interface OverviewSources {
   pendingReviews(): Promise<number>;
   contentDrafts(): Promise<number>;
   users(): Promise<{ active: number; disabled: number }>;
-  integrityFindings(): Promise<number>;
   runtime(): 'postgres' | 'file' | 'mixed';
 }
 
@@ -61,7 +64,6 @@ const DEFINITIONS: readonly Definition[] = [
   { id: 'contentDrafts', action: 'content:write', href: '/admin/content/stories' },
   { id: 'usersActive', action: 'user:provision', href: '/admin/users' },
   { id: 'usersDisabled', action: 'user:provision', href: '/admin/users' },
-  { id: 'integrity', action: 'user:provision', href: '/admin/users' },
   { id: 'runtime', action: 'runbook:read', href: '/admin/runbook' },
 ];
 
@@ -91,20 +93,20 @@ export async function buildOverview(principal: Principal, sources: OverviewSourc
       switch (definition.id) {
         case 'listingsPending':
         case 'reviewsPending':
-        case 'contentDrafts':
-        case 'integrity': {
+        case 'contentDrafts': {
           const read =
             definition.id === 'listingsPending'
               ? sources.pendingListings
               : definition.id === 'reviewsPending'
                 ? sources.pendingReviews
-                : definition.id === 'contentDrafts'
-                  ? sources.contentDrafts
-                  : sources.integrityFindings;
+                : sources.contentDrafts;
           const result = await count(read);
           return {
             ...base,
             ...result,
+            ...(definition.id === 'reviewsPending' && (result.count ?? 0) >= REVIEW_QUEUE_CAP
+              ? { atLeast: true }
+              : {}),
             ...(result.count !== undefined && result.count > 0 && definition.id !== 'contentDrafts'
               ? { severity: 'attention' as const }
               : {}),
@@ -147,11 +149,6 @@ export async function defaultOverviewSources(): Promise<OverviewSources> {
       const list = await (await getPlannerRepository()).listUsers();
       const disabled = list.filter((user) => Boolean(user.bannedAt) || Boolean(user.deletedAt)).length;
       return { active: list.length - disabled, disabled };
-    },
-    integrityFindings: async () => {
-      const [planner, content] = await Promise.all([getPlannerRepository(), getRepository()]);
-      const [a, b] = await Promise.all([planner.validateIntegrity(), content.validateIntegrity()]);
-      return a.length + b.length;
     },
     runtime: () => {
       const planner = Boolean(process.env.PLANNER_DATABASE_URL?.trim());

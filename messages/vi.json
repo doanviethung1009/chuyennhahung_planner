@@ -683,10 +683,9 @@
       "cardsLabel": {
         "listingsPending": "Chuyến đi chờ duyệt",
         "reviewsPending": "Đánh giá chờ duyệt",
-        "contentDrafts": "Bản nháp nội dung",
+        "contentDrafts": "Bản nháp (chuyến đi và đánh giá)",
         "usersActive": "Tài khoản đang hoạt động",
         "usersDisabled": "Tài khoản bị khóa hoặc đã xóa mềm",
-        "integrity": "Vấn đề toàn vẹn dữ liệu",
         "runtime": "Nơi lưu dữ liệu"
       },
       "open": "Mở",
@@ -698,7 +697,8 @@
         "postgres": "PostgreSQL",
         "file": "Tệp JSON",
         "mixed": "PostgreSQL và tệp JSON"
-      }
+      },
+      "atLeast": "Từ 200 trở lên: danh sách chỉ đọc tối đa 200 mục."
     },
     "notice": {
       "title": "Lưu ý: bản đã xuất bản hiện ngay trên trang công khai",
