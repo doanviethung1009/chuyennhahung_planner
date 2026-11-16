@@ -557,13 +557,16 @@ describe('HTTP: session probe and rate limits', () => {
 
     const viaCookie = await r.session.GET(req('/api/planner/session', { cookie }));
     expect(viaCookie.status).toBe(200);
-    const body = (await viaCookie.json()) as { user: { id: string; displayName: string }; expiresAt: string | null };
+    const body = (await viaCookie.json()) as { user: { displayName: string }; expiresAt: string | null };
     expect(body.user.displayName).toBe('Người đi chơi');
     expect(typeof body.expiresAt).toBe('string');
     const raw = JSON.stringify(body);
     expect(raw).not.toContain(cookie);
     expect(raw).not.toContain(bearer);
     expect(raw).not.toContain('tokenHash');
+    // The shape is locked: a new user field must not leak here unnoticed.
+    expect(Object.keys(body.user).sort()).toEqual(['displayName', 'hasGoogle', 'hasPassword', 'role']);
+    expect(Object.keys(body).sort()).toEqual(['expiresAt', 'passwordChangeRequired', 'user']);
 
     const viaBearer = await r.session.GET(req('/api/planner/session', { bearer }));
     expect(viaBearer.status).toBe(200);

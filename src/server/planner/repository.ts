@@ -2001,7 +2001,7 @@ export class PlannerRepository {
     request: Request,
     userId: string,
   ): Promise<{
-    user: PublicPlannerUser;
+    user: SessionUser;
     expiresAt: string | null;
     passwordChangeRequired: boolean;
   }> {
@@ -2013,7 +2013,7 @@ export class PlannerRepository {
     const found = presented ? findSessionByToken(data.sessions, presented) : null;
     const session = found && found.userId === userId ? found : null;
     return {
-      user: toPublicUser(user),
+      user: toSessionUser(user),
       expiresAt: session ? session.expiresAt : null,
       passwordChangeRequired: session?.method === 'password' && user.mustChangePassword === true,
     };
@@ -2759,17 +2759,51 @@ export class PlannerRepository {
   }
 }
 
+/**
+ * Fields an operator-facing response may carry. An allowlist, not a denylist:
+ * a field added to `PlannerUser` later stays out of every response until it is
+ * named here on purpose.
+ */
+export const PUBLIC_USER_FIELDS = [
+  'id',
+  'handle',
+  'displayName',
+  'createdAt',
+  'updatedAt',
+  'email',
+  'mustChangePassword',
+  'createdVia',
+  'bannedAt',
+  'bannedBy',
+  'deletedAt',
+  'deletedBy',
+] as const satisfies readonly (keyof PlannerUser)[];
+
 function toPublicUser(user: PlannerUser): PublicPlannerUser {
-  const rest = { ...user } as Partial<PlannerUser>;
-  delete rest.tokenHash;
-  delete rest.passwordHash;
-  delete rest.googleSub;
+  const out: Record<string, unknown> = {};
+  for (const field of PUBLIC_USER_FIELDS) {
+    if (user[field] !== undefined) out[field] = user[field];
+  }
   return {
-    ...(rest as Omit<PublicPlannerUser, 'hasPassword' | 'hasGoogle'>),
+    ...(out as Omit<PublicPlannerUser, 'hasPassword' | 'hasGoogle' | 'role'>),
     hasPassword: Boolean(user.passwordHash),
     hasGoogle: Boolean(user.googleSub),
     role: userRole(user),
   };
+}
+
+/**
+ * What `GET /api/planner/session` returns about the caller: only what the
+ * header and the change-password page read. No id, handle, email or timestamps.
+ */
+export type SessionUser = Pick<
+  PublicPlannerUser,
+  'displayName' | 'role' | 'hasPassword' | 'hasGoogle'
+>;
+
+function toSessionUser(user: PlannerUser): SessionUser {
+  const { displayName, role, hasPassword, hasGoogle } = toPublicUser(user);
+  return { displayName, role, hasPassword, hasGoogle };
 }
 
 const sweepNowMs = (now: Date) => now.getTime();
