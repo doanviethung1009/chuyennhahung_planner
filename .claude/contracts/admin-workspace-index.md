@@ -9,6 +9,7 @@
 | Task ID | Feature | Contract | Branch (proposed) | Class | Migration | Status of the area |
 |---|---|---|---|---|---|---|
 | P07-10 | Admin shell: layout, sidebar, breadcrumbs, `/admin/users` move | [admin-ws-p07-10-shell.md](admin-ws-p07-10-shell.md) | `feat/admin-shell` | L (route change) | none | Improvement/Missing |
+| P07-19 | Admin UX refinement: own root layout, top bar, `AdminPageHeader`, sidebar polish (ADR 0023) | [admin-ws-p07-19-ux-refinement.md](admin-ws-p07-19-ux-refinement.md) | `feat/admin-ux-refinement` | L (route tree, one PR) | none | Improvement (after P07-10 review) |
 | P07-11 | Dashboard | [admin-ws-p07-11-dashboard.md](admin-ws-p07-11-dashboard.md) | `feat/admin-dashboard` | M | none | Missing |
 | P07-12 | Users & roles: matrix, unlink Google, rotate token, pagination | [admin-ws-p07-12-users-roles.md](admin-ws-p07-12-users-roles.md) | `feat/admin-users-roles` | M | none | Improvement/Missing |
 | P07-13 | Audit viewer + admin event kinds | [admin-ws-p07-13-audit-viewer.md](admin-ws-p07-13-audit-viewer.md) | `feat/admin-audit-viewer` | L (new action) | ≤1 index | Missing (storage Planned: 10.2) |
@@ -25,7 +26,8 @@ Rows depend on columns (● hard, ○ soft).
 | | ADR 0020 | P07-10 | 10.2 | 10.5 | P07-13 |
 |---|---|---|---|---|---|
 | P07-10 | ● | | | | |
-| P07-11 | ● | ● | ○ activity card | | |
+| P07-19 | ● | ● | | | |
+| P07-11 | ● | ● (and P07-19) | ○ activity card | | |
 | P07-12 | ● | ● | ○ | | |
 | P07-13 | ● | ● | ● | ○ (events from 10.4/10.5) | |
 | P07-14 | | ● | ○ history | ● reports section | |
@@ -34,11 +36,14 @@ Rows depend on columns (● hard, ○ soft).
 | P07-17 | | ● | | | |
 | P07-18 | | ● | | | |
 
+**Path mapping after P07-19 (owner W-UX, ADR 0023).** The admin pages move to `src/app/(admin)/[locale]/admin/**`; URLs are unchanged. Wherever P07-11…P07-17 or Phase 10.5 name `src/app/[locale]/admin/**`, read `src/app/(admin)/[locale]/admin/**`, and use `AdminPageHeader` instead of `PageHeader`. Those contracts are not edited.
+
 ## File-conflict map (no two sessions edit one file at once)
 | File | Edited by | Order |
 |---|---|---|
 | `src/app/[locale]/admin/**/page.tsx` (existing) | P07-10 (wrap + move), 10.5 and P07-14 (`community/page.tsx`) | P07-10 before 10.5; P07-14 after 10.5 |
 | `src/components/admin/admin-nav.tsx` | P07-10 only (replaced) | — |
+| `src/app/[locale]/admin/**` → `src/app/(admin)/[locale]/admin/**`, `admin-sidebar.tsx`, `admin-console.tsx` (sign-out row), `src/app/[locale]/layout.tsx` (fonts import), `globals.css` (`--admin-bar-h`) | P07-19 only | P07-19 before P07-11, 10.5 and P07-14 |
 | `src/i18n/routing.ts`, `src/lib/return-to.ts`, `tests/admin-portal.test.ts`, `tests/return-to.test.ts` | P07-10, then each feature adding a route | sequential |
 | `src/server/identity/permissions.ts`, `tests/planner-roles.test.ts` | P07-13 only | — |
 | `messages/vi.json`, `messages/en.json` | every feature, plus Phase 10 batches 10.4, 10.5 | sequential, **one open PR at a time** |
@@ -49,7 +54,7 @@ Rows depend on columns (● hard, ○ soft).
 Therefore: **one feature session at a time, one open PR at a time** across Phase 10 and this work. Nothing here is genuinely parallel with a Phase 10 batch because of `messages/*.json` and the docs files.
 
 ## Recommended execution order
-`10.1 (merge as is) → P07-10 → 10.2 → P07-11 → 10.3 → 10.4 → 10.5 → P07-14 → P07-13 → P07-12 → P07-15 → P07-17 → P07-16`, `P07-18` blocked until Phase 08 starts.
+`10.1 (merge as is) → P07-10 → P07-19 → 10.2 → P07-11 → 10.3 → 10.4 → 10.5 → P07-14 → P07-13 → P07-12 → P07-15 → P07-17 → P07-16`, `P07-18` blocked until Phase 08 starts.
 Why: the frame first because every later screen plugs into it and it touches no data; 10.2 next because the audit log is Phase 10's job and is the hard prerequisite of the viewer; the dashboard right after 10.2 so its activity card is real; moderation workspace after 10.5 so it designs around reports once; viewer after 10.5 so it covers terms and report events in one pass; users/roles, collections and system are independent read-mostly screens; create/archive last among these because it adds write routes (largest risk) and benefits from the audit viewer existing.
 If the owner prefers to finish Phase 10 first, the order collapses to `10.1 → … → 10.7`, then `P07-10 → P07-11 → …` unchanged.
 
