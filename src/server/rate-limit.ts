@@ -19,6 +19,21 @@ export interface RateLimiter {
   check(key: string): RateLimitResult;
 }
 
+/**
+ * The same contract for a limiter whose counter lives outside the process
+ * (PostgreSQL, ADR 0019 §3). It may reject: a failed backend is a
+ * `service_unavailable` `ContentError`, and the caller must not write — fail
+ * closed. The sync `RateLimiter` stays for reads and the JSON store.
+ */
+export interface AsyncRateLimiter {
+  check(key: string): Promise<RateLimitResult>;
+}
+
+/** Wraps an in-process limiter for callers that take the async interface. */
+export function asAsyncLimiter(limiter: RateLimiter): AsyncRateLimiter {
+  return { check: async (key) => limiter.check(key) };
+}
+
 export interface RateLimiterOptions {
   limit: number;
   windowMs: number;
@@ -109,13 +124,22 @@ export function clientKey(headers: Pick<Headers, 'get'>): string {
 
 /** Share-link reads: 60 per minute per client. Shared by the API and the page. */
 export const shareReadLimiter = createRateLimiter({ limit: 60, windowMs: 60_000 });
-/** Reviews written by a signed-in traveller: 5 per hour per user (ADR 0014). */
-export const plannerReviewLimiter = createRateLimiter({ limit: 5, windowMs: 60 * 60_000 });
 /**
- * Reviews from a visitor with no account: 3 per hour per client (ADR 0014). The
- * key is forgeable, so the repository also caps one place at 20 a day overall.
+ * Review write limits. Their counters are shared across instances when the
+ * Planner runs on PostgreSQL, so they are built in `planner/instance.ts`
+ * (`getWriteLimiters`) from these specs; without a database they are the
+ * in-process limiters below.
  */
-export const guestReviewLimiter = createRateLimiter({ limit: 3, windowMs: 60 * 60_000 });
+export const WRITE_LIMITS = {
+  /** Reviews written by a signed-in traveller: 5 per hour per user (ADR 0014). */
+  plannerReview: { name: 'planner-review', limit: 5, windowMs: 60 * 60_000 },
+  /**
+   * Reviews from a visitor with no account: 3 per hour per client (ADR 0014).
+   * The key is forgeable, so the repository also caps one place at 20 a day.
+   */
+  guestReview: { name: 'guest-review', limit: 3, windowMs: 60 * 60_000 },
+} as const;
+export type WriteLimitName = keyof typeof WRITE_LIMITS;
 /** Sign-in attempts: 10 per minute per client. A separate bucket. */
 export const signInLimiter = createRateLimiter({ limit: 10, windowMs: 60_000 });
 /**

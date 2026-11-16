@@ -2,8 +2,8 @@ import { ContentError, rateLimited } from '@/server/content/errors';
 import { slugSchema } from '@/server/content/schemas';
 import { parseJsonBody } from '@/server/content/http';
 import { plannerJson, plannerRoute } from '@/server/planner/http';
+import { getWriteLimiters } from '@/server/planner/instance';
 import { plannerReviewInputSchema } from '@/server/planner/schemas';
-import { plannerReviewLimiter } from '@/server/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +24,8 @@ export function PUT(request: Request, context: Context) {
   return plannerRoute(request, async ({ userId }, repository) => {
     const placeSlug = await placeSlugOf(context);
     const input = await parseJsonBody(request, plannerReviewInputSchema);
-    const limit = plannerReviewLimiter.check(userId);
+    // Shared across instances on PostgreSQL; a failing database throws 503 here, before any write.
+    const limit = await (await getWriteLimiters()).plannerReview.check(userId);
     if (!limit.ok) throw rateLimited(limit.retryAfterSeconds);
     return plannerJson(await repository.upsertPlannerReview(userId, placeSlug, input));
   });

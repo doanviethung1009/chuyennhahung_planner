@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { ContentError, rateLimited } from '@/server/content/errors';
 import { parseJsonBody, toErrorResponse } from '@/server/content/http';
-import { getPlannerRepository } from '@/server/planner/instance';
+import { getPlannerRepository, getWriteLimiters } from '@/server/planner/instance';
 import { guestReviewInputSchema } from '@/server/planner/schemas';
 import { slugSchema } from '@/server/content/schemas';
-import { checkShareRead, clientKey, guestReviewLimiter } from '@/server/rate-limit';
+import { checkShareRead, clientKey } from '@/server/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,7 +39,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const key = clientKey(request.headers);
-    const limit = guestReviewLimiter.check(key);
+    // Shared across instances on PostgreSQL; a failing database throws 503 here, before any write.
+    const limit = await (await getWriteLimiters()).guestReview.check(key);
     if (!limit.ok) throw rateLimited(limit.retryAfterSeconds);
 
     const input = await parseJsonBody(request, guestReviewInputSchema);

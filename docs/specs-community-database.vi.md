@@ -4,7 +4,7 @@
 
 Trạng thái: **Đề xuất**. Nhãn **[C] [P] [A]**: xem
 [specs-community-overview.vi.md](specs-community-overview.vi.md). Số migration trống kế
-tiếp là `0011` (đã có `db/migrations/0010_audit_events.sql`). Tài liệu
+tiếp là `0012` (đã có `db/migrations/0011_rate_limit_counters.sql`). Tài liệu
 này không viết hay chạy migration nào.
 
 ## Mục tiêu và phạm vi
@@ -91,7 +91,7 @@ erDiagram
 
 ### Migration (đánh số đề xuất)
 
-Đánh số đề xuất, một migration mỗi lát: `0010` `audit_events` (Phase 10, đã có) · `0011` bộ đếm giới hạn (Phase 10, [ADR 0019](adr/0019-community-foundation.vi.md)) · `0011` báo cáo, `terms_acceptances`, trạng thái đăng (Phase 10) · `0012` `member_profiles`, `origin` của chuyến (Phase 11) · `0013` `journal_posts` (Phase 12) · `0014` `media_assets` (Phase 13) · `0015` theo dõi, thích, lưu, bình luận (Phase 14) · `0016` cột tìm kiếm, thông báo (Phase 15). Mỗi cái kèm ghi chú rollback, cập nhật import/export, và test trên cả hai kho (tiền lệ ADR 0014).
+Đánh số đề xuất, một migration mỗi lát: `0010` `audit_events` (Phase 10, đã có) · `0011` bộ đếm giới hạn (Phase 10, đã có, [ADR 0019](adr/0019-community-foundation.vi.md)) · `0012` báo cáo, `terms_acceptances`, trạng thái đăng (Phase 10) · `0013` `member_profiles`, `origin` của chuyến (Phase 11) · `0014` `journal_posts` (Phase 12) · `0015` `media_assets` (Phase 13) · `0016` theo dõi, thích, lưu, bình luận (Phase 14) · `0017` cột tìm kiếm, thông báo (Phase 15). Mỗi cái kèm ghi chú rollback, cập nhật import/export, và test trên cả hai kho (tiền lệ ADR 0014).
 
 ## Luồng xử lý và trạng thái lỗi
 
