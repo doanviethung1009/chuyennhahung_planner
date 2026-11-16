@@ -55,12 +55,13 @@ describe('route topology', () => {
     }
   });
 
-  it('exposes all six primary navigation entries', () => {
+  it('exposes all seven primary navigation entries', () => {
     expect(primaryNav.map((item) => item.key)).toEqual([
       'home',
       'stories',
       'destinations',
       'itineraries',
+      'communityTrips',
       'reviews',
       'about',
     ]);
