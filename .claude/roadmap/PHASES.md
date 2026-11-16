@@ -35,7 +35,7 @@ Trạng thái: `Done` · `Partial` · `In progress` · `Designed` (có ADR/contr
 | 02 | Travel Content System | Done | — | 00 |
 | 03 | Travel Planner Core | Done | — | 02 |
 | 04 | Interactive Planner UI | Partial (editor Done; còn Planner map, `/plan-your-trip`) | P2 | 03 |
-| 05 | Story → Planner, My Trips & Sharing | **In progress — phase hiện tại** | P0 | 02, 03 |
+| 05 | Story → Planner, My Trips & Sharing | **Done** (2026-11-16; đóng với cảnh báo, xem `CURRENT.md`) | — | 02, 03 |
 | 06 | AI Planner, Affiliate & Optimization | Not started | P2 | 05, 04 (editor), 07 (phần affiliate) |
 | 07 | Admin Portal, CMS & RBAC | In progress — phần lớn Done (code); còn audit log, MFA, CMS create/delete/template | **P1** | 05 |
 | 08 | Media Library & Analytics | Not started | P3 | 07 |
@@ -120,7 +120,8 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
 - **Ràng buộc:** Planner map cần ADR riêng (CLAUDE.md quy tắc 6).
 
 ## Phase 05 — Story → Planner, My Trips & Sharing
-- **Trạng thái:** In progress — **phase hiện tại**. Chi tiết và tiêu chí đóng:
+- **Trạng thái:** Done — đóng 2026-11-16: `/sec-check` PASS_WITH_WARNINGS, `/qc-check`
+  PASS với gaps (không có BLOCKED). Cảnh báo chuyển vào backlog P05-7..P05-11. Chi tiết:
   [`CURRENT.md`](CURRENT.md).
 - **Bằng chứng đã ship:** PR #23 (`feat/follow-hung-footsteps`, merge 2026-11-09):
   [ADR 0005](../../docs/adr/0005-trip-sharing-and-story-cloning.md),
