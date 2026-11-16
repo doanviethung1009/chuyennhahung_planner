@@ -1,0 +1,15 @@
+# Task Contract: P07-10 Admin shell — layout, sidebar, `/admin/users`
+- Class: L (important route change) · Branch: `feat/admin-shell` · Depends on: ADR 0020 Accepted (owner W1, W8) · Index: [admin-workspace-index.md](admin-workspace-index.md)
+- Desired outcome: every admin page sits in one frame with a grouped, role-aware sidebar, breadcrumb, skip link and a working phone menu; `/admin` becomes a minimal overview; the user console lives at `/admin/users`.
+- Scope IN: `src/app/[locale]/admin/layout.tsx` (new); `AdminSidebar` replacing `AdminNav`; `cache()` around `readStaffPageAccess`; move `AdminConsole` to `src/app/[locale]/admin/users/page.tsx` (`requireStaff(…,'users')`); `/admin` page = role-aware overview using the existing editor overview copy for everyone (P07-11 fills it); pathnames `/admin/users` (`/quan-tri/nguoi-dung`); `returnTo` allow-list; `messages` nav keys; all existing pages drop their own `AdminNav`.
+- Scope OUT: dashboard counts, any API, any new screen other than `/admin/users`, `/admin/users/roles` (P07-12), roles/permissions, database, behaviour of the user console.
+- Evidence: no `layout.tsx` under admin; `admin-nav.tsx` (6 flat links); `src/app/[locale]/admin/page.tsx`; `src/lib/admin-gate.ts`; `src/i18n/routing.ts:34-47`; `docs/features/admin-portal.md`.
+- Interface contract: no API change. Groups and links per [spec sitemap](../../docs/specs-admin-workspace.md#sitemap-and-navigation); media group not rendered.
+- Files allowed: `src/app/[locale]/admin/**`, `src/components/admin/{admin-nav.tsx→admin-sidebar.tsx,admin-console.tsx (import path only)}`, `src/lib/admin-gate.ts`, `src/server/planner/admin-page.ts` (`cache` only), `src/i18n/routing.ts`, `src/lib/return-to.ts`, `messages/*.json`, `tests/admin-portal.test.ts`, `tests/return-to.test.ts`, `docs/features/admin-shell.{md,vi.md}`, `docs/features/README.*`, `docs/architecture.*`, `docs/adr/0020-*` (status → Accepted), `.claude/context/project-context.md`. Nothing else without architect approval.
+- Acceptance: all pre-existing admin URLs return the same status per role as before; anonymous → sign-in with `returnTo` for `/admin`, `/admin/users`; member → 404; editor never sees People/Operations links; one `<h1>` per page; sidebar keyboard-operable, `aria-current`; no horizontal scroll at 375px; temporary-password redirect still works; strings in VI and EN.
+- Tests: update `admin-portal.test.ts` (route entries, no forbidden imports in `src/components/admin`), `return-to` near-miss cases for new paths, sidebar visibility per role (pure function of `can`), `i18n` parity, `docs`, `client-boundary`. Manual 375/768/1280px pass reported with evidence.
+- Security: hiding ≠ authorization (each page still gates); no new auth path; same-origin unchanged; `noindex` on every new page; no 403/404 oracle.
+- Rollback: revert PR; no data.
+- Docs: frontend role writes `docs/features/admin-shell.*`; architect role edits `docs/architecture.*` and ADR status in the same PR.
+- Budget: sub-agents 0; stop and ask if a page needs a change outside the file list.
+- State: READY (owner approved 2026-11-17)

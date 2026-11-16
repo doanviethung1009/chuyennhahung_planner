@@ -1,0 +1,12 @@
+# Task Contract: P07-16 Create and archive stories and places in the browser
+- Class: L (new session-capable write routes) · Branch: `feat/admin-content-create` · Depends on: P07-10; soft on P07-13 · **Needs owner architecture approval (W5)** · Index: [admin-workspace-index.md](admin-workspace-index.md)
+- Desired outcome: an editor creates a draft story or place and archives one without `curl`; hard delete stays token-only.
+- Scope IN: `POST /api/admin/travel/stories` and `…/places` moved from token-only `adminRoute` to `adminContentRoute({ action: 'content:write', session: true })`, body schema unchanged (`storyCreateSchema` etc., always created as draft); archive through the existing status route; "New" form pages reusing the existing editors; list buttons.
+- Scope OUT: hard delete, templates, collections create, publishing rules, schema changes, slug rename.
+- Evidence: `src/app/api/admin/travel/stories/route.ts:23-30` (POST uses `adminRoute`), GET uses `adminContentRoute`; ADR 0011 "create/delete/templates left token-only"; `story-editor.tsx`, `place-editor.tsx`.
+- Files allowed: the two `route.ts`, `src/server/admin/content-route.ts` only if a gap is found (report), `src/components/admin/content/**`, `src/app/[locale]/admin/content/{stories,places}/**` (new `new` pages), routing, `return-to`, messages, tests (`tests/admin-content-session.test.ts` matrix extended), `docs/features/admin-content-cms.*` (amend), `docs/adr/0011-*` (addendum line, architect), `docs/runbook.md`.
+- Acceptance: editor/admin/service may create; member 403, anonymous 401; duplicate slug → conflict message, no overwrite; created record is `draft` and not visible publicly; the token path still works for CI; same-origin enforced for the session path.
+- Tests: route matrix for both POSTs, draft-only invariant, duplicate slug, token path regression, public pages never show drafts (existing public-content tests green), both stores.
+- Security: new write routes → `requireSameOrigin`, zod body, no HTML trust in fields (existing renderer), rate-limit via existing helper if the content routes have one; `/sec-check` **recommended** — NOT RUN until called.
+- Rollback: restore `adminRoute` on the two handlers; hide the buttons; created drafts remain harmless.
+- Docs: backend writes the API part, frontend the UI part, one feature doc. Budget: sub-agents 0. State: READY (owner approved 2026-11-17)

@@ -1,0 +1,11 @@
+# Task Contract: P07-17 System status page
+- Class: M · Branch: `feat/admin-system-status` · Depends on: P07-10; owner facts `D10` for backup wording · Index: [admin-workspace-index.md](admin-workspace-index.md)
+- Desired outcome: a super admin sees the operator's first questions answered at `/admin/system` (`/quan-tri/he-thong`).
+- Scope IN: `GET /api/admin/system` (`runbook:read`, `no-store`) and the page: store mode per domain (Planner, Content: JSON or PostgreSQL, derived from env **presence**, never the URL), last applied migration, build identifier/version, feature flags and optional integrations as present/absent booleans (Google sign-in, public content source), health probe result, backups line = "not configured" until the owner supplies facts; links to Runbook.
+- Scope OUT: any write or action button, restart/deploy controls, log viewing, secrets or hostnames, backup implementation, production environment.
+- Evidence: ADR 0017 (Runbook gate), `planner/instance.ts` store selection, `migrate.ts`, `/api/health`, `DEPLOY-STATUS.md` (backups FAIL).
+- Files allowed: `src/server/admin/system.ts`, `src/app/api/admin/system/route.ts`, `src/app/[locale]/admin/system/page.tsx`, `src/components/admin/system/**`, routing, `return-to`, messages, tests, `docs/runbook.md`, `docs/features/admin-system-status.*`, `docs/features/README.*`.
+- Acceptance: admin and editor get 404 on the page and 403 on the API; response contains no env value, URL, host, token or path; works when DB is unreachable (reports "unreachable", no 500); never claims a backup exists.
+- Tests: role matrix, a "no secret ever serialised" test that sets sentinel env values and asserts they are absent from the response, DB-down path, `runbook.test.ts` sync.
+- Security: highest-risk part is leakage; allow-list the fields explicitly; `/sec-check` recommended — NOT RUN until called.
+- Rollback: revert PR. Docs: backend writes. Budget: sub-agents 0. State: READY (owner approved 2026-11-17)
