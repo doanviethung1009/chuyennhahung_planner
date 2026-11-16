@@ -5,7 +5,7 @@ import { createMemoryPlannerStore } from '../src/server/planner/store';
 import { daLatTripInput, makeOwner, makePlanner } from './planner-helpers';
 
 /**
- * The home page's view of the visitor (ADR 0021, docs/specs-home-mvp.md),
+ * The home page's view of the visitor (ADR 0022, docs/specs-home-mvp.md),
  * against a real in-memory Planner so identity and ownership are the real ones.
  */
 

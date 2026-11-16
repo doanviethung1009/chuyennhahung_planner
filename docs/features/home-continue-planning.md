@@ -40,7 +40,7 @@ note, budget and version never leave the server module.
 - **Server only.** [`readHomeMember`](../../src/server/planner/home-page.ts) reads the
   cookie, forwards only the cookie to `identify`, and falls back to `guest` on any
   failure, a pending password change, or a bearer-style identity
-  ([ADR 0021](../adr/0021-home-mvp-server-session.md)). The band is a server component
+  ([ADR 0022](../adr/0022-home-mvp-server-session.md)). The band is a server component
   with no client JavaScript, so it is in the first response — no skeleton, no layout shift.
 - **Which trip.** [`pickContinueTrip`](../../src/lib/home/continue-trip.ts): never a
   `completed` trip; earliest start date from today (Vietnam calendar day); else the most
@@ -75,6 +75,6 @@ note, budget and version never leave the server module.
   [personalization spec](../specs-home-personalization.md), not built.
 - If a CDN or shared cache is ever put in front of `/`, it must bypass the cache for
   requests with the session cookie, or the home page must move to the client-island
-  design of [ADR 0020](../adr/0020-personalized-home.md) (spec question Q5).
+  design of [ADR 0021](../adr/0021-personalized-home.md) (spec question Q5).
 - The member band was checked in a browser on a production build in Vietnamese and
   English at phone and desktop widths; `/qc-check` and `/sec-check` have not been run.

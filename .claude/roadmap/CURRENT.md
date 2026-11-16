@@ -1,9 +1,9 @@
-# Phase hiện tại — Phase 05: Story → Planner, My Trips & Sharing
+# Phase hiện tại — Phase 05: Story → Planner, My Trips & Sharing (ĐÃ ĐÓNG 2026-11-16)
 
 Roadmap đầy đủ: [`PHASES.md`](PHASES.md) · Tồn đọng: [`backlog.md`](backlog.md) ·
 Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
 
-- **Trạng thái:** In progress.
+- **Trạng thái:** **Done** — đóng 2026-11-16 (sec PASS_WITH_WARNINGS, qc PASS với gaps; không BLOCKED). Cảnh báo ở backlog P05-7..P05-11. Việc kế tiếp: mở Phase 07 (phần còn lại) / Phase 10 — cần ADR trước khi code.
 - **Cập nhật:** 2026-11-16, kiểm trên `main` @ `e362aea`; chủ dự án chốt khuyến nghị Q1–Q12 của `.claude/contracts/community-platform-audit.md`.
 - **Deploy:** chỉ dev VM (192.168.100.140, đến commit `0216f46` theo báo cáo 2026-11-15); chưa có production — xem `DEPLOY-STATUS.md`.
 - **Phase kế tiếp:** **Phase 10 — Community Foundations** (P1), cùng phần còn thiếu của Phase 07
@@ -41,8 +41,8 @@ CI trên `main` @ `124868e`: **success** (typecheck, lint, test, build).
    đổi thành `step={1}` (`src/components/planner/trip-setup-form.tsx`). Chưa kiểm: bản EN,
    cửa sổ riêng tư thật (dùng curl không cookie thay thế).
 2. **`/sec-check`** — public read không xác thực, xử lý token, rate limiter, open
-   redirect. Contract khuyến nghị "strongly". Trạng thái: **NOT RUN** (theo bằng chứng có).
-3. **`/qc-check`** — phase XL. Trạng thái: **NOT RUN** (theo bằng chứng có).
+   redirect. Trạng thái: ✅ **PASS_WITH_WARNINGS** (2026-11-16, đọc code tĩnh, chưa kiểm runtime). `npm audit --omit=dev`: 0 lỗ hổng. Cảnh báo: W1 `clientKey` tin hop XFF đầu (thấp-trung bình), W2 prune O(n) khi đầy key, W3 `shareToken` plaintext → backlog P05-7..P05-9.
+3. **`/qc-check`** — phase XL. Trạng thái: ✅ **PASS với gaps** (2026-11-16). `typecheck` PASS, `lint` PASS, `test` PASS (62 file, 871 passed, 30 skipped — 2 suite Postgres); `build` NOT RUN. Gap: thiếu test render story/`/shared` limited/sitemap, nút 44px chưa kiểm từng cái → P05-10, P05-11.
 4. **Test cho các bảo đảm độc lập của clone:** ✅ `tests/planner-clone-independence.test.ts`
    — trip không đổi khi template bị sửa/rút/xóa; không chia sẻ object (template đóng
    băng sâu, sửa tại chỗ hai chiều); purge trip không đụng template và vẫn clone lại được.

@@ -6,7 +6,7 @@
 
 - **Status:** Proposed — an impact assessment, a spec and a small Task Contract. No
   application code was changed. The decision it rests on is drafted as
-  [ADR 0021](adr/0021-home-mvp-server-session.md) (Proposed).
+  [ADR 0022](adr/0022-home-mvp-server-session.md) (Proposed).
 - **Date:** 2026-11-17
 - **Owner:** system-architect (design), project owner (decisions in
   [Open questions](#open-questions))
@@ -16,7 +16,7 @@
 - **Relation to the larger spec:** this is the smallest slice of
   [specs-home-personalization.md](specs-home-personalization.md). It **changes one of
   that spec's decisions for the MVP**: the session is read on the server, not in the
-  browser (see [ADR 0021](adr/0021-home-mvp-server-session.md)). Everything else there
+  browser (see [ADR 0022](adr/0022-home-mvp-server-session.md)). Everything else there
   (onboarding steps, "For you", activity list, `GET /api/planner/home`) stays out of
   the MVP.
 
@@ -59,7 +59,7 @@ Read from the repository on 2026-11-17.
 | Auth and roles | None; the same `identify` the admin pages use |
 | `/my-trips`, share links, Planner API | None; the band only links to them |
 | Phase 10 | None, provided the file list in [Files to change](#files-to-change) is kept |
-| Caching | `/` becomes a per-user document **for requests that carry the cookie**; guests' document is unchanged. Rule in [ADR 0021](adr/0021-home-mvp-server-session.md) |
+| Caching | `/` becomes a per-user document **for requests that carry the cookie**; guests' document is unchanged. Rule in [ADR 0022](adr/0022-home-mvp-server-session.md) |
 | `docs/architecture.*` | Update in the same change: home page now reads the session on the server (module boundary and rendering note) |
 
 ## Design
@@ -207,10 +207,10 @@ Copy stays in the brand's voice: a couple's invitation, no streaks or urgency.
 - **Evidence:** table in [Current state](#current-state).
 - **Constraints:** Server Components first; no new client JavaScript; no database; guest
   HTML byte-identical; Phase 10 files untouched.
-- **Architecture decision:** [ADR 0021](adr/0021-home-mvp-server-session.md) must be
+- **Architecture decision:** [ADR 0022](adr/0022-home-mvp-server-session.md) must be
   Accepted before code.
 - **Interface contract:** `HomeMember` and `ContinueTrip` above; `pickContinueTrip(trips, today)`.
-- **Tasks by owner:** Architect — accept ADR 0021, update `docs/architecture.*`.
+- **Tasks by owner:** Architect — accept ADR 0022, update `docs/architecture.*`.
   Backend role — `home-page.ts`, `continue-trip.ts` and their tests. Frontend role —
   component, messages, `page.tsx`, feature document. QC and Security — **on the owner's
   request only**.
@@ -259,7 +259,7 @@ touch a different region.
 ### Order of work
 
 Backend before frontend, in one branch and one PR (rule 9):
-1. Accept ADR 0021.
+1. Accept ADR 0022.
 2. `continue-trip.ts` + test, then `home-page.ts` + tests (the `HomeMember` type is the
    contract).
 3. Component, messages, `page.tsx`.
@@ -295,7 +295,7 @@ persisted.
 | Spec | Relation |
 |---|---|
 | [specs-home-personalization.md](specs-home-personalization.md) | The MVP is its first slice with one changed decision (server session read). Its `GET /api/planner/home`, onboarding steps, "For you", activity list and Phase 16 proposal are **deferred, not cancelled**. If a shared cache or CDN is introduced (Phase 09) or the personal part grows, the client-island design is the documented path |
-| [ADR 0020](adr/0020-personalized-home.md) | Superseded for the MVP by ADR 0021; remains the target design for the full spec |
+| [ADR 0021](adr/0021-personalized-home.md) | Superseded for the MVP by ADR 0022; remains the target design for the full spec |
 | Phase 10 ([ADR 0019](adr/0019-community-foundation.md)) | No shared files; see [Files that must not change](#files-that-must-not-change) |
 | Phase 11–15 | Not touched: no preferences, saved items, comments or search |
 
@@ -303,7 +303,7 @@ persisted.
 
 | # | Question | Recommendation |
 |---|---|---|
-| Q1 | Accept the server-side session read on `/` for the MVP (ADR 0021)? | **Accepted 2026-11-17**, with the A-9 cache-header check as a gate |
+| Q1 | Accept the server-side session read on `/` for the MVP (ADR 0022)? | **Accepted 2026-11-17**, with the A-9 cache-header check as a gate |
 | Q2 | Place the band above the hero or directly under it? | **Above**, compact — a returning member's first screen is their trip; the hero keeps the single `<h1>` |
 | Q3 | Distinguish "first trip" from "next trip" (needs one extra archived query only for members with no unfinished trip)? | **Yes**; the words "first trip" are wrong for someone who archived all theirs |
 | Q4 | Show activity count or progress in the band? | **Not in the MVP** — it needs a full `getTrip` read; add with the full spec |

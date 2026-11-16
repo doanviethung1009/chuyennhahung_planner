@@ -1,0 +1,22 @@
+# Task Contract 10.3 — PostgreSQL Shared Rate Limiter
+- Task ID: P10-6; related P10-13 (429 tests), P10-12/P10-11 (key, see 10.6)
+- Class: L (trust boundary: abuse control) · State: READY (owner approved D1-D12 as recommended, 2026-11-16) · Subagents: 0
+- Objective: the two review write limiters survive restarts and span two app instances, failing closed when the database is down.
+- Scope:
+  - **Step 0 (P10-13):** HTTP 429 tests with `Retry-After` for the Planner review limiter (5/h, `src/app/api/planner/reviews/[placeSlug]/route.ts:27`) and guest limiter (3/h, `src/app/api/community/reviews/route.ts:42`); the 30-day default restriction expiry test for guests. Pass on the **current** in-memory code first.
+  - `AsyncRateLimiter { check(key): Promise<RateLimitResult> }` beside the sync `RateLimiter` (`src/server/rate-limit.ts:16-20`, which stays for reads and the JSON store).
+  - Table `rate_limit_counters (key, window_start, count)`, pk `(key, window_start)`, one atomic `INSERT … ON CONFLICT DO UPDATE … RETURNING count` on the pool **outside** the store transaction (`postgres-planner-store.ts:10-17`), opportunistic sweep, fixed window.
+  - Selection in `src/server/planner/instance.ts` like the store (`:23-49`; expose the pool, no fallback from a configured DB); in-memory wrapped to async otherwise.
+  - Move `plannerReviewLimiter` and `guestReviewLimiter` (`rate-limit.ts:113`, `:118`). DB failure → `503 service_unavailable`.
+- Out of Scope: sign-in, signup, share-read, Google limiters; HMAC `guestKey`, proxy header trust (10.6); report/terms limits (10.4/10.5 reuse the async interface); sliding window; Redis; a global hourly cap (P10-12 "consider").
+- Architecture Reference: ADR 0019 §3 (+ Options C, D); ADR 0005, 0008, 0009.
+- Dependencies: owner D1. Soft: 10.2 merged (migration numbering `0011`). Feeds 10.5 and 10.6.
+- API/Data Contract: migration `db/migrations/0011_rate_limit_counters.sql` + rollback; responses unchanged: `429 rate_limited` + `Retry-After` (`rateLimited(seconds)`), new `503` only on DB failure. Keys: `userId` (Planner), `clientKey(headers)` (guest, still spoofable — documented).
+- Files Affected: `src/server/rate-limit.ts`, new shared-limiter module under `src/server/persistence/` or `src/server/`, `src/server/planner/instance.ts`, the two review routes, `db/migrations/0011_*`, `db/rollback/0011_*`, tests (`tests/rate-limit.test.ts` additions in a new file, route tests, a Postgres integration case), `docs/features/shared-write-limiter.md` + `.vi.md`, `docs/features/README.*`, `docs/architecture.*`, `docs/usage.*` (needs `PLANNER_DATABASE_URL`; DB-outage behaviour), `docs/specs-community-database.*`.
+- FE/BE Responsibilities: BE owns code and the feature document `shared-write-limiter` (7 sections, both languages). Architect hat: architecture/usage updates. FE: none.
+- QC Requirements: two limiter instances on one database share a count; window rollover resets; a new instance after "restart" keeps the count; DB error → `service_unavailable` **and the review is not written**; in-memory path passes existing `tests/rate-limit.test.ts` unchanged; both routes 429 with `Retry-After`; JSON-store deployments still work; Postgres cases skip locally without `TEST_DATABASE_URL`, run in CI (state which ran).
+- Security Requirements: fail closed; no raw key logged; counter keys are hashed or namespaced and bounded in length (`MAX_KEY_LENGTH` 64, `rate-limit.ts:96`); spoofing of `x-forwarded-for` is **not** fixed here — state it in the feature doc; one DB round trip per limited write is unmeasured (assumption: LAN). Recommend `/sec-check` before merge — NOT RUN until called.
+- Acceptance Criteria: all QC items pass; two-instance test is deterministic (injected clock); no other limiter changed.
+- Verification Commands: `npm run typecheck`, `npm run lint`, `npm run test`; Postgres cases with `TEST_DATABASE_URL`.
+- Rollback Strategy: restore the two exports to `createRateLimiter`; drop `rate_limit_counters` via rollback SQL; the sync interface was never removed, so it is a revert of the routes and `instance.ts`.
+- Definition of Done: criteria met, outputs stated, docs in the same PR, handoff `phase10-10.3.md` (the async interface name and how to add a new write limiter — 10.4/10.5 use it).

@@ -1,0 +1,14 @@
+# Task Contract: P07-11 Admin dashboard
+- Class: M · Branch: `feat/admin-dashboard` · Depends on: P07-10; soft on batch 10.2 (activity card) · Index: [admin-workspace-index.md](admin-workspace-index.md)
+- Desired outcome: `/admin` shows what is waiting, per role, each card linking to its screen.
+- Scope IN: `src/server/admin/overview.ts` (composes counts from existing repositories: pending trip listings and reviews via the existing queue methods, content drafts, users per role and disabled/soft-deleted, integrity finding count, runtime summary for super admin); `GET /api/admin/overview` (`adminContentRoute`-style session or service, `no-store`, cards filtered by `can`); dashboard cards in `/admin`; activity card only if the 10.2 events route exists on `main`, else omitted (no placeholder).
+- Scope OUT: new tables, writes, charts, analytics (Phase 08), polling/auto-refresh, repository changes.
+- Evidence: queue routes `api/admin/community/queue`; `api/admin/travel/integrity`, `api/admin/planner/integrity`; `listUsers` in users route; `permissions.ts`.
+- Interface contract: `{ cards: { id, count?, href, severity? }[] }`, ids from a fixed enum; no personal data, no handles.
+- Files allowed: `src/server/admin/overview.ts`, `src/app/api/admin/overview/route.ts`, `src/app/[locale]/admin/page.tsx`, `src/components/admin/dashboard/**`, `messages/*.json`, `docs/runbook.md` (route list), tests, `docs/features/admin-dashboard.*`, `docs/features/README.*`, `docs/architecture.*`.
+- Acceptance: a role sees only cards its actions allow; counts equal the underlying lists in a fixture; works on JSON and PostgreSQL stores; a failing source degrades to "unavailable" on its card, not a 500 page; empty states; one `<h1>`.
+- Tests: route role matrix (anonymous 401, member 403, editor subset, admin, super admin), counts vs fixture, degraded-card path, `runbook.test.ts` route sync, i18n, a11y checklist.
+- Security: no secret or email in payload; `no-store`; same helpers as other admin routes; `/sec-check` not required, recommended only if the payload grows.
+- Rollback: revert PR; `/admin` falls back to the P07-10 overview.
+- Docs: backend role writes the feature doc and runbook row; frontend adds UI section.
+- Budget: sub-agents 0. State: READY (owner approved 2026-11-17)

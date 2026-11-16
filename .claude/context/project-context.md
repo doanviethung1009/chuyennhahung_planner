@@ -101,7 +101,7 @@ The owner opened the Planner backend phase and it shipped: `src/app/api/planner/
 ## Other critical modules
 | Path | Role |
 |---|---|
-| `src/server/planner/home-page.ts`, `src/lib/home/continue-trip.ts`, `src/components/home/home-member-band.tsx` | ADR 0021: the **only** server-side session read outside admin pages — `readHomeMember()` on `/` gives a member band (first-trip / next-trip / Continue Planning); guest page unchanged; layout, header and metadata stay cookie-free (`tests/home-page-boundary.test.ts`) |
+| `src/server/planner/home-page.ts`, `src/lib/home/continue-trip.ts`, `src/components/home/home-member-band.tsx` | ADR 0022: the **only** server-side session read outside admin pages — `readHomeMember()` on `/` gives a member band (first-trip / next-trip / Continue Planning); guest page unchanged; layout, header and metadata stay cookie-free (`tests/home-page-boundary.test.ts`) |
 | `src/i18n/routing.ts` | Locales, localized pathname map, routing config |
 | `src/i18n/request.ts`, `navigation.ts` | next-intl request config and typed navigation |
 | `next.config.ts` | Tour redirects, image remote patterns |

@@ -6,7 +6,7 @@
 
 - **Trạng thái:** Đề xuất — đặc tả UX và đề xuất kiến trúc. Chưa có gì được xây; không
   sửa application code để viết tài liệu này. Quyết định duy nhất cần ghi lại được soạn
-  thành [ADR 0020](adr/0020-personalized-home.vi.md) (Đề xuất).
+  thành [ADR 0021](adr/0021-personalized-home.vi.md) (Đề xuất).
 - **MVP:** slice đầu, với một quyết định đổi (đọc phiên ở server), nằm ở
   [specs-home-mvp.vi.md](specs-home-mvp.vi.md).
 - **Ngày:** 2026-11-16
@@ -60,7 +60,7 @@ mình) chưa tồn tại. Spec nêu chỗ nào là bản thay thế mỏng lúc 
 
 1. **Một tài liệu cho mọi người; nội dung cá nhân được thêm ở trình duyệt.** Server không
    bao giờ đọc cookie để render `/`. Đây là quy tắc riêng tư và cache, mọi quyết định khác
-   đều theo từ đó ([ADR 0020](adr/0020-personalized-home.vi.md)).
+   đều theo từ đó ([ADR 0021](adr/0021-personalized-home.vi.md)).
 2. **Trang khách là mặc định, là phương án dự phòng và là trang của crawler.** Lớp cá nhân
    lỗi thì lùi về nó, không bao giờ về trang trống.
 3. **Dựa trên luật, giải thích được, tất định.** Mỗi mục cá nhân đều nói vì sao nó hiện.
@@ -633,7 +633,7 @@ vào Phase 10–15.
 | Phần | Xây trên | Chồng Phase 10–15? | Quyết định |
 |---|---|---|---|
 | Sắp lại trang khách, Bắt đầu nhanh, các bước Planner | T1 (site công khai), Phase 04/05 (Planner UI, chia sẻ) | Không | Spec này |
-| `GET /api/planner/home`, snapshot, provider, slot | repository Phase 03/05, phiên ADR 0004 | Không | Spec này, ADR 0020 |
+| `GET /api/planner/home`, snapshot, provider, slot | repository Phase 03/05, phiên ADR 0004 | Không | Spec này, ADR 0021 |
 | Onboarding thành viên mới | Phase 04/05 (`/trip-setup`, `/my-trips/new`) | Không | Spec này |
 | Tiếp tục, dải chuyến của tôi, gợi ý | Phase 04/05 | Không | Spec này |
 | Hoạt động cộng đồng (bài của mình) | Phase 10-S0 (ADR 0014/0015) | Không — đọc trạng thái đã có | Spec này |
@@ -658,7 +658,7 @@ thuộc BE chỉ qua kiểu `HomeSnapshot`, mà slice H1 đóng băng.
 
 | Slice | Nội dung | Vai trò (theo thứ tự) | Cấp |
 |---|---|---|---|
-| **H0** | Chấp nhận ADR 0020 (và quyết các câu hỏi mở) | architect | S |
+| **H0** | Chấp nhận ADR 0021 (và quyết các câu hỏi mở) | architect | S |
 | **H1** | route `/home` + schema + test; `AccountProvider`; khung slot; sắp lại trang khách, Bắt đầu nhanh, các bước Planner | backend, rồi frontend | L |
 | **H2** | Dải thành viên mới, các bước onboarding, thông báo | frontend | M |
 | **H3** | Thẻ tiếp tục, dải chuyến của tôi, gợi ý, danh sách hoạt động | frontend | M |

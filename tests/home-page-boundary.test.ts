@@ -3,7 +3,7 @@ import { join, relative, resolve, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
- * ADR 0021 lets the home page — and only it — read the session cookie on the
+ * ADR 0022 lets the home page — and only it — read the session cookie on the
  * server. These checks keep that one exception from spreading, and keep the
  * public SEO surface of `/` free of request data.
  */
@@ -21,7 +21,7 @@ function walk(dir: string): string[] {
 
 const home = read('app/[locale]/page.tsx');
 
-describe('home page request-data boundary (ADR 0021)', () => {
+describe('home page request-data boundary (ADR 0022)', () => {
   it('reads the member through the one dedicated module', () => {
     expect(home).toMatch(/readHomeMember\(\)/);
     expect(home).not.toMatch(/from ['"]next\/headers['"]/);

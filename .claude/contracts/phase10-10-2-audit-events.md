@@ -1,0 +1,23 @@
+# Task Contract 10.2 — Audit Events + database migration
+- Task ID: P10-1 (= P07-4); precondition P10-14
+- Class: L · State: READY (owner approved D1-D12 as recommended, 2026-11-16) · Subagents: 0
+- Objective: every existing community action writes one append-only `AuditEvent` in the same Planner-store transaction as the change it describes.
+- Scope:
+  - **Step 0 (precondition, P10-14):** PostgreSQL integration cases for `community_reviews` and `review_restrictions` (migrations 0007/0008, `planner-rows`) so the refactor below has a net. Pure tests; no source change.
+  - `AuditEvent` schema, table `audit_events` (`db/migrations/0010_audit_events.sql` + `db/rollback/0010_…sql`), JSON key `auditEvents`, mirrored in `planner-rows.ts`, `planner-transfer.ts` (strict schema `:32-42` and counts `:134-147`), `store.ts` (`:44-46`, `:60-61`, `:75-76`), `tests/planner-pg-fixtures.ts`.
+  - `src/server/community/events.ts` (append helper called inside the transaction callbacks).
+  - Events for: request, withdraw, approve, reject, remove (trip); re-queue on edit (`touch`); implicit listing end (leave `public`, archive, share revoke); review approve/reject/remove/hold; author edit republishing a held review; restriction apply and lift; restriction lifted by account delete. Exact list and rules (no event on failure or idempotent no-op; guest key never in an event): [community-foundation.md](community-foundation.md) "Events written".
+  - `GET /api/admin/community/events?targetId=` (`community:moderate`, `no-store`).
+  - Retention: 1 year sweep (D3).
+- Out of Scope: report events and terms events (added by 10.5/10.4 using the helper), role/template/user-admin events, author-facing UI, a delete/update path of any kind, the limiter.
+- Architecture Reference: ADR 0019 §2; `docs/specs-community-database.md` (`AuditEvent` row); moderation spec M3.
+- Dependencies: 10.1 merged (events record `fromStatus`/`toStatus` from `transition`); owner D1, D2, D3.
+- API/Data Contract: `AuditEvent { id, targetKind: trip|review|user, targetId, actorId, actorKind: user|service, action, fromStatus, toStatus, reason ≤500|null, createdAt }`; table with `seq` identity and indexes `(target_id, created_at)`; no foreign keys (ADR 0013). `GET …/events` → `{ items, count }`, staff-only shape.
+- Files Affected: `db/migrations/0010_audit_events.sql`, `db/rollback/0010_…sql`, `src/server/community/events.ts` (new), `src/server/planner/{schemas,store,repository}.ts`, `src/server/persistence/{planner-rows,planner-transfer}.ts`, `src/app/api/admin/community/events/route.ts` (new), `tests/planner-pg-fixtures.ts`, new/extended tests, `docs/features/moderation-events.md` + `.vi.md`, `docs/features/README.*`, `docs/architecture.*`, `docs/specs-community-database.*` (numbering), `.claude/context/project-context.md`.
+- FE/BE Responsibilities: BE (backend hat) owns all code and writes the feature document `moderation-events` (7 sections, both languages, registered). Architect hat updates `docs/architecture.*`, project-context, spec numbering. FE: none.
+- QC Requirements: one test per action: exactly one event, correct from/to/actor, same transaction (force a later throw → no event and no change); failing actions and no-ops write none; no update/delete API exists; events route 401/403 `member`/200 `editor`; JSON store **and** PostgreSQL adapter both run (Postgres cases skip locally without `TEST_DATABASE_URL`, `tests/planner-postgres.integration.test.ts:35-37`; CI runs them, `.github/workflows/ci.yml:30-74` — the PR states which ran); migration on empty and existing DB; export/import round-trip; `tests/community-*.test.ts` and `tests/review-restrictions-routes.test.ts` unchanged.
+- Security Requirements: personal data (actor ids, reasons quoting user text): not logged elsewhere, capped, swept at 1 year, no email, no guest key; staff-only route; reason length enforced at the boundary; recommend `/sec-check` (privacy of the log) — NOT RUN until the owner calls it.
+- Acceptance Criteria: all QC items above pass; migration applies cleanly on top of 0009; Step 0 tests land first and are green before the refactor.
+- Verification Commands: `npm run typecheck`, `npm run lint`, `npm run test`; with a database: `TEST_DATABASE_URL=… npm run test` (state which).
+- Rollback Strategy: remove the `appendEvent` calls and the route; `db/rollback/0010_…sql` drops `audit_events` (manual); stored events inert; older code must read a JSON export without `auditEvents` (the `.strict()` schema — note it in the feature doc).
+- Definition of Done: criteria met, commands pass with output stated, feature doc pair + README rows + architecture update merged in the same PR, handoff `phase10-10.2.md` (helper signature, migration number used).

@@ -1,8 +1,8 @@
-# ADR 0020 — Personalized home page: one public document, personal content filled in the browser from a private projection
+# ADR 0021 — Personalized home page: one public document, personal content filled in the browser from a private projection
 
-🇻🇳 Bản tiếng Việt: [0020-personalized-home.vi.md](0020-personalized-home.vi.md)
+🇻🇳 Bản tiếng Việt: [0021-personalized-home.vi.md](0021-personalized-home.vi.md)
 
-- **Status:** Proposed — superseded for the MVP by [ADR 0021](0021-home-mvp-server-session.md); kept as the full-feature design
+- **Status:** Proposed — superseded for the MVP by [ADR 0022](0022-home-mvp-server-session.md); kept as the full-feature design
 - **Date:** 2026-11-16
 - **Owner:** system-architect
 - **Affects:** `src/app/[locale]/page.tsx`, new `src/app/api/planner/home/route.ts`, new `src/components/home/**`, `src/components/layout/` (shared account provider), new `src/lib/home/**`, `messages/*.json`; no migration, no change to `src/content/types.ts`

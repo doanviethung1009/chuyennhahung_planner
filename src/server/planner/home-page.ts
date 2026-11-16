@@ -7,7 +7,7 @@ import type { PlannerRepository } from './repository';
 import type { Trip } from './schemas';
 
 /**
- * What the home page needs to know about the visitor (ADR 0021,
+ * What the home page needs to know about the visitor (ADR 0022,
  * docs/specs-home-mvp.md). Read on the server, for `/` only — the layout, the
  * header and the page metadata never touch request data.
  *

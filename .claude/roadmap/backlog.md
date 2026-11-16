@@ -7,15 +7,20 @@ Mỗi mục: ID ổn định `P<phase>-<n>`, chủ sở hữu (agent), phụ thu
 lại; mục bỏ đi được gạch và ghi lý do, không xóa. Sắp theo thứ tự triển khai
 (05 → 07 → 06 → 08 → 09), không theo Phase ID.
 
-## Phase 05 — Story → Planner, My Trips & Sharing (hiện tại, P0)
+## Phase 05 — Story → Planner, My Trips & Sharing (Done 2026-11-16, còn P05-7..11)
 
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
 | ~~P05-1~~ | ~~Kiểm thủ công luồng đầy đủ trên trình duyệt, 3 khổ màn hình~~ — xong 2026-11-10, sửa lỗi `step` ô ngân sách | main session | — |
-| P05-2 | `/sec-check` cho share token, public read, rate limiter, `returnTo` | user gọi `security` | — |
-| P05-3 | `/qc-check` theo tiêu chí contract | user gọi `qc` | — |
+| ~~P05-2~~ | ~~`/sec-check`~~ — xong 2026-11-16: PASS_WITH_WARNINGS, 0 finding chặn, `npm audit --omit=dev` 0 lỗ hổng | security | — |
+| ~~P05-3~~ | ~~`/qc-check`~~ — xong 2026-11-16: PASS với gaps; typecheck/lint PASS, test 871 passed/30 skipped; build NOT RUN | qc | — |
 | ~~P05-4~~ | ~~Test độc lập clone~~ — xong: `tests/planner-clone-independence.test.ts` | backend-engineer | — |
-| P05-5 | Contract `follow-hung-footsteps` → `State: DONE` sau P05-2, P05-3 | system-architect | P05-2, P05-3 |
+| ~~P05-5~~ | ~~Contract → `State: DONE`~~ — xong 2026-11-16 | system-architect | — |
+| P05-7 | **W1 (thấp-trung bình):** `clientKey` (`src/server/rate-limit.ts`) tin hop `x-forwarded-for` đầu tiên vô điều kiện → đổi header = bucket mới. Dùng hop tin cậy cuối hoặc gate bằng `TRUST_PROXY_HEADERS` (như `request-scheme.ts`); xác minh nginx ghi đè hay nối XFF. Gắn với Q12/P07-8 | backend-engineer | — |
+| P05-8 | **W2 (thấp):** khi `hits.size >= maxKeys`, mỗi `check()` chạy `prune()` toàn bộ → khuếch đại CPU. Giới hạn tần suất prune hoặc evict theo lô; chưa đo | backend-engineer | P05-7 |
+| P05-9 | **W3 (thấp):** `shareToken` lưu plaintext (`schemas.ts`), chỉ chỉ mục dùng digest. Ghi rõ vào ADR 0005 (bản sao/backup lộ link sống) hoặc chỉ lưu digest | system-architect | — |
+| P05-10 | Test render thiếu: section "Lịch trình thực tế" + CTA trên story (gồm template bị rút), trạng thái rate-limit của `/shared/[token]`, route private ngoài sitemap/noindex | frontend-engineer | — |
+| P05-11 | Chưa xác minh: từng nút ≥44px, parity Postgres store của share, bản EN và cửa sổ riêng tư thật của luồng thủ công | main session | — |
 | ~~P05-6~~ | ~~Sửa đoạn đã cũ: CLAUDE.md quy tắc 6 và rules/03 §6~~ — xong: CLAUDE.md ở PR #24, rules/03 §6 ở branch deploy-checklist | system-architect | — |
 
 ## Phase 07 — Admin Portal, CMS & RBAC (P1, ngay sau 05)

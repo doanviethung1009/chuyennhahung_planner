@@ -37,7 +37,7 @@ version không bao giờ rời module server.
 
 - **Chỉ ở server.** [`readHomeMember`](../../src/server/planner/home-page.ts) đọc cookie,
   chỉ chuyển cookie cho `identify`, và lùi về `guest` khi có bất kỳ lỗi, đang chờ đổi mật
-  khẩu, hay danh tính kiểu bearer ([ADR 0021](../adr/0021-home-mvp-server-session.vi.md)).
+  khẩu, hay danh tính kiểu bearer ([ADR 0022](../adr/0022-home-mvp-server-session.vi.md)).
   Dải là server component, không JavaScript client, nên có ngay trong phản hồi đầu — không
   khung chờ, không xô lệch bố cục.
 - **Chọn chuyến nào.** [`pickContinueTrip`](../../src/lib/home/continue-trip.ts): không bao
@@ -72,6 +72,6 @@ version không bao giờ rời module server.
   [spec cá nhân hóa](../specs-home-personalization.vi.md) lớn hơn, chưa xây.
 - Nếu có CDN hay cache dùng chung đặt trước `/`, nó phải bỏ qua cache với request có cookie
   phiên, hoặc trang chủ phải chuyển sang thiết kế đảo client của
-  [ADR 0020](../adr/0020-personalized-home.vi.md) (câu hỏi Q5 của spec).
+  [ADR 0021](../adr/0021-personalized-home.vi.md) (câu hỏi Q5 của spec).
 - Dải thành viên đã được kiểm trong trình duyệt trên bản build production bằng tiếng Việt và
   tiếng Anh ở độ rộng điện thoại và desktop; `/qc-check` và `/sec-check` chưa được chạy.

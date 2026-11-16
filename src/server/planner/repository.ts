@@ -28,6 +28,14 @@ import {
 import { computeTripBudget, type TripBudgetSummary } from './budget';
 import type { GoogleIdentity } from './google';
 import {
+  decide,
+  legacyRequest,
+  legacyWithdraw,
+  listingToState,
+  stateToListing,
+  transition,
+} from '../community/submission';
+import {
   DEFAULT_SCRYPT_COST_LOG2,
   dummyPasswordHash,
   generateTemporaryPassword,
@@ -1474,8 +1482,9 @@ export class PlannerRepository {
       if (trip.visibility !== 'public' || trip.shareToken === null) {
         throw invalidState(`trip "${tripId}" must be public before it can be listed`);
       }
+      // Legacy edge (a): accepted from any prior state (see submission.ts).
       const listing: TripListing = {
-        status: 'pending',
+        status: stateToListing(legacyRequest(listingToState(trip.listing?.status ?? null))) as TripListing['status'],
         authorDisplay,
         requestedAt: this.timestamp(),
         decidedAt: null,
@@ -1491,6 +1500,8 @@ export class PlannerRepository {
   withdrawListing(ownerId: string, tripId: string): Promise<ShareState> {
     return this.transaction((data) => {
       const { trip, index } = PlannerRepository.requireOwnedTrip(data, ownerId, tripId);
+      // Legacy edge (b): ends the listing from any state.
+      legacyWithdraw(listingToState(trip.listing?.status ?? null)); // always `draft` → no listing
       data.trips[index] = { ...trip, listing: null };
       return shareStateOf(data.trips[index] as Trip);
     });
@@ -1513,8 +1524,8 @@ export class PlannerRepository {
       if (!trip || !trip.listing) {
         throw new ContentError('not_found', `no listing request for trip "${tripId}"`);
       }
-      const needed = decision === 'remove' ? 'approved' : 'pending';
-      if (trip.listing.status !== needed) {
+      const nextState = decide(listingToState(trip.listing.status), decision);
+      if (nextState === null) {
         throw invalidState(`cannot ${decision}: the listing is ${trip.listing.status}`);
       }
       if (decision === 'approve' && !isShareable(trip)) {
@@ -1525,7 +1536,8 @@ export class PlannerRepository {
       }
       const listing: TripListing = {
         ...trip.listing,
-        status: decision === 'approve' ? 'approved' : 'rejected',
+        // `remove` lands in module state `removed`, stored as `rejected` (edge c).
+        status: stateToListing(nextState) as TripListing['status'],
         decidedAt: this.timestamp(),
         decidedBy: actor.slice(0, 80),
         rejectReason: decision === 'approve' ? null : reason,
@@ -2474,7 +2486,15 @@ export class PlannerRepository {
     if (next.visibility !== 'public' || next.status !== 'active') {
       next.listing = null;
     } else if (next.listing?.status === 'approved') {
-      next.listing = { ...next.listing, status: 'pending', decidedAt: null, decidedBy: null };
+      const requeued = transition(listingToState(next.listing.status), 'edit_material');
+      if (requeued !== null) {
+        next.listing = {
+          ...next.listing,
+          status: stateToListing(requeued) as TripListing['status'],
+          decidedAt: null,
+          decidedBy: null,
+        };
+      }
     }
     data.trips[index] = next;
     return next;

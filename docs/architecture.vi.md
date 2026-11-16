@@ -235,7 +235,7 @@ nên nó đi được bằng bàn phím và bot vẫn đọc được khi tắt 
 Layout, header và metadata của trang không bao giờ đọc dữ liệu request. **Một ngoại lệ
 được gọi tên:** trang chủ `/` đọc cookie phiên ở server qua
 [`readHomeMember`](../src/server/planner/home-page.ts) để hiện cho thành viên đã đăng nhập
-dải chuyến đầu tiên hoặc Continue Planning ([ADR 0021](adr/0021-home-mvp-server-session.vi.md),
+dải chuyến đầu tiên hoặc Continue Planning ([ADR 0022](adr/0022-home-mvp-server-session.vi.md),
 [tính năng](features/home-continue-planning.vi.md)). Request không có cookie nhận đúng trang
 công khai; request có cookie được trả `private, no-store`. Mọi cache dùng chung đặt trước `/`
 phải bỏ qua nó với request có cookie.

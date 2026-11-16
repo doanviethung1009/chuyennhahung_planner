@@ -46,7 +46,7 @@ export default async function HomePage({ params }: Params) {
   if (!featured) return null;
 
   const communityTrips = await getCommunityTrips(3);
-  // The only request-dependent read on this page, and only here (ADR 0021).
+  // The only request-dependent read on this page, and only here (ADR 0022).
   const member = await readHomeMember();
   const featuredItineraries = itineraries.filter((i) => i.featured);
 

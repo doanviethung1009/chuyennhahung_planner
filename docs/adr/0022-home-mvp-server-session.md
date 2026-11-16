@@ -1,12 +1,12 @@
-# ADR 0021 — Home MVP reads the session on the server, for the home page only
+# ADR 0022 — Home MVP reads the session on the server, for the home page only
 
-🇻🇳 Bản tiếng Việt: [0021-home-mvp-server-session.vi.md](0021-home-mvp-server-session.vi.md)
+🇻🇳 Bản tiếng Việt: [0022-home-mvp-server-session.vi.md](0022-home-mvp-server-session.vi.md)
 
 - **Status:** Accepted (project owner, 2026-11-17)
 - **Date:** 2026-11-17
 - **Owner:** system-architect
 - **Affects:** `src/app/[locale]/page.tsx`, new `src/server/planner/home-page.ts`, new `src/lib/home/continue-trip.ts`, new `src/components/home/home-member-band.tsx`, `messages/*.json`; no migration, no new route or endpoint
-- **Supersedes:** the decision in [ADR 0020](0020-personalized-home.md) (client islands plus a new endpoint), **for the MVP only**
+- **Supersedes:** the decision in [ADR 0021](0021-personalized-home.md) (client islands plus a new endpoint), **for the MVP only**
 - **Detail:** [specs-home-mvp.md](../specs-home-mvp.md)
 
 ## Context
@@ -16,7 +16,7 @@ band for a member with a trip ("Continue Planning"); guests keep today's page. T
 owner asked to prefer Server Components, reuse the session and My Trips, add no
 database, keep public SEO and protect private trips.
 
-[ADR 0020](0020-personalized-home.md) answered a larger question and rejected reading
+[ADR 0021](0021-personalized-home.md) answered a larger question and rejected reading
 the session on the server (its option B), mainly because it makes `/` a per-user
 document. Facts found since, in the repository:
 
@@ -45,7 +45,7 @@ second is checked by a test before merge.
 4. **A response to a request that carries the cookie must be `private, no-store`.**
    Verified by a test; if Next does not emit it, a conditional header rule (`has`
    cookie) is added in `next.config.ts`.
-5. **ADR 0020 stays the target for the full feature** and the path back if a shared
+5. **ADR 0021 stays the target for the full feature** and the path back if a shared
    cache is introduced.
 
 ## Options considered
@@ -53,7 +53,7 @@ second is checked by a test before merge.
 | Option | For | Against |
 |---|---|---|
 | **A (chosen)** Server Component reads the cookie on `/` | No client JavaScript, no flash or layout shift, no new endpoint, one store read only for signed-in members; fits the owner's brief and the admin-page precedent | `/` is a per-user document for cookie requests; a future CDN must bypass the cache for them; the privacy guarantee rests on the `private, no-store` header and an isolation test |
-| B ADR 0020: public shell, client islands, new `GET /api/planner/home` | Safe in any shared cache; guest page doubles as fallback | A new endpoint, provider, skeletons and a layout-shift budget for a one-band feature; two sequential requests; more code than the feature earns |
+| B ADR 0021: public shell, client islands, new `GET /api/planner/home` | Safe in any shared cache; guest page doubles as fallback | A new endpoint, provider, skeletons and a layout-shift budget for a one-band feature; two sequential requests; more code than the feature earns |
 | C Server read inside `<Suspense>` with a streamed band | Shell shows first | A band inserted above the hero after first paint shifts layout for members; the data read is a few milliseconds, so streaming buys nothing |
 
 Runner-up: **B**. It lost on one reason — it is the right design for a larger,
@@ -78,7 +78,7 @@ component line and one module.
 ## Follow-up
 
 - Accept this ADR and answer Q1–Q5 in the spec before code.
-- Mark ADR 0020 as superseded for the MVP (done in this change) and keep it as the
+- Mark ADR 0021 as superseded for the MVP (done in this change) and keep it as the
   full-feature design.
 - Feature document `docs/features/home-continue-planning.md` + `.vi.md`; update
   `docs/architecture.md` + `.vi.md` and `.claude/context/project-context.md` with the

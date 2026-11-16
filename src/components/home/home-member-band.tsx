@@ -7,7 +7,7 @@ import { ButtonLink } from '@/components/ui/button';
 import { Container } from '@/components/ui/container';
 
 /**
- * The one extra band a signed-in member sees above the hero (ADR 0021).
+ * The one extra band a signed-in member sees above the hero (ADR 0022).
  *
  * A server component with no client JavaScript: the band is part of the first
  * response, so there is no skeleton and no layout shift. It receives only the

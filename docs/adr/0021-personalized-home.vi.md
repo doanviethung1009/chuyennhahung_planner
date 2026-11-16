@@ -1,8 +1,8 @@
-# ADR 0020 — Trang chủ cá nhân hóa: một tài liệu công khai, nội dung cá nhân được điền ở trình duyệt từ một phép chiếu riêng
+# ADR 0021 — Trang chủ cá nhân hóa: một tài liệu công khai, nội dung cá nhân được điền ở trình duyệt từ một phép chiếu riêng
 
-🇬🇧 English version: [0020-personalized-home.md](0020-personalized-home.md)
+🇬🇧 English version: [0021-personalized-home.md](0021-personalized-home.md)
 
-- **Trạng thái:** Đề xuất — được [ADR 0021](0021-home-mvp-server-session.vi.md) thay thế cho MVP; giữ làm thiết kế tính năng đầy đủ
+- **Trạng thái:** Đề xuất — được [ADR 0022](0022-home-mvp-server-session.vi.md) thay thế cho MVP; giữ làm thiết kế tính năng đầy đủ
 - **Ngày:** 2026-11-16
 - **Chủ trì:** system-architect
 - **Ảnh hưởng:** `src/app/[locale]/page.tsx`, `src/app/api/planner/home/route.ts` (mới), `src/components/home/**` (mới), `src/components/layout/` (provider tài khoản dùng chung), `src/lib/home/**` (mới), `messages/*.json`; không migration, không đổi `src/content/types.ts`

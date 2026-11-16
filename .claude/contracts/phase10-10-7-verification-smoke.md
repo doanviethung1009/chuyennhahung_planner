@@ -1,0 +1,21 @@
+# Task Contract 10.7 — QC, Security, DEV Smoke Test
+- Task IDs: P10-4 (smoke); P10-7 (owner infra, tracked here); reviews on demand
+- Class: S (evidence only; no source change) · State: READY (owner approved D1-D12 as recommended, 2026-11-16) · Subagents: 0
+- Objective: prove Phase 10 works on the dev VM and record independent review verdicts, then close the phase.
+- Scope:
+  - **Smoke (P10-4)** on the deployed dev app (VM 192.168.100.140, ADR 0016 auto deploy): `/community-trips`, `/reviews`, admin community (queue, reviews, restrictions, events, reports); a listing request → approve → remove path produces audit events; a report is filed and resolved; the Terms gate blocks then allows; a review is rate-limited (429) and survives an app restart (shared limiter). Evidence (statuses, screenshots or response excerpts without personal data) in the handoff note.
+  - **Owner items (P10-7):** backups of the dev store, `metadataBase`, HSTS — owner reports; this batch only records status. Blocks any new **user-generated media**, not this phase's close.
+  - **Reviews, only when the owner calls them:** `/qc-check` after 10.1 and at the end; `/sec-check` after 10.3 and 10.5 (and after 10.6). Two review/fix cycles maximum; a BLOCKED verdict stops the work.
+  - Phase close: update `.claude/roadmap/PHASES.md` and `backlog.md` statuses, `docs/specs-community-roadmap.*` rows, ADR 0019 status — architect hat, one docs PR.
+- Out of Scope: new features, fixes found by smoke (each becomes a bugfix task with its own contract), production deploy, load testing.
+- Architecture Reference: ADR 0016 (auto deploy), ADR 0019; `docs/specs-community-qc.md`.
+- Dependencies: 10.1–10.5 and 10.6a merged and deployed to dev; owner D10, D11; VM access is the owner's (memory: dev runs over HTTP on the IP; Postgres on a separate VM).
+- API/Data Contract: none.
+- Files Affected: `.claude/contracts/handoff/phase10-10.7.md` (evidence), `.claude/roadmap/PHASES.md`, `.claude/roadmap/backlog.md`, `docs/specs-community-roadmap.md` + `.vi.md`, `docs/adr/0019-*` status (+ `.vi.md`, index) — docs PR only.
+- FE/BE Responsibilities: none; main session runs the smoke through the built-in browser or the owner does.
+- QC Requirements: checklist above executed and each line marked PASS / FAIL / NOT RUN with evidence; the `qc` and `security` verdicts reported verbatim (PASS / PASS_WITH_WARNINGS / BLOCKED), never summarised as PASS if not run.
+- Security Requirements: use dev data only; never paste tokens, cookies or the admin token into notes; smoke must not create real accounts on a production host.
+- Acceptance Criteria: every smoke line has evidence or an explicit NOT RUN reason; no BLOCKED verdict open; phase statuses updated truthfully.
+- Verification Commands: `npm run typecheck`, `npm run lint`, `npm run test` on the docs PR (`tests/docs.test.ts` covers the bilingual changes).
+- Rollback Strategy: documentation only — revert the docs PR; nothing deployed or migrated.
+- Definition of Done: evidence note + docs PR merged, open follow-ups listed as new tasks, owner informed of anything NOT RUN.

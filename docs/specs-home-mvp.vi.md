@@ -6,7 +6,7 @@
 
 - **Trạng thái:** Đề xuất — đánh giá tác động, spec và một Task Contract nhỏ. Không sửa
   application code. Quyết định nó dựa vào được soạn thành
-  [ADR 0021](adr/0021-home-mvp-server-session.vi.md) (Đề xuất).
+  [ADR 0022](adr/0022-home-mvp-server-session.vi.md) (Đề xuất).
 - **Ngày:** 2026-11-17
 - **Chủ trì:** system-architect (thiết kế), chủ dự án (quyết định trong
   [Câu hỏi mở](#câu-hỏi-mở))
@@ -16,7 +16,7 @@
 - **Quan hệ với spec lớn:** đây là slice nhỏ nhất của
   [specs-home-personalization.vi.md](specs-home-personalization.vi.md). Nó **đổi một quyết
   định của spec đó cho MVP**: phiên được đọc ở server, không phải ở trình duyệt (xem
-  [ADR 0021](adr/0021-home-mvp-server-session.vi.md)). Mọi thứ khác ở đó (các bước
+  [ADR 0022](adr/0022-home-mvp-server-session.vi.md)). Mọi thứ khác ở đó (các bước
   onboarding, "Dành cho bạn", danh sách hoạt động, `GET /api/planner/home`) nằm ngoài MVP.
 
 **MVP, đúng như yêu cầu**
@@ -58,7 +58,7 @@ Stories, destinations, chuyến cộng đồng và review không đổi với m�
 | Xác thực và vai trò | Không; dùng đúng `identify` mà trang admin dùng |
 | `/my-trips`, liên kết chia sẻ, Planner API | Không; dải chỉ liên kết tới chúng |
 | Phase 10 | Không, miễn là giữ đúng danh sách ở [Tệp cần đổi](#tệp-cần-đổi) |
-| Cache | `/` thành tài liệu theo từng người **với request có mang cookie**; tài liệu của khách không đổi. Quy tắc ở [ADR 0021](adr/0021-home-mvp-server-session.vi.md) |
+| Cache | `/` thành tài liệu theo từng người **với request có mang cookie**; tài liệu của khách không đổi. Quy tắc ở [ADR 0022](adr/0022-home-mvp-server-session.vi.md) |
 | `docs/architecture.*` | Cập nhật trong cùng thay đổi: trang chủ giờ đọc phiên ở server (ranh giới module và ghi chú render) |
 
 ## Thiết kế
@@ -204,10 +204,10 @@ Lời giữ giọng thương hiệu: lời mời của một cặp đôi, không
 - **Bằng chứng:** bảng ở [Hiện trạng](#hiện-trạng).
 - **Ràng buộc:** Server Components trước; không thêm JavaScript client; không database; HTML
   của khách giống hệt từng byte; không đụng tệp Phase 10.
-- **Quyết định kiến trúc:** [ADR 0021](adr/0021-home-mvp-server-session.vi.md) phải được
+- **Quyết định kiến trúc:** [ADR 0022](adr/0022-home-mvp-server-session.vi.md) phải được
   Chấp nhận trước khi viết code.
 - **Hợp đồng giao diện:** `HomeMember` và `ContinueTrip` ở trên; `pickContinueTrip(trips, today)`.
-- **Việc theo chủ:** Architect — chấp nhận ADR 0021, cập nhật `docs/architecture.*`.
+- **Việc theo chủ:** Architect — chấp nhận ADR 0022, cập nhật `docs/architecture.*`.
   Vai backend — `home-page.ts`, `continue-trip.ts` và test của chúng. Vai frontend —
   component, messages, `page.tsx`, feature document. QC và Security — **chỉ khi chủ dự án
   yêu cầu**.
@@ -255,7 +255,7 @@ Phase 10: chỉ thêm khóa **bên trong** `home`, để merge chạm vùng khá
 ### Thứ tự thực hiện
 
 Backend trước frontend, trong một branch và một PR (quy tắc 9):
-1. Chấp nhận ADR 0021.
+1. Chấp nhận ADR 0022.
 2. `continue-trip.ts` + test, rồi `home-page.ts` + test (kiểu `HomeMember` là hợp đồng).
 3. Component, messages, `page.tsx`.
 4. Kiểm tra header cache; `typecheck`, `lint`, `test`, `build`; feature document và tài liệu
@@ -290,7 +290,7 @@ Không migration. Deploy không đổi gì với khách. Rollback là revert; kh
 | Spec | Quan hệ |
 |---|---|
 | [specs-home-personalization.vi.md](specs-home-personalization.vi.md) | MVP là slice đầu của nó với một quyết định đổi (đọc phiên ở server). `GET /api/planner/home`, các bước onboarding, "Dành cho bạn", danh sách hoạt động và đề xuất Phase 16 được **hoãn, không hủy**. Nếu có cache dùng chung hoặc CDN (Phase 09) hay phần cá nhân lớn lên, thiết kế đảo client là lối đã ghi sẵn |
-| [ADR 0020](adr/0020-personalized-home.vi.md) | Được ADR 0021 thay thế cho MVP; vẫn là thiết kế đích của spec đầy đủ |
+| [ADR 0021](adr/0021-personalized-home.vi.md) | Được ADR 0022 thay thế cho MVP; vẫn là thiết kế đích của spec đầy đủ |
 | Phase 10 ([ADR 0019](adr/0019-community-foundation.vi.md)) | Không tệp dùng chung; xem [Tệp không được đổi](#tệp-không-được-đổi) |
 | Phase 11–15 | Không đụng: không sở thích, mục đã lưu, bình luận hay tìm kiếm |
 
@@ -298,7 +298,7 @@ Không migration. Deploy không đổi gì với khách. Rollback là revert; kh
 
 | # | Câu hỏi | Khuyến nghị |
 |---|---|---|
-| Q1 | Chấp nhận việc đọc phiên ở server trên `/` cho MVP (ADR 0021)? | **Đã chấp nhận 2026-11-17**, với kiểm tra header cache A-9 làm cổng |
+| Q1 | Chấp nhận việc đọc phiên ở server trên `/` cho MVP (ADR 0022)? | **Đã chấp nhận 2026-11-17**, với kiểm tra header cache A-9 làm cổng |
 | Q2 | Đặt dải phía trên hero hay ngay dưới nó? | **Phía trên**, gọn — màn đầu của thành viên quay lại là chuyến của họ; hero giữ `<h1>` duy nhất |
 | Q3 | Phân biệt "chuyến đầu tiên" với "chuyến tiếp theo" (cần thêm một query archived, chỉ cho thành viên không có chuyến chưa xong)? | **Có**; chữ "chuyến đầu tiên" sai với người đã lưu trữ hết chuyến của mình |
 | Q4 | Hiện số hoạt động hay tiến độ trong dải? | **Chưa ở MVP** — cần đọc đầy đủ `getTrip`; thêm cùng spec đầy đủ |

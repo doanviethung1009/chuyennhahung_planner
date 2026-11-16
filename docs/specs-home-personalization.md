@@ -6,7 +6,7 @@
 
 - **Status:** Proposed — a UX specification and an architecture proposal. Nothing here is
   built; no application code was changed to write it. The one decision that needs
-  recording is drafted as [ADR 0020](adr/0020-personalized-home.md) (Proposed).
+  recording is drafted as [ADR 0021](adr/0021-personalized-home.md) (Proposed).
 - **MVP:** the first slice, with one changed decision (server-side session read), is
   [specs-home-mvp.md](specs-home-mvp.md).
 - **Date:** 2026-11-16
@@ -61,7 +61,7 @@ says where each is a thin stand-in now and which phase replaces it.
 
 1. **One document for everyone; personal content is added in the browser.** The server
    never reads a cookie to render `/`. This is the privacy and cache rule, and every
-   other decision follows it ([ADR 0020](adr/0020-personalized-home.md)).
+   other decision follows it ([ADR 0021](adr/0021-personalized-home.md)).
 2. **The guest page is the default, the fallback and the crawler's page.** Any
    failure in the personal layer degrades to it, never to an empty page.
 3. **Rule-based, explainable, deterministic.** Every personal item says why it is shown.
@@ -642,7 +642,7 @@ squeezed into Phase 10–15.
 | Piece | Built on | Overlaps Phase 10–15? | Decision |
 |---|---|---|---|
 | Guest page re-order, Quick start, Planner steps | T1 (public site), Phase 04/05 (Planner UI, sharing) | No | This spec |
-| `GET /api/planner/home`, snapshot, provider, slots | Phase 03/05 repository, ADR 0004 session | No | This spec, ADR 0020 |
+| `GET /api/planner/home`, snapshot, provider, slots | Phase 03/05 repository, ADR 0004 session | No | This spec, ADR 0021 |
 | New-member onboarding | Phase 04/05 (`/trip-setup`, `/my-trips/new`) | No | This spec |
 | Resume, My trips strip, nudges | Phase 04/05 | No | This spec |
 | Community activity (own submissions) | Phase 10-S0 (ADR 0014/0015) | No — reads existing statuses | This spec |
@@ -667,7 +667,7 @@ FE depends on BE only through the `HomeSnapshot` type, which slice H1 freezes.
 
 | Slice | Content | Roles (in sequence) | Class |
 |---|---|---|---|
-| **H0** | Accept ADR 0020 (and decide the open questions) | architect | S |
+| **H0** | Accept ADR 0021 (and decide the open questions) | architect | S |
 | **H1** | `/home` route + schema + tests; `AccountProvider`; slot skeleton; guest page re-order, Quick start, Planner steps | backend, then frontend | L |
 | **H2** | New-member band, onboarding steps, notices | frontend | M |
 | **H3** | Resume card, My trips strip, nudges, activity list | frontend | M |

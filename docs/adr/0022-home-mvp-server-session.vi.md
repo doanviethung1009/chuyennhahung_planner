@@ -1,12 +1,12 @@
-# ADR 0021 — MVP trang chủ đọc phiên ở server, chỉ cho trang chủ
+# ADR 0022 — MVP trang chủ đọc phiên ở server, chỉ cho trang chủ
 
-🇬🇧 English version: [0021-home-mvp-server-session.md](0021-home-mvp-server-session.md)
+🇬🇧 English version: [0022-home-mvp-server-session.md](0022-home-mvp-server-session.md)
 
 - **Trạng thái:** Đã chấp nhận (chủ dự án, 2026-11-17)
 - **Ngày:** 2026-11-17
 - **Chủ trì:** system-architect
 - **Ảnh hưởng:** `src/app/[locale]/page.tsx`, `src/server/planner/home-page.ts` (mới), `src/lib/home/continue-trip.ts` (mới), `src/components/home/home-member-band.tsx` (mới), `messages/*.json`; không migration, không route hay endpoint mới
-- **Thay thế:** quyết định trong [ADR 0020](0020-personalized-home.vi.md) (đảo client cộng endpoint mới), **chỉ cho MVP**
+- **Thay thế:** quyết định trong [ADR 0021](0021-personalized-home.vi.md) (đảo client cộng endpoint mới), **chỉ cho MVP**
 - **Chi tiết:** [specs-home-mvp.vi.md](../specs-home-mvp.vi.md)
 
 ## Bối cảnh
@@ -16,7 +16,7 @@ viên có chuyến ("Continue Planning"); khách giữ nguyên trang hiện nay.
 tiên Server Components, tái dùng phiên và My Trips, không thêm database, giữ SEO công khai và
 bảo vệ chuyến riêng tư.
 
-[ADR 0020](0020-personalized-home.vi.md) trả lời một câu hỏi lớn hơn và đã loại việc đọc phiên
+[ADR 0021](0021-personalized-home.vi.md) trả lời một câu hỏi lớn hơn và đã loại việc đọc phiên
 ở server (phương án B của nó), chủ yếu vì nó biến `/` thành tài liệu theo từng người. Sự thật
 tìm được từ đó, trong repository:
 
@@ -43,14 +43,14 @@ gửi `private, no-store` cho render động này không — điều sau đượ
    từ client, không endpoint mới.
 4. **Phản hồi cho request có cookie phải là `private, no-store`.** Được kiểm bằng test; nếu Next
    không phát ra, thêm một luật header có điều kiện (`has` cookie) trong `next.config.ts`.
-5. **ADR 0020 vẫn là thiết kế đích cho tính năng đầy đủ** và là đường lui nếu có cache dùng chung.
+5. **ADR 0021 vẫn là thiết kế đích cho tính năng đầy đủ** và là đường lui nếu có cache dùng chung.
 
 ## Các phương án đã xét
 
 | Phương án | Ưu | Nhược |
 |---|---|---|
 | **A (chọn)** Server Component đọc cookie trên `/` | Không JavaScript client, không nháy hay xô lệch bố cục, không endpoint mới, chỉ đọc store một lần cho thành viên đã đăng nhập; khớp brief của chủ và tiền lệ trang admin | `/` là tài liệu theo từng người với request có cookie; CDN tương lai phải bỏ qua cache cho chúng; đảm bảo riêng tư dựa vào header `private, no-store` và một test cách ly |
-| B ADR 0020: khung công khai, đảo client, `GET /api/planner/home` mới | An toàn trong mọi cache dùng chung; trang khách vừa là dự phòng | Một endpoint, provider, khung chờ và ngân sách xô lệch bố cục cho tính năng chỉ một dải; hai request tuần tự; nhiều code hơn tính năng đáng có |
+| B ADR 0021: khung công khai, đảo client, `GET /api/planner/home` mới | An toàn trong mọi cache dùng chung; trang khách vừa là dự phòng | Một endpoint, provider, khung chờ và ngân sách xô lệch bố cục cho tính năng chỉ một dải; hai request tuần tự; nhiều code hơn tính năng đáng có |
 | C Đọc ở server trong `<Suspense>` với dải được stream | Khung hiện trước | Dải chèn phía trên hero sau lần vẽ đầu làm xô lệch bố cục cho thành viên; việc đọc dữ liệu chỉ vài mili giây nên stream không được gì |
 
 Phương án về nhì: **B**. Nó thua vì một lý do — là thiết kế đúng cho trang chủ lớn hơn, có cache
@@ -73,7 +73,7 @@ trang công khai khác. Đảo ngược là gỡ một dòng component và một
 ## Việc tiếp theo
 
 - Chấp nhận ADR này và trả lời Q1–Q5 trong spec trước khi viết code.
-- Đánh dấu ADR 0020 là bị thay thế cho MVP (đã làm trong thay đổi này) và giữ nó làm thiết
+- Đánh dấu ADR 0021 là bị thay thế cho MVP (đã làm trong thay đổi này) và giữ nó làm thiết
   kế tính năng đầy đủ.
 - Feature document `docs/features/home-continue-planning.md` + `.vi.md`; cập nhật
   `docs/architecture.md` + `.vi.md` và `.claude/context/project-context.md` với ngoại lệ một
