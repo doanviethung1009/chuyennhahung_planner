@@ -109,9 +109,12 @@ API used (all same-origin, cookie-authenticated; bodies are `.strict()`):
 - `tests/i18n.test.ts`, `tests/routing.test.ts`, `tests/docs.test.ts`,
   `tests/design-tokens.test.ts` cover catalogue parity, the five routes, this
   document and token usage.
-- Not covered by automated tests: the client forms and the rendered pages. They
-  need a browser check (anonymous visit, customise, save, sign in, draft restored,
-  share, open the link in a private window).
+- Not covered by automated tests: the client forms and the rendered pages. The
+  browser flow (anonymous visit, customise, save, sign in, draft restored, share, open
+  the link without a cookie) was checked by hand on 2026-11-10; the EN locale and a
+  real private window are still unchecked. Phase 05 closed on 2026-11-16 with
+  `/sec-check` PASS_WITH_WARNINGS and `/qc-check` PASS with gaps; follow-ups are
+  `P05-7`..`P05-11` in `.claude/roadmap/backlog.md`.
 
 ## Limits and open questions
 

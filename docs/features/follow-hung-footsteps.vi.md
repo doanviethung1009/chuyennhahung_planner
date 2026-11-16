@@ -109,9 +109,12 @@ API được dùng (đều cùng origin, xác thực bằng cookie; body là `.s
 - `tests/i18n.test.ts`, `tests/routing.test.ts`, `tests/docs.test.ts`,
   `tests/design-tokens.test.ts` phủ việc đồng bộ catalogue, năm route, tài liệu này
   và việc dùng token.
-- Chưa có test tự động cho các form client và trang đã render. Cần kiểm tra bằng
+- Chưa có test tự động cho các form client và trang đã render. Luồng trên
   trình duyệt (vào ẩn danh, tuỳ chỉnh, lưu, đăng nhập, bản nháp được khôi phục,
-  chia sẻ, mở đường dẫn trong cửa sổ riêng tư).
+  chia sẻ, mở đường dẫn không cookie) đã kiểm tay ngày 2026-11-10; bản EN và cửa sổ
+  riêng tư thật vẫn chưa kiểm. Phase 05 đóng ngày 2026-11-16 với `/sec-check`
+  PASS_WITH_WARNINGS và `/qc-check` PASS với gaps; việc tiếp theo là `P05-7`..`P05-11`
+  trong `.claude/roadmap/backlog.md`.
 
 ## Giới hạn và câu hỏi còn mở
 

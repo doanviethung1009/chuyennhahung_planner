@@ -107,7 +107,7 @@ Revert the PR. Stored `.data/planner.json` rows keep the extra optional fields a
 ## Budget
 Max 2 implementer invocations (BE then FE). Stop condition: BE reports typecheck/lint/test green before FE starts; any BLOCKED review from the user stops the work; at most two review/fix cycles, then escalate.
 
-## State: IMPLEMENTED (merged PR #23)
+## State: DONE (merged PR #23; Phase 05 closed 2026-11-16 — sec PASS_WITH_WARNINGS, qc PASS with gaps; warnings in backlog P05-7..P05-11)
 ## Feature document owner: frontend-engineer — `docs/features/follow-hung-footsteps.md` + `.vi.md`, registered in `docs/features/README.*` (BE supplies the API behaviour per this contract)
 ## Architecture/usage doc updates needed: `docs/architecture.*` done. `docs/usage.*`: none unless the BE adds an env var (it should not; limits are code constants).
 
