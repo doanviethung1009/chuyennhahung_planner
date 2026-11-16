@@ -63,7 +63,9 @@ never whole transcripts — to any approved subagent.
 **Handoff.** When a session ends with work left, write a handoff of at most 15 lines
 in `.claude/contracts/<task-id>.md` (or the PR description): branch, what is done,
 each check with its real status (PASS/FAIL/NOT RUN), what is left, open decisions. Facts
-only — no recap of the conversation.
+only — no recap of the conversation. A full Task Contract run
+(`.claude/templates/UNIVERSAL_TASK_EXECUTION.md`) writes its handoff to
+`.claude/contracts/handoff/<task-id>.md`, at most 25 lines.
 
 ## Keep the main session short — this is where the credits go
 Measured on this project's own transcripts (2026-11-09, 12 sessions): the **main
