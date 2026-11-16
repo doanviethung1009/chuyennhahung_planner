@@ -34,6 +34,17 @@ export const adminPaths = ['/quan-tri/:path*', '/en/admin/:path*'];
 
 const noIndex = { key: 'X-Robots-Tag', value: 'noindex, nofollow' };
 
+/**
+ * The home page shows a signed-in member a personal band (ADR 0022), so a
+ * request that carries the session cookie must never be stored by a shared
+ * cache. Next already answers dynamic renders `private, no-store`; this states
+ * it explicitly and testably. Guests are unaffected. The cookie name mirrors
+ * `SESSION_COOKIE` in `src/server/planner/auth.ts` (a test keeps them equal).
+ */
+export const homePaths = ['/', '/en'];
+export const sessionCookieName = 'planner_session';
+const privateNoStore = { key: 'Cache-Control', value: 'private, no-store' };
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   // A self-contained server bundle for the Docker image (`Dockerfile`): only the
@@ -48,6 +59,11 @@ const nextConfig: NextConfig = {
       // (ADR 0005: a share token must never leak through `Referer`).
       ...sharePaths.map((source) => ({ source, headers: [noReferrer] })),
       ...adminPaths.map((source) => ({ source, headers: [noIndex] })),
+      ...homePaths.map((source) => ({
+        source,
+        has: [{ type: 'cookie' as const, key: sessionCookieName }],
+        headers: [privateNoStore],
+      })),
     ];
   },
   images: {

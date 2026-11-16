@@ -46,8 +46,16 @@ version không bao giờ rời module server.
   gần nhất; hòa thì theo `updatedAt` rồi `id`.
 - **Trang công khai không đổi.** `generateMetadata`, layout và header không đọc dữ liệu
   request; request không có cookie render cùng HTML như trước.
-- **Cache.** Request có cookie được Next trả `private, no-cache, no-store` qua render động
-  (đã kiểm trên bản build production); không cần luật nào trong `next.config.ts`.
+- **Cache.** Request có cookie được trả `private, no-store`: một luật `has: cookie` có điều
+  kiện trong `next.config.ts` cho `/` và `/en` nêu điều đó, một test khẳng định nó, và render
+  động của Next cũng gửi `private, no-cache, no-store` (đã kiểm trên bản build production).
+  Khách không bị ảnh hưởng.
+- **Cookie rác.** Giá trị không thể là token phiên (không phải 32–128 ký tự base64url) bị loại
+  trước `identify`, nên không tốn lần đọc store nào.
+- **Thứ tự heading.** Tên trong dải là một `<p>` gắn nhãn cho `<section>`, không phải heading,
+  nên `<h1>` của hero vẫn đứng đầu.
+- **Tác dụng phụ của phiên.** Như ở các trang admin, `identify` có thể gia hạn cửa sổ trượt của
+  phiên, nên mở `/` với cookie hợp lệ làm mới nó.
 
 ## Files
 
@@ -62,12 +70,15 @@ version không bao giờ rời module server.
 - `tests/home-continue-trip.test.ts` — hàm chọn, xử lý hòa điểm, ngày Việt Nam.
 - `tests/home-member.test.ts` — khách, cookie rác, token bearer, chờ đổi mật khẩu,
   first/next/continue, bộ khóa chính xác, cách ly giữa hai thành viên, store lỗi.
-- `tests/home-page-boundary.test.ts` — ngoại lệ duy nhất không lan sang layout, header,
-  metadata hay trang khác.
+- `tests/home-member-band.test.ts` — dải khi render: không có gì cho khách, các href, không
+  heading, điều khiển 44px, chuyến đã qua ngày và không ngày, tên chuyến là văn bản.
+- `tests/home-page-boundary.test.ts` — ngoại lệ duy nhất không lan sang trang, component hay
+  tệp thư viện nào khác; luật `private, no-store` và tên cookie của nó.
 
 ## Limits and open questions
 
 - Chưa có số hoạt động hay tiến độ trong dải: cần đọc đầy đủ chuyến.
+- Chỉ 100 chuyến đang dùng đầu tiên được xét khi chọn chuyến để tiếp tục.
 - Các bước onboarding, "Dành cho bạn", hoạt động cộng đồng và mục đã lưu thuộc
   [spec cá nhân hóa](../specs-home-personalization.vi.md) lớn hơn, chưa xây.
 - Nếu có CDN hay cache dùng chung đặt trước `/`, nó phải bỏ qua cache với request có cookie

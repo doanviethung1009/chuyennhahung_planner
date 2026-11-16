@@ -126,7 +126,8 @@ Ties break on `updatedAt` newest, then `id` ascending, so the result is determin
 ### Wireframes
 
 The band is one compact block above the hero. The hero keeps the only `<h1>`; the band
-uses an `<h2>`.
+adds **no heading element** — its title is a `<p>` that labels the `<section>` through
+`aria-labelledby` — so the outline stays h1-first.
 
 Mobile (≈375 px) — continue
 
@@ -135,7 +136,7 @@ Mobile (≈375 px) — continue
 │ header (existing)        │
 ├─────────────────────────┤
 │ TIẾP TỤC LÊN KẾ HOẠCH    │  eyebrow
-│ Đà Lạt cuối tuần   (h2)  │  trip title, plain text
+│ Đà Lạt cuối tuần         │  trip title, a labelled <p>
 │ Đà Lạt · 4 ngày · Còn 12 ngày │
 │ (Bản nháp)               │  Badge from planning.*
 │ [Tiếp tục chỉnh sửa]     │  → /my-trips/[id], ≥44px
@@ -150,7 +151,7 @@ Mobile — first trip / next trip
 ```
 ┌─────────────────────────┐
 │ BẮT ĐẦU                  │
-│ Tạo chuyến đầu tiên (h2) │  next-trip: "Bắt đầu một chuyến mới"
+│ Tạo chuyến đầu tiên      │  next-trip: "Bắt đầu một chuyến mới"
 │ Chọn một chuyện của Hưng │
 │ làm mẫu hoặc đi từ trang trắng │
 │ [Tạo chuyến đi]          │  → /my-trips/new
@@ -172,7 +173,7 @@ button right; a thin `border-b` separates it from the hero. No new colours or to
 | Trip title very long | Clamped to two lines with ellipsis; full title is on the trip page |
 | No `startDate` | No countdown; shows "Dates not set" |
 | `startDate` today | "Leaving today" |
-| `startDate` in the past, not completed | No countdown; no pressure language |
+| `startDate` in the past, not completed | No countdown; the date itself is shown; no pressure language |
 | Locale | Strings in `messages/vi.json` **and** `messages/en.json` under `home.member.*`; dates through `formatDate`, counts through ICU plurals |
 
 Copy stays in the brand's voice: a couple's invitation, no streaks or urgency.
@@ -186,7 +187,9 @@ Copy stays in the brand's voice: a couple's invitation, no streaks or urgency.
 | Rendering | Title and names are React text nodes, never `dangerouslySetInnerHTML` |
 | URLs | Only the trip `id` appears in a link, as it already does in `/my-trips/[id]`; no title, status or count in any query string |
 | Metadata | `generateMetadata` stays cookie-free: the page `<title>`, description, canonical, OG image and JSON-LD never depend on the member |
-| Caching | A response to a request **with** the cookie must be `private, no-store`; a guest response is unchanged. To be asserted by a test, and if Next does not emit it for a dynamic render, added as a conditional header rule (`has` cookie) in `next.config.ts` |
+| Caching | A response to a request **with** the cookie is `private, no-store`: stated by a conditional header rule (`has` cookie) in `next.config.ts` for `/` and `/en`, asserted by `tests/home-page-boundary.test.ts`, and also Next's own default for a dynamic render (checked on a production build). A guest response is unchanged |
+| Garbage cookies | A token that cannot be a session token (not 32–128 base64url characters) is turned away before `identify`, so a public page does not cost a store snapshot per junk cookie |
+| Session side effects | `identify` may extend a session's sliding window and sweep an expired one, exactly as on the admin pages; opening `/` with a valid cookie therefore renews it |
 | Crawlers | They send no cookie, so they receive the guest page: SEO and structured data are unchanged. Showing signed-in members an extra band is personalization, not cloaking |
 | Layout and header | Still never read request data (`tests/header-account.test.ts` stays as it is) |
 | Logs | A failure logs the error name only; no trip or user field |
@@ -244,7 +247,7 @@ Copy stays in the brand's voice: a couple's invitation, no streaks or urgency.
 | `docs/features/home-continue-planning.md` + `.vi.md`, `docs/features/README.md` + `.vi.md` | **new** / register | frontend |
 | `docs/architecture.md` + `.vi.md` | note on `/` | architect |
 | `.claude/context/project-context.md` | one line under "Other critical modules" | architect |
-| `next.config.ts` | **only if** the cache-header check fails: a conditional `has: cookie` rule | architect |
+| `next.config.ts` | a conditional `has: cookie` rule that answers `/` and `/en` with `private, no-store` | architect |
 
 ### Files that must not change
 
@@ -282,10 +285,10 @@ persisted.
 | A-6 | Picker: upcoming date beats undated beats past; ties deterministic; `completed` never chosen to continue |
 | A-7 | **Isolation:** with members A and B, A's page never contains B's trip title or id |
 | A-8 | The component receives only `ContinueTrip` fields; a test fails if `shareToken`, `note`, `budget`, `ownerId` or `version` can reach it |
-| A-9 | A request with the cookie is answered `private, no-store`; a guest response is unchanged |
+| A-9 | A request with the cookie is answered `private, no-store`; a guest response is unchanged (test on the `next.config.ts` rule; verified once on a production build) |
 | A-10 | `generateMetadata`, layout and header read no request data; `tests/header-account.test.ts` unchanged and green |
 | A-11 | Store or session failure → guest page, one log line with the error name only |
-| A-12 | One `<h1>` on the page; band uses `<h2>` with `aria-labelledby`; links are real `<a>` ≥ 44 px with visible focus; no new colour |
+| A-12 | One `<h1>` on the page; the band adds no heading and is labelled with `aria-labelledby`; links are real `<a>` ≥ 44 px with visible focus; no new colour |
 | A-13 | VI and EN keys both present (`tests/i18n.test.ts`); 375 px with Vietnamese strings has no horizontal scroll |
 | A-14 | No new client component or client JavaScript; no new request from the browser |
 | A-15 | `typecheck`, `lint`, `test`, `build` pass with the output stated; `/qc-check` and `/sec-check` are **NOT RUN** until the owner asks (recommended: the A-1, A-7, A-9 group) |

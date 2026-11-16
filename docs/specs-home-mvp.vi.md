@@ -123,7 +123,9 @@ Hòa thì xét `updatedAt` mới nhất, rồi `id` tăng dần, nên kết qu�
 
 ### Wireframe
 
-Dải là một khối gọn phía trên hero. Hero giữ `<h1>` duy nhất; dải dùng `<h2>`.
+Dải là một khối gọn phía trên hero. Hero giữ `<h1>` duy nhất; dải **không thêm phần tử
+heading nào** — tên chuyến là một `<p>` gắn nhãn cho `<section>` qua `aria-labelledby` — nên
+cấu trúc heading vẫn bắt đầu bằng h1.
 
 Mobile (≈375 px) — continue
 
@@ -132,7 +134,7 @@ Mobile (≈375 px) — continue
 │ header (hiện có)         │
 ├─────────────────────────┤
 │ TIẾP TỤC LÊN KẾ HOẠCH    │  eyebrow
-│ Đà Lạt cuối tuần   (h2)  │  tên chuyến, văn bản thuần
+│ Đà Lạt cuối tuần         │  tên chuyến, một <p> gắn nhãn
 │ Đà Lạt · 4 ngày · Còn 12 ngày │
 │ (Bản nháp)               │  Badge từ planning.*
 │ [Tiếp tục chỉnh sửa]     │  → /my-trips/[id], ≥44px
@@ -147,7 +149,7 @@ Mobile — first trip / next trip
 ```
 ┌─────────────────────────┐
 │ BẮT ĐẦU                  │
-│ Tạo chuyến đầu tiên (h2) │  next-trip: "Bắt đầu một chuyến mới"
+│ Tạo chuyến đầu tiên      │  next-trip: "Bắt đầu một chuyến mới"
 │ Chọn một chuyện của Hưng │
 │ làm mẫu hoặc đi từ trang trắng │
 │ [Tạo chuyến đi]          │  → /my-trips/new
@@ -169,7 +171,7 @@ một `border-b` mảnh tách khỏi hero. Không màu hay token mới: `Contain
 | Tên chuyến rất dài | Cắt hai dòng có dấu chấm lửng; tên đầy đủ ở trang chuyến |
 | Không có `startDate` | Không đếm ngược; hiện "Chưa chọn ngày" |
 | `startDate` là hôm nay | "Khởi hành hôm nay" |
-| `startDate` đã qua, chưa hoàn thành | Không đếm ngược; không dùng lời thúc ép |
+| `startDate` đã qua, chưa hoàn thành | Không đếm ngược; hiện chính ngày đó; không dùng lời thúc ép |
 | Ngôn ngữ | Chuỗi trong `messages/vi.json` **và** `messages/en.json` dưới `home.member.*`; ngày qua `formatDate`, số đếm qua ICU plural |
 
 Lời giữ giọng thương hiệu: lời mời của một cặp đôi, không chuỗi ngày hay thúc ép.
@@ -183,7 +185,9 @@ Lời giữ giọng thương hiệu: lời mời của một cặp đôi, không
 | Render | Tên chuyến và tên là text node của React, không `dangerouslySetInnerHTML` |
 | URL | Chỉ `id` chuyến xuất hiện trong liên kết, như hiện đã có ở `/my-trips/[id]`; không tên, trạng thái hay số đếm nào trong query string |
 | Metadata | `generateMetadata` vẫn không đọc cookie: `<title>`, mô tả, canonical, ảnh OG và JSON-LD của trang không bao giờ phụ thuộc thành viên |
-| Cache | Phản hồi cho request **có** cookie phải là `private, no-store`; phản hồi cho khách không đổi. Được khẳng định bằng test, và nếu Next không phát ra header đó cho render động thì thêm một luật header có điều kiện (`has` cookie) trong `next.config.ts` |
+| Cache | Phản hồi cho request **có** cookie là `private, no-store`: được nêu bằng một luật header có điều kiện (`has` cookie) trong `next.config.ts` cho `/` và `/en`, được khẳng định bằng `tests/home-page-boundary.test.ts`, và cũng là mặc định của Next cho render động (đã kiểm trên bản build production). Phản hồi cho khách không đổi |
+| Cookie rác | Token không thể là token phiên (không phải 32–128 ký tự base64url) bị loại trước `identify`, nên trang công khai không tốn một lần đọc snapshot store cho mỗi cookie rác |
+| Tác dụng phụ của phiên | `identify` có thể gia hạn cửa sổ trượt của phiên và dọn phiên hết hạn, y như các trang admin; mở `/` với cookie hợp lệ vì vậy làm mới nó |
 | Crawler | Họ không gửi cookie nên nhận trang khách: SEO và dữ liệu có cấu trúc không đổi. Cho thành viên đã đăng nhập thấy thêm một dải là cá nhân hóa, không phải cloaking |
 | Layout và header | Vẫn không bao giờ đọc dữ liệu request (`tests/header-account.test.ts` giữ nguyên) |
 | Log | Lỗi chỉ log tên lỗi; không trường chuyến hay người dùng nào |
@@ -241,7 +245,7 @@ Lời giữ giọng thương hiệu: lời mời của một cặp đôi, không
 | `docs/features/home-continue-planning.md` + `.vi.md`, `docs/features/README.md` + `.vi.md` | **mới** / đăng ký | frontend |
 | `docs/architecture.md` + `.vi.md` | ghi chú về `/` | architect |
 | `.claude/context/project-context.md` | một dòng ở "Other critical modules" | architect |
-| `next.config.ts` | **chỉ khi** kiểm tra header cache thất bại: một luật `has: cookie` có điều kiện | architect |
+| `next.config.ts` | một luật `has: cookie` có điều kiện trả `private, no-store` cho `/` và `/en` | architect |
 
 ### Tệp không được đổi
 
@@ -277,10 +281,10 @@ Không migration. Deploy không đổi gì với khách. Rollback là revert; kh
 | A-6 | Hàm chọn: có ngày sắp tới thắng không ngày thắng đã qua; hòa tất định; chuyến `completed` không bao giờ được chọn để tiếp tục |
 | A-7 | **Cách ly:** với thành viên A và B, trang của A không bao giờ chứa tên hay id chuyến của B |
 | A-8 | Component chỉ nhận các trường `ContinueTrip`; test fail nếu `shareToken`, `note`, `budget`, `ownerId` hay `version` có thể tới được nó |
-| A-9 | Request có cookie được trả `private, no-store`; phản hồi cho khách không đổi |
+| A-9 | Request có cookie được trả `private, no-store`; phản hồi cho khách không đổi (test trên luật `next.config.ts`; đã kiểm một lần trên bản build production) |
 | A-10 | `generateMetadata`, layout và header không đọc dữ liệu request; `tests/header-account.test.ts` không đổi và xanh |
 | A-11 | Store hoặc phiên lỗi → trang khách, một dòng log chỉ có tên lỗi |
-| A-12 | Một `<h1>` trên trang; dải dùng `<h2>` với `aria-labelledby`; liên kết là `<a>` thật ≥ 44 px, focus nhìn thấy; không màu mới |
+| A-12 | Một `<h1>` trên trang; dải không thêm heading và được gắn nhãn bằng `aria-labelledby`; liên kết là `<a>` thật ≥ 44 px, focus nhìn thấy; không màu mới |
 | A-13 | Khóa VI và EN đều có (`tests/i18n.test.ts`); 375 px với chuỗi tiếng Việt không cuộn ngang |
 | A-14 | Không client component hay JavaScript client mới; không request mới từ trình duyệt |
 | A-15 | `typecheck`, `lint`, `test`, `build` đạt và nêu đầu ra; `/qc-check` và `/sec-check` là **NOT RUN** cho đến khi chủ dự án yêu cầu (khuyến nghị: nhóm A-1, A-7, A-9) |

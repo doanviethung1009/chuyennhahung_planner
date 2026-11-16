@@ -42,10 +42,12 @@ second is checked by a test before merge.
    `generateMetadata`, the layout and the header stay cookie-free.
 3. **One server component** renders the band above the hero; no client component, no
    client fetch, no new endpoint.
-4. **A response to a request that carries the cookie must be `private, no-store`.**
-   Verified by a test; if Next does not emit it, a conditional header rule (`has`
-   cookie) is added in `next.config.ts`.
-5. **ADR 0021 stays the target for the full feature** and the path back if a shared
+4. **A response to a request that carries the cookie is `private, no-store`.** Stated
+   by a conditional header rule (`has` cookie) in `next.config.ts` for `/` and `/en`,
+   asserted by a test, and also Next's default for a dynamic render.
+5. **A cookie that cannot be a session token is rejected before `identify`**, so a
+   public page does not read the whole store for junk input.
+6. **ADR 0021 stays the target for the full feature** and the path back if a shared
    cache is introduced.
 
 ## Options considered
@@ -72,8 +74,10 @@ vary or bypass on the session cookie — this must be decided before Phase 09 (s
 the isolation test between two members and the byte-identical guest test are
 obligations; the existing rule "public pages stay free of request data" now has one
 named exception, which `tests/home-page-boundary.test.ts` encodes so it cannot spread
-to the layout, header, metadata or other public pages. Reversing means removing one
-component line and one module.
+to the layout, header, metadata or other public pages. `identify` has the same side effects it has on the admin pages — it may extend a
+session's sliding window and sweep an expired one — so opening `/` with a valid cookie
+renews that session; a prefetcher holding the cookie does too. Accepted as precedent.
+Reversing means removing one component line, one module and the header rule.
 
 ## Follow-up
 

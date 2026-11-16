@@ -41,6 +41,14 @@ export interface ContinueTrip {
 
 const GUEST: HomeMember = { status: 'guest' };
 
+/**
+ * A real session token is 32 random bytes in base64url (43 characters). Anything
+ * else cannot be one, so it is turned away before `identify` reads the whole
+ * store: a public page must not cost a snapshot per garbage cookie. The bounds
+ * are loose on purpose — this is a cheap filter, `identify` stays the authority.
+ */
+const SESSION_TOKEN_SHAPE = /^[A-Za-z0-9_-]{32,128}$/;
+
 function toContinueTrip(trip: Trip, today: string): ContinueTrip {
   const days = trip.startDate ? daysUntil(trip.startDate, today) : null;
   return {
@@ -64,7 +72,7 @@ export async function resolveHomeMember(
   sessionToken: string | null,
   now: Date,
 ): Promise<HomeMember> {
-  if (!sessionToken) return GUEST;
+  if (!sessionToken || !SESSION_TOKEN_SHAPE.test(sessionToken)) return GUEST;
 
   try {
     const request = new Request('http://home-page.internal/', {

@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
 import { getDestination } from '@/content/destinations';
+import { formatDate } from '@/lib/format';
 import type { HomeMember } from '@/server/planner/home-page';
 import { Badge, MetaRow } from '@/components/ui/badge';
 import { ButtonLink } from '@/components/ui/button';
@@ -13,6 +14,9 @@ import { Container } from '@/components/ui/container';
  * response, so there is no skeleton and no layout shift. It receives only the
  * allow-listed `HomeMember`; trip titles are plain text nodes. A guest gets
  * `null`, which leaves the public page exactly as it was.
+ *
+ * The title is a labelled `<p>`, not a heading: the hero below holds the page's
+ * only `<h1>`, and a heading before it would put the outline out of order.
  */
 export async function HomeMemberBand({ member, locale }: { member: HomeMember; locale: Locale }) {
   if (member.status === 'guest') return null;
@@ -29,7 +33,7 @@ export async function HomeMemberBand({ member, locale }: { member: HomeMember; l
           ? t('leavingToday')
           : trip.daysUntilStart !== null
             ? t('countdown', { count: trip.daysUntilStart })
-            : null;
+            : formatDate(trip.startDate, locale);
 
     return (
       <section aria-labelledby="home-member-heading" className="border-b border-border-subtle bg-surface-muted">
@@ -37,12 +41,12 @@ export async function HomeMemberBand({ member, locale }: { member: HomeMember; l
           <div className="flex flex-col gap-5 py-6 md:flex-row md:items-center md:justify-between md:py-7">
             <div className="min-w-0">
               <p className="text-eyebrow text-primary-strong">{t('continueEyebrow')}</p>
-              <h2
+              <p
                 id="home-member-heading"
                 className="mt-2 line-clamp-2 font-display text-xl font-semibold text-ink-900 md:text-2xl"
               >
                 {trip.title}
-              </h2>
+              </p>
               <MetaRow
                 className="mt-2"
                 items={[
@@ -77,12 +81,12 @@ export async function HomeMemberBand({ member, locale }: { member: HomeMember; l
         <div className="flex flex-col gap-5 py-6 md:flex-row md:items-center md:justify-between md:py-7">
           <div className="min-w-0 md:max-w-2xl">
             <p className="text-eyebrow text-primary-strong">{t('startEyebrow')}</p>
-            <h2
+            <p
               id="home-member-heading"
               className="mt-2 font-display text-xl font-semibold text-ink-900 md:text-2xl"
             >
               {first ? t('firstTitle') : t('nextTitle')}
-            </h2>
+            </p>
             <p className="mt-2 text-base leading-relaxed text-foreground-muted">
               {first ? t('firstLead') : t('nextLead')}
             </p>
