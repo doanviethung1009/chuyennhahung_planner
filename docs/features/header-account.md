@@ -48,7 +48,7 @@ None. The control links to existing routes:
 - **Signed in.** A 44px avatar button (`aria-expanded`, `aria-controls`, accessible
   name "Account for {name}") discloses a panel: "Signed in as {name}", My Trips,
   Change password (always shown; an account without a password sees an
-  explanation and the Google link on that page), Admin (only for `role === 'admin'`; the page still checks the role on
+  explanation and the Google link on that page), Admin (any role except `member` — editor, admin, super admin; the page still checks the role on
   the server) and Sign out. It is a disclosure, not an ARIA `menu`: entries stay
   ordinary links, Tab works as usual, ↓/↑ move between entries, Escape closes and
   returns focus to the button, a click or focus outside closes it.
