@@ -796,7 +796,6 @@ export class PlannerRepository {
     });
   }
 
-  /** Permanent delete. Refuses while the traveller still has trips — their data is not collateral. */
   /**
    * What a permanent delete would take with the account: shown in the
    * confirmation, counted fresh from the store (ADR 0017).
@@ -813,6 +812,13 @@ export class PlannerRepository {
     };
   }
 
+  /**
+   * Permanent delete (ADR 0017): the account goes with its own trips, days,
+   * activities and expenses; copies other travellers made lose only the source
+   * link. A session actor needs the account soft-deleted first, and one that
+   * holds trips or reviews needs a super admin plus `confirmHandle` (the
+   * handle, typed). The service token (no actor) deletes directly.
+   */
   deleteUser(userId: string, actor?: AdminActor, confirmHandle?: string): Promise<void> {
     if (actor && actor.userId === userId) {
       return Promise.reject(selfAdminAction('delete itself'));

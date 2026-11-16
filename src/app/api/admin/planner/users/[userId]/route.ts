@@ -26,8 +26,9 @@ export function PATCH(
  * Removes a traveller (ADR 0017). `?mode=soft` hides and disables the account
  * but keeps its data, and can be undone with `POST .../restore`; `?mode=hard`
  * (the default, as before) deletes it for good with the account's own trips.
- * One that holds trips or reviews needs a super admin and `?confirm=<handle>`. A session may hard-delete only an account that was soft-deleted
- * first; the service token keeps the direct path. Staff accounts only from a
+ * One that holds trips or reviews needs a super admin and `?confirm=<handle>`.
+ * A session may hard-delete only an account that was soft-deleted first; the
+ * service token keeps the direct path. Staff accounts only from a
  * session; never yourself.
  */
 export function DELETE(
