@@ -1,0 +1,12 @@
+# Task Contract: P07-12 Users & roles screens
+- Class: M · Branch: `feat/admin-users-roles` · Depends on: P07-10 · Index: [admin-workspace-index.md](admin-workspace-index.md)
+- Desired outcome: admins use the browser for what is `curl`-only today, and can read what each role may do.
+- Scope IN: `/admin/users/roles` (`/quan-tri/nguoi-dung/vai-tro`): read-only matrix rendered from `ROLE_ACTIONS` and `canManageRole`; Google unlink and token rotation actions on `users/[userId]/google` and `rotate-token` with the existing confirm pattern and one-time `SecretPanel`; additive `limit`/`cursor`/`sort` on `GET /api/admin/planner/users` (default 50 in the UI, no change for callers that pass nothing) and UI paging; pathname + `returnTo` entry.
+- Scope OUT: role model changes, new actions, MFA, audit events for these acts (P07-13), self-service.
+- Evidence: `user-table.tsx`, `filter-users.ts`, `users/[userId]/{google,rotate-token}/route.ts`, `permissions.ts`, ADR 0017 §3.
+- Files allowed: `src/app/[locale]/admin/users/**`, `src/components/admin/{user-table,admin-console,types,filter-users,roles-matrix}.tsx|ts`, `src/app/api/admin/planner/users/route.ts` (query only), `src/server/planner/repository.ts` — **only if** listing needs a cursor method; if so, stop and ask the architect (shared with Phase 10), `src/i18n/routing.ts`, `src/lib/return-to.ts`, `messages/*.json`, tests, `docs/features/admin-users-roles.*`, `docs/features/README.*`.
+- Acceptance: matrix equals `ROLE_ACTIONS` (test fails if a role/action is added without the page following); an admin cannot unlink or rotate for admin/super admin accounts (`canManageRole`, server enforces); tokens shown once, never persisted client-side; paging stable under concurrent create; filter still works with paging.
+- Tests: matrix-vs-source, role gating of both actions (403/409 reasons mapped to messages), pagination bounds (`limit` cap, bad cursor → 422), existing `admin-portal` and `planner-roles` suites green.
+- Security: one-time secrets only in state and `no-store`; no new route accepts an unvalidated cursor; `limit` capped server-side. `/sec-check` recommended (credential handling surface) — NOT RUN until called.
+- Rollback: revert PR; API additions are optional parameters.
+- Docs: frontend writes the feature doc; backend edits only the API section. Budget: sub-agents 0. State: READY (owner approved 2026-11-17)
