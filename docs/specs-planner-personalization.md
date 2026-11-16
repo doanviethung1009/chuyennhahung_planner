@@ -242,7 +242,7 @@ Each slice is its own branch, ADR and feature document. Order is by value and ri
 | P6 | Saved items and "want to go" signal | Yes | P1 |
 | P7 | Public traveller profile, helpful reaction | Yes, each | P4, P5 |
 
-P1–P3 touch only the traveller's own data and already-approved trips, so they can be built independently (Phase 15 in the roadmap). P4 onwards adds public write paths and should wait for Phase 10 (Report control, audit log) and for Terms that permit copying.
+P1–P3 touch only the traveller's own data and already-approved trips, so they can be built independently (Phase 15 in the roadmap). P4 onwards adds public write paths and should wait for Phase 10 (Report control, audit log) and for a per-trip copy switch consistent with Terms Article 3.
 
 ## Acceptance direction
 

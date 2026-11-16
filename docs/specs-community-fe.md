@@ -54,8 +54,7 @@ convention and are proposals. Routes are added to the sitemap only if public.
 ### Key flows
 
 **Publish a trip.** On `/my-trips/[id]` two switches: "Share by link" (existing) and
-"Publish to community" (opens a short sheet: display name or anonymous, terms link,
-submit). Status chip: Draft, In review, Needs changes (with the note), Published, Not
+"Publish to community" (opens a short sheet: display name or anonymous, a switch "Allow others to copy this trip" (default per the owner's decision, off recommended), terms link, submit). Status chip: Draft, In review, Needs changes (with the note), Published, Not
 accepted (with the reason), Taken down. Editing a published trip warns, before saving, that
 it will go back to review. [C]
 

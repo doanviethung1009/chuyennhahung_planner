@@ -101,4 +101,4 @@ instances; secrets absent from client bundles.
 | 1 | Should publishing require a verified email once an email sender exists? | Revisit then |
 | 2 | Must staff accounts with `community:moderate` have MFA? | Decide before Phase 14 (PR #107 Q6 defers MFA and records the risk); MFA is not built |
 | 3 | Public profile slug: independent of `handle`? | Yes |
-| 4 | Do the Creator Terms permit other members to copy a published trip? | Owner and counsel confirm and amend before Use this trip ships (risk RK16) |
+| 4 | Terms Article 3 already covers copying when the creator turns it on. Which default for the per-trip copy switch, and may a copy be republished or only used personally? | Switch off by default; owner decides the republish scope before Use this trip ships; counsel reads Article 3 against the feature (risk RK16) |

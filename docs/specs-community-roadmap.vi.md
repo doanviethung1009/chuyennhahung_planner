@@ -56,7 +56,7 @@ Thứ tự khuyến nghị, như trong `PHASES.md`: **05 → 07 → 10 → 11 �
 | Phase | Chủ đề | Sản phẩm bàn giao | Cổng bảo mật | Điều kiện thoát |
 |---|---|---|---|---|
 | **10** | Nền tảng cộng đồng | `10-S0` (ADR 0014/0015, đã có code); `audit_events` cùng máy trạng thái submission (P10-1); `terms_acceptances` (P10-2); `reports`, điều khiển Báo cáo và hàng đợi (P10-3); limiter ghi dùng chung (P10-6); trạng thái đăng chuyến `changes_requested` và `unpublished`, bộ lọc thư viện; sửa sao lưu, `metadataBase`, HSTS (P10-7); các phát hiện từ review 2026-11-16 (P10-11 đến P10-16: HMAC cho `guestKey`, tăng cường header chuyển tiếp, test 429 và PostgreSQL, quyết định chặn ở server, giả danh trong tên khách); [ADR 0019](adr/0019-community-foundation.vi.md) | P10-5 (review bề mặt cộng đồng hiện có) đã xong: security PASS_WITH_WARNINGS, qc PASS_WITH_NOTES, không BLOCKED; `/sec-check` lại cho audit log và limiter mới | Test chuyển trạng thái và ánh xạ xanh; test limiter qua hai instance mô phỏng; khôi phục sao lưu chứng minh được trên dev VM |
-| **11** | Hồ sơ thành viên, Creator Terms, Dùng chuyến này | `member_profiles` (mặc định riêng tư, trang công khai tự nguyện, không upload avatar); đồng ý Terms theo phiên bản và text khớp thực tế; **Dùng chuyến này** kèm ghi công và `origin`; chính sách riêng tư do chủ dự án cung cấp (P11-D1) | `/sec-check` về danh sách cho phép khi sao chép và tính ẩn danh | Test liệt kê ẩn danh xanh; Terms cho phép sao chép (xem rủi ro RK16) |
+| **11** | Hồ sơ thành viên, Creator Terms, Dùng chuyến này | `member_profiles` (mặc định riêng tư, trang công khai tự nguyện, không upload avatar); đồng ý Terms theo phiên bản và text khớp thực tế; **Dùng chuyến này** kèm ghi công, `origin` và công tắc sao chép theo từng chuyến của người tạo (Điều 3 Terms); chính sách riêng tư do chủ dự án cung cấp (P11-D1) | `/sec-check` về danh sách cho phép khi sao chép và tính ẩn danh | Test liệt kê ẩn danh xanh; công tắc sao chép theo chuyến và phạm vi đăng lại đã được quyết (xem rủi ro RK16) |
 | **12** | Nhật ký và Blog (tuyển chọn) | `journal_posts` kind `journal`/`blog`, gắn chuyến, tài liệu block, duyệt tuyển chọn; **chỉ văn bản, không ảnh tải lên** | `/sec-check` về rich text và CSP; ADR cho editor | Bộ XSS vô hại; nhân viên duyệt và gỡ được |
 | **13** | Media lai và Vlog | `media_assets`, pipeline upload ảnh, avatar, hạn mức, vlog là `journal_posts.kind=vlog` với embed trong danh sách cho phép; xây trên thư viện media của Phase 08 | `/sec-check` bắt buộc (XL, ranh giới tin cậy); ADR cho thư viện ảnh và lưu trữ | Fixture GPS và đa định dạng xanh; sao lưu media được xác minh |
 | **14** | Tương tác | `saves`, `follows`, `likes`, `comments` (lên ngay, kèm Báo cáo và giữ lại), hạn chế mở rộng cho mọi đích | `/sec-check` về giới hạn lạm dụng và quyền riêng tư; load test đường ghi | Số đếm đúng khi đồng thời; chuỗi xóa được chứng minh; limiter dùng chung được xác minh; quyết định MFA được ghi lại |
@@ -101,8 +101,7 @@ toàn kho (ADR 0009); chưa có bộ gửi email; chưa có MFA (PR #107 Q6 hoã
 
 ## Phụ thuộc và bảo mật
 
-Bên ngoài: chính sách riêng tư và cơ sở pháp lý từ chủ dự án (Q9); văn bản Terms bao phủ việc
-thành viên khác sao chép; điều khoản Cloudflare Tunnel cho media [A]; role trên VM PostgreSQL
+Bên ngoài: chính sách riêng tư và cơ sở pháp lý từ chủ dự án (Q9); quyết định về công tắc sao chép theo chuyến và việc đăng lại bản sao (Điều 3 Terms đã cho phép sao chép khi người tạo bật); điều khoản Cloudflare Tunnel cho media [A]; role trên VM PostgreSQL
 (extension); sao lưu dev VM.
 
 ### Kế hoạch thực thi agent
@@ -154,7 +153,7 @@ có thuộc Phase 11 như đề xuất không.
 | RK13 | Phình phạm vi thành tính năng mạng xã hội | Phạm vi | Cao | Trung bình | Danh sách "ngoài phạm vi", mỗi tính năng một ADR |
 | RK14 | Bằng chứng deploy đã cũ: lần chạy dev VM (2026-11-15) có trước PR #93–#105 | Vận hành | Trung bình | Trung bình | Chạy lại bài test deploy trước khi Phase 10 ra mắt |
 | RK15 | Tìm kiếm tiếng Việt bỏ sót truy vấn không dấu | Sản phẩm | Trung bình | Thấp | Cột không dấu, chuẩn hóa dự phòng |
-| RK16 | Creator Terms cấp quyền cho Chuyện Nhà Hưng nhưng không cho thành viên khác, nên việc sao chép chuyến có thể thiếu cơ sở pháp lý | Pháp lý | Trung bình | Cao | Chủ dự án và luật sư xác nhận và sửa Terms ở Phase 11 trước khi Dùng chuyến này ra mắt |
+| RK16 | Điều 3 Terms chỉ cho sao chép khi người tạo bật, nhưng code chưa có công tắc theo chuyến và phạm vi đăng lại một bản sao chưa được định nghĩa | Pháp lý, sản phẩm | Trung bình | Trung bình | Thêm công tắc theo chuyến (mặc định tắt) và quy tắc đăng lại ở Phase 11; luật sư đọc Điều 3 so với tính năng |
 | RK17 | Nội dung cộng đồng đang lên sóng khi điều khiển Báo cáo và audit log chưa tồn tại | An toàn | Trung bình | Cao | Phase 10 trước; sao lưu trước khi có thêm nội dung người dùng (Q10) |
 | RK18 | Hai roadmap lệch nhau (`.claude/roadmap/` và các spec này) | Quy trình | Trung bình | Thấp | Bảng ánh xạ nhóm spec ở trên; PHASES.md là nguồn chuẩn cho ID |
 
@@ -174,10 +173,11 @@ có thuộc Phase 11 như đề xuất không.
 | 10 | Mọi chỉnh sửa chuyến đã đăng đưa nó về hàng duyệt | 2026-11-14 | ADR 0014 |
 | 11 | Nhật ký/blog/vlog tuyển chọn; bình luận lên ngay kèm Báo cáo và giữ lại | 2026-11-16 | PR #107 Q2 |
 | 12 | Vlog embed trước (YouTube), upload ảnh sau | 2026-11-16 | PR #107 Q7 |
+| 13 | Điều 3 Creator Terms đã cho phép sao chép khi người tạo bật; còn thiếu là công tắc theo chuyến và quy tắc đăng lại (sửa nhận định trước đó rằng Terms không có quyền này) | 2026-11-16 | Rà `src/content/site.ts` |
 
 Còn mở: vai trò moderator (editor tới Phase 15), slug công khai so với `handle`, thư viện ảnh,
 thư viện editor, lựa chọn lưu trữ, hạn mức, MFA cho nhân viên, mục tiêu quyết định đầu tiên,
-văn bản Terms cho việc sao chép.
+công tắc sao chép theo chuyến và phạm vi đăng lại (Điều 3 Terms).
 
 ## Tổng hợp theo phase
 
@@ -189,7 +189,7 @@ văn bản Terms cho việc sao chép.
 | 10 | Ghi nhận đồng ý Terms | P1 | audit log | Backend, Frontend | [bảo mật](specs-community-security.vi.md) | Chặn ghi khi thiếu phiên bản | Đề xuất |
 | 10 | Trạng thái đăng chuyến, bộ lọc thư viện | P1 | audit log | Backend, Frontend | [api](specs-community-api.vi.md) | Mọi cạnh được test | Đề xuất |
 | 11 | Hồ sơ thành viên, trang công khai tự nguyện | P1 | 10, chính sách riêng tư | Backend, Frontend | [cơ sở dữ liệu](specs-community-database.vi.md) | Mặc định tắt | Đề xuất |
-| 11 | Dùng chuyến này kèm ghi công | P1 | 10, Terms | Backend, Frontend | [api](specs-community-api.vi.md) | Nguồn không đổi, ẩn danh giữ vững | Đề xuất |
+| 11 | Dùng chuyến này kèm ghi công | P1 | 10, công tắc sao chép (Điều 3 Terms) | Backend, Frontend | [api](specs-community-api.vi.md) | Nguồn không đổi, ẩn danh giữ vững | Đề xuất |
 | 12 | Nhật ký và blog | P2 | 10, 11 | Backend, Frontend | [fe](specs-community-fe.vi.md) | XSS vô hại, luồng duyệt | Đề xuất |
 | 13 | Upload ảnh, avatar | P2 | 08, 12 | Backend | [media](specs-community-media.vi.md) | Xóa GPS, hạn mức | Đề xuất |
 | 13 | Vlog và embed video | P2 | 12, media của 13 | Frontend | [media](specs-community-media.vi.md) | Bấm để tải, danh sách cho phép | Đề xuất |

@@ -57,7 +57,7 @@ Recommended order, as in `PHASES.md`: **05 → 07 → 10 → 11 → 12 → 06 �
 | Phase | Theme | Deliverables | Security gate | Exit condition |
 |---|---|---|---|---|
 | **10** | Community Foundations | `10-S0` (ADR 0014/0015, already coded); `audit_events` with the submission state machine (P10-1); `terms_acceptances` (P10-2); `reports` and the Report control and queue (P10-3); shared write limiter (P10-6); trip publication states `changes_requested` and `unpublished`, gallery filters; backups, `metadataBase`, HSTS fixed (P10-7); findings from the 2026-11-16 reviews (P10-11 to P10-16: HMAC `guestKey`, forwarded-header hardening, 429 and PostgreSQL tests, server-side gate decision, guest-name impersonation); [ADR 0019](adr/0019-community-foundation.md) | P10-5 (reviews of the existing community surface) is done: security PASS_WITH_WARNINGS, qc PASS_WITH_NOTES, no BLOCKED; `/sec-check` again on the new audit log and limiter | Transition and mapping tests green; limiter test across two simulated instances; backup restore proven on the dev VM |
-| **11** | Member Profiles, Creator Terms, Use this trip | `member_profiles` (private by default, public opt-in page, no avatar upload); Terms version acceptance and text matching what exists; **Use this trip** with attribution and `origin`; owner-supplied privacy policy (P11-D1) | `/sec-check` on the copy allow-list and anonymity | Anonymity enumeration test green; Terms permit copying (see risk RK16) |
+| **11** | Member Profiles, Creator Terms, Use this trip | `member_profiles` (private by default, public opt-in page, no avatar upload); Terms version acceptance and text matching what exists; **Use this trip** with attribution, `origin` and a per-trip creator switch for copying (Terms Article 3); owner-supplied privacy policy (P11-D1) | `/sec-check` on the copy allow-list and anonymity | Anonymity enumeration test green; per-trip copy switch and republish scope decided (see risk RK16) |
 | **12** | Travel Journal and Blog (curated) | `journal_posts` kind `journal`/`blog`, trip link, block document, curated review; **text only, no uploaded images** | `/sec-check` on rich text and CSP; ADR for the editor | XSS corpus inert; staff review and take down |
 | **13** | Media Hybrid and Vlog | `media_assets`, image upload pipeline, avatars, quotas, vlog as `journal_posts.kind=vlog` with allow-listed embeds; built on Phase 08's media library | `/sec-check` required (XL, trust boundary); ADR for the image library and storage | GPS and polyglot fixtures green; media backup verified |
 | **14** | Engagement | `saves`, `follows`, `likes`, `comments` (live at once, plus Report and hold), restriction extended to all targets | `/sec-check` on abuse limits and privacy; load test of the write path | Counts correct under concurrency; deletion cascade proven; shared limiter verified; MFA decision recorded |
@@ -102,8 +102,7 @@ failing (Q10); the older three-state `listing`; `moderator` role deferred (ADR 0
 
 ## Dependencies and security
 
-External: privacy policy and legal basis from the owner (Q9); Terms text covering copying by
-other members; Cloudflare Tunnel terms for media [A]; the PostgreSQL VM role (extensions);
+External: privacy policy and legal basis from the owner (Q9); a decision on the per-trip copy switch and on republishing copies (Terms Article 3 already covers copying when the creator turns it on); Cloudflare Tunnel terms for media [A]; the PostgreSQL VM role (extensions);
 dev VM backups.
 
 ### Agent execution plan
@@ -155,7 +154,7 @@ backups (Q10), the real takedown mailbox (Q8), the privacy policy (Q9), and whet
 | RK13 | Scope creep into social-network features | Scope | High | Medium | "Not in scope" list, one ADR per feature |
 | RK14 | Deploy evidence is old: the dev VM run (2026-11-15) predates PR #93–#105 | Operations | Medium | Medium | Re-run the deploy test before Phase 10 ships |
 | RK15 | Vietnamese search misses unaccented queries | Product | Medium | Low | Unaccented column, fallback normalisation |
-| RK16 | Creator Terms grant a licence to Chuyện Nhà Hưng but not to other members, so copying a trip may lack a legal basis | Legal | Medium | High | Owner and counsel confirm and amend the Terms in Phase 11 before Use this trip ships |
+| RK16 | Terms Article 3 allows copying only when the creator turns it on, but no per-trip switch exists in the code and the scope for republishing a copy is undefined | Legal, product | Medium | Medium | Add the per-trip switch (default off) and a republish rule in Phase 11; counsel reads Article 3 against the feature |
 | RK17 | Live community content while the Report control and audit log do not exist yet | Safety | Medium | High | Phase 10 first; backups before new user content (Q10) |
 | RK18 | Two roadmaps drift (`.claude/roadmap/` and these specs) | Process | Medium | Low | The spec-group mapping table above; PHASES.md is authoritative for IDs |
 
@@ -175,10 +174,10 @@ backups (Q10), the real takedown mailbox (Q8), the privacy policy (Q9), and whet
 | 10 | Any edit to a listed trip returns it to review | 2026-11-14 | ADR 0014 |
 | 11 | Journal/blog/vlog curated; comments live at once plus Report and hold | 2026-11-16 | PR #107 Q2 |
 | 12 | Embed vlogs first (YouTube), upload images later | 2026-11-16 | PR #107 Q7 |
+| 13 | Creator Terms Article 3 already covers copying when the creator turns it on; what is missing is a per-trip switch and a republish rule (corrects an earlier claim that the Terms gave no such right) | 2026-11-16 | Review of `src/content/site.ts` |
 
 Open: moderator role (editors until Phase 15), public slug versus `handle`, image library,
-editor library, storage choice, quotas, MFA for staff, first-decision target, Terms text
-for copying.
+editor library, storage choice, quotas, MFA for staff, first-decision target, per-trip copy switch and republish scope (Terms Article 3).
 
 ## Phase summary
 
@@ -190,7 +189,7 @@ for copying.
 | 10 | Terms acceptance | P1 | audit log | Backend, Frontend | [security](specs-community-security.md) | Writes blocked without version | Proposed |
 | 10 | Trip publication states, gallery filters | P1 | audit log | Backend, Frontend | [api](specs-community-api.md) | Every edge tested | Proposed |
 | 11 | Member profile, public opt-in page | P1 | 10, privacy policy | Backend, Frontend | [database](specs-community-database.md) | Opt-in default off | Proposed |
-| 11 | Use this trip with attribution | P1 | 10, Terms | Backend, Frontend | [api](specs-community-api.md) | Source unchanged, anonymity holds | Proposed |
+| 11 | Use this trip with attribution | P1 | 10, copy switch (Terms Art. 3) | Backend, Frontend | [api](specs-community-api.md) | Source unchanged, anonymity holds | Proposed |
 | 12 | Journal and blog | P2 | 10, 11 | Backend, Frontend | [fe](specs-community-fe.md) | XSS inert, review flow | Proposed |
 | 13 | Image upload, avatars | P2 | 08, 12 | Backend | [media](specs-community-media.md) | GPS stripped, quotas | Proposed |
 | 13 | Vlog and video embed | P2 | 12, 13 media | Frontend | [media](specs-community-media.md) | Click to load, allow-list | Proposed |
