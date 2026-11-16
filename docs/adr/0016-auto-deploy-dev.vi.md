@@ -2,7 +2,7 @@
 
 🇬🇧 English version: [0016-auto-deploy-dev.md](0016-auto-deploy-dev.md)
 
-- **Trạng thái:** Đã chấp nhận (chủ nhà chọn runner tự host ngày 2026-11-15); pipeline đã viết nhưng **chưa chạy** từ đầu đến cuối — cần chủ nhà đăng ký runner
+- **Trạng thái:** Đã chấp nhận (chủ nhà chọn runner tự host ngày 2026-11-15); sau đó pipeline đã chạy trọn vẹn trên VM dev (báo cáo kiểm thử deploy 2026-11-15: năm lần chạy xanh, một lần rollback và một lần deploy lại, commit `0216f46`); báo cáo cũng ghi chưa có sao lưu và `metadataBase` chưa đặt, luồng admin trên trình duyệt chưa chạy
 - **Ngày:** 2026-11-15
 - **Người sở hữu:** system-architect
 

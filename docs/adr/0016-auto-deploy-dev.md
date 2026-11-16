@@ -2,7 +2,7 @@
 
 🇻🇳 Bản tiếng Việt: [0016-auto-deploy-dev.vi.md](0016-auto-deploy-dev.vi.md)
 
-- **Status:** Accepted (owner chose the self-hosted runner on 2026-11-15); the pipeline is written, but it has **not run** end to end — it needs the owner's runner registration
+- **Status:** Accepted (owner chose the self-hosted runner on 2026-11-15); the pipeline has since run end to end on the dev VM (deploy test report 2026-11-15: five green runs, a rollback and a redeploy, commit `0216f46`); the report also found no backups and an unset `metadataBase`, and the admin browser flow was not run
 - **Date:** 2026-11-15
 - **Owner:** system-architect
 
