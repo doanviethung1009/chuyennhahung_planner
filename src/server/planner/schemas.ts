@@ -865,6 +865,24 @@ export const auditEventSchema = z.object({
 });
 export type AuditEvent = z.infer<typeof auditEventSchema>;
 
+/**
+ * One member's acceptance of one version of the Creator Terms (ADR 0019 §4).
+ * Unique per (userId, version). Personal data; no IP or user agent is stored.
+ */
+export const termsAcceptanceSchema = z.object({
+  id: plannerIdSchema,
+  userId: plannerIdSchema,
+  version: z.string().trim().min(1).max(40),
+  acceptedAt: timestampSchema,
+  lang: reviewLangSchema,
+});
+export type TermsAcceptance = z.infer<typeof termsAcceptanceSchema>;
+
+/** `POST /api/planner/terms` body. Strict: the user comes from the session, never the body. */
+export const acceptTermsSchema = z
+  .object({ version: z.string().trim().min(1).max(40), lang: reviewLangSchema.default('vi') })
+  .strict();
+
 /** `POST /api/admin/community/restrictions` body. Strict. */
 export const createRestrictionSchema = z
   .object({

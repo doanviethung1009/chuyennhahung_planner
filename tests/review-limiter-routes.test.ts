@@ -2,6 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { termsVersion } from '../src/content/site';
 import { SESSION_COOKIE } from '../src/server/planner/auth';
 import { placeFixture } from './travel-content-helpers';
 
@@ -52,6 +53,7 @@ async function newSession(handle: string) {
   const repo = await planner.getPlannerRepository();
   const issued = await repo.createUser({ handle, displayName: 'Người dùng', role: 'member' });
   const session = await repo.signIn(issued.accessToken);
+  await repo.acceptTerms(issued.user.id, termsVersion, 'vi'); // the write gate (batch 10.4)
   return { id: issued.user.id, cookie: session.token };
 }
 

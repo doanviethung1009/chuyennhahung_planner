@@ -486,6 +486,14 @@
     "listingWithdrawn": "The trip was withdrawn from the home page.",
     "listingEditNote": "Any change to a trip shown on the home page sends it back to review and takes it down until it is approved again."
   },
+  "creatorTerms": {
+    "label": "I have read and accept the Creator Terms (version {version}).",
+    "hint": "You accept once per version. Reading, withdrawing a listing and deleting your own review never need it.",
+    "loading": "Checking…",
+    "accepted": "You accepted the Creator Terms (version {version}).",
+    "required": "Accept the Creator Terms before you submit.",
+    "error": "Could not save your acceptance. Please try again."
+  },
   "shared": {
     "metaDescription": "A travel itinerary shared from Chuyện Nhà Hưng.",
     "readOnlyNote": "This itinerary is shared for reading. You cannot edit this page.",

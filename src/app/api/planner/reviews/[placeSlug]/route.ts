@@ -24,6 +24,7 @@ export function PUT(request: Request, context: Context) {
   return plannerRoute(request, async ({ userId }, repository) => {
     const placeSlug = await placeSlugOf(context);
     const input = await parseJsonBody(request, plannerReviewInputSchema);
+    await repository.requireTermsAccepted(userId);
     // Shared across instances on PostgreSQL; a failing database throws 503 here, before any write.
     const limit = await (await getWriteLimiters()).plannerReview.check(userId);
     if (!limit.ok) throw rateLimited(limit.retryAfterSeconds);

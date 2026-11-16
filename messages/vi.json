@@ -486,6 +486,14 @@
     "listingWithdrawn": "Đã rút chuyến đi khỏi trang chủ.",
     "listingEditNote": "Mọi thay đổi trên chuyến đi đã lên trang chủ sẽ đưa nó về trạng thái chờ duyệt và gỡ tạm khỏi trang chủ."
   },
+  "creatorTerms": {
+    "label": "Tôi đã đọc và đồng ý với Điều khoản Người tạo (phiên bản {version}).",
+    "hint": "Bạn chỉ cần đồng ý một lần cho mỗi phiên bản. Đọc, rút lịch trình và xóa đánh giá của mình không cần đồng ý.",
+    "loading": "Đang kiểm tra…",
+    "accepted": "Bạn đã đồng ý Điều khoản Người tạo (phiên bản {version}).",
+    "required": "Hãy đồng ý Điều khoản Người tạo trước khi gửi.",
+    "error": "Chưa lưu được việc đồng ý. Hãy thử lại."
+  },
   "shared": {
     "metaDescription": "Một lịch trình du lịch được chia sẻ từ Chuyện Nhà Hưng.",
     "readOnlyNote": "Lịch trình này được chia sẻ để bạn xem. Bạn không thể chỉnh sửa trang này.",

@@ -9,6 +9,7 @@ import { contribution, contributionOpen } from '@/content/site';
 import type { ShareState, TripListing, Visibility } from '@/server/planner/schemas';
 import { ApiError, api } from './api';
 import { inputClass } from './field';
+import { TermsAccept } from './terms-accept';
 
 const VISIBILITIES: Visibility[] = ['private', 'unlisted', 'public'];
 
@@ -28,12 +29,14 @@ export function SharePanel({
 }) {
   const t = useTranslations('share');
   const tVis = useTranslations('visibility');
+  const tTerms = useTranslations('creatorTerms');
   const locale = useLocale() as Locale;
 
   const [state, setState] = useState<ShareState>(initial);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [failed, setFailed] = useState(false);
+  const [termsOk, setTermsOk] = useState(false);
   const [authorDisplay, setAuthorDisplay] = useState<TripListing['authorDisplay']>(
     initial.listing?.authorDisplay ?? 'name',
   );
@@ -64,7 +67,7 @@ export function SharePanel({
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) return onUnauthorized();
       setFailed(true);
-      setMessage(t('errorGeneric'));
+      setMessage(error instanceof ApiError && error.reason === 'terms_not_accepted' ? tTerms('required') : t('errorGeneric'));
     } finally {
       setBusy(false);
     }
@@ -210,6 +213,10 @@ export function SharePanel({
                 </div>
               ) : null}
 
+              <div className="mt-4">
+                <TermsAccept onChange={setTermsOk} onUnauthorized={onUnauthorized} />
+              </div>
+
               <p className="mt-4 text-sm font-medium">
                 {t('listingStatusLabel')}{' '}
                 <span className="font-normal text-foreground-muted">{t(`listingStatus.${state.listing?.status ?? 'none'}`)}</span>
@@ -242,7 +249,7 @@ export function SharePanel({
               <div className="mt-3 flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
-                  disabled={busy}
+                  disabled={busy || !termsOk}
                   className={buttonClass({ size: 'sm' })}
                   onClick={() =>
                     run(

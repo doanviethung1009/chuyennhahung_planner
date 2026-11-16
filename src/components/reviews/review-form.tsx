@@ -7,6 +7,7 @@ import { buttonClass } from '@/components/ui/button';
 import { contribution, contributionOpen } from '@/content/site';
 import { ApiError, api } from '@/components/planner/api';
 import { Field, inputClass } from '@/components/planner/field';
+import { TermsAccept } from '@/components/planner/terms-accept';
 import type { OwnReview } from '@/server/planner/schemas';
 
 const BODY_MIN = 60;
@@ -33,6 +34,7 @@ type Props =
  */
 export function ReviewForm(props: Props) {
   const t = useTranslations('communityReviews');
+  const tTerms = useTranslations('creatorTerms');
   const locale = useLocale() as Locale;
   const uid = useId();
   const planner = props.mode === 'planner';
@@ -50,6 +52,7 @@ export function ReviewForm(props: Props) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [failed, setFailed] = useState(false);
+  const [termsOk, setTermsOk] = useState(false);
 
   if (!contributionOpen) {
     return <p className="rounded-md border border-border-strong bg-surface p-4 text-sm">{t('form.closed')}</p>;
@@ -87,6 +90,10 @@ export function ReviewForm(props: Props) {
     } catch (error) {
       if (error instanceof ApiError && error.status === 401 && props.mode === 'planner') return props.onUnauthorized();
       setFailed(true);
+      if (error instanceof ApiError && error.reason === 'terms_not_accepted') {
+        setMessage(tTerms('required'));
+        return;
+      }
       const code = error instanceof ApiError ? error.code : 'generic';
       setMessage(
         code === 'rate_limited' || code === 'forbidden' || code === 'invalid_state' || code === 'validation_failed' || code === 'invalid_reference'
@@ -242,10 +249,12 @@ export function ReviewForm(props: Props) {
         </fieldset>
       )}
 
+      {props.mode === 'planner' ? <TermsAccept onChange={setTermsOk} onUnauthorized={props.onUnauthorized} /> : null}
+
       <p className="text-sm text-foreground-muted">{planner ? t('form.plannerNote') : t('form.guestNote')}</p>
 
       <div className="flex flex-wrap items-center gap-3">
-        <button type="submit" disabled={busy} className={buttonClass({ size: 'md' })}>
+        <button type="submit" disabled={busy || (planner && !termsOk)} className={buttonClass({ size: 'md' })}>
           {busy ? t('form.sending') : t('form.submit')}
         </button>
         <p role="status" aria-live="polite" className={`text-sm ${failed ? 'text-primary-strong' : 'text-foreground-muted'}`}>

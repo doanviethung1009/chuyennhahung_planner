@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { termsVersion } from '../src/content/site';
 import type { PlannerRepository } from '../src/server/planner/repository';
 import type { PlannerData } from '../src/server/planner/store';
 import {
@@ -85,6 +86,9 @@ export async function runScenario(planner: PlannerRepository): Promise<{
   await planner.setVisibility(userId, tripId, 'unlisted');
   const second = await planner.createTrip(userId, daLatTripInput({ title: 'Mộc Châu cuối tuần' }));
   await planner.archiveTrip(userId, second.trip.id, second.trip.version);
+
+  // ADR 0019 §4: the member accepts the current Creator Terms (batch 10.4).
+  await planner.acceptTerms(userId, termsVersion, 'vi');
 
   // ADR 0014 PR 2: one pending Planner review and one published guest review.
   const reviewBody = 'Hồ rất đẹp vào buổi sáng, nước trong, đi bộ quanh hồ mất khoảng một tiếng, nên đi sớm.';
