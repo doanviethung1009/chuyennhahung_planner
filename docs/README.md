@@ -33,6 +33,8 @@ index below.
 | [specs-community-security.md](specs-community-security.md) | Community Platform spec (proposed): RBAC, ownership, privacy, threat model |
 | [specs-community-qc.md](specs-community-qc.md) | Community Platform spec (proposed): test strategy, acceptance per phase, regression net |
 | [specs-community-roadmap.md](specs-community-roadmap.md) | Community Platform spec (proposed): phases C1-C7, agent plan, risk register, decision log |
+| [specs-admin-workspace.md](specs-admin-workspace.md) | Admin Workspace spec (proposed): review of the admin portal, Existing/Improvement/Missing/Planned inventory, sitemap and navigation, design by area, gap analysis, roadmap placement |
+| [specs-admin-workspace-impact.md](specs-admin-workspace-impact.md) | Admin Workspace spec (proposed): database, API and RBAC impact, security and QC checklists, session gates |
 | [usage.md](usage.md) | Install, run, test, verify, deploy, and the day-to-day workflows |
 | [travel-content-api.md](travel-content-api.md) | Travel Content System API contract — endpoints, conventions, error codes, invariants |
 | [runbook.md](runbook.md) | Runbook: where to start — which guide answers which question, quick checks, and the list of every API endpoint; shown to admins at `/quan-tri/runbook` |
