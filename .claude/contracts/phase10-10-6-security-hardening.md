@@ -1,0 +1,21 @@
+# Task Contract 10.6 — Security Hardening
+- Task IDs: **10.6a** P10-12, P10-15, P10-16 · **10.6b** P10-11 (gated by owner D4 / P11-D1). Two PRs; 10.6b may be deferred without blocking 10.7.
+- Class: M (10.6a) · L (10.6b: key change + migration) · State: READY (owner approved D1-D12 as recommended, 2026-11-16) · Subagents: 0
+- Objective: close the findings of the 2026-11-16 `/sec-check` and `/qc-check` that touch Phase 10 write paths (backlog P10-11..P10-16), without widening scope.
+- Scope:
+  - **P10-15 (D9):** server-side refusal of community writes (listing request, Planner review, guest review) when `contributionOpen` is false (`src/content/site.ts:102`; today UI-only: `community-reviews-section.tsx:16`, `share-panel.tsx:189`, `review-form.tsx:54`). A shared server helper, one `forbidden` reason `contribution_closed`.
+  - **P10-12:** limiter key trust: document and test that nginx overwrites `x-forwarded-for` (`tests/deploy-config.test.ts`), add a test pinning `clientKey` behaviour with a spoofed header behind the documented proxy setup; evaluate a global hourly cap for guest reviews (a decision record in the feature doc, implement only if the owner agrees). The real VM config check is the owner's (D10).
+  - **P10-16:** guest `authorName`: reject or neutralise names impersonating staff/the site (list kept in one constant, case/diacritic-insensitive) in `createGuestReview` input validation.
+  - **10.6b P10-11 (gated):** `guestKey` = HMAC-SHA-256 of the client key with a server secret (new env var, never committed), replacing `guestKeyOf` (`repository.ts` ~2864); guest keys deleted 24 h after a review and after restriction expiry + grace; needs a short ADR/addendum to ADR 0015 (D12) and a migration that clears or rehashes existing `guest_key` values. Must change the limiter key and restriction keys **once** (10.3 is merged by then).
+- Out of Scope: MFA, a hosted identity provider, nginx/VM changes themselves (owner), report/terms behaviour (10.4/10.5), new limiters.
+- Architecture Reference: ADR 0014/0015/0019 §3 "Keys"; `.claude/roadmap/backlog.md` P10-11..P10-16; `docs/specs-community-security.md`.
+- Dependencies: 10.3 merged (P10-12, 10.6b); 10.4/10.5 merged first so hardening covers the new routes; owner D4 (10.6b), D9, D10.
+- API/Data Contract: no new routes. New `403 forbidden` reason `contribution_closed`; guest name rejection → `400 validation_failed` path `authorName`. 10.6b: env `GUEST_KEY_SECRET` (name to confirm in the ADR), migration next free number.
+- Files Affected: 10.6a: `src/server/planner/repository.ts`, `src/server/planner/schemas.ts`, the three write routes, new server helper, `src/content/site.ts` (read only), tests, `docs/features/community-reviews.*` (limits section), `docs/specs-community-security.*` status. 10.6b adds `db/migrations/<next>`, `src/server/planner/repository.ts`, `docs/adr/0020-*` (+ `.vi.md`, index rows), `docs/usage.*` (secret).
+- FE/BE Responsibilities: BE only; FE unchanged (UI gates already exist).
+- QC Requirements: closed gate → API refuses all three writes while reads still work; open gate unchanged; impersonating names rejected, ordinary names accepted (Vietnamese diacritics); spoofed-header test; 10.6b: same client → same key, different secret → different key, old raw keys not re-derivable, restriction still matches a returning guest within its term; existing community tests unchanged except where a test builds a key by hand (list in PR).
+- Security Requirements: secret via environment only, never logged; changing the key function invalidates existing guest restrictions unless migrated — decide and document; no PII added to responses; recommend `/sec-check` after 10.6 — NOT RUN until called.
+- Acceptance Criteria: each backlog ID's stated finding is closed or explicitly deferred with a reason in the PR; commands pass.
+- Verification Commands: `npm run typecheck`, `npm run lint`, `npm run test` (+ Postgres cases for 10.6b migration).
+- Rollback Strategy: 10.6a: revert; no data. 10.6b: revert code and keep the secret unused; migration rollback restores nothing destroyed (cleared keys are not recoverable — state this before merge).
+- Definition of Done: as 10.4, plus the feature-doc "Limits" sections reflect the closed findings; handoff `phase10-10.6.md`.
