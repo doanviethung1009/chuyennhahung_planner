@@ -50,12 +50,15 @@ export class ContentError extends Error {
   readonly issues: FieldIssue[];
   /** Set only for `rate_limited`; becomes the `Retry-After` header. */
   readonly retryAfterSeconds: number | null;
+  /** Stable sub-reason of a refusal (e.g. `last_admin`), so a UI can say which rule applied. */
+  readonly reason: string | null;
 
   constructor(
     code: ContentErrorCode,
     message: string,
     issues: FieldIssue[] = [],
     retryAfterSeconds: number | null = null,
+    reason: string | null = null,
   ) {
     super(message);
     this.name = 'ContentError';
@@ -63,6 +66,7 @@ export class ContentError extends Error {
     this.status = STATUS_BY_CODE[code];
     this.issues = issues;
     this.retryAfterSeconds = retryAfterSeconds;
+    this.reason = reason;
   }
 }
 

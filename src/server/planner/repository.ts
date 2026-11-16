@@ -350,7 +350,23 @@ export class PlannerRepository {
   // -------------------------------------------------------------------------
 
   /**
-   * Email + password sign-in. Every failure — unknown email, no password set,
+   * The rate-limit key for a sign-in attempt: the account's id when the email
+   * or handle matches one, otherwise the identifier itself. An account reached
+   * by its handle and by its email therefore shares one bucket (ADR 0018). The
+   * key never leaves the server, so it says nothing about existence.
+   */
+  async signInBucketKey(identifier: string): Promise<string> {
+    const key = identifier.trim().toLowerCase();
+    const byEmail = key.includes('@');
+    const data = await this.snapshot();
+    const user = data.users.find((row) => (byEmail ? row.email === key : row.handle === key));
+    // Separate namespaces: an identifier that merely looks like a user id must
+    // not land in that account's bucket.
+    return user ? `account:id:${user.id}` : `account:ident:${key}`;
+  }
+
+  /**
+   * Email-or-handle + password sign-in. Every failure — unknown account, no password set,
    * wrong password — is the same 401 with the same message, and an unknown
    * email still pays for one scrypt run, so neither the answer nor its timing
    * says whether an account exists.
@@ -360,10 +376,17 @@ export class PlannerRepository {
    * hash it verified is still the stored one, so a password changed in between
    * cannot be signed in with.
    */
-  async signInWithPassword(email: string, password: string): Promise<IssuedSession> {
-    const refused = () => new ContentError('unauthorized', 'that email and password do not match');
+  async signInWithPassword(identifier: string, password: string): Promise<IssuedSession> {
+    const refused = () => new ContentError('unauthorized', 'that account and password do not match');
     const data = await this.snapshot();
-    const candidate = data.users.find((user) => user.email === email && !isDisabled(user)) ?? null;
+    // An email (has an "@", which no handle can contain) or an account handle
+    // (ADR 0018). One generic refusal either way.
+    const key = identifier.trim().toLowerCase();
+    const byEmail = key.includes('@');
+    const candidate =
+      data.users.find(
+        (user) => (byEmail ? user.email === key : user.handle === key) && !isDisabled(user),
+      ) ?? null;
     const stored = candidate?.passwordHash ?? null;
 
     const check = await verifyPassword(
@@ -448,9 +471,6 @@ export class PlannerRepository {
       const user = data.users.find((row) => row.id === userId);
       if (!user) throw notFound('planner user', userId);
       assertMayManage(data, actor, userRole(user));
-      if (!user.email) {
-        throw invalidState(`planner user "${userId}" has no email, so cannot sign in with a password`);
-      }
       user.passwordHash = hash;
       user.mustChangePassword = true;
       user.updatedAt = this.timestamp();
@@ -724,7 +744,7 @@ export class PlannerRepository {
       // so an admin can neither demote a super admin nor promote anyone to one.
       assertMayManage(data, actor, userRole(existing));
       assertMayManage(data, actor, role);
-      if (isDisabled(existing)) throw invalidState('a banned or deleted account cannot change role; unban or restore it first');
+      if (isDisabled(existing)) throw new ContentError('invalid_state', 'a banned or deleted account cannot change role; unban or restore it first', [], null, 'account_disabled');
       if (userRole(existing) === role) return toPublicUser(existing);
       // Never leave the system without an admin — the service token is held to
       // this too (ADR 0010 §6).
@@ -832,7 +852,7 @@ export class PlannerRepository {
       // A session actor deletes permanently only what was soft-deleted first;
       // the service token keeps the direct path (ADR 0017).
       if (actor && !target.deletedAt) {
-        throw invalidState('soft-delete the account first; only a soft-deleted account can be deleted permanently');
+        throw new ContentError('invalid_state', 'soft-delete the account first; only a soft-deleted account can be deleted permanently', [], null, 'not_soft_deleted');
       }
       if (isAdminRole(userRole(target))) assertAnotherAdminExists(data, userId, 'delete', userRole(target));
 
@@ -847,7 +867,7 @@ export class PlannerRepository {
           throw forbidden('only a super admin can permanently delete an account that still holds trips or reviews');
         }
         if (confirmHandle !== target.handle) {
-          throw invalidState('type the account handle to confirm a permanent delete');
+          throw new ContentError('invalid_state', 'type the account handle to confirm a permanent delete', [], null, 'confirm_handle');
         }
       }
 
@@ -3070,6 +3090,9 @@ function selfAdminAction(what: string): ContentError {
   return new ContentError(
     'invalid_state',
     `an admin session cannot ${what}; use the account password page or ask another admin`,
+    [],
+    null,
+    'self_action',
   );
 }
 
@@ -3117,6 +3140,9 @@ function assertAnotherAdminExists(data: PlannerData, userId: string, verb: strin
     throw new ContentError(
       'invalid_state',
       `cannot ${verb} the last admin: at least one admin must remain`,
+      [],
+      null,
+      'last_admin',
     );
   }
   if (role === 'super_admin') {
@@ -3127,6 +3153,9 @@ function assertAnotherAdminExists(data: PlannerData, userId: string, verb: strin
       throw new ContentError(
         'invalid_state',
         `cannot ${verb} the last super admin: at least one super admin must remain`,
+        [],
+        null,
+        'last_super_admin',
       );
     }
   }

@@ -583,19 +583,30 @@ export const plannerSessionSchema = z.object({
 });
 
 /**
- * Sign-in body: the access token the operator issued, or an email and a
- * password. Strict, so the two shapes cannot be mixed.
+ * Sign-in body: the access token the operator issued, or an email or
+ * handle and a password. Strict, so the two shapes cannot be mixed.
  */
 export const signInSchema = z.union([
   z.object({ accessToken: z.string().trim().min(32).max(256) }).strict(),
   z
     .object({
-      email: emailSchema,
+      // An email or an account handle (ADR 0018). Lower-cased, so both match
+      // the stored form; a looser shape than `emailSchema` on purpose, because
+      // a malformed guess must get the same 401 as a wrong one.
+      identifier: z.string().trim().min(1).max(254).transform((value) => value.toLowerCase()),
       // Not `passwordSchema`: a too-short guess must get the same 401 as a
       // wrong one, not a 422 that says something about the account.
       password: z.string().min(1).max(PASSWORD_MAX_LENGTH),
     })
     .strict(),
+  // Legacy body, still accepted: `email` is just an `identifier`.
+  z
+    .object({
+      email: emailSchema,
+      password: z.string().min(1).max(PASSWORD_MAX_LENGTH),
+    })
+    .strict()
+    .transform(({ email, password }) => ({ identifier: email, password })),
 ]);
 
 export const passwordChangeSchema = z

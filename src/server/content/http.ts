@@ -5,7 +5,7 @@ import { ContentError, payloadTooLarge, type FieldIssue } from './errors';
 import { listQuerySchema } from './schemas';
 
 export interface ApiErrorBody {
-  error: { code: string; message: string; issues: FieldIssue[] };
+  error: { code: string; message: string; issues: FieldIssue[]; reason?: string };
 }
 
 /**
@@ -40,7 +40,12 @@ function issuesFromZod(error: z.ZodError): FieldIssue[] {
 export function toErrorResponse(error: unknown): NextResponse {
   if (error instanceof ContentError) {
     const body: ApiErrorBody = {
-      error: { code: error.code, message: error.message, issues: error.issues },
+      error: {
+        code: error.code,
+        message: error.message,
+        issues: error.issues,
+        ...(error.reason ? { reason: error.reason } : {}),
+      },
     };
     const headers: Record<string, string> = { ...NO_STORE };
     if (error.retryAfterSeconds !== null) {

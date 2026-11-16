@@ -9,6 +9,8 @@ export class ApiError extends Error {
     readonly retryAfterSeconds: number | null,
     /** Field paths named by a 422 `issues` list; the messages stay on the server. */
     readonly issuePaths: string[] = [],
+    /** Stable sub-reason of a 409 refusal, when the server names one. */
+    readonly reason: string | null = null,
   ) {
     super(code);
     this.name = 'ApiError';
@@ -45,9 +47,11 @@ export async function api<T = undefined>(path: string, options: Options = {}): P
   if (!response.ok) {
     let code = 'error';
     let issuePaths: string[] = [];
+    let reason: string | null = null;
     try {
-      const data = (await response.json()) as { error?: { code?: string; issues?: { path?: string }[] } };
+      const data = (await response.json()) as { error?: { code?: string; reason?: string; issues?: { path?: string }[] } };
       code = data.error?.code ?? code;
+      reason = typeof data.error?.reason === 'string' ? data.error.reason : null;
       issuePaths = (data.error?.issues ?? []).flatMap((issue) => (typeof issue.path === 'string' ? [issue.path] : []));
     } catch {
       // Non-JSON error body: keep the generic code.
@@ -58,7 +62,7 @@ export async function api<T = undefined>(path: string, options: Options = {}): P
       goToChangePassword();
     }
     const retry = Number(response.headers.get('retry-after'));
-    throw new ApiError(response.status, code, Number.isFinite(retry) && retry > 0 ? retry : null, issuePaths);
+    throw new ApiError(response.status, code, Number.isFinite(retry) && retry > 0 ? retry : null, issuePaths, reason);
   }
 
   return (await response.json()) as T;

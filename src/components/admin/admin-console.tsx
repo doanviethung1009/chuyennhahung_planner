@@ -27,6 +27,15 @@ const ERROR_CODES = [
   'not_found',
   'conflict',
 ] as const;
+/** `error.reason` values the API names for a 409, each with its own message under `admin.errors.reason`. */
+const REASONS = [
+  'self_action',
+  'last_admin',
+  'last_super_admin',
+  'account_disabled',
+  'not_soft_deleted',
+  'confirm_handle',
+] as const;
 const FIELD_NAMES = ['handle', 'displayName', 'email', 'role'] as const;
 
 /**
@@ -60,6 +69,9 @@ export function AdminConsole({ currentUserId, currentHandle, actorRole }: Props)
       }
       if (code === 'rate_limited') {
         return setStatus({ kind: 'error', text: t('errors.rate_limited', { seconds: failure.retryAfterSeconds ?? 60 }) });
+      }
+      if (code === 'invalid_state' && failure.reason && (REASONS as readonly string[]).includes(failure.reason)) {
+        return setStatus({ kind: 'error', text: t(`errors.reason.${failure.reason as (typeof REASONS)[number]}`) });
       }
       if ((ERROR_CODES as readonly string[]).includes(code)) {
         return setStatus({ kind: 'error', text: t(`errors.${code as (typeof ERROR_CODES)[number]}`) });
@@ -167,11 +179,6 @@ export function AdminConsole({ currentUserId, currentHandle, actorRole }: Props)
       }
       setStatus({ kind: 'ok', text: t(`status.${kind}Done`, { handle: user.handle }) });
     } catch (failure) {
-      // `invalid_state` here is one of several lifecycle refusals (own account, last
-      // admin, not soft-deleted first, handle not confirmed), unlike the role / reset wording of `errors.invalid_state`.
-      if (failure instanceof ApiError && failure.code === 'invalid_state') {
-        return setStatus({ kind: 'error', text: t('errors.account_state') });
-      }
       fail(failure);
     }
   }

@@ -12,7 +12,7 @@ interface SignInResponse {
 }
 
 /**
- * Email + password sign-in (ADR 0007), with the access-token form
+ * Email-or-handle + password sign-in (ADR 0007, 0018), with the access-token form
  * always visible, because an account an operator created without an email has
  * only a code and must be able to find where to use it.
  *
@@ -54,7 +54,7 @@ export function SignInForm({ target }: { target: string }) {
 
   function onPassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    void submit({ email: email.trim(), password }, t('errorCredentials'));
+    void submit({ identifier: email.trim(), password }, t('errorCredentials'));
   }
 
   function onToken(event: FormEvent<HTMLFormElement>) {
@@ -68,7 +68,7 @@ export function SignInForm({ target }: { target: string }) {
         <Field id="si-email" label={t('emailLabel')}>
           <input
             id="si-email"
-            type="email"
+            type="text"
             autoComplete="username"
             autoCapitalize="none"
             spellCheck={false}

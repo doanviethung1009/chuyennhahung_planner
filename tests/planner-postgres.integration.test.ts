@@ -207,6 +207,14 @@ describe.skipIf(!url)('Planner on PostgreSQL (TEST_DATABASE_URL)', () => {
       expect(left.rows[0]).toEqual({ count: '0' });
     });
 
+    it('resets an email-less user and signs them in by handle (ADR 0018)', async () => {
+      const planner = repository();
+      const { user } = await planner.createUser({ handle: 'khong-email-pg', displayName: 'Không email' });
+      const reset = await planner.resetUserPassword(user.id);
+      const session = await planner.signInWithPassword('khong-email-pg', reset.temporaryPassword);
+      expect(session.user.mustChangePassword).toBe(true);
+    });
+
     it('a user who owns a trip cannot be deleted', async () => {
       const { userId } = await seeded();
       await expect(pool.query('DELETE FROM planner_users WHERE id = $1', [userId])).rejects.toMatchObject({

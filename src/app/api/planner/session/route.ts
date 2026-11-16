@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Signs in, with either the access token an operator issued (ADR 0004 §2) or
- * an email and password (ADR 0007), and sets an `HttpOnly` session cookie.
+ * an email or account handle and a password (ADR 0007, 0018), and sets an `HttpOnly` session cookie.
  * `passwordChangeRequired` tells the browser to send the user to the
  * change-password page before anything else will answer.
  *
@@ -41,11 +41,11 @@ export function POST(request: Request) {
 
     // A second bucket per account, so guessing one password from many
     // addresses is slowed too (ADR 0007). It throttles; it never locks.
-    const perAccount = signInAccountLimiter.check(`email:${input.email}`);
+    const perAccount = signInAccountLimiter.check(await repository.signInBucketKey(input.identifier));
     if (!perAccount.ok) throw rateLimited(perAccount.retryAfterSeconds);
 
     const { user, token, expiresAt } = await repository.signInWithPassword(
-      input.email,
+      input.identifier,
       input.password,
     );
     return setSessionCookie(
