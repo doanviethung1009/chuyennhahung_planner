@@ -329,6 +329,8 @@ flowchart LR
 
 [ADR 0010](adr/0010-admin-portal-session-authorization.vi.md) (Accepted). `/quan-tri` (`/en/admin`) là server component có `noindex`, không nằm trong sitemap và bị disallow trong `robots.ts`. Vai trò được thực thi: `can()` được gọi trong đường xử lý request, ở trang và ở API admin.
 
+Trang `/admin` là bảng điều khiển (P07-11, [feature](features/admin-dashboard.vi.md)): `src/server/admin/overview.ts` gom số đếm chỉ đọc từ phương thức repository sẵn có, lọc theo `can()`, và `GET /api/admin/overview` trả cùng payload. Nguồn lỗi chỉ làm hỏng thẻ của nó.
+
 `adminPlannerRoute` trong `src/server/planner/http.ts` xác định một trong **hai principal**:
 
 | Principal | Credential | Tới được |

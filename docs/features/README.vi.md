@@ -27,6 +27,7 @@ Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
 | Travel Content trên PostgreSQL | [content-postgres-tables.vi.md](content-postgres-tables.vi.md) | Store theo `CONTENT_DATABASE_URL`, mỗi collection một bảng trên engine bảng dùng chung, seed dưới lock, import và export |
 | Vai trò admin | [admin-roles.vi.md](admin-roles.vi.md) | `role` trên user, `permissions.ts`, `PATCH /api/admin/planner/users/[userId]` để nâng admin đầu tiên |
 | Khung quản trị | [admin-shell.vi.md](admin-shell.vi.md) | Một layout cho mọi trang quản trị: thanh bên theo nhóm và theo vai trò, breadcrumb, skip link, menu điện thoại; tổng quan `/admin` và bảng người dùng ở `/admin/users` (ADR 0020) |
+| Bảng điều khiển quản trị | [admin-dashboard.vi.md](admin-dashboard.vi.md) | Thẻ trên `/admin` theo vai trò: chuyến đi và đánh giá chờ duyệt, bản nháp, tài khoản, toàn vẹn, runtime; `GET /api/admin/overview` (P07-11) |
 | Cổng quản trị | [admin-portal.vi.md](admin-portal.vi.md) | `/quan-tri` — danh sách, tạo, đổi vai trò và cấp lại mật khẩu người dùng ngay trên trình duyệt, chỉ cho admin (ADR 0010) |
 | Lọc người dùng quản trị | [admin-user-filter.vi.md](admin-user-filter.vi.md) | Tìm kiếm (tên, handle, email) và lọc vai trò trên bảng người dùng `/quan-tri`, phía client |
 | Tự động deploy lên dev | [auto-deploy-dev.vi.md](auto-deploy-dev.vi.md) | Workflow `deploy-dev`: `main` xanh build image, runner tự host trên VM deploy, health probe và rollback (ADR 0016) |

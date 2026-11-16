@@ -1,0 +1,11 @@
+# Handoff — P07-11 Admin dashboard
+- Task: P07-11 · Branch `feat/admin-dashboard` · PR: see below (not merged; contract stays READY until merge)
+- Done: `src/server/admin/overview.ts` (`buildOverview`, injectable sources, `loadOverview`); `GET /api/admin/overview` (`adminContentRoute`, `content:write`, session or service, `no-store`); `OverviewCards` server component; `/admin` shows cards; VI/EN keys; docs (`features/admin-dashboard.*`, README rows, runbook route row, architecture paragraph).
+- Cards (fixed enum): listingsPending, reviewsPending (`community:moderate`) · contentDrafts (`content:write`) · usersActive, usersDisabled, integrity (`user:provision`) · runtime (`runbook:read`). Failing source → that card `state: 'unavailable'`.
+- Outside the plan: none. Added optional `state` and `detail` fields to the card shape (contract: `{id,count?,href,severity?}`) so "unavailable" and the runtime value are expressible.
+- Decisions: activity card omitted — `/api/admin/community/events` needs a `targetId`, no feed exists (waits for P07-13). Integrity card is for admins (no existing action for it); integrity routes stay token-only. contentDrafts = draft stories + draft reviews (places have no status).
+- Migration: none. API/DB/RBAC: new read-only route only; `permissions.ts` untouched.
+- Tests: typecheck PASS · lint PASS · `npm run test` PASS (73 files passed, 975 tests passed, 48 skipped) · `npm run build` PASS. PostgreSQL path: NOT RUN (only repository methods used; no PG instance here). Visual pass at 375/768/1280px: NOT RUN.
+- Reviews: `qc` NOT RUN · `security` NOT RUN (recommended only if the payload grows).
+- Risk: counts read whole lists (queue methods cap at 200 rows for reviews only; `reviewsPending` is therefore capped at 200).
+- Next: P07-12 (users & roles).

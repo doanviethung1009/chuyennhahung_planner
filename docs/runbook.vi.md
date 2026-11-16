@@ -103,6 +103,7 @@ hay bỏ một route nghĩa là sửa bảng này ở cả hai ngôn ngữ.
 | POST | `/api/admin/planner/users/[userId]/rotate-token` | Chỉ admin token | Đổi access token |
 | DELETE | `/api/admin/planner/users/[userId]/google` | Chỉ admin token | Gỡ liên kết Google |
 | GET | `/api/admin/planner/integrity` | Chỉ admin token | Báo cáo toàn vẹn kho Planner |
+| GET | `/api/admin/overview` | Admin token hoặc phiên staff | Số đếm các thẻ bảng điều khiển, lọc theo vai trò (`content:write`) |
 | GET | `/api/admin/community/queue` | Admin token hoặc phiên admin | Hàng đợi đăng chuyến, chờ duyệt trước (`community:moderate`) |
 | PATCH | `/api/admin/community/trips/[id]` | Admin token hoặc phiên admin | Duyệt hoặc từ chối chuyến (`community:moderate`) |
 | GET | `/api/admin/community/reviews` | Admin token hoặc phiên admin | Hàng đợi kiểm duyệt đánh giá (`community:moderate`) |

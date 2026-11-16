@@ -678,7 +678,27 @@
       "goStories": "Open the stories list",
       "title": "Admin",
       "metaTitle": "Admin",
-      "description": "Everything you can manage on the site, in one place."
+      "description": "Everything you can manage on the site, in one place.",
+      "cardsHeading": "Waiting for you",
+      "cardsLabel": {
+        "listingsPending": "Trip listings waiting for review",
+        "reviewsPending": "Reviews waiting for review",
+        "contentDrafts": "Content drafts",
+        "usersActive": "Active accounts",
+        "usersDisabled": "Banned or soft-deleted accounts",
+        "integrity": "Data integrity findings",
+        "runtime": "Where data is stored"
+      },
+      "open": "Open",
+      "unavailable": "Count unavailable",
+      "unavailableHint": "The data source failed; reload the page in a moment.",
+      "empty": "Nothing is waiting for you.",
+      "attention": "Needs attention",
+      "runtimeValue": {
+        "postgres": "PostgreSQL",
+        "file": "JSON files",
+        "mixed": "PostgreSQL and JSON files"
+      }
     },
     "notice": {
       "title": "Note: published edits go live on the public site",

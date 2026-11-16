@@ -330,6 +330,8 @@ flowchart LR
 
 [ADR 0010](adr/0010-admin-portal-session-authorization.md) (Accepted). `/quan-tri` (`/en/admin`) is a server component with `noindex`, absent from the sitemap and disallowed in `robots.ts`. Roles are enforced: `can()` is called in the request path, on pages and on the admin API.
 
+The `/admin` page is the dashboard (P07-11, [feature](features/admin-dashboard.md)): `src/server/admin/overview.ts` composes read-only counts from existing repository methods, filtered by `can()`, and `GET /api/admin/overview` serves the same payload. A failing source degrades its own card.
+
 `adminPlannerRoute` in `src/server/planner/http.ts` resolves one of **two principals**:
 
 | Principal | Credential | Reaches |
