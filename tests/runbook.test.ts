@@ -97,7 +97,7 @@ describe('admin runbook tab', () => {
     const page = readFileSync(join(root, 'src/app/[locale]/admin/runbook/page.tsx'), 'utf8');
     expect(page).toMatch(/requireStaff\([\s\S]*?'runbook'\)/);
     const nav = readFileSync(join(root, 'src/components/admin/admin-nav.tsx'), 'utf8');
-    expect(nav).toMatch(/canRunbook \? \(\s*<Link href="\/admin\/runbook"/);
+    expect(nav).toMatch(/canRunbook \? \(\s*<li>\s*<Link href="\/admin\/runbook"/);
   });
 });
 

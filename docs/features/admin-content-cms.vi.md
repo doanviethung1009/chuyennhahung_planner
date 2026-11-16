@@ -26,7 +26,7 @@ Các trường sửa được theo `storyUpdateSchema`, `placeUpdateSchema` và 
 
 ## Cách hoạt động
 
-Mỗi trang là server component: `requireStaff` (`src/lib/admin-gate.ts`, dựng trên `readStaffPageAccess`) đưa khách chưa đăng nhập tới trang đăng nhập kèm `returnTo`, người còn mật khẩu tạm tới trang đổi mật khẩu, và vai trò không có việc gì ở đây tới `notFound()`. Thanh điều hướng chỉ hiện Người dùng nếu vai trò có `user:provision` và Nội dung nếu có `content:write`; API vẫn là bên quyết định quyền. Sau đó trang render một client island gọi `fetch` cùng origin, nên chỉ có một đường ghi.
+Mỗi trang là server component: `requireStaff` (`src/lib/admin-gate.ts`, dựng trên `readStaffPageAccess`) đưa khách chưa đăng nhập tới trang đăng nhập kèm `returnTo`, người còn mật khẩu tạm tới trang đổi mật khẩu, và vai trò không có việc gì ở đây tới `notFound()`. Thanh điều hướng là một hàng liên kết phẳng: Người dùng chỉ hiện nếu vai trò có `user:provision`, Chuyến đi, Địa điểm, Đánh giá và Cộng đồng chỉ hiện nếu có `content:write` (không còn nhãn "Nội dung" riêng); API vẫn là bên quyết định quyền. Sau đó trang render một client island gọi `fetch` cùng origin, nên chỉ có một đường ghi.
 
 Khi lưu, chỉ các khoá sửa được được gửi kèm `If-Match: "<updatedAt>"`. Dấu thời gian cũ trả **412** `version_conflict`: màn hình báo có người khác lưu trước và đưa nút tải lại. Lỗi 422 đánh dấu từng trường có `path` dạng dấu chấm nằm trong `issues`. 401 mời đăng nhập lại, 429 báo thời gian chờ. Nút bị vô hiệu khi đang gửi, và kết quả được đọc qua vùng live lịch sự.
 

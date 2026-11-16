@@ -619,11 +619,10 @@
       "label": "Admin area",
       "users": "Users",
       "overview": "Overview",
-      "content": "Content",
       "stories": "Stories",
       "places": "Places",
       "reviews": "Reviews",
-      "community": "Community trips",
+      "community": "Community",
       "runbook": "Runbook"
     },
     "overview": {

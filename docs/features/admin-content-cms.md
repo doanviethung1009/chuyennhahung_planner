@@ -26,7 +26,7 @@ Editable fields follow `storyUpdateSchema`, `placeUpdateSchema` and `reviewUpdat
 
 ## How it works
 
-Each page is a server component: `requireStaff` (`src/lib/admin-gate.ts`, built on `readStaffPageAccess`) sends anonymous visitors to sign-in with `returnTo`, a temporary password to change-password, and a role with nothing to do here to `notFound()`. The shell nav shows Users only if the role can `user:provision` and Content only if it can `content:write`; the API remains the authority. The page then renders one client island that fetches with same-origin `fetch`, so there is one mutation path.
+Each page is a server component: `requireStaff` (`src/lib/admin-gate.ts`, built on `readStaffPageAccess`) sends anonymous visitors to sign-in with `returnTo`, a temporary password to change-password, and a role with nothing to do here to `notFound()`. The shell nav is one flat row of links: Users only if the role can `user:provision`, Stories, Places, Reviews and Community only if it can `content:write` (there is no separate "Content" label); the API remains the authority. The page then renders one client island that fetches with same-origin `fetch`, so there is one mutation path.
 
 Saving sends only the editable keys with `If-Match: "<updatedAt>"`. A stale stamp returns **412** `version_conflict`: the screen says someone else saved first and offers a reload. A 422 marks each field whose dotted `path` appears in `issues`. 401 offers sign-in again, 429 shows the wait. Buttons are disabled while a request is pending, and results are announced in a polite live region.
 
