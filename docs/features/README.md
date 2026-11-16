@@ -39,6 +39,7 @@ New features start from [`_template.md`](_template.md) /
 | Create a blank trip | [create-blank-trip.md](create-blank-trip.md) | `/my-trips/new` — create-trip button and form on My Trips, `source: "blank"` |
 | Docker deploy on one VM | [docker-deploy.md](docker-deploy.md) | Runbook: nginx + app + optional PostgreSQL, bind-mounted state, host setup, backup |
 | Super admin accounts | [super-admin-accounts.md](super-admin-accounts.md) | `super_admin` role (ADR 0017): only it opens the Runbook, admins cannot manage admin accounts |
+| Handle sign-in | [handle-sign-in.md](handle-sign-in.md) | Sign in with an email or account handle; reset password works without an email (ADR 0018) |
 | Admin runbook | [admin-runbook.md](admin-runbook.md) | `/quan-tri/runbook` — super-admin-only tab that shows the API list and the operations guides from `docs/` in the browser |
 
 ## Phases not yet open

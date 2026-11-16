@@ -146,7 +146,7 @@ describe('signing in with a password', () => {
       planner.signInWithPassword('has@example.com', 'wrong-password-123').catch((e: Error) => e),
     ]);
     for (const failure of failures) {
-      expect(failure).toMatchObject({ code: 'unauthorized', message: 'that email and password do not match' });
+      expect(failure).toMatchObject({ code: 'unauthorized', message: 'that account and password do not match' });
     }
   });
 
@@ -202,10 +202,60 @@ describe('changing and resetting a password', () => {
     await planner.signInWithPassword('change@example.com', reset.temporaryPassword);
   });
 
-  it('cannot reset a user who has no email', async () => {
+  it('resets a user who has no email, who then signs in by handle (ADR 0018)', async () => {
+    // Regression: this used to be refused 409 `invalid_state`, so an operator
+    // could never give an email-less account a password.
     const planner = makePlanner();
     const { user } = await planner.createUser({ handle: 'chi-token', displayName: 'Chỉ token' });
-    await expect(planner.resetUserPassword(user.id)).rejects.toMatchObject({ code: 'invalid_state' });
+    const reset = await planner.resetUserPassword(user.id);
+    expect(reset.user).toMatchObject({ hasPassword: true, mustChangePassword: true });
+    const session = await planner.signInWithPassword('chi-token', reset.temporaryPassword);
+    expect(session.user.mustChangePassword).toBe(true);
+  });
+});
+
+describe('refusals name their reason (ADR 0018)', () => {
+  it('tells self-action, last-admin and not-soft-deleted apart on a 409', async () => {
+    const planner = makePlanner();
+    const { user: admin } = await planner.createUser({ handle: 'admin-mot', displayName: 'A', email: 'a@example.com', role: 'admin' });
+    const { user: other } = await planner.createUser({ handle: 'thanh-vien', displayName: 'T' });
+    await expect(planner.resetUserPassword(admin.id, { userId: admin.id })).rejects.toMatchObject({ code: 'invalid_state', reason: 'self_action' });
+    await expect(planner.setUserRole(admin.id, 'member')).rejects.toMatchObject({ code: 'invalid_state', reason: 'last_admin' });
+    await expect(planner.deleteUser(other.id, { userId: admin.id })).rejects.toMatchObject({ reason: 'not_soft_deleted' });
+  });
+});
+
+describe('signing in with a handle (ADR 0018)', () => {
+  it('matches the handle case-insensitively and an email still works', async () => {
+    const planner = makePlanner();
+    const { user, temporaryPassword } = await planner.createUser({ handle: 'tam-nha', displayName: 'Tâm', email: 'tam2@example.com' });
+    await planner.signInWithPassword('Tam-Nha', temporaryPassword!);
+    await planner.signInWithPassword('tam2@example.com', temporaryPassword!);
+    expect(user.handle).toBe('tam-nha');
+  });
+
+  it('gives the same refusal for a wrong password, an unknown handle and a handle with no password', async () => {
+    const planner = makePlanner();
+    const { temporaryPassword } = await planner.createUser({ handle: 'co-mk', displayName: 'Có', email: 'co@example.com' });
+    await planner.createUser({ handle: 'khong-mk-nua', displayName: 'Không' });
+    const failures = await Promise.all([
+      planner.signInWithPassword('co-mk', 'wrong-password-123').catch((e: Error) => e),
+      planner.signInWithPassword('nobody-here', temporaryPassword!).catch((e: Error) => e),
+      planner.signInWithPassword('khong-mk-nua', temporaryPassword!).catch((e: Error) => e),
+    ]);
+    for (const failure of failures) {
+      expect(failure).toMatchObject({ code: 'unauthorized', message: 'that account and password do not match' });
+    }
+  });
+
+  it('refuses a banned account signing in by handle', async () => {
+    const store = createMemoryPlannerStore();
+    const planner = makePlanner({ store });
+    const { temporaryPassword } = await planner.createUser({ handle: 'bi-khoa', displayName: 'Bị khóa', email: 'ban@example.com' });
+    const data = await store.read();
+    data.users[0]!.bannedAt = new Date().toISOString();
+    await store.write(data);
+    await expect(planner.signInWithPassword('bi-khoa', temporaryPassword!)).rejects.toMatchObject({ code: 'unauthorized' });
   });
 });
 
