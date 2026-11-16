@@ -38,6 +38,7 @@ No stored data changes. Message keys `signIn.description`, `signIn.divider`, `si
 
 ## Limits and open questions
 
+- The sign-in error is one generic message for every failure, and it also hints at Google sign-in or contacting us for accounts with no password, so it neither reveals which accounts exist nor leaves the user stuck.
 - A 409 now carries `error.reason` (`self_action`, `last_admin`, `last_super_admin`, `account_disabled`, `not_soft_deleted`, `confirm_handle`) and the admin console shows one message per reason instead of one text for every refusal.
 - A handle is now a login name; guessable handles rely on the rate limits and strong temporary passwords.
 - Creating a user without an email still issues no password; use Reset password afterwards.

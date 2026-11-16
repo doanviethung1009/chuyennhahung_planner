@@ -297,7 +297,7 @@
     "passwordLabel": "Mật khẩu",
     "submit": "Đăng nhập",
     "submitting": "Đang đăng nhập…",
-    "errorCredentials": "Tài khoản hoặc mật khẩu chưa đúng. Hãy kiểm tra lại.",
+    "errorCredentials": "Tài khoản hoặc mật khẩu chưa đúng. Hãy kiểm tra lại. Nếu bạn thường đăng nhập bằng Google, hoặc chưa được cấp mật khẩu, hãy dùng cách đó hoặc liên hệ nhà Hưng.",
     "tokenToggle": "Đăng nhập bằng mã truy cập",
     "tokenLabel": "Mã truy cập",
     "tokenHint": "Mã do nhà Hưng cấp cho bạn. Mã không được lưu trong trình duyệt.",
