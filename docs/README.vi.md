@@ -19,6 +19,8 @@ trúc hai bản lệch nhau, hoặc nếu tài liệu chưa được liệt kê 
 | Tài liệu | Nội dung |
 |---|---|
 | [architecture.vi.md](architecture.vi.md) | Hình dạng runtime, routing, luồng dữ liệu, ranh giới module, các phase |
+| [specs-roadmap.vi.md](specs-roadmap.vi.md) | Spec: các giai đoạn dự án trong một trang — bảng trạng thái, dòng thời gian quyết định, những gì chưa mở, những gì còn cần chủ dự án |
+| [specs-product.vi.md](specs-product.vi.md) | Spec: sản phẩm và các khả năng — mục đích, đối tượng và vai trò, bảng khả năng và bề mặt API, các quy tắc mọi thay đổi đều giữ |
 | [usage.vi.md](usage.vi.md) | Cài đặt, chạy, test, kiểm tra, deploy và các luồng việc hằng ngày |
 | [travel-content-api.vi.md](travel-content-api.vi.md) | Hợp đồng API của Travel Content System — endpoint, quy ước, mã lỗi, các bất biến |
 | [runbook.vi.md](runbook.vi.md) | Runbook: nơi bắt đầu — hướng dẫn nào trả lời câu hỏi nào, kiểm tra nhanh và danh sách mọi endpoint API; hiển thị cho admin tại `/quan-tri/runbook` |
