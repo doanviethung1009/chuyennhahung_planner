@@ -118,10 +118,11 @@ Read this first if you are unsure how to sign in, or you lost access.
 | Role | Can do | Signs in with |
 |---|---|---|
 | `member` | Their own Planner trips | Email + password, or Google |
-| `editor` | Travel content at `/quan-tri` | Email + password, or Google |
-| `admin` | Content **and** users at `/quan-tri` | Email + password, or Google |
+| `editor` | Travel content and community moderation at `/quan-tri` | Email + password, or Google |
+| `admin` | Content, community moderation (including restricting people) **and** users at `/quan-tri`; manages `member` and `editor` accounts only | Email + password, or Google |
+| `super_admin` | Everything an `admin` does, plus the Runbook tab and management of `admin` accounts | Email + password, or Google |
 
-An account is a `member` unless it was created with another role (`admin:create` makes an `admin` unless `--role` says otherwise). Only an admin (in `/quan-tri`) or the service token can make someone `editor` or `admin`; Only a super admin (or the service token) can make an `admin` or `super_admin`, or reset an admin's password, and only a super admin opens the Runbook tab ([ADR 0017](adr/0017-super-admin-role.md)); promote the first one with `PATCH /api/admin/planner/users/<id>` and `{"role":"super_admin"}` using the admin token. In `/quan-tri` an account (member, editor, admin) can be banned (sessions end at once, sign-in refused, undone by *Unban*), soft-deleted (blocked and marked, undone by *Restore*) or deleted permanently, which only works on an already soft-deleted account (one that holds trips or reviews needs a super admin who types its handle; the *Deleted* tab lists them); you cannot do this to yourself, and an admin only reaches members and editors. Google never grants a role.
+An account is a `member` unless it was created with another role (`admin:create` makes an `admin` unless `--role` says otherwise). An admin (in `/quan-tri`) or the service token can make someone `member` or `editor`. Only a super admin (or the service token) can make an `admin` or `super_admin`, or reset an admin's password, and only a super admin opens the Runbook tab ([ADR 0017](adr/0017-super-admin-role.md)); promote the first one with `PATCH /api/admin/planner/users/<id>` and `{"role":"super_admin"}` using the admin token. In `/quan-tri` an account (member, editor, admin) can be banned (sessions end at once, sign-in refused, undone by *Unban*), soft-deleted (blocked and marked, undone by *Restore*) or deleted permanently, which only works on an already soft-deleted account (one that holds trips or reviews needs a super admin who types its handle; the *Deleted* tab lists them); you cannot do this to yourself, and an admin only reaches members and editors. Google never grants a role.
 
 **The secrets, and what to do if one is lost**
 
@@ -218,9 +219,9 @@ A session lasts 14 days, or 7 days without use. `rotate-token` signs the
 traveller out everywhere.
 
 Roles ([ADR 0006](adr/0006-unified-identity-and-roles.md)): `role` is `member`
-(default), `editor` or `admin`. Roles are enforced for user administration
-([ADR 0010](adr/0010-admin-portal-session-authorization.md)): an `admin` session may
-use the portal at `/quan-tri`; `editor` has no screen yet. Promote the first admin with the admin token; the body is strict, so any key
+(default), `editor`, `admin` or `super_admin` ([ADR 0017](adr/0017-super-admin-role.md)). Roles are
+enforced by `can` on every admin route and page ([ADR 0010](adr/0010-admin-portal-session-authorization.md),
+[ADR 0011](adr/0011-admin-content-cms.md)): `admin` and `super_admin` use the whole portal at `/quan-tri`; an `editor` sees the content and community pages only. Promote the first admin with the admin token; the body is strict, so any key
 other than `role` is refused with 422.
 
 ```bash
@@ -353,13 +354,13 @@ The variables are read at startup. **Restart** `npm run dev` (or recreate the co
 
 **HTTP on an IP address does not work.** Google accepts a plain-HTTP redirect URI only for `localhost`. The dev VM served as `http://192.168.x.x` cannot use Google sign-in; it needs a domain with HTTPS first. Until then, use password sign-in there and leave the two variables unset so the button stays hidden.
 
-### Moderate community trips (admin or editor)
+### Moderate community trips (editor, admin or super admin)
 
 Open `/quan-tri/cong-dong` (`/en/admin/community`). Pending requests come first: **Approve**, or **Reject** with a reason the owner will see; an approved trip can be **Removed** with a reason. The home page and `/chuyen-di-cong-dong` show only approved trips. The same page lists traveller place reviews: **Remove** any live review. Reviews, whether written in the Planner or by a visitor on the home page, are published without approval. Before travellers can submit anything, fill `contribution.terms` (VI and EN) and `contribution.takedownContact` in `src/content/site.ts`; until then the owner's control is closed.
 
-Admins also get a **Runbook** tab at `/quan-tri/runbook` (`/en/admin/runbook`): the API list and the operations guides, read from `docs/`. Editors do not see it. In Docker the image carries a copy of `docs/`, so the tab matches the deployed version ([features/admin-runbook.md](features/admin-runbook.md)).
+Super admins also get a **Runbook** tab at `/quan-tri/runbook` (`/en/admin/runbook`): the API list and the operations guides, read from `docs/`. Editors and admins do not see it ([ADR 0017](adr/0017-super-admin-role.md)). In Docker the image carries a copy of `docs/`, so the tab matches the deployed version ([features/admin-runbook.md](features/admin-runbook.md)).
 
-### Edit content in the browser (admin or editor)
+### Edit content in the browser (editor, admin or super admin)
 
 Sign in as in the section above (an `editor` account has the role `editor`; an admin can set it from `/quan-tri`) and open `/quan-tri/noi-dung/chuyen-di` (`/en/admin/content/stories`). The five pages are stories, a story, places, a place and reviews (`/quan-tri/noi-dung/dia-diem`, `/quan-tri/noi-dung/danh-gia`). Edit a record and save; publishing or archiving a story or review is a separate action. Create, delete, templates and collections are not in the browser yet — use the token API ([travel-content-api.md](travel-content-api.md)).
 

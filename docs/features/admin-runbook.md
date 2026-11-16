@@ -6,7 +6,7 @@
 
 A **Runbook** tab in the admin area where an administrator reads the API list and
 the operations guides in the browser, without repository access. It is for the
-`admin` role only: an editor or any other signed-in user gets a `404`, an
+`super_admin` role only ([ADR 0017](../adr/0017-super-admin-role.md)): an editor, an admin or any other signed-in user gets a `404`, an
 anonymous visitor is sent to sign-in and back. The content is the repository's own
 documents, so it cannot drift from what is deployed. Research result that led to
 it: before this change there was no API list at all (only the Travel Content

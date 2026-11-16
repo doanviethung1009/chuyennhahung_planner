@@ -3,9 +3,8 @@ import { z } from 'zod';
 /**
  * Roles and the actions they may perform (ADR 0006, steps 1–2).
  *
- * Pure: no I/O, no imports from the planner. Nothing in the request path calls
- * `can` yet — admin routes are still gated by `ADMIN_API_TOKEN` alone. The map
- * exists so the later steps have one place to widen, and so tests pin it now.
+ * Pure: no I/O, no imports from the planner. `can` gates every admin route and
+ * page (ADR 0010, 0011, 0017); the map is the one place to widen, and tests pin it.
  */
 export const roleSchema = z.enum(['member', 'editor', 'admin', 'super_admin']);
 export type Role = z.infer<typeof roleSchema>;

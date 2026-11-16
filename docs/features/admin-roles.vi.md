@@ -8,7 +8,9 @@ Mỗi user của Planner nay mang một vai trò — `member`, `editor` hoặc `
 người vận hành giữ `ADMIN_API_TOKEN` có thể tạo hoặc nâng admin đầu tiên. Đây là
 bước 1–2 của [ADR 0006](../adr/0006-unified-identity-and-roles.vi.md): vai trò được
 ghi lại và phân giải, nhưng chưa có gì trong đường xử lý request áp dụng nó, nên
-hành vi người dùng thấy không đổi.
+hành vi người dùng thấy không đổi. *Lịch sử:* các thay đổi sau đã áp dụng nó — xem
+[admin-portal.vi.md](admin-portal.vi.md), [admin-content-cms.vi.md](admin-content-cms.vi.md) và
+[super-admin-accounts.vi.md](super-admin-accounts.vi.md) (thêm `super_admin`).
 
 ## Routes
 
@@ -35,7 +37,7 @@ biến role vắng mặt thành `member`; việc đọc không bao giờ ghi l�
 `can(principal, action)` tra một bảng tĩnh: `member` không có gì; `editor` có
 `template:write` và `story:publish`; `admin` có thêm `user:provision` và
 `user:promote`; `service` có cả bốn. `trip:support-read` được giữ tên và không cấp
-cho ai. Role hoặc action lạ đều bị từ chối. Chưa route nào gọi `can`.
+cho ai. Role hoặc action lạ đều bị từ chối. (Ở bước này chưa route nào gọi `can`; nay mọi route và trang quản trị đều gọi.)
 
 `PATCH` parse `{ role }` bằng schema strict (key thừa như `email` là 422, vì route
 này cấp đặc quyền), rồi gọi `setUserRole`. Cùng một role lần nữa trả 200 và không
@@ -69,8 +71,7 @@ khai nào; đăng nhập Google lần đầu là `member`.
 
 ## Giới hạn và câu hỏi mở
 
-Chưa có gì áp dụng vai trò: role sai hiện không có tác dụng, và rủi ro là một bước
-sau tin vào nó. PATCH hoàn toàn dựa vào `ADMIN_API_TOKEN` (giới hạn tốc độ và so
+*Ở bước này* chưa có gì áp dụng vai trò; cổng quản trị, CMS nội dung và ADR 0017 nay đã áp dụng. PATCH hoàn toàn dựa vào `ADMIN_API_TOKEN` (giới hạn tốc độ và so
 sánh timing-safe nằm ở `adminPlannerRoute`). Chưa có nhật ký audit, giao diện admin,
 route admin qua session, MFA hay identity provider (ADR 0006 bước 3–4). Các câu hỏi
 mở cho chủ nhà trong ADR vẫn còn: chọn provider, ai là admin, và `admin` có bắt buộc

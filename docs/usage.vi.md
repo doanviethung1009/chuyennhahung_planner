@@ -119,10 +119,11 @@ merge — vẫn phải có người xem.
 | Vai trò | Làm được gì | Đăng nhập bằng |
 |---|---|---|
 | `member` | Các trip Planner của chính mình | Email + mật khẩu, hoặc Google |
-| `editor` | Nội dung du lịch ở `/quan-tri` | Email + mật khẩu, hoặc Google |
-| `admin` | Nội dung **và** người dùng ở `/quan-tri` | Email + mật khẩu, hoặc Google |
+| `editor` | Nội dung du lịch và kiểm duyệt cộng đồng ở `/quan-tri` | Email + mật khẩu, hoặc Google |
+| `admin` | Nội dung, kiểm duyệt cộng đồng (gồm hạn chế người dùng) **và** người dùng ở `/quan-tri`; chỉ quản lý tài khoản `member` và `editor` | Email + mật khẩu, hoặc Google |
+| `super_admin` | Mọi việc của `admin`, cộng tab Runbook và quản lý tài khoản `admin` | Email + mật khẩu, hoặc Google |
 
-Tài khoản là `member` trừ khi được tạo với vai trò khác (`admin:create` tạo ra `admin`, trừ khi `--role` nói khác). Chỉ admin (ở `/quan-tri`) hoặc service token mới nâng được ai đó lên `editor` hay `admin`; Chỉ super admin (hoặc service token) tạo được `admin`/`super_admin` hay đặt lại mật khẩu admin, và chỉ super admin mở được tab Runbook ([ADR 0017](adr/0017-super-admin-role.vi.md)); nâng người đầu tiên bằng `PATCH /api/admin/planner/users/<id>` với `{"role":"super_admin"}` dùng admin token. Trong `/quan-tri` tài khoản (member, editor, admin) khóa được (phiên kết thúc ngay, không đăng nhập được, hoàn tác bằng *Mở khóa*), xóa mềm được (chặn và đánh dấu, hoàn tác bằng *Khôi phục*) hoặc xóa vĩnh viễn, chỉ làm được với tài khoản đã xóa mềm (tài khoản còn chuyến đi hoặc bình luận cần super admin gõ lại handle; tab *Đã xóa* liệt kê chúng); không làm với chính mình, và admin chỉ với member và editor. Google không bao giờ cấp vai trò.
+Tài khoản là `member` trừ khi được tạo với vai trò khác (`admin:create` tạo ra `admin`, trừ khi `--role` nói khác). Admin (ở `/quan-tri`) hoặc service token đặt được ai đó thành `member` hay `editor`. Chỉ super admin (hoặc service token) tạo được `admin`/`super_admin` hay đặt lại mật khẩu admin, và chỉ super admin mở được tab Runbook ([ADR 0017](adr/0017-super-admin-role.vi.md)); nâng người đầu tiên bằng `PATCH /api/admin/planner/users/<id>` với `{"role":"super_admin"}` dùng admin token. Trong `/quan-tri` tài khoản (member, editor, admin) khóa được (phiên kết thúc ngay, không đăng nhập được, hoàn tác bằng *Mở khóa*), xóa mềm được (chặn và đánh dấu, hoàn tác bằng *Khôi phục*) hoặc xóa vĩnh viễn, chỉ làm được với tài khoản đã xóa mềm (tài khoản còn chuyến đi hoặc bình luận cần super admin gõ lại handle; tab *Đã xóa* liệt kê chúng); không làm với chính mình, và admin chỉ với member và editor. Google không bao giờ cấp vai trò.
 
 **Các loại bí mật, và mất thì làm gì**
 
@@ -219,9 +220,8 @@ Một session sống 14 ngày, hoặc 7 ngày nếu không dùng. `rotate-token`
 người đi chơi khỏi mọi nơi.
 
 Vai trò ([ADR 0006](adr/0006-unified-identity-and-roles.vi.md)): `role` là
-`member` (mặc định), `editor` hoặc `admin`. Vai trò được thực thi cho việc quản lý user
-([ADR 0010](adr/0010-admin-portal-session-authorization.vi.md)): session `admin` dùng được
-cổng ở `/quan-tri`; `editor` chưa có màn hình. Nâng admin đầu tiên bằng admin token; body là strict, nên key nào khác
+`member` (mặc định), `editor`, `admin` hoặc `super_admin` ([ADR 0017](adr/0017-super-admin-role.vi.md)). `can` được thực thi trên mọi route và trang quản trị ([ADR 0010](adr/0010-admin-portal-session-authorization.vi.md),
+[ADR 0011](adr/0011-admin-content-cms.vi.md)): `admin` và `super_admin` dùng toàn bộ cổng ở `/quan-tri`; `editor` chỉ thấy các trang nội dung và cộng đồng. Nâng admin đầu tiên bằng admin token; body là strict, nên key nào khác
 `role` đều bị từ chối với 422.
 
 ```bash
@@ -354,13 +354,13 @@ Biến chỉ được đọc lúc khởi động. **Khởi động lại** `npm 
 
 **HTTP trên địa chỉ IP không dùng được.** Google chỉ chấp nhận redirect URI HTTP thường cho `localhost`. VM dev chạy dạng `http://192.168.x.x` không dùng được đăng nhập Google; cần tên miền có HTTPS trước. Trong lúc chờ, dùng đăng nhập mật khẩu ở đó và để trống hai biến để nút không hiện.
 
-### Duyệt chuyến đi cộng đồng (admin hoặc editor)
+### Duyệt chuyến đi cộng đồng (editor, admin hoặc super admin)
 
 Mở `/quan-tri/cong-dong` (`/en/admin/community`). Yêu cầu chờ duyệt nằm trên: **Duyệt**, hoặc **Từ chối** kèm lý do để chủ chuyến thấy; chuyến đã duyệt có thể **Gỡ** kèm lý do. Trang chủ và `/chuyen-di-cong-dong` chỉ hiện chuyến đã duyệt. Cùng trang này liệt kê đánh giá địa điểm của người đi: **Gỡ** bất kỳ đánh giá đang hiện nào. Đánh giá, dù viết trong Planner hay do khách viết ở trang chủ, đều được đăng mà không cần duyệt. Trước khi người đi gửi được gì, hãy điền `contribution.terms` (VI và EN) và `contribution.takedownContact` trong `src/content/site.ts`; cho tới lúc đó nút của chủ chuyến vẫn đóng.
 
-Admin còn có tab **Runbook** tại `/quan-tri/runbook` (`/en/admin/runbook`): danh sách API và các hướng dẫn vận hành, đọc từ `docs/`. Editor không thấy tab này. Với Docker, image mang theo bản sao `docs/` nên tab khớp với bản đã triển khai ([features/admin-runbook.vi.md](features/admin-runbook.vi.md)).
+Super admin còn có tab **Runbook** tại `/quan-tri/runbook` (`/en/admin/runbook`): danh sách API và các hướng dẫn vận hành, đọc từ `docs/`. Editor và admin không thấy tab này ([ADR 0017](adr/0017-super-admin-role.vi.md)). Với Docker, image mang theo bản sao `docs/` nên tab khớp với bản đã triển khai ([features/admin-runbook.vi.md](features/admin-runbook.vi.md)).
 
-### Sửa nội dung trên trình duyệt (admin hoặc editor)
+### Sửa nội dung trên trình duyệt (editor, admin hoặc super admin)
 
 Đăng nhập như mục trên (tài khoản `editor` có vai trò `editor`; admin đặt vai trò này được từ `/quan-tri`) rồi mở `/quan-tri/noi-dung/chuyen-di` (`/en/admin/content/stories`). Năm trang gồm danh sách chuyến đi, một chuyến đi, địa điểm, một địa điểm và đánh giá (`/quan-tri/noi-dung/dia-diem`, `/quan-tri/noi-dung/danh-gia`). Sửa một bản ghi rồi lưu; xuất bản hoặc lưu trữ story hay review là một hành động riêng. Tạo mới, xoá, template và collection chưa có trên trình duyệt — dùng API token ([travel-content-api.vi.md](travel-content-api.vi.md)).
 

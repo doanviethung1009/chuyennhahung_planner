@@ -2,7 +2,7 @@
 
 🇬🇧 English: [0006-unified-identity-and-roles.md](0006-unified-identity-and-roles.md)
 
-- **Trạng thái:** Accepted (đã chấp nhận) — 2026-11-11. Thay đổi chấp nhận chỉ hiện thực bước migration 1–2 (`role` tùy chọn, bảng `can`, bootstrap và nâng quyền bằng admin token); bước 3–4 (route admin qua session, portal, audit store, bỏ việc trình duyệt dùng token) vẫn thuộc Phase 07 và không được dựng sớm. Hợp đồng: `.claude/contracts/admin-role-bootstrap.md`.
+- **Trạng thái:** Accepted (đã chấp nhận) — 2026-11-11 (mở rộng bởi [ADR 0017](0017-super-admin-role.vi.md): vai trò thứ tư `super_admin`; bước 3–4 sau đó đã được ADR 0010 và 0011 thực hiện). Thay đổi chấp nhận chỉ hiện thực bước migration 1–2 (`role` tùy chọn, bảng `can`, bootstrap và nâng quyền bằng admin token); bước 3–4 (route admin qua session, portal, audit store, bỏ việc trình duyệt dùng token) vẫn thuộc Phase 07 và không được dựng sớm. Hợp đồng: `.claude/contracts/admin-role-bootstrap.md`.
 - **Ngày:** 2026-11-09 (chấp nhận 2026-11-11)
 - **Người sở hữu:** system-architect
 

@@ -8,7 +8,9 @@ Every Planner user now carries a role — `member`, `editor` or `admin` — and 
 operator holding `ADMIN_API_TOKEN` can create or promote the first admin. This is
 steps 1–2 of [ADR 0006](../adr/0006-unified-identity-and-roles.md): the role is
 recorded and resolved, but nothing in the request path enforces it yet, so no
-user-visible behaviour changes.
+user-visible behaviour changes. *Historical:* later changes enforce it — see
+[admin-portal.md](admin-portal.md), [admin-content-cms.md](admin-content-cms.md) and
+[super-admin-accounts.md](super-admin-accounts.md) (which adds `super_admin`).
 
 ## Routes
 
@@ -35,7 +37,7 @@ absent role becomes `member`; reads never rewrite the stored row. `can(principal
 action)` consults a static map: `member` none; `editor` `template:write` and
 `story:publish`; `admin` those plus `user:provision` and `user:promote`; `service`
 all four. `trip:support-read` is reserved and granted to no one. An unknown role or
-action is denied. No route calls `can` yet.
+action is denied. (At this step no route called `can`; today every admin route and page does.)
 
 `PATCH` parses `{ role }` with a strict schema (an extra key such as `email` is a
 422, because this route grants privilege), then `setUserRole`. The same role again
@@ -70,8 +72,7 @@ user; a first Google sign-in is `member`.
 
 ## Limits and open questions
 
-Nothing enforces a role: a wrong role has no effect today, and the risk is a later
-step trusting it. PATCH rests entirely on `ADMIN_API_TOKEN` (rate limit and
+*At this step* nothing enforced a role; the admin portal, content CMS and ADR 0017 now do. PATCH rests entirely on `ADMIN_API_TOKEN` (rate limit and
 timing-safe compare live in `adminPlannerRoute`). There is no audit log, admin UI,
 session-path admin route, MFA or identity provider (ADR 0006 steps 3–4). Open owner
 questions from the ADR remain: provider choice, who the admins are, and whether
