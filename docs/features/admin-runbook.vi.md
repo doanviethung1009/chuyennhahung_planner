@@ -6,7 +6,7 @@
 
 Một tab **Runbook** trong khu quản trị để quản trị viên đọc danh sách API và các
 hướng dẫn vận hành ngay trên trình duyệt, không cần quyền vào repository. Chỉ dành
-cho vai trò `admin`: editor hay người dùng đăng nhập khác nhận `404`, khách chưa
+cho vai trò `super_admin` ([ADR 0017](../adr/0017-super-admin-role.vi.md)): editor, admin hay người dùng đăng nhập khác nhận `404`, khách chưa
 đăng nhập được chuyển tới trang đăng nhập rồi quay lại. Nội dung là chính các tài
 liệu trong repository nên không lệch khỏi bản đang triển khai. Kết quả khảo sát dẫn
 tới việc này: trước đó chưa có danh sách API nào (chỉ có hợp đồng Travel Content ở

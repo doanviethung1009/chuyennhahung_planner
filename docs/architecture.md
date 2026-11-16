@@ -402,11 +402,11 @@ Deliberately absent, and not to be scaffolded early:
   browser user-administration portal — is built ([ADR 0010](adr/0010-admin-portal-session-authorization.md),
   [features/admin-portal.md](features/admin-portal.md)). Everything else below is not
   built or to be scaffolded early; each item needs its decision recorded first.
-  Remaining after slice 1: CMS, audit log, MFA, editor screens, a shared rate-limit store.
+  Remaining after slice 1: CMS, audit log, MFA, a shared rate-limit store.
   Design direction: [ADR 0006](adr/0006-unified-identity-and-roles.md) (Accepted 2026-11-11; migration steps 1–2 — `role`, `can`, admin-token bootstrap — are implemented, step 3 — session principals on admin routes — is partly done by ADR 0010, step 4 and the rest remain Phase 07).
   Backlog of dependencies and decisions:
   - **Identity provider** — sign-in methods are decided ([ADR 0007](adr/0007-password-and-google-sign-in.md): password and Google); still open are self-service reset (needs an email sender) and MFA for `admin`.
-  - **Role model** — `member` / `editor` / `admin` / `super_admin` ([ADR 0017](adr/0017-super-admin-role.md): Runbook and management of admin accounts) on the one user model, a pure `can(identity, action, resource)`, `ADMIN_API_TOKEN` demoted to a service principal. Enforced for user administration since slice 1; `editor` has no screen yet.
+  - **Role model** — `member` / `editor` / `admin` / `super_admin` ([ADR 0017](adr/0017-super-admin-role.md): Runbook and management of admin accounts) on the one user model, a pure `can(identity, action, resource)`, `ADMIN_API_TOKEN` demoted to a service principal. Enforced by `can` on every admin route and page; an `editor` reaches the content and community pages.
   - **Admin session and CSRF hardening** — done in slice 1 (shorter lifetimes per role; `requireSameOrigin` becomes load-bearing for admin mutations; the token never reaches a Client Component (`tests/client-boundary.test.ts`)); MFA still open.
   - **Audit log** — who changed which template or role, and any support read of a trip.
   - **SQL and multi-instance** — the admin portal makes a second writer to the stores likely; both stores can be on PostgreSQL ([ADR 0009](adr/0009-postgres-persistence.md), [ADR 0013](adr/0013-content-on-postgres-tables.md)), but the per-process rate limiter still does not survive more than one instance.

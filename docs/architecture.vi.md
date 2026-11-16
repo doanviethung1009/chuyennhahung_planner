@@ -401,11 +401,11 @@ Những thứ vắng mặt có chủ đích, và không được dựng sớm:
   quản lý user trên trình duyệt — đã dựng ([ADR 0010](adr/0010-admin-portal-session-authorization.vi.md),
   [features/admin-portal.vi.md](features/admin-portal.vi.md)). Mọi mục còn lại bên dưới
   chưa dựng và không được dựng sớm; mỗi mục cần ghi quyết định trước.
-  Còn lại sau lát cắt 1: CMS, audit log, MFA, màn hình editor, store rate limit dùng chung. Hướng thiết kế:
+  Còn lại sau lát cắt 1: CMS, audit log, MFA, store rate limit dùng chung. Hướng thiết kế:
   [ADR 0006](adr/0006-unified-identity-and-roles.vi.md) (Đã chấp nhận 2026-11-11; bước migration 1–2 — `role`, `can`, bootstrap bằng admin token — đã hiện thực, bước 3 — principal session trên route admin — đã xong một phần nhờ ADR 0010, bước 4 và phần còn lại vẫn thuộc Phase 07). Backlog phụ
   thuộc và quyết định:
   - **Nhà cung cấp danh tính** — các cách đăng nhập đã được quyết ([ADR 0007](adr/0007-password-and-google-sign-in.vi.md): mật khẩu và Google); còn mở là tự đặt lại mật khẩu (cần dịch vụ gửi email) và MFA cho `admin`.
-  - **Mô hình vai trò** — `member` / `editor` / `admin` / `super_admin` ([ADR 0017](adr/0017-super-admin-role.vi.md): Runbook và quản lý tài khoản admin) trên một mô hình user, hàm thuần `can(identity, action, resource)`, `ADMIN_API_TOKEN` hạ thành service principal. Đã thực thi cho quản lý user từ lát cắt 1; `editor` chưa có màn hình.
+  - **Mô hình vai trò** — `member` / `editor` / `admin` / `super_admin` ([ADR 0017](adr/0017-super-admin-role.vi.md): Runbook và quản lý tài khoản admin) trên một mô hình user, hàm thuần `can(identity, action, resource)`, `ADMIN_API_TOKEN` hạ thành service principal. Được thực thi bằng `can` trên mọi route và trang quản trị; `editor` vào được các trang nội dung và cộng đồng.
   - **Củng cố session admin và CSRF** — xong ở lát cắt 1 (thời hạn ngắn hơn theo vai trò; `requireSameOrigin` thành chốt chịu lực cho mutation admin; token không bao giờ tới Client Component (`tests/client-boundary.test.ts`)); MFA vẫn còn mở.
   - **Audit log** — ai đổi template hay vai trò nào, và mọi lần đọc trip để hỗ trợ.
   - **SQL và nhiều instance** — admin portal khiến có người ghi thứ hai vào store; cả hai store có thể lên PostgreSQL ([ADR 0009](adr/0009-postgres-persistence.vi.md), [ADR 0013](adr/0013-content-on-postgres-tables.vi.md)), nhưng rate limiter theo process vẫn không sống nổi qua một instance.

@@ -2,7 +2,7 @@
 
 🇻🇳 Bản tiếng Việt: [0006-unified-identity-and-roles.vi.md](0006-unified-identity-and-roles.vi.md)
 
-- **Status:** Accepted — 2026-11-11. Only migration steps 1–2 (optional `role`, the `can` map, admin-token bootstrap and promotion) are implemented in the accepting change; steps 3–4 (session-path admin routes, portal, audit store, removing browser use of the token) remain Phase 07 and are not to be scaffolded early. Contract: `.claude/contracts/admin-role-bootstrap.md`.
+- **Status:** Accepted — 2026-11-11 (extended by [ADR 0017](0017-super-admin-role.md): a fourth role, `super_admin`; steps 3–4 since shipped by ADR 0010 and 0011). Only migration steps 1–2 (optional `role`, the `can` map, admin-token bootstrap and promotion) are implemented in the accepting change; steps 3–4 (session-path admin routes, portal, audit store, removing browser use of the token) remain Phase 07 and are not to be scaffolded early. Contract: `.claude/contracts/admin-role-bootstrap.md`.
 - **Date:** 2026-11-09 (accepted 2026-11-11)
 - **Owner:** system-architect
 
