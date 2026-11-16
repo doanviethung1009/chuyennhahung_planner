@@ -59,8 +59,9 @@ export async function readAdminPageAccess(): Promise<AdminPageAccess> {
 
 /**
  * Page gate for the whole admin shell (ADR 0011 §5): any role that can do
- * something there. `forbidden` -> `notFound()`; the shell hides sections by
- * `can(role, ...)`, but the API stays the authority.
+ * something there. `forbidden` -> `notFound()`. Every page calls `requireStaff`
+ * itself; the sidebar only hides links by `can(role, ...)`, and the API stays
+ * the authority.
  */
 export type StaffPageAccess =
   | { status: 'anonymous' }

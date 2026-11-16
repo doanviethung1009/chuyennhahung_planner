@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, type Dirent } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import nextConfig, { adminPaths } from '../next.config';
@@ -86,6 +86,19 @@ describe('admin portal (frontend, ADR 0010)', () => {
     expect(readFileSync(join(base, 'layout.tsx'), 'utf8')).toMatch(/AdminSidebar/);
     expect(readFileSync(join(base, 'users/page.tsx'), 'utf8')).toMatch(/requireStaff\([\s\S]*?'users'\)/);
     expect(readFileSync(join(base, 'page.tsx'), 'utf8')).not.toMatch(/AdminConsole|AdminNav/);
+  });
+});
+
+describe('admin page gates (ADR 0020)', () => {
+  it('has every admin page call requireStaff itself, whatever the layout draws', () => {
+    const base = resolve(import.meta.dirname, '../src/app/[locale]/admin');
+    const pages = (readdirSync(base, { recursive: true, withFileTypes: true }) as Dirent[])
+      .filter((entry) => entry.isFile() && entry.name === 'page.tsx')
+      .map((entry) => join(entry.parentPath, entry.name));
+    expect(pages.length).toBeGreaterThanOrEqual(9);
+    for (const file of pages) {
+      expect(readFileSync(file, 'utf8'), file).toMatch(/requireStaff\(/);
+    }
   });
 });
 

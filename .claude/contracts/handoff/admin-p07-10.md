@@ -5,7 +5,7 @@
 - Migration: none. API/DB/RBAC: none changed.
 - Tests: typecheck PASS · lint PASS · `npm run test` PASS (68 files, 939 passed, 42 skipped) · `npm run build` PASS (`/[locale]/admin/users` routed).
 - Visual pass DONE on dev server (super admin + editor, local test accounts, since removed): 1280/768/375px — no horizontal overflow, one `<h1>`, `aria-current` correct, phone menu opens/closes on navigation, ≥44px targets, temporary-password redirect keeps `returnTo`; anonymous → sign-in `returnTo=/quan-tri/nguoi-dung`; editor sees no People/Operations and gets 404 on `/admin/users`, `/admin/runbook`. Found and fixed: VI breadcrumb "Người dùng / Người dùng" (group renamed "Thành viên").
-- NOT RUN: `qc`, `security` reviews (not called).
+- Reviews (run on owner's request): `qc` PASS · `security` PASS, no blocker/high/medium. Applied their low findings: `tabIndex={-1}` + positioned wrapper for the skip link, test that every admin page calls `requireStaff`, stale `StaffPageAccess` comment. Not applied: contract named `tests/return-to.test.ts`, cases live in `admin-portal.test.ts`; owner to accept scope deviations (runbook test, admin-portal docs, ADR README, this note).
 - Security: no new auth path; layout never redirects/404s (pages keep their gate, so no oracle); hiding ≠ authorization; `noindex` on `/admin/users`. No findings.
 - Decisions: only existing routes are linked (collections, integrity, audit, system, roles, media come with P07-12…18). Community link follows the page's `content:write` gate.
 - Risk: a bookmarked `/quan-tri` now shows the overview; `aria-current` matching verified in browser.

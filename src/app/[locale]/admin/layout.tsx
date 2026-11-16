@@ -22,7 +22,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const groups = adminSidebarGroups(access.principal);
 
   return (
-    <div className="flex flex-col lg:flex-row">
+    <div className="relative flex flex-col lg:flex-row">
       <a
         href="#admin-content"
         className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-lg focus:bg-surface focus:px-4 focus:py-3 focus:text-foreground"
@@ -30,7 +30,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         {t('skip')}
       </a>
       <AdminSidebar groups={groups} />
-      <div id="admin-content" className="min-w-0 flex-1">
+      <div id="admin-content" tabIndex={-1} className="min-w-0 flex-1 focus:outline-none">
         <AdminBreadcrumb groups={groups} />
         {children}
       </div>
