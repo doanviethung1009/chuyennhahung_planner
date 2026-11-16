@@ -10,12 +10,13 @@ export interface NavItem {
   href: StaticPathname;
 }
 
-/** The six primary navigation entries, in order. */
+/** The seven primary navigation entries, in order. */
 export const primaryNav: NavItem[] = [
   { key: 'home', href: '/' },
   { key: 'stories', href: '/stories' },
   { key: 'destinations', href: '/destinations' },
   { key: 'itineraries', href: '/itineraries' },
+  { key: 'communityTrips', href: '/community-trips' },
   { key: 'reviews', href: '/reviews' },
   { key: 'about', href: '/about' },
 ];
@@ -24,5 +25,4 @@ export const primaryNav: NavItem[] = [
 export const footerExtraNav: NavItem[] = [
   { key: 'map', href: '/map' },
   { key: 'planTrip', href: '/plan-your-trip' },
-  { key: 'communityTrips', href: '/community-trips' },
 ];
