@@ -41,9 +41,12 @@ gửi `private, no-store` cho render động này không — điều sau đượ
    `generateMetadata`, layout và header vẫn không đọc cookie.
 3. **Một server component** render dải phía trên hero; không client component, không fetch
    từ client, không endpoint mới.
-4. **Phản hồi cho request có cookie phải là `private, no-store`.** Được kiểm bằng test; nếu Next
-   không phát ra, thêm một luật header có điều kiện (`has` cookie) trong `next.config.ts`.
-5. **ADR 0021 vẫn là thiết kế đích cho tính năng đầy đủ** và là đường lui nếu có cache dùng chung.
+4. **Phản hồi cho request có cookie là `private, no-store`.** Được nêu bằng một luật header có
+   điều kiện (`has` cookie) trong `next.config.ts` cho `/` và `/en`, được khẳng định bằng test,
+   và cũng là mặc định của Next cho render động.
+5. **Cookie không thể là token phiên bị loại trước `identify`**, để trang công khai không đọc cả
+   store cho đầu vào rác.
+6. **ADR 0021 vẫn là thiết kế đích cho tính năng đầy đủ** và là đường lui nếu có cache dùng chung.
 
 ## Các phương án đã xét
 
@@ -68,7 +71,10 @@ phải phân biệt hoặc bỏ qua theo cookie phiên — phải quyết trư�
 cách ly giữa hai thành viên và test khách giống hệt từng byte là nghĩa vụ; quy tắc hiện có
 "trang công khai không chứa dữ liệu request" giờ có một ngoại lệ được gọi tên, được mã hóa
 trong `tests/home-page-boundary.test.ts` để nó không lan sang layout, header, metadata hay
-trang công khai khác. Đảo ngược là gỡ một dòng component và một module.
+trang công khai khác. `identify` có cùng tác dụng phụ như ở các trang admin — nó có thể gia hạn
+cửa sổ trượt của phiên và dọn phiên hết hạn — nên mở `/` với cookie hợp lệ làm mới phiên đó; một
+trình tải trước giữ cookie cũng vậy. Chấp nhận theo tiền lệ. Đảo ngược là gỡ một dòng component,
+một module và luật header.
 
 ## Việc tiếp theo
 

@@ -48,9 +48,16 @@ note, budget and version never leave the server module.
   `updatedAt` then `id`.
 - **Public page unchanged.** `generateMetadata`, the layout and the header read no
   request data; a request without the cookie renders the same HTML as before.
-- **Caching.** A request that carries the cookie is answered
-  `private, no-cache, no-store` by Next's dynamic rendering (checked on a production
-  build); no `next.config.ts` rule was needed.
+- **Caching.** A request that carries the cookie is answered `private, no-store`: a
+  conditional `has: cookie` rule in `next.config.ts` for `/` and `/en` states it, a test
+  asserts it, and Next's own dynamic render sends `private, no-cache, no-store` too
+  (checked on a production build). Guests are unaffected.
+- **Junk cookies.** A value that cannot be a session token (not 32–128 base64url
+  characters) is turned away before `identify`, so it costs no store read.
+- **Heading order.** The band's title is a `<p>` labelling its `<section>`, not a
+  heading, so the hero's `<h1>` stays first.
+- **Session side effect.** As on the admin pages, `identify` may extend a session's
+  sliding window, so opening `/` with a valid cookie renews it.
 
 ## Files
 
@@ -65,12 +72,15 @@ note, budget and version never leave the server module.
 - `tests/home-continue-trip.test.ts` — the picker, tie-breaks, the Vietnam day.
 - `tests/home-member.test.ts` — guest, garbage cookie, bearer token, pending password,
   first/next/continue, the exact key set, isolation between two members, store failure.
-- `tests/home-page-boundary.test.ts` — the one exception does not spread to the layout,
-  header, metadata or other pages.
+- `tests/home-member-band.test.ts` — the rendered band: nothing for a guest, hrefs, no
+  heading, 44px controls, past and undated trips, titles as text.
+- `tests/home-page-boundary.test.ts` — the one exception does not spread to any other
+  page, component or library file; the `private, no-store` rule and its cookie name.
 
 ## Limits and open questions
 
 - No activity count or progress in the band: it would need a full trip read.
+- Only the first 100 active trips are considered when choosing the trip to continue.
 - Onboarding steps, "For you", community activity and saved items are the larger
   [personalization spec](../specs-home-personalization.md), not built.
 - If a CDN or shared cache is ever put in front of `/`, it must bypass the cache for

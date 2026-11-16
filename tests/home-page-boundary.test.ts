@@ -1,6 +1,8 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import nextConfig, { homePaths, sessionCookieName } from '../next.config';
+import { SESSION_COOKIE } from '../src/server/planner/auth';
 
 /**
  * ADR 0022 lets the home page — and only it — read the session cookie on the
@@ -37,12 +39,51 @@ describe('home page request-data boundary (ADR 0022)', () => {
     expect(metadata).not.toMatch(/readHomeMember|cookies|headers\s*\(/);
   });
 
-  it('is imported by no other page or layout', () => {
-    const offenders = walk(join(src, 'app'))
-      .filter((path) => relative(src, path) !== join('app', '[locale]', 'page.tsx'))
-      .filter((path) => /server\/planner\/home-page/.test(readFileSync(path, 'utf8')))
+  it('is imported by no other page, layout, component or library file', () => {
+    // Everything under src may import it only as the page does, plus the
+    // band's type-only import. Walking all of src closes the gap a component
+    // or lib file would otherwise leave.
+    const importers = walk(src)
+      .filter((path) => /server\/planner\/home-page['"]/.test(readFileSync(path, 'utf8')))
+      .map((path) => relative(src, path).split(sep).join('/'))
+      .filter((path) => path !== 'server/planner/home-page.ts');
+    expect(importers.sort()).toEqual(['app/[locale]/page.tsx', 'components/home/home-member-band.tsx']);
+  });
+
+  it('lets the band import it as a type only', () => {
+    expect(read('components/home/home-member-band.tsx')).toMatch(
+      /^import type \{ HomeMember \} from '@\/server\/planner\/home-page';/m,
+    );
+  });
+
+  it('keeps request APIs out of every component and library file', () => {
+    const offenders = [...walk(join(src, 'components')), ...walk(join(src, 'lib'))]
+      .filter((path) => /from ['"]next\/headers['"]/.test(readFileSync(path, 'utf8')))
       .map((path) => relative(src, path).split(sep).join('/'));
     expect(offenders).toEqual([]);
+  });
+
+  it('keeps the cache-header cookie name equal to the real session cookie', () => {
+    expect(sessionCookieName).toBe(SESSION_COOKIE);
+  });
+
+  it('answers a cookie request on the home page private, no-store (A-9)', async () => {
+    const rules = (await nextConfig.headers?.()) ?? [];
+    for (const source of homePaths) {
+      const rule = rules.filter((r) => r.source === source && r.has).at(-1);
+      expect(rule, source).toEqual({
+        source,
+        has: [{ type: 'cookie', key: SESSION_COOKIE }],
+        headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+      });
+    }
+  });
+
+  it('adds no cache rule that would reach guests or other pages', async () => {
+    const rules = (await nextConfig.headers?.()) ?? [];
+    const cacheRules = rules.filter((r) => r.headers.some((h) => h.key.toLowerCase() === 'cache-control'));
+    expect(cacheRules.map((r) => r.source).sort()).toEqual([...homePaths].sort());
+    for (const rule of cacheRules) expect(rule.has?.length).toBe(1);
   });
 
   it('is not used by the shared chrome', () => {

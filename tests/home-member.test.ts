@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { resolveHomeMember } from '../src/server/planner/home-page';
 import type { PlannerRepository } from '../src/server/planner/repository';
 import { createMemoryPlannerStore } from '../src/server/planner/store';
@@ -27,6 +27,8 @@ describe('resolveHomeMember', () => {
     const planner = await setup();
     expect(await resolveHomeMember(planner, null, NOW)).toEqual({ status: 'guest' });
     expect(await resolveHomeMember(planner, 'not-a-real-session', NOW)).toEqual({ status: 'guest' });
+    // Well-formed but unknown: reaches the store and is refused there.
+    expect(await resolveHomeMember(planner, 'A'.repeat(43), NOW)).toEqual({ status: 'guest' });
   });
 
   it('is a guest when a bearer-only identity is all there is', async () => {
@@ -105,6 +107,41 @@ describe('resolveHomeMember', () => {
       ].sort(),
     );
     expect(JSON.stringify(result)).not.toMatch(/ghi chú riêng|ownerId|shareToken|budget|version/);
+  });
+
+  it('reads today in Vietnam across the UTC midnight boundary', async () => {
+    const planner = await setup();
+    const { userId, cookie } = await member(planner, 'nua-dem');
+    await planner.createTrip(userId, daLatTripInput({ startDate: '2026-06-10' }));
+
+    // 18:30 UTC on 9 June is 10 June in Vietnam: the trip leaves today.
+    expect(await resolveHomeMember(planner, cookie, new Date('2026-06-09T18:30:00Z'))).toMatchObject({
+      status: 'continue',
+      trip: { daysUntilStart: 0 },
+    });
+    // 16:59 UTC is still 9 June in Vietnam: one day to go.
+    expect(await resolveHomeMember(planner, cookie, new Date('2026-06-09T16:59:00Z'))).toMatchObject({
+      status: 'continue',
+      trip: { daysUntilStart: 1 },
+    });
+  });
+
+  it('turns a malformed cookie away without touching the store', async () => {
+    const spy = {
+      identify: vi.fn(() => Promise.reject(new Error('must not be called'))),
+      listTrips: vi.fn(() => Promise.reject(new Error('must not be called'))),
+    };
+    for (const junk of ['garbage', 'a'.repeat(31), 'a'.repeat(129), `${'a'.repeat(40)} x`, '"><script>']) {
+      expect(await resolveHomeMember(spy, junk, NOW)).toEqual({ status: 'guest' });
+    }
+    expect(spy.identify).not.toHaveBeenCalled();
+    expect(spy.listTrips).not.toHaveBeenCalled();
+  });
+
+  it('accepts a real session token shape, so the filter never locks members out', async () => {
+    const planner = await setup();
+    const { cookie } = await member(planner, 'hinh-dang');
+    expect(cookie).toMatch(/^[A-Za-z0-9_-]{32,128}$/);
   });
 
   it('reports no countdown for a trip whose date has passed', async () => {
