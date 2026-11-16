@@ -99,6 +99,21 @@
       "title": "Itineraries we actually travelled",
       "lead": "Broken down by day, with real costs and the parts we suggest you skip."
     },
+    "member": {
+      "continueEyebrow": "Continue planning",
+      "continueCta": "Keep editing",
+      "allTrips": "All my trips",
+      "days": "{count, plural, one {# day} other {# days}}",
+      "countdown": "{count, plural, one {# day to go} other {# days to go}}",
+      "leavingToday": "Leaving today",
+      "noDate": "Dates not set",
+      "startEyebrow": "Get started",
+      "firstTitle": "Create your first trip",
+      "firstLead": "Start from a blank page, or open one of Hưng's stories and use its real itinerary as a template.",
+      "nextTitle": "Start a new trip",
+      "nextLead": "Your earlier trips are finished or put away. Plan the next one.",
+      "createCta": "Create a trip"
+    },
     "plan": {
       "eyebrow": "Plan your own",
       "title": "Want a trip of your own?",

@@ -37,6 +37,7 @@ New features start from [`_template.md`](_template.md) /
 | Admin content CMS | [admin-content-cms.md](admin-content-cms.md) | `/quan-tri/noi-dung/...` — editors and admins edit stories, places and reviews with vi and en side by side, publish and moderate (ADR 0011) |
 | Public Travel pages from content | [public-travel-cms.md](public-travel-cms.md) | Home, stories, destinations and sitemap read published stories from the content repository, dynamic, so CMS edits go live on the next request (ADR 0012) |
 | Header account | [header-account.md](header-account.md) | Sign-in icon for guests, account menu (My Trips, password, admin, sign out) for members, desktop and mobile |
+| Home Continue Planning | [home-continue-planning.md](home-continue-planning.md) | A band above the hero for signed-in members: create the first trip, or Continue Planning on the next unfinished trip; guests see the page unchanged |
 | Create a blank trip | [create-blank-trip.md](create-blank-trip.md) | `/my-trips/new` — create-trip button and form on My Trips, `source: "blank"` |
 | Docker deploy on one VM | [docker-deploy.md](docker-deploy.md) | Runbook: nginx + app + optional PostgreSQL, bind-mounted state, host setup, backup |
 | Super admin accounts | [super-admin-accounts.md](super-admin-accounts.md) | `super_admin` role (ADR 0017): only it opens the Runbook, admins cannot manage admin accounts |

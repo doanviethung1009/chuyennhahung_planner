@@ -17,6 +17,8 @@ import { AboutSection } from '@/components/sections/about-section';
 import { CommunityTripsSection } from '@/components/sections/community-trips-section';
 import { getCommunityTrips } from '@/server/community/public';
 import { CommunityReviewsSection } from '@/components/sections/community-reviews-section';
+import { HomeMemberBand } from '@/components/home/home-member-band';
+import { readHomeMember } from '@/server/planner/home-page';
 
 /** Stories come from the content repository per request (ADR 0012). */
 export const dynamic = 'force-dynamic';
@@ -44,10 +46,14 @@ export default async function HomePage({ params }: Params) {
   if (!featured) return null;
 
   const communityTrips = await getCommunityTrips(3);
+  // The only request-dependent read on this page, and only here (ADR 0022).
+  const member = await readHomeMember();
   const featuredItineraries = itineraries.filter((i) => i.featured);
 
   return (
     <>
+      <HomeMemberBand member={member} locale={locale} />
+
       <Hero
         locale={locale}
         featured={featured}
