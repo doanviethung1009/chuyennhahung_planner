@@ -87,7 +87,7 @@ surface, and no inert schema).
 - **Keys.** Authenticated writes are keyed by `userId`, which a client cannot forge.
   Anonymous writes remain keyed by `clientKey(headers)`, which is a forwarded header and
   **still spoofable**: a shared store fixes persistence and multi-instance behaviour, not
-  spoofing. The trusted-proxy question (Cloudflare Tunnel, nginx) is raised in Follow-up.
+  spoofing. Backlog P10-12 records that nginx overwrites `x-forwarded-for` (covered by `tests/deploy-config.test.ts`); what stays open is the real VM configuration and whether Cloudflare Tunnel sits in front, which changes the trustworthy header. P10-11 (HMAC for `guestKey`) changes the guest key this limiter uses; both must land together or the limiter key changes twice.
 - If the database is unreachable a write limiter fails **closed** (`service_unavailable`):
   the write needs the same database anyway.
 
@@ -165,5 +165,4 @@ Harder, and not free:
 - **Open questions for the owner:**
   1. Resolved: profiles belong to Phase 11 (PHASES.md), not to this ADR.
   2. Is a 1-year retention for `AuditEvent` acceptable?
-  3. Behind Cloudflare Tunnel and nginx, which forwarded header is trustworthy for
-     `clientKey`? Needs the real deployment, not the repository.
+  3. Partly answered by P10-12 (nginx overwrites `x-forwarded-for`, tested in the repository). Still open: the real VM configuration, and whether Cloudflare Tunnel is in front (then the trustworthy header differs). Needs the real deployment, not the repository.

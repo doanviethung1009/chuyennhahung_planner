@@ -94,7 +94,7 @@ trust boundary, as every current surface is. [C]
 |---|---|
 | No session on a signed-in route | `401 unauthorized` |
 | Banned or restricted user writes | `403 forbidden` with the existing restriction message |
-| Gate closed (`contributionOpen` false) | `503 service_unavailable` on community writes; reads unaffected |
+| Gate closed (`contributionOpen` false) | `503 service_unavailable` on community writes; reads unaffected. Proposed: whether the server enforces the gate at all, or only the UI, is the owner's open decision P10-15 |
 | Journal not in a state that allows the action | `409` via `invalid_state` |
 | Stale edit | `412 version_conflict` |
 | Too many writes | `429 rate_limited` with `Retry-After` |

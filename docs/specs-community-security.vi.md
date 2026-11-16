@@ -4,8 +4,7 @@
 
 Trạng thái: **Đề xuất**. Nhãn **[C] [P] [A]**: xem
 [specs-community-overview.vi.md](specs-community-overview.vi.md). Đây là mô hình đe dọa lúc
-thiết kế, không phải một lần review. Reviewer `security` **CHƯA CHẠY**; khuyến nghị chạy
-trước Phase 13 và Phase 14 và chỉ chạy khi chủ dự án yêu cầu (`/sec-check`).
+thiết kế, không phải một lần review. Một lần review `security` cho bề mặt cộng đồng **hiện có** đã chạy ngày 2026-11-16 (PASS_WITH_WARNINGS; các phát hiện là mục backlog P10-11 đến P10-16); nó không phủ thiết kế này. Với các phase mới, reviewer **CHƯA CHẠY**; khuyến nghị chạy trước Phase 13 và Phase 14 và chỉ chạy khi chủ dự án yêu cầu (`/sec-check`).
 
 ## Mục tiêu và phạm vi
 

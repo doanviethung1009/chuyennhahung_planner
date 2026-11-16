@@ -4,7 +4,7 @@
 
 Trạng thái: **Đề xuất**. Nhãn **[C] [P] [A]**: xem
 [specs-community-overview.vi.md](specs-community-overview.vi.md). Tài liệu này không viết
-test nào. Reviewer `qc` độc lập **CHƯA CHẠY** và chỉ chạy khi chủ dự án yêu cầu (`/qc-check`).
+test nào. Một lần review `qc` cho bề mặt cộng đồng hiện có đã chạy ngày 2026-11-16 (PASS_WITH_NOTES; khoảng trống là mục backlog P10-13 và P10-14). Với các phase mới, reviewer `qc` độc lập **CHƯA CHẠY** và chỉ chạy khi chủ dự án yêu cầu (`/qc-check`).
 
 ## Mục tiêu và phạm vi
 
@@ -80,3 +80,4 @@ hàng đợi; hạn mức sao chép qua nửa đêm; moderator gỡ khi người
 |---|---|---|
 | 1 | Adapter PostgreSQL test được trong CI hay chỉ cục bộ? | Kiểm `.github/workflows/ci.yml`; dùng adapter JSON trong CI nếu không có database |
 | 2 | Có cần load test đường ghi trước Phase 14 không? | Một bài nhỏ, để chốt quyết định DB5 bằng dữ liệu |
+| 3 | Khoảng trống trong test cộng đồng hiện có: chưa có test HTTP 429 cho limiter đánh giá (P10-13), chưa có ca integration PostgreSQL cho `community_reviews` và `review_restrictions` (P10-14) | Đóng cả hai ở Phase 10 trước khi xây tiếp lên chúng |

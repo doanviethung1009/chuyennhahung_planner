@@ -4,8 +4,7 @@
 
 Status: **Proposed**. Labels **[C] [P] [A]**: see
 [specs-community-overview.md](specs-community-overview.md). No test is written by this
-document. The independent `qc` reviewer is **NOT RUN** and runs only when the owner asks
-(`/qc-check`).
+document. A `qc` review of the existing community surface ran on 2026-11-16 (PASS_WITH_NOTES; gaps are backlog items P10-13 and P10-14). For the new phases the independent `qc` reviewer is **NOT RUN** and runs only when the owner asks (`/qc-check`).
 
 ## Goals and scope
 
@@ -84,3 +83,4 @@ queue; copy quota across midnight; moderator removal while a reader has the page
 |---|---|---|
 | 1 | Can the PostgreSQL adapter be tested in CI, or only locally? | Check `.github/workflows/ci.yml`; use the JSON adapter in CI if no database is provided |
 | 2 | Is a load test of the write path wanted before Phase 14? | A small one, to settle decision DB5 with data |
+| 3 | Known gaps in the existing community tests: no HTTP 429 test for the review limiters (P10-13), no PostgreSQL integration case for `community_reviews` and `review_restrictions` (P10-14) | Close both in Phase 10 before building on them |

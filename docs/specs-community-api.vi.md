@@ -94,7 +94,7 @@ bề mặt hiện nay. [C]
 |---|---|
 | Không có session ở route cần đăng nhập | `401 unauthorized` |
 | User bị cấm hoặc hạn chế ghi | `403 forbidden` kèm thông điệp hạn chế hiện có |
-| Cổng đóng (`contributionOpen` false) | `503 service_unavailable` ở thao tác ghi cộng đồng; đọc không ảnh hưởng |
+| Cổng đóng (`contributionOpen` false) | `503 service_unavailable` ở thao tác ghi cộng đồng; đọc không ảnh hưởng. Đề xuất: việc server có ép cổng hay chỉ UI là quyết định mở P10-15 của chủ dự án |
 | Nhật ký không ở trạng thái cho phép hành động | `409` qua `invalid_state` |
 | Sửa trên bản cũ | `412 version_conflict` |
 | Ghi quá nhiều | `429 rate_limited` kèm `Retry-After` |

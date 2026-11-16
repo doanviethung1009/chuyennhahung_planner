@@ -86,7 +86,7 @@ Read on 2026-11-16 from `main` (e362aea); paths are real.
 | Moderation | `community:moderate` for editor and up; `community:restrict` for admin and up; no `moderator` role | `permissions.ts:12-50` |
 | Community today | Trip listing (`none/pending/approved/rejected`), place reviews, review restrictions, staff queue | ADR 0014/0015, migrations `0005`–`0008` |
 | Sharing | `visibility`, share token, `SharedTripView` allow-list, `duplicateTrip` (owner's own trip only) | ADR 0005, `repository.ts:1329` |
-| Rate limiting | In-memory, per process, spoofable client key | `src/server/rate-limit.ts`, ADR 0005 |
+| Rate limiting | In-memory, per process; the client key is a forwarded header, spoofable unless the proxy overwrites it (nginx overwrite is configured and tested in `tests/deploy-config.test.ts`, real VM config still to confirm, P10-12) | `src/server/rate-limit.ts`, ADR 0005 |
 | Notifications, follow, like, comment, report, search | **None** | grep over `src`, `db/migrations` |
 | Email sender | **None** (blocks reset-by-email and email notifications) | [specs-roadmap.md](specs-roadmap.md#not-open-yet) |
 | Contribution gate | **Open**: terms and a takedown contact are filled; PR #107 Q8 asks the owner to confirm the contact is a monitored mailbox | `contributionOpen`, `src/content/site.ts:102` |

@@ -85,9 +85,7 @@ không schema nằm không).
   lát kế tiếp trở đi dùng nó ngay từ đầu.** Các limiter đăng nhập, đăng ký, đọc chia sẻ và Google
   không đổi trong ADR này.
 - **Khóa.** Lệnh ghi đã đăng nhập khóa theo `userId`, client không giả được. Lệnh ghi ẩn
-  danh vẫn khóa theo `clientKey(headers)`, vốn là một header chuyển tiếp và **vẫn giả mạo
-  được**: kho dùng chung sửa tính bền vững và hành vi đa instance, không sửa giả mạo. Câu
-  hỏi proxy đáng tin (Cloudflare Tunnel, nginx) được nêu ở phần Theo dõi.
+  danh vẫn khóa theo `clientKey(headers)`, vốn là một header chuyển tiếp và **vẫn giả mạo được**: kho dùng chung sửa tính bền vững và hành vi đa instance, không sửa giả mạo. Backlog P10-12 ghi rằng nginx ghi đè `x-forwarded-for` (có `tests/deploy-config.test.ts` phủ); phần còn mở là cấu hình thật trên VM và việc Cloudflare Tunnel có đứng trước không, vì nó đổi header đáng tin. P10-11 (HMAC cho `guestKey`) đổi khóa khách mà limiter này dùng; hai việc phải đi cùng nhau, nếu không khóa của limiter đổi hai lần.
 - Nếu database không với tới được thì limiter ghi **từ chối** (`service_unavailable`): lệnh
   ghi cũng cần chính database đó.
 
@@ -166,5 +164,4 @@ Khó hơn, và không miễn phí:
 - **Câu hỏi mở cho chủ dự án:**
   1. Đã giải quyết: hồ sơ thuộc Phase 11 (PHASES.md), không thuộc ADR này.
   2. Lưu giữ `AuditEvent` 1 năm có chấp nhận được không?
-  3. Sau Cloudflare Tunnel và nginx, header chuyển tiếp nào đáng tin cho `clientKey`? Cần
-     xem triển khai thật, không phải repository.
+  3. Đã trả lời một phần bởi P10-12 (nginx ghi đè `x-forwarded-for`, có test trong repository). Còn mở: cấu hình thật trên VM, và việc Cloudflare Tunnel có đứng trước không (khi đó header đáng tin khác đi). Cần xem triển khai thật, không phải repository.

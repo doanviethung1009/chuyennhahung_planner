@@ -86,7 +86,7 @@ liệu hành vi, bản đồ Planner và gợi ý AI (cả hai vẫn đóng, xem
 | Kiểm duyệt | `community:moderate` từ editor trở lên; `community:restrict` từ admin trở lên; không có vai trò `moderator` | `permissions.ts:12-50` |
 | Cộng đồng hiện tại | Đăng chuyến (`none/pending/approved/rejected`), đánh giá địa điểm, hạn chế đánh giá, hàng đợi nhân viên | ADR 0014/0015, migration `0005`–`0008` |
 | Chia sẻ | `visibility`, share token, danh sách cho phép `SharedTripView`, `duplicateTrip` (chỉ chuyến của chính chủ) | ADR 0005, `repository.ts:1329` |
-| Giới hạn tốc độ | Trong bộ nhớ, theo tiến trình, khóa client giả mạo được | `src/server/rate-limit.ts`, ADR 0005 |
+| Giới hạn tốc độ | Trong bộ nhớ, theo tiến trình; khóa client là header chuyển tiếp, giả mạo được trừ khi proxy ghi đè (nginx ghi đè đã cấu hình và có test trong `tests/deploy-config.test.ts`, cấu hình thật trên VM còn phải xác nhận, P10-12) | `src/server/rate-limit.ts`, ADR 0005 |
 | Thông báo, theo dõi, thích, bình luận, báo cáo, tìm kiếm | **Không có** | grep trên `src`, `db/migrations` |
 | Bộ gửi email | **Không có** (chặn đặt lại mật khẩu qua email và thông báo email) | [specs-roadmap.vi.md](specs-roadmap.vi.md#chưa-mở) |
 | Cổng đóng góp | **Mở**: điều khoản và liên hệ gỡ bài đã được điền; PR #107 Q8 nhờ chủ dự án xác nhận liên hệ là hộp thư có người theo dõi | `contributionOpen`, `src/content/site.ts:102` |

@@ -4,7 +4,7 @@
 
 Status: **Proposed**. Labels **[C] [P] [A]**: see
 [specs-community-overview.md](specs-community-overview.md). This is a design-time threat
-model, not a review. The `security` reviewer has **NOT RUN**; it is recommended before Phases 13 and 14 and runs only when the owner asks (`/sec-check`).
+model, not a review. A `security` review of the **existing** community surface ran on 2026-11-16 (PASS_WITH_WARNINGS; findings are backlog items P10-11 to P10-16); it did not cover this design. For the new phases the reviewer has **NOT RUN**; it is recommended before Phases 13 and 14 and runs only when the owner asks (`/sec-check`).
 
 ## Goals and scope
 
