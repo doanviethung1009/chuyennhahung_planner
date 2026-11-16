@@ -22,6 +22,17 @@ index below.
 | [architecture.md](architecture.md) | Runtime shape, routing, data flow, module boundaries, phases |
 | [specs-roadmap.md](specs-roadmap.md) | Spec: project phases at a glance — status table, decision timeline, what is not open yet, what still needs the owner |
 | [specs-product.md](specs-product.md) | Spec: product and capabilities — purpose, audiences and roles, capability and API-surface tables, the rules every change keeps |
+| [specs-planner-personalization.md](specs-planner-personalization.md) | Spec (proposed): Planner personalization and community — traveller preferences, rule-based matching, "Use this trip", trust and safety, delivery slices, open questions |
+| [specs-community-overview.md](specs-community-overview.md) | Community Platform spec (proposed): overview and assessment |
+| [specs-community-architecture.md](specs-community-architecture.md) | Community Platform spec (proposed): architecture: modules, decisions, flows |
+| [specs-community-database.md](specs-community-database.md) | Community Platform spec (proposed): data model, ERD, indexes, migrations 0010+ |
+| [specs-community-api.md](specs-community-api.md) | Community Platform spec (proposed): routes, authorization, pagination, errors, limits |
+| [specs-community-fe.md](specs-community-fe.md) | Community Platform spec (proposed): pages, flows, components, states |
+| [specs-community-media.md](specs-community-media.md) | Community Platform spec (proposed): hybrid image storage, upload pipeline, video embeds |
+| [specs-community-moderation.md](specs-community-moderation.md) | Community Platform spec (proposed): curated state machine, roles, reports |
+| [specs-community-security.md](specs-community-security.md) | Community Platform spec (proposed): RBAC, ownership, privacy, threat model |
+| [specs-community-qc.md](specs-community-qc.md) | Community Platform spec (proposed): test strategy, acceptance per phase, regression net |
+| [specs-community-roadmap.md](specs-community-roadmap.md) | Community Platform spec (proposed): phases C1-C7, agent plan, risk register, decision log |
 | [usage.md](usage.md) | Install, run, test, verify, deploy, and the day-to-day workflows |
 | [travel-content-api.md](travel-content-api.md) | Travel Content System API contract — endpoints, conventions, error codes, invariants |
 | [runbook.md](runbook.md) | Runbook: where to start — which guide answers which question, quick checks, and the list of every API endpoint; shown to admins at `/quan-tri/runbook` |

@@ -21,6 +21,17 @@ trúc hai bản lệch nhau, hoặc nếu tài liệu chưa được liệt kê 
 | [architecture.vi.md](architecture.vi.md) | Hình dạng runtime, routing, luồng dữ liệu, ranh giới module, các phase |
 | [specs-roadmap.vi.md](specs-roadmap.vi.md) | Spec: các giai đoạn dự án trong một trang — bảng trạng thái, dòng thời gian quyết định, những gì chưa mở, những gì còn cần chủ dự án |
 | [specs-product.vi.md](specs-product.vi.md) | Spec: sản phẩm và các khả năng — mục đích, đối tượng và vai trò, bảng khả năng và bề mặt API, các quy tắc mọi thay đổi đều giữ |
+| [specs-planner-personalization.vi.md](specs-planner-personalization.vi.md) | Spec (đề xuất): cá nhân hóa và cộng đồng Planner — sở thích người đi, khớp theo luật, "Dùng chuyến này", tin cậy và an toàn, các lát triển khai, câu hỏi còn mở |
+| [specs-community-overview.vi.md](specs-community-overview.vi.md) | Spec Community Platform (đề xuất): tổng quan — tầm nhìn, hiện trạng repository, khoảng trống |
+| [specs-community-architecture.vi.md](specs-community-architecture.vi.md) | Spec Community Platform (đề xuất): kiến trúc — module, quyết định, luồng |
+| [specs-community-database.vi.md](specs-community-database.vi.md) | Spec Community Platform (đề xuất): cơ sở dữ liệu — mô hình dữ liệu, ERD, chỉ mục, migration 0010+ |
+| [specs-community-api.vi.md](specs-community-api.vi.md) | Spec Community Platform (đề xuất): API — route, phân quyền, phân trang, lỗi, giới hạn |
+| [specs-community-fe.vi.md](specs-community-fe.vi.md) | Spec Community Platform (đề xuất): frontend — trang, luồng, component, trạng thái |
+| [specs-community-media.vi.md](specs-community-media.vi.md) | Spec Community Platform (đề xuất): media — lưu ảnh lai, pipeline upload, embed video |
+| [specs-community-moderation.vi.md](specs-community-moderation.vi.md) | Spec Community Platform (đề xuất): kiểm duyệt — máy trạng thái tuyển chọn, vai trò, báo cáo |
+| [specs-community-security.vi.md](specs-community-security.vi.md) | Spec Community Platform (đề xuất): bảo mật — RBAC, sở hữu, riêng tư, mô hình đe dọa |
+| [specs-community-qc.vi.md](specs-community-qc.vi.md) | Spec Community Platform (đề xuất): QC — chiến lược test, nghiệm thu theo phase, lưới hồi quy |
+| [specs-community-roadmap.vi.md](specs-community-roadmap.vi.md) | Spec Community Platform (đề xuất): roadmap — phase C1–C7, kế hoạch agent, sổ rủi ro, nhật ký quyết định |
 | [usage.vi.md](usage.vi.md) | Cài đặt, chạy, test, kiểm tra, deploy và các luồng việc hằng ngày |
 | [travel-content-api.vi.md](travel-content-api.vi.md) | Hợp đồng API của Travel Content System — endpoint, quy ước, mã lỗi, các bất biến |
 | [runbook.vi.md](runbook.vi.md) | Runbook: nơi bắt đầu — hướng dẫn nào trả lời câu hỏi nào, kiểm tra nhanh và danh sách mọi endpoint API; hiển thị cho admin tại `/quan-tri/runbook` |
