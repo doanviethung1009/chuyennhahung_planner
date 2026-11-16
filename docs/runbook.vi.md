@@ -98,6 +98,7 @@ hay bỏ một route nghĩa là sửa bảng này ở cả hai ngôn ngữ.
 | POST | `/api/admin/planner/users/[userId]/ban` | Admin token hoặc phiên admin | Khóa tài khoản: kết thúc phiên, chặn mọi đăng nhập (ADR 0017) |
 | POST | `/api/admin/planner/users/[userId]/unban` | Admin token hoặc phiên admin | Gỡ khóa |
 | POST | `/api/admin/planner/users/[userId]/restore` | Admin token hoặc phiên admin | Khôi phục tài khoản đã xóa mềm |
+| GET | `/api/admin/planner/users/[userId]/impact` | Admin token hoặc phiên admin | Đếm chuyến đi và bình luận sẽ bị xóa khi xóa vĩnh viễn |
 | POST | `/api/admin/planner/users/[userId]/reset-password` | Admin token hoặc phiên admin | Cấp lại mật khẩu tạm (`user:provision`) |
 | POST | `/api/admin/planner/users/[userId]/rotate-token` | Chỉ admin token | Đổi access token |
 | DELETE | `/api/admin/planner/users/[userId]/google` | Chỉ admin token | Gỡ liên kết Google |

@@ -1,6 +1,8 @@
 import type { AdminRole, AdminUser } from './types';
 
 export type RoleFilter = 'all' | AdminRole;
+/** `deleted` = soft-deleted accounts, `active` = everyone else, `all` = no status filter. */
+export type StatusView = 'all' | 'active' | 'deleted';
 
 /** Lower-case, strip Vietnamese diacritics (đ included) so "hung" finds "Hưng". */
 export function normalizeSearch(value: string): string {
@@ -13,9 +15,16 @@ export function normalizeSearch(value: string): string {
 }
 
 /** Client-side filter over the already-loaded list: name, handle or email, and role. */
-export function filterUsers(users: AdminUser[], query: string, role: RoleFilter): AdminUser[] {
+export function filterUsers(
+  users: AdminUser[],
+  query: string,
+  role: RoleFilter,
+  view: StatusView = 'all',
+): AdminUser[] {
   const needle = normalizeSearch(query);
   return users.filter((user) => {
+    if (view === 'deleted' && !user.deletedAt) return false;
+    if (view === 'active' && user.deletedAt) return false;
     if (role !== 'all' && (user.role ?? 'member') !== role) return false;
     if (!needle) return true;
     return [user.displayName, user.handle, user.email ?? ''].some((field) =>

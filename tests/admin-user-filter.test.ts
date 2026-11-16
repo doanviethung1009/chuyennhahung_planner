@@ -36,4 +36,11 @@ describe('admin user filter', () => {
   it('folds đ to d', () => {
     expect(normalizeSearch('Đà Lạt')).toBe('da lat');
   });
+
+  it('splits active and soft-deleted accounts by view', () => {
+    const mixed: AdminUser[] = [...users, { ...users[0]!, id: '4', handle: 'gone', deletedAt: '2026-02-01T00:00:00Z' }];
+    expect(ids(filterUsers(mixed, '', 'all', 'active'))).toEqual(['1', '2', '3']);
+    expect(ids(filterUsers(mixed, '', 'all', 'deleted'))).toEqual(['4']);
+    expect(ids(filterUsers(mixed, '', 'all'))).toEqual(['1', '2', '3', '4']);
+  });
 });

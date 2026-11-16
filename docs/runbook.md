@@ -98,6 +98,7 @@ adding or removing a route means editing this table in both languages.
 | POST | `/api/admin/planner/users/[userId]/ban` | Admin token or admin session | Ban an account: ends its sessions, blocks every sign-in (ADR 0017) |
 | POST | `/api/admin/planner/users/[userId]/unban` | Admin token or admin session | Lift a ban |
 | POST | `/api/admin/planner/users/[userId]/restore` | Admin token or admin session | Restore a soft-deleted account |
+| GET | `/api/admin/planner/users/[userId]/impact` | Admin token or admin session | Count the trips and reviews a permanent delete would remove |
 | POST | `/api/admin/planner/users/[userId]/reset-password` | Admin token or admin session | Reissue a temporary password (`user:provision`) |
 | POST | `/api/admin/planner/users/[userId]/rotate-token` | Admin token only | Rotate the access token |
 | DELETE | `/api/admin/planner/users/[userId]/google` | Admin token only | Unlink Google from the user |
