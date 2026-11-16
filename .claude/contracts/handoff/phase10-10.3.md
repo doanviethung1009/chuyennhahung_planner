@@ -5,12 +5,12 @@ Branch `feat/shared-write-limiter` (nothing committed/pushed). Contract: `phase1
 - Step 0 (P10-13): `tests/review-limiter-routes.test.ts` (429 + `Retry-After`, Planner 5/h and guest 3/h) green on the old in-memory code before the change. The 30-day guest restriction default was already asserted (`tests/community-reviews.test.ts`, "time-boxes a guest").
 - **Migration `0011_rate_limit_counters.sql`** + rollback. Next free number = `0012` (specs-community-database renumbered 0012+ by one).
 - Interface `AsyncRateLimiter { check(key): Promise<RateLimitResult> }` and `asAsyncLimiter(syncLimiter)` in `src/server/rate-limit.ts`; sync `RateLimiter` untouched.
-- `src/server/persistence/postgres-rate-limiter.ts`: `createPostgresRateLimiter({ pool, name, limit, windowMs, now? })`; sha256 key, fixed window, one upsert outside the store transaction, sweep >24h, any DB error → `ContentError('service_unavailable')` (fail closed).
+- `src/server/persistence/postgres-rate-limiter.ts`: `createPostgresRateLimiter({ pool, name, limit, windowMs, now? })`; sha256 key, fixed window, one upsert outside the store transaction, own pool (max 2, statement_timeout 3s) from `getWriteLimiters`, batched sweep >2h, any DB error → `ContentError('service_unavailable')` (fail closed).
 - `planner/instance.ts`: `getWriteLimiters()` (built beside the repository, same cached promise; pool exposed from `selectStore`).
 - `plannerReviewLimiter` / `guestReviewLimiter` exports removed; routes use `getWriteLimiters()`.
 
 ## Add a write limiter (10.4 report, 10.5 terms)
-1. Add `{ name, limit, windowMs ≤ 24h }` to `WRITE_LIMITS` (`rate-limit.ts`). 2. Add it to `buildLimiters` in `instance.ts`. 3. In the route: `const l = await (await getWriteLimiters()).<name>.check(key); if (!l.ok) throw rateLimited(l.retryAfterSeconds)` **before** the write. Use `userId`, never raw IP, where a user exists.
+1. Add `{ name, limit, windowMs ≤ 1h }` to `WRITE_LIMITS` (`rate-limit.ts`). 2. Add it to `buildLimiters` in `instance.ts`. 3. In the route: `const l = await (await getWriteLimiters()).<name>.check(key); if (!l.ok) throw rateLimited(l.retryAfterSeconds)` **before** the write. Use `userId`, never raw IP, where a user exists.
 
 ## Not done / notes
 - `x-forwarded-for` spoofing NOT fixed (10.6); DB round trip per check unmeasured; fixed window allows 2× limit at a boundary.

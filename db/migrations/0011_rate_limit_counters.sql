@@ -1,6 +1,6 @@
 -- 0011_rate_limit_counters — shared fixed-window counters for write rate limits
 -- (ADR 0019 §3, batch 10.3). One row per (hashed key, window); the app does a
--- single atomic upsert per check and sweeps rows older than 24 hours.
+-- single atomic upsert per check and sweeps rows older than 2 hours.
 -- `key` is a SHA-256 hex of limiter name + caller key: no address or user id in the clear.
 -- `window_start` is the window's start in epoch milliseconds. No foreign keys (ADR 0013).
 -- Rollback: db/rollback/0011_rate_limit_counters.sql.

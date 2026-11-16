@@ -59,10 +59,30 @@ describe('Postgres rate limiter (fake pool)', () => {
     const sweeps = calls.filter((c) => c.text.startsWith('DELETE'));
     expect(sweeps).toHaveLength(1);
     expect(sweeps[0]!.values).toEqual([10_000 - COUNTER_RETENTION_MS]);
+    expect(COUNTER_RETENTION_MS).toBeLessThanOrEqual(2 * 60 * 60_000);
   });
 
-  it('refuses a window longer than the retention', () => {
+  it('refuses a window longer than half the retention', () => {
     const { pool } = fakePool();
-    expect(() => createPostgresRateLimiter({ pool, name: 'a', limit: 1, windowMs: COUNTER_RETENTION_MS + 1 })).toThrow();
+    expect(() => createPostgresRateLimiter({ pool, name: 'a', limit: 1, windowMs: COUNTER_RETENTION_MS / 2 + 1 })).toThrow();
+    expect(() => createPostgresRateLimiter({ pool, name: 'a', limit: 1, windowMs: COUNTER_RETENTION_MS / 2 })).not.toThrow();
+  });
+
+  it('sweeps in bounded batches until a short batch', async () => {
+    const batches: number[] = [1000, 1000, 5];
+    const calls: string[] = [];
+    const pool: PgQueryable = {
+      async query(text) {
+        calls.push(text);
+        if (text.startsWith('DELETE')) return { rows: Array.from({ length: batches.shift() ?? 0 }, () => ({})) };
+        return { rows: [{ count: 1 }] };
+      },
+    };
+    let t = 0;
+    const limiter = createPostgresRateLimiter({ pool, name: 'a', limit: 3, windowMs: 1000, now: () => t, sweepIntervalMs: 1 });
+    t = 5;
+    await limiter.check('k');
+    await new Promise((r) => setTimeout(r, 20));
+    expect(calls.filter((c) => c.startsWith('DELETE'))).toHaveLength(3);
   });
 });

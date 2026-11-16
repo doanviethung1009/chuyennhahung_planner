@@ -16,6 +16,10 @@ import type { AsyncRateLimiter, RateLimitResult } from '@/server/rate-limit';
  * "allow". The caller checks before it writes, so nothing is stored. The
  * driver's message is dropped — it can carry a host or role name.
  *
+ * The limiter should get its own small pool with a `statement_timeout`
+ * (`planner/instance.ts`), so anonymous traffic cannot hold the Planner store's
+ * connections.
+ *
  * Honest limits: a fixed window allows up to twice the limit across a window
  * boundary (the in-memory limiter is a sliding window); the key is whatever the
  * caller supplies, so a forgeable `x-forwarded-for` stays forgeable (10.6 is
@@ -42,9 +46,15 @@ export interface PostgresRateLimiterOptions {
 
 /**
  * Rows older than this are deleted by the sweep, whatever limiter wrote them,
- * so no limiter's window may be longer (checked on creation).
+ * so no limiter's window may be longer than half of it (checked on creation).
+ * Short on purpose: a client rotating forged keys leaves one row per key per
+ * window, so rows can only pile up for about this long.
  */
-export const COUNTER_RETENTION_MS = 24 * 60 * 60_000;
+export const COUNTER_RETENTION_MS = 2 * 60 * 60_000;
+export const MAX_WINDOW_MS = COUNTER_RETENTION_MS / 2;
+/** Rows deleted per statement, and statements per sweep, so one sweep stays light. */
+const SWEEP_BATCH = 1000;
+const SWEEP_MAX_BATCHES = 10;
 const SWEEP_INTERVAL_MS = 10 * 60_000;
 
 const COUNT_SQL = `INSERT INTO rate_limit_counters (key, window_start, count)
@@ -53,7 +63,9 @@ ON CONFLICT (key, window_start) DO UPDATE
   SET count = LEAST(rate_limit_counters.count + 1, $3)
 RETURNING count`;
 
-const SWEEP_SQL = 'DELETE FROM rate_limit_counters WHERE window_start < $1';
+const SWEEP_SQL = `DELETE FROM rate_limit_counters WHERE ctid IN (
+  SELECT ctid FROM rate_limit_counters WHERE window_start < $1 LIMIT ${SWEEP_BATCH})
+RETURNING 1`;
 
 /** The stored key: a hash, so no address or user id sits in the table in the clear. */
 export function counterKey(name: string, key: string): string {
@@ -63,8 +75,8 @@ export function counterKey(name: string, key: string): string {
 export function createPostgresRateLimiter(options: PostgresRateLimiterOptions): AsyncRateLimiter {
   const { pool, name, limit, windowMs } = options;
   if (!Number.isInteger(limit) || limit < 1) throw new Error('rate limit must be a positive integer');
-  if (!Number.isInteger(windowMs) || windowMs < 1 || windowMs > COUNTER_RETENTION_MS) {
-    throw new Error('rate limit window must be between 1 ms and the counter retention');
+  if (!Number.isInteger(windowMs) || windowMs < 1 || windowMs > MAX_WINDOW_MS) {
+    throw new Error('rate limit window must be between 1 ms and half the counter retention');
   }
   const now = options.now ?? Date.now;
   const sweepIntervalMs = options.sweepIntervalMs ?? SWEEP_INTERVAL_MS;
@@ -76,12 +88,18 @@ export function createPostgresRateLimiter(options: PostgresRateLimiterOptions): 
     if (sweeping || at - lastSweep < sweepIntervalMs) return;
     sweeping = true;
     lastSweep = at;
-    pool
-      .query(SWEEP_SQL, [at - COUNTER_RETENTION_MS])
-      .catch(() => undefined)
-      .finally(() => {
+    void (async () => {
+      try {
+        for (let i = 0; i < SWEEP_MAX_BATCHES; i += 1) {
+          const { rows } = await pool.query(SWEEP_SQL, [at - COUNTER_RETENTION_MS]);
+          if (rows.length < SWEEP_BATCH) break;
+        }
+      } catch {
+        // Best effort: the next sweep tries again.
+      } finally {
         sweeping = false;
-      });
+      }
+    })();
   }
 
   return {

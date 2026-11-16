@@ -33,6 +33,7 @@ interface Selected {
   store: PlannerStore;
   /** The Planner's pool, or null on the JSON store; the write limiters share it. */
   pool: pg.Pool | null;
+  databaseUrl: string | null;
 }
 
 async function selectStore(): Promise<Selected> {
@@ -58,11 +59,12 @@ async function selectStore(): Promise<Selected> {
       await pool.end().catch(() => undefined);
       throw error;
     }
-    return { store: createPostgresPlannerStore(pool), pool };
+    return { store: createPostgresPlannerStore(pool), pool, databaseUrl };
   }
   return {
     store: createJsonPlannerStore(process.env.PLANNER_STORE?.trim() || DEFAULT_STORE_PATH),
     pool: null,
+    databaseUrl: null,
   };
 }
 
@@ -79,7 +81,13 @@ interface Built {
  * limiters wrapped to the async interface. A configured database never falls
  * back to in-process counters — a check that cannot reach it fails closed.
  */
-function buildLimiters(pool: pg.Pool | null): WriteLimiters {
+function buildLimiters(databaseUrl: string | null): WriteLimiters {
+  // Their own small pool with a statement timeout: every anonymous guest POST
+  // makes one query, and that must not be able to hold the store's connections
+  // (max 5) or hang on a stuck query. A slow database is then a fast 503.
+  const pool = databaseUrl
+    ? createPostgresPool(databaseUrl, { max: 2, options: '-c statement_timeout=3000' })
+    : null;
   const make = (spec: (typeof WRITE_LIMITS)[WriteLimitName]): AsyncRateLimiter =>
     pool
       ? createPostgresRateLimiter({ pool, ...spec })
@@ -98,11 +106,11 @@ let lastFailure: { at: number; error: unknown } | null = null;
 
 async function build(): Promise<Built> {
   const content = await getRepository();
-  const { store, pool } = await selectStore();
+  const { store, databaseUrl } = await selectStore();
 
   return {
     repository: new PlannerRepository({ store, catalog: createContentCatalog(content) }),
-    limiters: buildLimiters(pool),
+    limiters: buildLimiters(databaseUrl),
   };
 }
 

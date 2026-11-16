@@ -75,7 +75,7 @@ describe.skipIf(!url)('Postgres rate limiter (TEST_DATABASE_URL)', () => {
     expect(rows.every((r) => /^[0-9a-f]{64}$/.test(String(r.key)))).toBe(true);
   });
 
-  it('sweeps windows older than the retention', async () => {
+  it('sweeps windows older than the retention (2 h)', async () => {
     await pool.query("INSERT INTO rate_limit_counters VALUES ('old', 1, 2)");
     const limiter = make(pool, { sweepIntervalMs: 1 });
     t += 1000;
