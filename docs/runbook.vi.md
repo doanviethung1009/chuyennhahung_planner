@@ -94,8 +94,8 @@ hay bỏ một route nghĩa là sửa bảng này ở cả hai ngôn ngữ.
 | GET | `/api/admin/planner/users` | Admin token hoặc phiên admin | Danh sách người dùng (`user:provision`) |
 | POST | `/api/admin/planner/users` | Admin token hoặc phiên admin | Tạo người dùng, trả bí mật một lần (`user:provision`) |
 | PATCH | `/api/admin/planner/users/[userId]` | Admin token hoặc phiên admin | Đặt vai trò (`user:promote`) |
-| DELETE | `/api/admin/planner/users/[userId]` | Admin token hoặc phiên admin | Xóa người dùng: `?mode=soft` vô hiệu và đánh dấu đã xóa (khôi phục được), `?mode=hard` (mặc định) xóa hẳn; phiên chỉ xóa hẳn được tài khoản staff đã xóa mềm (ADR 0017) |
-| POST | `/api/admin/planner/users/[userId]/ban` | Admin token hoặc phiên admin | Khóa tài khoản staff: kết thúc phiên, chặn mọi đăng nhập (ADR 0017) |
+| DELETE | `/api/admin/planner/users/[userId]` | Admin token hoặc phiên admin | Xóa người dùng: `?mode=soft` vô hiệu và đánh dấu đã xóa (khôi phục được), `?mode=hard` (mặc định) xóa hẳn; phiên chỉ xóa hẳn được tài khoản đã xóa mềm (ADR 0017) |
+| POST | `/api/admin/planner/users/[userId]/ban` | Admin token hoặc phiên admin | Khóa tài khoản: kết thúc phiên, chặn mọi đăng nhập (ADR 0017) |
 | POST | `/api/admin/planner/users/[userId]/unban` | Admin token hoặc phiên admin | Gỡ khóa |
 | POST | `/api/admin/planner/users/[userId]/restore` | Admin token hoặc phiên admin | Khôi phục tài khoản đã xóa mềm |
 | POST | `/api/admin/planner/users/[userId]/reset-password` | Admin token hoặc phiên admin | Cấp lại mật khẩu tạm (`user:provision`) |

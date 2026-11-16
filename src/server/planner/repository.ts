@@ -724,6 +724,7 @@ export class PlannerRepository {
       // so an admin can neither demote a super admin nor promote anyone to one.
       assertMayManage(data, actor, userRole(existing));
       assertMayManage(data, actor, role);
+      if (isDisabled(existing)) throw invalidState('a banned or deleted account cannot change role; unban or restore it first');
       if (userRole(existing) === role) return toPublicUser(existing);
       // Never leave the system without an admin — the service token is held to
       // this too (ADR 0010 §6).
@@ -780,9 +781,6 @@ export class PlannerRepository {
       if (index < 0 || !existing) throw notFound('planner user', userId);
       const role = userRole(existing);
       assertMayManage(data, actor, role);
-      if (role === 'member') {
-        throw invalidState('only editor, admin and super admin accounts can be banned or soft-deleted');
-      }
       const disabling = change === 'ban' || change === 'delete';
       const field = change === 'ban' || change === 'unban' ? 'banned' : 'deleted';
       if (Boolean(existing[`${field}At`]) === disabling) return toPublicUser(existing);
@@ -813,9 +811,6 @@ export class PlannerRepository {
       // the service token keeps the direct path (ADR 0017).
       if (actor && !target.deletedAt) {
         throw invalidState('soft-delete the account first; only a soft-deleted account can be deleted permanently');
-      }
-      if (actor && userRole(target) === 'member') {
-        throw invalidState('only editor, admin and super admin accounts can be deleted from a session');
       }
       if (isAdminRole(userRole(target))) assertAnotherAdminExists(data, userId, 'delete', userRole(target));
 

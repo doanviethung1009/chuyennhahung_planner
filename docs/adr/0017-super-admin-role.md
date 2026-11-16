@@ -21,7 +21,7 @@
 
 7. **Account lifecycle (second PR).** `bannedAt/bannedBy` and `deletedAt/deletedBy` are optional fields on the user. A banned or soft-deleted account is *disabled*: all its sessions are removed at once, and `identify` (cookie and bearer), access-token sign-in, password sign-in and Google sign-in refuse it (Google reads it as `account_not_found`, so there is no distinct answer and no signup around it). Its trips, reviews and credentials are untouched, and unban or restore re-enables it.
 8. Delete has two modes (owner decision): **soft** (`DELETE ?mode=soft`: disable and mark deleted, restorable with `POST .../restore`) and **hard** (`DELETE ?mode=hard`, the default as before: the row goes, refused while the account owns trips). A session may hard-delete only a staff account that was soft-deleted first; the service token keeps the direct path.
-9. Ban, soft delete and restore apply to staff accounts (editor, admin, super admin) only, never yourself, and an admin acts only on editors (`canManageRole`). A disabled account no longer counts toward "the last admin" or "the last super admin", and a disabled actor cannot act.
+9. Ban, soft delete and restore apply to every account (member, editor, admin, super admin; extended from staff-only by the owner), never yourself, and an admin acts only on member and editor accounts (`canManageRole`). A banned or deleted account cannot change role until it is unbanned or restored. A disabled account no longer counts toward "the last admin" or "the last super admin", and a disabled actor cannot act.
 10. No new Action names: the routes reuse `user:provision`. New routes: `POST .../ban`, `.../unban`, `.../restore`; `DELETE` now accepts a session.
 
 ## Options considered

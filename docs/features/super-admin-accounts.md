@@ -4,7 +4,7 @@
 
 ## Summary
 
-A `super_admin` role above `admin` ([ADR 0017](../adr/0017-super-admin-role.md)). Only a super admin opens the Runbook tab, and an admin can no longer take over another admin account. Staff accounts (editor, admin, super admin) can also be banned, soft-deleted, restored or deleted permanently.
+A `super_admin` role above `admin` ([ADR 0017](../adr/0017-super-admin-role.md)). Only a super admin opens the Runbook tab, and an admin can no longer take over another admin account. Any account (member, editor, admin, super admin) can also be banned, soft-deleted, restored or deleted permanently.
 
 ## Routes
 
@@ -21,7 +21,7 @@ API: `POST /api/admin/planner/users/[userId]/ban`, `/unban`, `/restore`; `DELETE
 3. `canManageRole(actor, target)`: an admin session may create, re-role or reset the password of `member` and `editor` accounts only; a super admin or the service token may act on any. The check also runs again inside the transaction, so a demoted actor is refused.
 4. The last `super_admin` cannot be demoted or deleted; `admin` and `super_admin` both count for "the last admin".
 4a. `npm run admin:create -- --email … --name … --role member|editor|admin|super_admin` (default `admin`) creates an account with that role straight in the store, no token needed. The curl equivalents are in `docs/deploy-runbook.md` Phase 7.
-5. Ban and soft delete mark the user *disabled*: sessions are removed at once and cookie, access-token, password and Google sign-in all refuse it; data stays. Unban and restore re-enable. Soft delete only disables and marks the account (it stays in the staff list with a "Deleted" badge), hard delete (`?mode=hard`, the default) removes the row and refuses while the user owns trips; a session may hard-delete only a soft-deleted staff account. Staff targets only, never yourself, an admin only on editors, and a disabled account no longer counts as "the last admin". In the user table each row offers Reset / Ban / Delete (soft), or Unban, or Restore / Delete permanently, each with a confirmation.
+5. Ban and soft delete mark the user *disabled*: sessions are removed at once and cookie, access-token, password and Google sign-in all refuse it; data stays. Unban and restore re-enable. Soft delete only disables and marks the account (it stays in the staff list with a "Deleted" badge), hard delete (`?mode=hard`, the default) removes the row and refuses while the user owns trips; a session may hard-delete only a soft-deleted account. Never yourself, an admin only on members and editors, and a disabled account no longer counts as "the last admin". In the user table each row offers Reset / Ban / Delete (soft), or Unban, or Restore / Delete permanently, each with a confirmation.
 6. Make the first super admin with the service token: `PATCH /api/admin/planner/users/:id` body `{"role":"super_admin"}`.
 
 ## Files
@@ -48,5 +48,5 @@ API: `POST /api/admin/planner/users/[userId]/ban`, `/unban`, `/restore`; `DELETE
 - Existing admins lose the Runbook, and the right to manage other admins, until the first super admin exists.
 - Soft delete keeps the email and handle reserved; there is no purge-after-N-days job.
 - Public content (listed trips, approved reviews) of a banned or soft-deleted user stays visible; only sign-in is blocked. Hiding it would need its own change.
-- Members cannot be banned or soft-deleted (use review restrictions, ADR 0015).
+- Ban and soft delete also apply to members; review restrictions (ADR 0015) remain the lighter tool for one author.
 - A review with `/sec-check` is recommended and has not been run.

@@ -154,6 +154,11 @@ export function AdminConsole({ currentUserId, currentHandle, actorRole }: Props)
       }
       setStatus({ kind: 'ok', text: t(`status.${kind}Done`, { handle: user.handle }) });
     } catch (failure) {
+      // `invalid_state` here is one of several lifecycle refusals (own account, last
+      // admin, still owns trips), unlike the role / reset wording of `errors.invalid_state`.
+      if (failure instanceof ApiError && failure.code === 'invalid_state') {
+        return setStatus({ kind: 'error', text: t('errors.account_state') });
+      }
       fail(failure);
     }
   }

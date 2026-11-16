@@ -597,6 +597,7 @@
       "signInAgain": "Đăng nhập lại",
       "forbidden": "Tài khoản này không có quyền quản trị.",
       "password_change_required": "Hãy đổi mật khẩu tạm trước khi tiếp tục.",
+      "account_state": "Bị từ chối: bạn không thể làm việc này với chính mình hoặc với quản trị viên cuối cùng, và xóa vĩnh viễn bị từ chối khi tài khoản còn chuyến đi hoặc chưa được xóa mềm trước.",
       "invalid_state": "Thao tác bị từ chối: bạn không thể tự đổi vai trò, tự cấp lại mật khẩu hay gỡ quản trị viên cuối cùng.",
       "validation_failed": "Thông tin chưa hợp lệ.",
       "validation_fields": "Thông tin chưa hợp lệ ở: {fields}.",

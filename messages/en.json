@@ -597,6 +597,7 @@
       "signInAgain": "Sign in again",
       "forbidden": "This account does not have admin rights.",
       "password_change_required": "Change your temporary password before you continue.",
+      "account_state": "Refused: you cannot do this to your own account or to the last admin, and a permanent delete is refused while the account still owns trips or has not been soft-deleted first.",
       "invalid_state": "Refused: you cannot change your own role, reset your own password or remove the last admin.",
       "validation_failed": "Some details are not valid.",
       "validation_fields": "Some details are not valid: {fields}.",
