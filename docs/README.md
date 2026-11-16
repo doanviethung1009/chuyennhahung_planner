@@ -20,6 +20,8 @@ index below.
 | Document | What it covers |
 |---|---|
 | [architecture.md](architecture.md) | Runtime shape, routing, data flow, module boundaries, phases |
+| [specs-roadmap.md](specs-roadmap.md) | Spec: project phases at a glance — status table, decision timeline, what is not open yet, what still needs the owner |
+| [specs-product.md](specs-product.md) | Spec: product and capabilities — purpose, audiences and roles, capability and API-surface tables, the rules every change keeps |
 | [usage.md](usage.md) | Install, run, test, verify, deploy, and the day-to-day workflows |
 | [travel-content-api.md](travel-content-api.md) | Travel Content System API contract — endpoints, conventions, error codes, invariants |
 | [runbook.md](runbook.md) | Runbook: where to start — which guide answers which question, quick checks, and the list of every API endpoint; shown to admins at `/quan-tri/runbook` |
