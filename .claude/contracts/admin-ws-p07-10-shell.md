@@ -12,4 +12,4 @@
 - Rollback: revert PR; no data.
 - Docs: frontend role writes `docs/features/admin-shell.*`; architect role edits `docs/architecture.*` and ADR status in the same PR.
 - Budget: sub-agents 0; stop and ask if a page needs a change outside the file list.
-- State: READY (owner approved 2026-11-17)
+- State: DONE (PR #116 merged 2026-11-16, merge commit 8b74dc2; owner approved 2026-11-17)
