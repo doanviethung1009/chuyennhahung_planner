@@ -22,6 +22,7 @@ import {
   makePlanner,
 } from './planner-helpers';
 import { runScenario, stable } from './planner-pg-fixtures';
+import { registerEventCases } from './moderation-events-cases';
 
 /**
  * The Postgres store against a real database (ADR 0009). Runs only when
@@ -66,7 +67,7 @@ describe.skipIf(!url)('Planner on PostgreSQL (TEST_DATABASE_URL)', () => {
     // what tells every cached store so, exactly as a real commit would.
     await pool.query('UPDATE planner_revision SET revision = revision + 1');
     await pool.query(
-      'TRUNCATE review_restrictions, community_reviews, trip_expenses, trip_activities, trip_days, trips, planner_oauth_attempts, planner_sessions, planner_users RESTART IDENTITY CASCADE',
+      'TRUNCATE audit_events, review_restrictions, community_reviews, trip_expenses, trip_activities, trip_days, trips, planner_oauth_attempts, planner_sessions, planner_users RESTART IDENTITY CASCADE',
     );
   });
 
@@ -392,6 +393,85 @@ describe.skipIf(!url)('Planner on PostgreSQL (TEST_DATABASE_URL)', () => {
 
       await a.revokeShare(userId, created.trip.id);
       expect(await b.getSharedTrip(shareToken!)).toBeNull();
+    });
+  });
+
+  describe('community reviews and restrictions (migrations 0006-0008, P10-14)', () => {
+    const body = 'Hồ rất đẹp vào buổi sáng, nước trong, đi bộ quanh hồ mất khoảng một tiếng, nên đi sớm.';
+    const review = { rating: 5, body, lang: 'vi' as const, visitedOn: '2026-02-20', authorDisplay: 'name' as const };
+
+    /** Same steps on memory and Postgres; both must end equal and survive a re-read. */
+    async function drive(planner: PlannerRepository) {
+      const { userId } = await makeOwner(planner);
+      await planner.upsertPlannerReview(userId, 'ho-xuan-huong', review);
+      await planner.createGuestReview(
+        { placeSlug: 'ho-xuan-huong', rating: 3, body, lang: 'vi', visitedOn: '2026-02-21', authorName: 'Khách' },
+        'pg-guest-fixed',
+      );
+      const mine = (await planner.listReviewQueue()).find((item) => item.source === 'planner')!;
+      expect(await planner.decideReview(mine.id, 'hold', 'staff', 'Bạn đi hồi nào?')).toBe('held');
+      await planner.upsertPlannerReview(userId, 'ho-xuan-huong', { ...review, rating: 4 });
+      const guest = (await planner.listReviewQueue()).find((item) => item.source === 'homepage')!;
+      const created = await planner.createRestriction({ reviewId: guest.id, scope: 'place', reason: 'spam lặp lại' }, 'staff');
+      await planner.liftRestriction(created.id, 'staff');
+      await planner.liftRestriction(created.id, 'staff'); // idempotent
+      await planner.createRestriction({ reviewId: mine.id, scope: 'all', reason: 'quấy rối' }, 'staff');
+      await planner.decideReview(guest.id, 'remove', 'staff', 'vi phạm');
+      return userId;
+    }
+
+    it('round-trips review status, decisions and restrictions like the memory store', async () => {
+      const memory = createMemoryPlannerStore();
+      await drive(makePlanner({ store: memory }));
+      await drive(repository());
+      const fresh = await createPostgresPlannerStore(openPool()).read();
+      const expected = await memory.read();
+      expect(fresh.communityReviews).toEqual(expected.communityReviews);
+      expect(fresh.reviewRestrictions).toEqual(expected.reviewRestrictions);
+      expect(fresh.communityReviews.map((r) => r.status).sort()).toEqual(['approved', 'removed']);
+      expect(fresh.reviewRestrictions.filter((r) => r.liftedAt === null)).toHaveLength(1);
+    });
+
+    it('ends active restrictions when the account is deleted and drops its reviews', async () => {
+      const planner = repository();
+      const userId = await drive(planner);
+      await planner.deleteUser(userId);
+      const data = await createPostgresPlannerStore(openPool()).read();
+      expect(data.communityReviews.every((r) => r.authorId !== userId)).toBe(true);
+      const mineRows = data.reviewRestrictions.filter((r) => r.authorId === userId);
+      expect(mineRows).toHaveLength(1);
+      expect(mineRows[0]!.liftedBy).toBe('account deleted');
+    });
+
+    it('keeps the guest key out of every API list', async () => {
+      const planner = repository();
+      await drive(planner);
+      expect(JSON.stringify(await planner.listRestrictions())).not.toContain('pg-guest');
+      expect(JSON.stringify(await planner.listReviewQueue())).not.toContain('guestKey');
+    });
+  });
+
+  describe('moderation events (migration 0010, ADR 0019)', () => {
+    registerEventCases(async () => ({ planner: repository(), store }));
+
+    it('migration 0010 created the table with its index and an insert-only shape', async () => {
+      const cols = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'audit_events' AND table_schema = $1", [schema]);
+      expect(cols.rows.map((r) => r.column_name)).toEqual(
+        expect.arrayContaining(['seq', 'id', 'target_kind', 'target_id', 'actor_id', 'actor_kind', 'action', 'from_status', 'to_status', 'reason', 'created_at']),
+      );
+      const idx = await pool.query("SELECT indexname FROM pg_indexes WHERE tablename = 'audit_events' AND schemaname = $1", [schema]);
+      expect(idx.rows.map((r) => r.indexname)).toContain('audit_events_target');
+    });
+
+    it('a second store sees the events after a commit, in order', async () => {
+      const planner = repository();
+      const { userId } = await makeOwner(planner);
+      const view = await planner.createTrip(userId, daLatTripInput());
+      await planner.setVisibility(userId, view.trip.id, 'public');
+      await planner.requestListing(userId, view.trip.id, 'name');
+      await planner.decideListing(view.trip.id, 'approve', 'staff-1', null);
+      const other = repository(createPostgresPlannerStore(openPool()));
+      expect((await other.listEvents(view.trip.id)).map((e) => e.action)).toEqual(['approve', 'request']);
     });
   });
 

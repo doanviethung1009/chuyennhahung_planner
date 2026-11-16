@@ -368,6 +368,8 @@ the author's existing ones at read time, reversibly. A guest is known only by th
 connection key, so a guest restriction is time-boxed (30 days default, 90 max) and refused for the
 shared `unknown` key. No author id or guest key appears in any response.
 
+Audit log ([ADR 0019](adr/0019-community-foundation.md), [features/moderation-events.md](features/moderation-events.md)): every listing, review and restriction action appends one `AuditEvent` (table `audit_events`, migration `0010`, JSON key `auditEvents`) inside the same Planner-store transaction through `src/server/community/events.ts`; append-only, swept after one year, read by staff at `GET /api/admin/community/events?targetId=`. Listing transitions go through the pure state machine `src/server/community/submission.ts`.
+
 ## Phases
 
 Deliberately absent, and not to be scaffolded early:
