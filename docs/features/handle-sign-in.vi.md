@@ -38,6 +38,7 @@ Không đổi dữ liệu lưu. Các khóa `signIn.description`, `signIn.divider
 
 ## Giới hạn và câu hỏi mở
 
+- Lỗi đăng nhập là một thông báo chung cho mọi trường hợp, kèm gợi ý dùng Google hoặc liên hệ nhà Hưng cho tài khoản chưa có mật khẩu, nên không lộ tài khoản nào tồn tại mà người dùng cũng không bị kẹt.
 - Lỗi 409 nay có `error.reason` (`self_action`, `last_admin`, `last_super_admin`, `account_disabled`, `not_soft_deleted`, `confirm_handle`) và trang quản trị hiện một thông báo riêng cho từng lý do thay vì một câu chung cho mọi từ chối.
 - Handle nay là tên đăng nhập; handle dễ đoán dựa vào giới hạn tốc độ và mật khẩu tạm mạnh.
 - Tạo user không có email vẫn không cấp mật khẩu; hãy bấm Cấp lại mật khẩu sau đó.

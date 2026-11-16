@@ -297,7 +297,7 @@
     "passwordLabel": "Password",
     "submit": "Sign in",
     "submitting": "Signing in…",
-    "errorCredentials": "That account and password do not match. Please check them.",
+    "errorCredentials": "That account and password do not match. Please check them. If you usually sign in with Google, or have not been given a password yet, use that instead or contact us.",
     "tokenToggle": "Sign in with an access code",
     "tokenLabel": "Access code",
     "tokenHint": "The code we gave you. It is not stored in the browser.",
