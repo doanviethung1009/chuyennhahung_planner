@@ -38,7 +38,7 @@ nullable columns, JSON-file parity for local development.
 
 | Entity (table) | Key fields | Notes |
 |---|---|---|
-| `Trip` (existing) | + `origin` JSONB null: `{ sourceToken, sourceTitle, authorDisplay }`; `listing` gains `changes_requested`, `unpublished` | `origin` holds no author when the source was anonymous |
+| `Trip` (existing) | + `origin` JSONB null: `{ sourceToken, sourceTitle, authorDisplay }`; `listing` gains `changes_requested`, `unpublished` and `allowCopy` (creator's per-trip copy switch, Terms Article 3) | `origin` holds no author when the source was anonymous |
 | `Profile` (`member_profiles`) | `userId` pk, `publicSlug` uq null, `bio` ≤280, `avatarAssetId` null, `visibility` `private`/`public`, `updatedAt` | Off by default; slug is not `handle` |
 | `Journal` (`journal_posts`) | `id` pk, `authorId` ix, `kind` `journal`/`blog`/`vlog`, `slug` uq, `title`, `summary`, `coverAssetId`, `body` JSONB blocks, `bodyVersion`, `lang`, `placeSlugs[]`, `tags[]`, `status`, moderation fields, `publishedAt`, `revision`, timestamps | `revision` for `If-Match` |
 | `MediaAsset` (`media_assets`) | `id` pk, `ownerId` ix, `kind` `image`, `status`, `mime`, `bytes`, `width`, `height`, `storageKey`, `variants` JSONB, `attachedTo` `{kind,id}` null, `createdAt`, `deletedAt` | Video is never a row here; it is an embed inside `body` |

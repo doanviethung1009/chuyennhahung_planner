@@ -53,7 +53,7 @@ trust boundary, as every current surface is. [C]
 | Method and path | Purpose | Notes |
 |---|---|---|
 | `PUT/DELETE /api/planner/[id]/listing` | Request or withdraw publication | [C] existing |
-| `POST /api/community/trips/[token]/use` | Clone into a private draft | Returns `TripView`; copy quota |
+| `POST /api/community/trips/[token]/use` | Clone into a private draft | Returns `TripView`; copy quota; `404` unless the creator turned copying on |
 | `GET/POST /api/planner/journals` | List mine / create draft | |
 | `GET/PATCH/DELETE /api/planner/journals/[id]` | Read, edit (`If-Match`), delete | Owner only |
 | `POST /api/planner/journals/[id]/{submit,unpublish,archive}` | State transitions by the author | `invalid_state` if not allowed |

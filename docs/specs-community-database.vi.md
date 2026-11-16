@@ -38,7 +38,7 @@ tương đương với file JSON cho phát triển cục bộ.
 
 | Thực thể (bảng) | Trường chính | Ghi chú |
 |---|---|---|
-| `Trip` (có sẵn) | + `origin` JSONB null: `{ sourceToken, sourceTitle, authorDisplay }`; `listing` thêm `changes_requested`, `unpublished` | `origin` không giữ tác giả khi nguồn ẩn danh |
+| `Trip` (có sẵn) | + `origin` JSONB null: `{ sourceToken, sourceTitle, authorDisplay }`; `listing` thêm `changes_requested`, `unpublished` và `allowCopy` (công tắc sao chép theo từng chuyến của người tạo, Điều 3 Terms) | `origin` không giữ tác giả khi nguồn ẩn danh |
 | `Profile` (`member_profiles`) | `userId` pk, `publicSlug` uq null, `bio` ≤280, `avatarAssetId` null, `visibility` `private`/`public`, `updatedAt` | Mặc định tắt; slug không phải `handle` |
 | `Journal` (`journal_posts`) | `id` pk, `authorId` ix, `kind` `journal`/`blog`/`vlog`, `slug` uq, `title`, `summary`, `coverAssetId`, `body` JSONB block, `bodyVersion`, `lang`, `placeSlugs[]`, `tags[]`, `status`, trường kiểm duyệt, `publishedAt`, `revision`, mốc thời gian | `revision` cho `If-Match` |
 | `MediaAsset` (`media_assets`) | `id` pk, `ownerId` ix, `kind` `image`, `status`, `mime`, `bytes`, `width`, `height`, `storageKey`, `variants` JSONB, `attachedTo` `{kind,id}` null, `createdAt`, `deletedAt` | Video không bao giờ là một dòng ở đây; nó là embed trong `body` |

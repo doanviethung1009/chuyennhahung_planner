@@ -54,7 +54,7 @@ liệu này không viết code.
 ### Các luồng chính
 
 **Đăng một chuyến.** Trên `/my-trips/[id]` có hai công tắc: "Chia sẻ bằng link" (có sẵn)
-và "Đăng lên cộng đồng" (mở một sheet ngắn: tên hiển thị hay ẩn danh, link điều khoản, gửi).
+và "Đăng lên cộng đồng" (mở một sheet ngắn: tên hiển thị hay ẩn danh, công tắc "Cho phép người khác sao chép chuyến này" (mặc định theo quyết định của chủ dự án, khuyến nghị tắt), link điều khoản, gửi).
 Chip trạng thái: Bản nháp, Đang duyệt, Cần chỉnh sửa (kèm ghi chú), Đã đăng, Chưa được
 chấp nhận (kèm lý do), Đã gỡ. Sửa một chuyến đã đăng cảnh báo, trước khi lưu, rằng nó sẽ
 quay lại hàng duyệt. [C]

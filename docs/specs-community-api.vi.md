@@ -53,7 +53,7 @@ bề mặt hiện nay. [C]
 | Method và đường dẫn | Mục đích | Ghi chú |
 |---|---|---|
 | `PUT/DELETE /api/planner/[id]/listing` | Xin hoặc rút việc đăng | [C] có sẵn |
-| `POST /api/community/trips/[token]/use` | Sao chép thành bản nháp riêng | Trả `TripView`; hạn mức sao chép |
+| `POST /api/community/trips/[token]/use` | Sao chép thành bản nháp riêng | Trả `TripView`; hạn mức sao chép; `404` trừ khi người tạo đã bật sao chép |
 | `GET/POST /api/planner/journals` | Liệt kê của tôi / tạo bản nháp | |
 | `GET/PATCH/DELETE /api/planner/journals/[id]` | Đọc, sửa (`If-Match`), xóa | Chỉ chủ |
 | `POST /api/planner/journals/[id]/{submit,unpublish,archive}` | Chuyển trạng thái do tác giả | `invalid_state` nếu không cho phép |

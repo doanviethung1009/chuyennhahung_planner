@@ -101,4 +101,4 @@ qua hai instance mô phỏng; bí mật vắng mặt trong bundle client.
 | 1 | Đăng bài có cần email đã xác minh khi đã có bộ gửi email không? | Xem lại khi đó |
 | 2 | Tài khoản nhân viên có `community:moderate` có bắt buộc MFA không? | Quyết định trước Phase 14 (PR #107 Q6 hoãn MFA và ghi rủi ro); MFA chưa xây |
 | 3 | Slug hồ sơ công khai: độc lập với `handle`? | Có |
-| 4 | Creator Terms có cho phép thành viên khác sao chép một chuyến đã đăng không? | Chủ dự án và luật sư xác nhận và sửa trước khi Dùng chuyến này ra mắt (rủi ro RK16) |
+| 4 | Điều 3 của Terms đã cho phép sao chép khi người tạo bật tính năng. Công tắc sao chép theo từng chuyến mặc định thế nào, và bản sao được đăng lại hay chỉ dùng cá nhân? | Công tắc mặc định tắt; chủ dự án quyết định phạm vi đăng lại trước khi Dùng chuyến này ra mắt; luật sư đọc Điều 3 so với tính năng (rủi ro RK16) |

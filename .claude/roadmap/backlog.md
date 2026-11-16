@@ -109,8 +109,8 @@ Nguồn: `.claude/contracts/community-platform-audit.md`. Mỗi mục cần ADR 
 | P11-1 | ADR profile: `member_profiles` 1:1, mặc định riêng tư, allow-list | system-architect | P10-2, P11-D1 |
 | P11-D1 | **Chủ nhà cấp** chính sách riêng tư, thời hạn lưu `guestKey`, quyền xuất/xóa dữ liệu (Q9) | owner | — |
 | P11-2 | API + UI hồ sơ, danh sách bài của tác giả | BE + FE | P11-1 |
-| P11-D2 | **Chủ nhà + người am hiểu pháp lý xác nhận:** Creator Terms hiện cấp quyền cho Chuyện Nhà Hưng, chưa cho thành viên khác sao chép chuyến; sửa Terms cho phép sao chép trước khi ra "Dùng chuyến này" | owner | P10-2 |
-| P11-3 | ADR "Dùng chuyến này": danh sách trường được sao chép (không ghi chú tự do, chi phí riêng, share token), `Trip.origin`, ghi công, nguồn bị rút/ẩn danh | system-architect | P10-3, P11-D2 |
+| P11-D2 | **Chủ nhà quyết định:** Điều 3 Creator Terms đã cho phép sao chép khi người tạo bật tính năng; code chưa có công tắc theo từng chuyến. Chọn mặc định (khuyến nghị: tắt) và phạm vi đăng lại bản sao (chỉ dùng cá nhân, hay cho đăng lại); người am hiểu pháp lý đọc Điều 3 so với tính năng | owner | P10-2 |
+| P11-3 | ADR "Dùng chuyến này": công tắc sao chép theo chuyến (Điều 3 Terms), danh sách trường được sao chép (không ghi chú tự do, chi phí riêng, share token), `Trip.origin`, ghi công, nguồn bị rút/ẩn danh | system-architect | P10-3, P11-D2 |
 | P11-4 | API `POST /api/community/trips/[token]/use` + UI nút; hạn mức sao chép; test nguồn không đổi và ẩn danh | BE + FE | P11-3 |
 
 ## Phase 12 — Travel Journal & Blog (P2, đề xuất)

@@ -243,7 +243,7 @@ rủi ro:
 | P6 | Mục đã lưu và tín hiệu "muốn đi" | Có | P1 |
 | P7 | Hồ sơ người đi công khai, phản hồi hữu ích | Có, mỗi cái một ADR | P4, P5 |
 
-P1–P3 chỉ chạm dữ liệu của chính người đi và các chuyến đã duyệt, nên xây độc lập được (Phase 15 trong roadmap). Từ P4 trở đi thêm đường ghi công khai và nên chờ Phase 10 (điều khiển Báo cáo, audit log) cùng Terms cho phép sao chép.
+P1–P3 chỉ chạm dữ liệu của chính người đi và các chuyến đã duyệt, nên xây độc lập được (Phase 15 trong roadmap). Từ P4 trở đi thêm đường ghi công khai và nên chờ Phase 10 (điều khiển Báo cáo, audit log) cùng công tắc sao chép theo từng chuyến khớp Điều 3 của Terms.
 
 ## Hướng nghiệm thu
 
