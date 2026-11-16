@@ -567,7 +567,9 @@
       "emailHint": "Cần có email để họ đăng nhập bằng mật khẩu.",
       "roleLabel": "Vai trò",
       "submit": "Tạo người dùng",
-      "submitting": "Đang tạo…"
+      "submitting": "Đang tạo…",
+      "open": "Thêm người dùng",
+      "cancel": "Hủy"
     },
     "secret": {
       "heading": "Lưu ngay bây giờ: bí mật của {handle}",

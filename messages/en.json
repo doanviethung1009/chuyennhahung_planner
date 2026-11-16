@@ -567,7 +567,9 @@
       "emailHint": "An email is needed for them to sign in with a password.",
       "roleLabel": "Role",
       "submit": "Create user",
-      "submitting": "Creating…"
+      "submitting": "Creating…",
+      "open": "Add a user",
+      "cancel": "Cancel"
     },
     "secret": {
       "heading": "Save this now: secrets for {handle}",
