@@ -160,6 +160,49 @@ describe('deploy/scripts/backup.sh (fake docker)', () => {
   });
 });
 
+describe('nginx proxy headers', () => {
+  // The app keys its rate limiter on the first X-Forwarded-For hop and trusts
+  // X-Forwarded-Proto (TRUST_PROXY_HEADERS), so nginx must OVERWRITE them — a
+  // client-supplied value must never survive. Comments are stripped because
+  // they mention the forbidden variable on purpose.
+  const strip = (s: string) => s.replace(/#.*$/gm, '');
+  const files = ['deploy/nginx/default.conf', 'deploy/nginx-app.conf'];
+
+  for (const f of files) {
+    describe(f, () => {
+      const conf = strip(read(f));
+
+      it('overwrites X-Forwarded-For with the socket address, never appends', () => {
+        expect(conf).toMatch(/proxy_set_header\s+X-Forwarded-For\s+\$remote_addr\s*;/);
+        expect(conf).not.toContain('$proxy_add_x_forwarded_for');
+        expect(conf).not.toMatch(/\$http_x_forwarded_for/i);
+      });
+
+      it('sets the scheme, host and real IP from nginx, not from the client', () => {
+        expect(conf).toMatch(/proxy_set_header\s+X-Forwarded-Proto\s+\$scheme\s*;/);
+        expect(conf).toMatch(/proxy_set_header\s+X-Forwarded-Host\s+\$host\s*;/);
+        expect(conf).toMatch(/proxy_set_header\s+Host\s+\$host\s*;/);
+        expect(conf).toMatch(/proxy_set_header\s+X-Real-IP\s+\$remote_addr\s*;/);
+        expect(conf).not.toMatch(/\$http_x_forwarded_proto/i);
+      });
+
+      it('sets each proxy header once', () => {
+        for (const h of ['X-Forwarded-For', 'X-Forwarded-Proto', 'X-Forwarded-Host', 'X-Real-IP']) {
+          expect(conf.match(new RegExp(`proxy_set_header\\s+${h}\\s`, 'g'))?.length).toBe(1);
+        }
+      });
+    });
+  }
+
+  it('the stack config proxies to app:3000 resolved per request, with a maintenance fallback', () => {
+    const conf = strip(read('deploy/nginx/default.conf'));
+    expect(conf).toMatch(/resolver\s+127\.0\.0\.11/);
+    expect(conf).toContain('set $upstream http://app:3000;');
+    expect(conf).toMatch(/proxy_pass\s+\$upstream\s*;/);
+    expect(conf).toMatch(/error_page\s+502\s+503\s+504\s+\/maintenance\.html\s*;/);
+  });
+});
+
 describe('compose.app.yml', () => {
   it('lets the deploy script choose the image and keeps the local build', () => {
     const c = read('deploy/compose.app.yml');
