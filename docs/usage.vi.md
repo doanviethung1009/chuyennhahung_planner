@@ -396,6 +396,8 @@ Khi đặt `PLANNER_DATABASE_URL`, Planner lưu dữ liệu trong PostgreSQL 16 
 giờ quay về** file JSON: database sập thì các route Planner trả
 `503 service_unavailable`.
 
+Giới hạn ghi đánh giá (5 lần mỗi giờ cho người dùng đã đăng nhập, 3 lần mỗi giờ cho mỗi khách) khi đó được đếm trong bảng `rate_limit_counters` (migration `0011`), nên restart vẫn giữ số đếm và nhiều instance dùng chung ([features/shared-write-limiter.vi.md](features/shared-write-limiter.vi.md)). Khi database sập, gửi đánh giá trả `503 service_unavailable` và không lưu gì. Không có `PLANNER_DATABASE_URL` thì giới hạn vẫn theo từng tiến trình. Khóa là header địa chỉ client, mà client có thể giả mạo.
+
 **Thiết lập một lần, do chủ nhà làm trên máy chạy database.** Tạo một role và
 database riêng; không superuser, không `CREATEDB`. Dùng mật khẩu thật lấy từ nơi
 lưu secret — `<password>` bên dưới chỉ là chỗ giữ chỗ:
