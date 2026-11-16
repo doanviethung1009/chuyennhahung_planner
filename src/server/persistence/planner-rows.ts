@@ -6,6 +6,7 @@ import {
   plannerSessionSchema,
   plannerUserSchema,
   reviewRestrictionSchema,
+  auditEventSchema,
   tripActivitySchema,
   tripDaySchema,
   tripExpenseSchema,
@@ -281,6 +282,24 @@ export const TABLES: readonly TableSpec<PlannerCollection>[] = [
       col('expiresAt', 'expires_at', 'timestamptz', 'nullable'),
       col('liftedAt', 'lifted_at', 'timestamptz', 'nullable'),
       col('liftedBy', 'lifted_by', 'text', 'nullable'),
+    ],
+  },
+  {
+    // ADR 0019. Append-only; no foreign keys (ADR 0013). Swept after one year.
+    collection: 'auditEvents',
+    table: 'audit_events',
+    parse: (r) => auditEventSchema.parse(r),
+    columns: [
+      col('id', 'id', 'text'),
+      col('targetKind', 'target_kind', 'text'),
+      col('targetId', 'target_id', 'text'),
+      col('actorId', 'actor_id', 'text'),
+      col('actorKind', 'actor_kind', 'text'),
+      col('action', 'action', 'text'),
+      col('fromStatus', 'from_status', 'text', 'nullable'),
+      col('toStatus', 'to_status', 'text', 'nullable'),
+      col('reason', 'reason', 'text', 'nullable'),
+      col('createdAt', 'created_at', 'timestamptz'),
     ],
   },
 ];

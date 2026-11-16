@@ -4,6 +4,7 @@ import { PlannerRepository } from '@/server/planner/repository';
 import {
   communityReviewSchema,
   reviewRestrictionSchema,
+  auditEventSchema,
   oauthAttemptSchema,
   plannerSessionSchema,
   plannerUserSchema,
@@ -38,6 +39,7 @@ const documentSchema = z
     tripExpenses: z.array(tripExpenseSchema).default([]),
     communityReviews: z.array(communityReviewSchema).default([]),
     reviewRestrictions: z.array(reviewRestrictionSchema).default([]),
+    auditEvents: z.array(auditEventSchema).default([]),
   })
   .strict();
 
@@ -143,6 +145,7 @@ export async function importPlannerDocument(
       tripExpenses: incoming.tripExpenses.length,
       communityReviews: incoming.communityReviews.length,
       reviewRestrictions: incoming.reviewRestrictions.length,
+      auditEvents: incoming.auditEvents.length,
     },
   };
 }

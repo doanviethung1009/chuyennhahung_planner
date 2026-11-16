@@ -2,7 +2,7 @@
 
 🇻🇳 English version: [0019-community-foundation.md](0019-community-foundation.md)
 
-- **Trạng thái:** Đề xuất
+- **Trạng thái:** Đã chấp nhận (quyết định D1 của chủ dự án, 2026-11-16)
 - **Ngày:** 2026-11-16
 - **Chủ trì:** system-architect
 - **Ảnh hưởng:** `src/server/community/**` (mới `submission.ts`, `events.ts`), `src/server/planner/repository.ts` (chỉ các method kiểm duyệt), `src/server/rate-limit.ts` và một module limiter dùng chung mới, `src/server/persistence/planner-rows.ts`, `planner-transfer.ts`, `db/migrations/0010_*.sql`, `src/server/identity/permissions.ts` (dự kiến không đổi)
@@ -100,7 +100,7 @@ không schema nằm không).
 | Trạng thái `changes_requested`, `unpublished` | Phase 10, lát sau | Chúng cần UI mới có nghĩa |
 | Repository theo từng dòng cho thích và bình luận (DB5) | Phase 14, sau khi đo | Chưa có đường ghi như vậy |
 
-Đánh số migration: `0010` sự kiện kiểm toán và bộ đếm (ADR này); các lát sau theo [specs-community-database.vi.md](../specs-community-database.vi.md). Hồ sơ nằm ở Phase 11 như PHASES.md đã ghi.
+Đánh số migration: `0010` sự kiện kiểm toán (batch 10.2, đã có), `0011` bộ đếm giới hạn (batch 10.3); các lát sau theo [specs-community-database.vi.md](../specs-community-database.vi.md). Hồ sơ nằm ở Phase 11 như PHASES.md đã ghi.
 
 ## Các phương án đã xét
 

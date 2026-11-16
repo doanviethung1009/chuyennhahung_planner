@@ -2,7 +2,7 @@
 
 🇻🇳 Bản tiếng Việt: [0019-community-foundation.vi.md](0019-community-foundation.vi.md)
 
-- **Status:** Proposed
+- **Status:** Accepted (owner decision D1, 2026-11-16)
 - **Date:** 2026-11-16
 - **Owner:** system-architect
 - **Affects:** `src/server/community/**` (new `submission.ts`, `events.ts`), `src/server/planner/repository.ts` (moderation methods only), `src/server/rate-limit.ts` and a new shared limiter module, `src/server/persistence/planner-rows.ts`, `planner-transfer.ts`, `db/migrations/0010_*.sql`, `src/server/identity/permissions.ts` (no change expected)
@@ -102,7 +102,7 @@ surface, and no inert schema).
 | `changes_requested`, `unpublished` states | Phase 10, later slice | They need UI to be meaningful |
 | Per-row repository for likes and comments (DB5) | Phase 14, after a measurement | No such write path exists yet |
 
-Migration numbering: `0010` audit events and counters (this ADR); later slices follow [specs-community-database.md](../specs-community-database.md). Profiles sit in Phase 11 as PHASES.md already states.
+Migration numbering: `0010` audit events (batch 10.2, shipped), `0011` rate-limit counters (batch 10.3); later slices follow [specs-community-database.md](../specs-community-database.md). Profiles sit in Phase 11 as PHASES.md already states.
 
 ## Options considered
 

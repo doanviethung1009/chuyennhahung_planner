@@ -35,6 +35,7 @@ import {
   stateToListing,
   transition,
 } from '../community/submission';
+import { appendEvent, eventsForTarget, type NewAuditEvent } from '../community/events';
 import {
   DEFAULT_SCRYPT_COST_LOG2,
   dummyPasswordHash,
@@ -77,6 +78,7 @@ import {
   type ListingDecision,
   type ReviewDecision,
   type ReviewRestriction,
+  type AuditEvent,
   type RestrictionListItem,
   type OwnRestriction,
   type CreateRestrictionInput,
@@ -243,6 +245,30 @@ export class PlannerRepository {
 
   private timestamp(): string {
     return this.now().toISOString();
+  }
+
+  /** One audit event, inside the caller's transaction (ADR 0019 §2). */
+  private record(data: PlannerData, event: NewAuditEvent): void {
+    appendEvent(data, event, { id: this.newId('evt'), at: this.timestamp() });
+  }
+
+  /** Staff read of the log for one target (trip, review or user id), newest first. */
+  async listEvents(targetId: string): Promise<AuditEvent[]> {
+    return eventsForTarget(await this.snapshot(), targetId);
+  }
+
+  /** A listing that ends without anyone deciding: leaving `public`, archive, share revoke. */
+  private recordImplicitEnd(data: PlannerData, trip: Trip): void {
+    if (!trip.listing) return;
+    this.record(data, {
+      targetKind: 'trip',
+      targetId: trip.id,
+      actorId: 'system',
+      action: 'withdraw',
+      fromStatus: listingToState(trip.listing.status),
+      toStatus: 'draft',
+      reason: 'implicit_end',
+    });
   }
 
   private async snapshot(): Promise<PlannerData> {
@@ -901,11 +927,18 @@ export class PlannerRepository {
       data.communityReviews = data.communityReviews.filter((review) => review.authorId !== userId);
       // Restrictions stay as the audit record, but end with the account (security review, ADR 0015).
       const endedAt = this.timestamp();
-      data.reviewRestrictions = data.reviewRestrictions.map((row) =>
-        row.authorId === userId && row.liftedAt === null
-          ? { ...row, liftedAt: endedAt, liftedBy: 'account deleted' }
-          : row,
-      );
+      data.reviewRestrictions = data.reviewRestrictions.map((row) => {
+        if (row.authorId !== userId || row.liftedAt !== null) return row;
+        this.record(data, {
+          targetKind: 'user',
+          targetId: userId,
+          actorId: 'account deleted',
+          action: 'lift',
+          fromStatus: 'active',
+          toStatus: 'lifted',
+        });
+        return { ...row, liftedAt: endedAt, liftedBy: 'account deleted' };
+      });
     });
   }
 
@@ -1427,6 +1460,7 @@ export class PlannerRepository {
       }
       // Leaving `public` ends the listing at once (ADR 0014 §3).
       const listing = visibility === 'public' ? trip.listing : null;
+      if (listing === null) this.recordImplicitEnd(data, trip);
       data.trips[index] = { ...trip, visibility, shareToken, shareTokenCreatedAt, listing };
       return { visibility, shareToken, shareTokenCreatedAt, listing };
     });
@@ -1451,6 +1485,7 @@ export class PlannerRepository {
   revokeShare(ownerId: string, tripId: string): Promise<ShareState> {
     return this.transaction((data) => {
       const { trip, index } = PlannerRepository.requireOwnedTrip(data, ownerId, tripId);
+      this.recordImplicitEnd(data, trip);
       data.trips[index] = {
         ...trip,
         visibility: 'private',
@@ -1483,8 +1518,17 @@ export class PlannerRepository {
         throw invalidState(`trip "${tripId}" must be public before it can be listed`);
       }
       // Legacy edge (a): accepted from any prior state (see submission.ts).
+      const requested = legacyRequest(listingToState(trip.listing?.status ?? null));
+      this.record(data, {
+        targetKind: 'trip',
+        targetId: tripId,
+        actorId: ownerId,
+        action: 'request',
+        fromStatus: listingToState(trip.listing?.status ?? null),
+        toStatus: requested,
+      });
       const listing: TripListing = {
-        status: stateToListing(legacyRequest(listingToState(trip.listing?.status ?? null))) as TripListing['status'],
+        status: stateToListing(requested) as TripListing['status'],
         authorDisplay,
         requestedAt: this.timestamp(),
         decidedAt: null,
@@ -1501,7 +1545,19 @@ export class PlannerRepository {
     return this.transaction((data) => {
       const { trip, index } = PlannerRepository.requireOwnedTrip(data, ownerId, tripId);
       // Legacy edge (b): ends the listing from any state.
-      legacyWithdraw(listingToState(trip.listing?.status ?? null)); // always `draft` → no listing
+      const from = listingToState(trip.listing?.status ?? null);
+      const to = legacyWithdraw(from); // always `draft` → no listing
+      // Idempotent: withdrawing a trip that has no listing changes nothing, so logs nothing.
+      if (trip.listing) {
+        this.record(data, {
+          targetKind: 'trip',
+          targetId: tripId,
+          actorId: ownerId,
+          action: 'withdraw',
+          fromStatus: from,
+          toStatus: to,
+        });
+      }
       data.trips[index] = { ...trip, listing: null };
       return shareStateOf(data.trips[index] as Trip);
     });
@@ -1542,6 +1598,15 @@ export class PlannerRepository {
         decidedBy: actor.slice(0, 80),
         rejectReason: decision === 'approve' ? null : reason,
       };
+      this.record(data, {
+        targetKind: 'trip',
+        targetId: tripId,
+        actorId: actor,
+        action: decision,
+        fromStatus: listingToState(trip.listing.status),
+        toStatus: nextState,
+        reason: decision === 'approve' ? null : reason,
+      });
       data.trips[index] = { ...trip, listing };
       return listing;
     });
@@ -1643,6 +1708,17 @@ export class PlannerRepository {
         createdAt: existing?.createdAt ?? at,
         updatedAt: at,
       };
+      // The author's edit republishes a held review: a status change, so it is logged.
+      if (existing?.status === 'held') {
+        this.record(data, {
+          targetKind: 'review',
+          targetId: existing.id,
+          actorId: userId,
+          action: 'republish',
+          fromStatus: 'held',
+          toStatus: 'approved',
+        });
+      }
       if (existing) data.communityReviews[index] = review;
       else data.communityReviews.push(review);
       return ownReviewOf(review);
@@ -1811,6 +1887,15 @@ export class PlannerRepository {
               ? 'held'
               : 'removed';
       const at = this.timestamp();
+      this.record(data, {
+        targetKind: 'review',
+        targetId: reviewId,
+        actorId: actor,
+        action: decision,
+        fromStatus: review.status,
+        toStatus: status,
+        reason: decision === 'approve' ? null : reason,
+      });
       data.communityReviews[index] = {
         ...review,
         status,
@@ -1893,6 +1978,16 @@ export class PlannerRepository {
         liftedBy: null,
       };
       data.reviewRestrictions.push(row);
+      // A guest is identified by the restriction id, never by the guest key.
+      this.record(data, {
+        targetKind: 'user',
+        targetId: subject === 'user' ? (review.authorId as string) : row.id,
+        actorId: actor,
+        action: 'restrict',
+        fromStatus: null,
+        toStatus: 'active',
+        reason: input.reason,
+      });
       return { id: row.id };
     });
   }
@@ -1904,6 +1999,14 @@ export class PlannerRepository {
       const row = data.reviewRestrictions[index];
       if (!row) throw notFound('restriction', restrictionId);
       if (row.liftedAt) return;
+      this.record(data, {
+        targetKind: 'user',
+        targetId: row.subject === 'user' && row.authorId ? row.authorId : row.id,
+        actorId: actor,
+        action: 'lift',
+        fromStatus: 'active',
+        toStatus: 'lifted',
+      });
       data.reviewRestrictions[index] = { ...row, liftedAt: this.timestamp(), liftedBy: actor.slice(0, 80) };
     });
   }
@@ -2484,10 +2587,19 @@ export class PlannerRepository {
     // ADR 0014: approval vouches for the content that was reviewed, so any
     // change re-queues it; leaving `public` (or archiving) ends the listing.
     if (next.visibility !== 'public' || next.status !== 'active') {
+      this.recordImplicitEnd(data, trip);
       next.listing = null;
     } else if (next.listing?.status === 'approved') {
       const requeued = transition(listingToState(next.listing.status), 'edit_material');
       if (requeued !== null) {
+        this.record(data, {
+          targetKind: 'trip',
+          targetId: trip.id,
+          actorId: trip.ownerId,
+          action: 'requeue',
+          fromStatus: listingToState(next.listing.status),
+          toStatus: requeued,
+        });
         next.listing = {
           ...next.listing,
           status: stateToListing(requeued) as TripListing['status'],
@@ -2983,6 +3095,7 @@ function newShareToken(): string {
  * row is next saved.
  */
 function withTripDefaults(data: PlannerData): PlannerData {
+  data.auditEvents ??= [];
   for (const trip of data.trips) {
     trip.planningStatus ??= 'draft';
     trip.visibility ??= 'private';

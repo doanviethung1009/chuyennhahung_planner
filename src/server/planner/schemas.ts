@@ -845,6 +845,26 @@ export const reviewRestrictionSchema = z.object({
   liftedBy: z.string().max(80).nullable().default(null),
 });
 
+/**
+ * One append-only record of a community action (ADR 0019 §2). Written in the
+ * same transaction as the change; never updated or deleted by the app (only the
+ * one-year retention sweep removes rows). `targetId` of a restriction on a guest
+ * is the restriction id, never the guest key.
+ */
+export const auditEventSchema = z.object({
+  id: plannerIdSchema,
+  targetKind: z.enum(['trip', 'review', 'user']),
+  targetId: plannerIdSchema,
+  actorId: z.string().trim().min(1).max(80),
+  actorKind: z.enum(['user', 'service']),
+  action: z.string().trim().min(1).max(40),
+  fromStatus: z.string().max(40).nullable().default(null),
+  toStatus: z.string().max(40).nullable().default(null),
+  reason: z.string().max(500).nullable().default(null),
+  createdAt: timestampSchema,
+});
+export type AuditEvent = z.infer<typeof auditEventSchema>;
+
 /** `POST /api/admin/community/restrictions` body. Strict. */
 export const createRestrictionSchema = z
   .object({

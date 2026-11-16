@@ -368,6 +368,8 @@ Khách chỉ được nhận diện bằng khoá kết nối đã băm, nên res
 30 ngày, tối đa 90) và bị từ chối với khoá `unknown` dùng chung. Không có id tác giả hay guest key
 trong bất kỳ phản hồi nào.
 
+Log kiểm toán ([ADR 0019](adr/0019-community-foundation.vi.md), [features/moderation-events.vi.md](features/moderation-events.vi.md)): mọi hành động listing, đánh giá và restriction thêm một `AuditEvent` (bảng `audit_events`, migration `0010`, khoá JSON `auditEvents`) trong cùng transaction của Planner store qua `src/server/community/events.ts`; chỉ nối thêm, dọn sau một năm, staff đọc tại `GET /api/admin/community/events?targetId=`. Chuyển trạng thái listing đi qua máy trạng thái thuần `src/server/community/submission.ts`.
+
 ## Các phase
 
 Những thứ vắng mặt có chủ đích, và không được dựng sớm:
