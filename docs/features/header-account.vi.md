@@ -26,6 +26,8 @@ Không thêm route. Control dẫn tới các route sẵn có:
 - `GET /api/planner/session` → `{ user, expiresAt, passwordChangeRequired }`
   ([ADR 0004](../adr/0004-planner-identity.vi.md)). Header đọc `user.displayName`,
   `user.role` và `user.hasPassword`; `401` nghĩa là khách.
+  Đối tượng `user` cố ý tối giản — `displayName`, `role`, `hasPassword`,
+  `hasGoogle` — không có id, handle, email hay mốc thời gian.
 - `DELETE /api/planner/session` để đăng xuất (`204`, gọi lại vẫn an toàn).
 - Chuỗi trong `nav`: `signIn`, `accountMenu`, `signedInAs`, `changePassword`,
   `admin`, `signOut`, `signingOut`, `signOutFailed` (và `myTrips` có sẵn).

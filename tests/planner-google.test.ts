@@ -432,7 +432,12 @@ describe('Google sign-in over HTTP', { timeout: 30_000 }, () => {
     const who = await routes.session.GET(
       new Request(`${ORIGIN}/api/planner/session`, { headers: { cookie: `${SESSION_COOKIE}=${token}` } }),
     );
-    expect((await who.json()).user).toMatchObject({ email: 'new.customer@gmail.com', createdVia: 'google' });
+    expect((await who.json()).user).toEqual({
+      displayName: 'Khách Hàng',
+      role: 'member',
+      hasPassword: false,
+      hasGoogle: true,
+    });
   });
 
   it('refuses a state that does not match the cookie, and burns it', async () => {

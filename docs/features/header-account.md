@@ -27,6 +27,8 @@ None. The control links to existing routes:
 - `GET /api/planner/session` → `{ user, expiresAt, passwordChangeRequired }`
   ([ADR 0004](../adr/0004-planner-identity.md)). The header reads
   `user.displayName`, `user.role` and `user.hasPassword`; a `401` means guest.
+  The `user` object is deliberately minimal — `displayName`, `role`, `hasPassword`,
+  `hasGoogle` — with no id, handle, email or timestamps.
 - `DELETE /api/planner/session` signs out (`204`, idempotent).
 - Messages under `nav`: `signIn`, `accountMenu`, `signedInAs`, `changePassword`,
   `admin`, `signOut`, `signingOut`, `signOutFailed` (and the existing `myTrips`).
