@@ -31,6 +31,8 @@ B lost because it adds a surface without a benefit.
 
 Easier: an email-less account can be given a password and used at once. Harder: a handle is now a login name, so a handle that is guessable is an online-guessing target; the existing rate limits and 12-character temporary passwords are the defence, and a handle is never shown to anyone who is not signed in.
 
+Accepted trade-off: the per-account bucket is keyed on the account alone, so anyone who knows a handle can spend its 5 attempts per 15 minutes and slow that person's password sign-in for up to 15 minutes. This follows ADR 0007 (throttle, never lock) and already held for an email. It does not touch Google or access-code sign-in, the per-IP bucket still bounds the attacker, and no account is taken over. Keying on IP plus account was rejected: it would let a guesser multiply the guess budget by changing address, and the per-IP key depends on a proxy that overwrites `X-Forwarded-For`. Revisit (for example a challenge after repeated failures) only if abuse is seen.
+
 ## Follow-up
 
 Run `/sec-check` (authentication change). Feature document: [handle-sign-in](../features/handle-sign-in.md).

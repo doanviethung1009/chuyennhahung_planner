@@ -31,6 +31,8 @@ B thua vì thêm bề mặt mà không có lợi ích.
 
 Dễ hơn: tài khoản chưa có email được cấp mật khẩu và dùng ngay. Khó hơn: handle trở thành tên đăng nhập, nên handle dễ đoán là mục tiêu dò mật khẩu trực tuyến; phòng vệ là các giới hạn tốc độ hiện có và mật khẩu tạm 12 ký tự, và handle không bao giờ hiện cho người chưa đăng nhập.
 
+Đánh đổi được chấp nhận: nhóm theo tài khoản chỉ lấy khóa là tài khoản, nên ai biết handle có thể dùng hết 5 lượt mỗi 15 phút của người đó và làm chậm đăng nhập bằng mật khẩu của họ tối đa 15 phút. Điều này theo đúng ADR 0007 (làm chậm, không khóa hẳn) và đã đúng với email. Nó không ảnh hưởng đăng nhập bằng Google hay mã truy cập, nhóm theo IP vẫn giới hạn kẻ tấn công, và không tài khoản nào bị chiếm. Phương án khóa theo IP cộng tài khoản bị loại: kẻ đoán chỉ cần đổi địa chỉ là nhân được ngân sách đoán, và khóa IP phụ thuộc proxy ghi đè `X-Forwarded-For`. Chỉ xem lại (ví dụ thử thách sau nhiều lần sai) nếu thấy bị lạm dụng.
+
 ## Việc tiếp theo
 
 Chạy `/sec-check` (thay đổi xác thực). Tài liệu tính năng: [handle-sign-in](../features/handle-sign-in.vi.md).
