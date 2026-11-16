@@ -7,8 +7,9 @@ Trạng thái phase hiện tại: [`CURRENT.md`](CURRENT.md). Việc tồn đọ
 [`backlog.md`](backlog.md). Trạng thái deploy từng phase:
 [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md).
 
-Cập nhật lần cuối: 2026-11-09 — thêm `DEPLOY-STATUS.md`, làm mới theo `main` @ `124868e`.
-Tạo lần đầu từ `main` @ `3d42707`.
+Cập nhật lần cuối: 2026-11-16 — đối chiếu lại theo `main` @ `e362aea` (báo cáo
+`.claude/contracts/community-platform-audit.md`; chủ dự án chốt khuyến nghị Q1–Q12 cùng ngày).
+Lần trước: 2026-11-09 (`main` @ `124868e`). Tạo lần đầu từ `main` @ `3d42707`.
 
 ## Quy tắc định danh
 
@@ -33,12 +34,18 @@ Trạng thái: `Done` · `Partial` · `In progress` · `Designed` (có ADR/contr
 | 01 | Branding & UX | Done (còn dữ liệu chủ nhà) | — | 00 |
 | 02 | Travel Content System | Done | — | 00 |
 | 03 | Travel Planner Core | Done | — | 02 |
-| 04 | Interactive Planner UI | Partial | P2 | 03 |
+| 04 | Interactive Planner UI | Partial (editor Done; còn Planner map, `/plan-your-trip`) | P2 | 03 |
 | 05 | Story → Planner, My Trips & Sharing | **In progress — phase hiện tại** | P0 | 02, 03 |
 | 06 | AI Planner, Affiliate & Optimization | Not started | P2 | 05, 04 (editor), 07 (phần affiliate) |
-| 07 | Admin Portal, CMS & RBAC | Designed (ADR 0006 Proposed, PR #25) | **P1 — làm ngay sau 05** | 05 |
+| 07 | Admin Portal, CMS & RBAC | In progress — phần lớn Done (code); còn audit log, MFA, CMS create/delete/template | **P1** | 05 |
 | 08 | Media Library & Analytics | Not started | P3 | 07 |
-| 09 | Production Readiness & Launch | Not started | P4 | 07, 08 (hoặc loại trừ có ghi lại) |
+| 09 | Production Readiness & Launch | Partial — dev VM + Postgres đã chạy; production Not started | P4 | 07, 08 (hoặc loại trừ có ghi lại) |
+| 10 | Community Foundations | Designed (đề xuất, chờ ADR); 10-S0 đã code | **P1** | 07 |
+| 11 | Member Profiles & Creator Terms | Designed (đề xuất) | P1 | 10 |
+| 12 | Travel Journal & Blog (curated) | Designed (đề xuất) | P2 | 10, 11 |
+| 13 | Media Hybrid & Vlog | Designed (đề xuất) | P2 | 08, 12 |
+| 14 | Engagement: Save · Follow · Like · Comment | Designed (đề xuất) | P3 | 10, 11, 12; rate-limit store chung |
+| 15 | Curated Gallery & Discovery | Designed (đề xuất) | P4 | 12, 14 |
 
 ## Thứ tự triển khai
 
@@ -59,7 +66,7 @@ flowchart LR
   P08 --> P09
 ```
 
-Thứ tự đề xuất: **05 → 07 → 06 → 08 → 09**, với 04 (editor) chạy xen khi có slot
+Thứ tự đề xuất (cập nhật 2026-11-16): **05 → 07 → 10 → 11 → 12 → 06 → 08 → 13 → 14 → 09 → 15**; 07 phần còn thiếu (audit log) làm cùng Phase 10. Thứ tự trước đó: 05 → 07 → 06 → 08 → 09, với 04 (editor) chạy xen khi có slot
 frontend và bắt buộc xong trước phần AI của 06.
 
 **Quy tắc 07 trước 06** (quyết định của chủ dự án, 2026-11-09): sau khi Phase 05 đạt
@@ -104,8 +111,10 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
 - **Trạng thái:** Partial.
 - **Đã có (đến qua Phase 05):** form tạo chuyến từ template, My Trips, trang chi tiết
   chỉ-xem, `src/components/planner/itinerary-days.tsx`.
-- **Chưa có (kiểm source 2026-11-09):** editor ngày/hoạt động/chi phí trong trình duyệt
-  — không component nào gọi API activities/reorder/expenses; `/plan-your-trip` vẫn là
+- **Đã có thêm (kiểm 2026-11-16):** trip editor ngày/hoạt động/chi phí trên `/my-trips/[id]`
+  (`src/components/planner/trip-editor/`, `docs/features/trip-editor.md`; kiểm tay, chưa có
+  test component) — P04-1 xong.
+- **Chưa có (kiểm source 2026-11-16):** `/plan-your-trip` vẫn là
   trang liên hệ (mailto/Zalo/Messenger); Planner map. Xem
   `docs/features/follow-hung-footsteps.md` → *Limits and open questions*.
 - **Ràng buộc:** Planner map cần ADR riêng (CLAUDE.md quy tắc 6).
@@ -136,8 +145,8 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
   Phần Optimization không phụ thuộc 07.
 
 ## Phase 07 — Admin Portal, CMS & RBAC
-- **Trạng thái:** In progress — lát cắt 1 (portal quản lý user, ADR 0010 Accepted 2026-11-11) đã hiện thực, chờ review/PR; còn CMS, audit log, MFA, màn hình editor, store rate limit dùng chung. Thiết kế gốc ở `docs/adr/0006-unified-identity-and-roles.md`
-  (+ `.vi.md`), *Proposed*, merge ở PR #25. Nhãn cũ "Phase 06 (Admin Portal & CMS)" đã
+- **Trạng thái:** In progress — phần lớn Done về code (cập nhật 2026-11-16): ADR 0006 *Accepted* 2026-11-11, ADR 0010 (portal user), 0011 (CMS story/place/review), 0012 (public đọc từ content repo), 0017 (`super_admin`). **Còn thiếu:** audit log (`audit_events`), MFA, CMS create/delete/template (vẫn token-only), store rate-limit dùng chung (chưa xác minh). Admin trên trình duyệt chưa có bằng chứng chạy trên dev VM. Thiết kế gốc ở `docs/adr/0006-unified-identity-and-roles.md`
+  (+ `.vi.md`). Nhãn cũ "Phase 06 (Admin Portal & CMS)" đã
   đổi thành Phase 07 (P07-R0). Còn chờ chủ nhà quyết định P07-D1.
 - **Phạm vi:** một user model với `role: member|editor|admin`; `can(identity, action)`
   thuần; `ADMIN_API_TOKEN` thành service principal; session admin chặt hơn; audit log;
@@ -157,9 +166,47 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
   đồng ý/quyền riêng tư (ADR riêng).
 
 ## Phase 09 — Production Readiness & Launch
-- **Trạng thái:** Not started.
+- **Trạng thái:** Partial (2026-11-16). Đã có bằng chứng: PostgreSQL (ADR 0008/0009/0013) và
+  dev VM chạy Docker + auto-deploy (ADR 0016; báo cáo `.claude/reports/deploy-test-2026-11-15.md`:
+  5 run xanh, rollback + redeploy thật, dữ liệu bền qua deploy). **Chưa có:** sao lưu (FAIL),
+  production (G8), store rate-limit chung đã xác minh, `/release-check`.
 - **Phạm vi:** SQL + nhiều instance (schema đích đã có ở ADR 0002), store chung cho rate
   limiter, nhà cung cấp danh tính thật, xử lý advisory phụ thuộc, dữ liệu thật của chủ
   nhà, checklist phát hành (`/release-check`), `/qc-check` và `/sec-check` toàn hệ thống.
 - **Phụ thuộc:** 07; 08 hoặc quyết định loại 08 khỏi bản launch (ghi lại); SQL trước khi
   có hơn một instance.
+
+## Phase 10 — Community Foundations
+- **Trạng thái:** Designed (đề xuất 2026-11-16, chủ dự án chốt khuyến nghị; cần ADR riêng trước khi code).
+- **10-S0 — đã có code, deploy chưa xác minh:** [ADR 0014](../../docs/adr/0014-community-trips-and-reviews.md)
+  (Community Trips + Reviews) và [ADR 0015](../../docs/adr/0015-community-review-author-controls.md)
+  (hold, restrictions); migration `0005`–`0008`; `tests/community-*.test.ts`,
+  `tests/review-restrictions-routes.test.ts`. Ghi nhận hồi tố ở đây, **không** đổi ID Phase 05–09.
+- **Phạm vi mới:** `audit_events` (P07-4), `terms_acceptances`, `reports` + hàng đợi, smoke
+  `/community-trips` và `/reviews` trên dev, `/sec-check` + `/qc-check` cho community.
+- **Quyết định đã chốt:** giữ review hiện ngay theo ADR 0014 (Q1), thêm Report + audit log
+  trước khi cân nhắc siết.
+- **Phụ thuộc:** 07; ADR 0014/0015.
+
+## Phase 11 — Member Profiles & Creator Terms
+- **Trạng thái:** Designed. `member_profiles` (1:1 theo `userId`, mặc định riêng tư), đồng
+  ý Terms theo phiên bản, sửa Terms cho khớp (hiện nhắc ảnh/video khi chưa có upload).
+- **Phụ thuộc:** 10; chính sách riêng tư do chủ nhà cung cấp (Q9).
+
+## Phase 12 — Travel Journal & Blog (curated)
+- **Trạng thái:** Designed. `journal_posts` kind `journal|blog`, duyệt trước (Q2), gắn trip.
+- **Phụ thuộc:** 10, 11.
+
+## Phase 13 — Media Hybrid & Vlog
+- **Trạng thái:** Designed. Embed allow-list trước (YouTube, Q7), upload ảnh sau, `kind=vlog`.
+  Thực thi trên nền Phase 08 (ID 08 giữ nguyên phạm vi).
+- **Phụ thuộc:** 08, 12; ADR storage + chính sách media.
+
+## Phase 14 — Engagement: Save · Follow · Like · Comment
+- **Trạng thái:** Designed. Save riêng tư; comment hiện ngay + Report + hold (Q2).
+- **Phụ thuộc:** 10, 11, 12; store rate-limit chung đã xác minh trước khi tăng bề mặt ghi.
+
+## Phase 15 — Curated Gallery & Discovery
+- **Trạng thái:** Designed. Tìm kiếm/lọc/phân trang gallery, collection do editor tuyển,
+  thông báo; role `moderator` là quyết định riêng.
+- **Phụ thuộc:** 12, 14.

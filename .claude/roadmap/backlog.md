@@ -26,15 +26,15 @@ không sửa ý.
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
 | ~~P07-R0~~ | ~~Commit ADR 0006 + `tests/client-boundary.test.ts`; đổi nhãn "Phase 06" thành "Phase 07"~~ — xong: commit ở PR #25, đổi nhãn ở branch deploy-checklist | system-architect | — |
-| P07-D1 | **Chủ nhà quyết:** nhà cung cấp danh tính (giữ token + session hay Auth.js/hosted), ai là admin, MFA cho `admin` | owner | — |
-| P07-D2 | ADR 0006 → Accepted | system-architect | P05 đóng, P07-R0, P07-D1 |
-| P07-1 | Role model: `role` trên user (thiếu = `member`), `can()` thuần, map quyền tĩnh | backend-engineer | P07-D2 |
-| P07-2 | `ADMIN_API_TOKEN` → service principal, bị từ chối `trip:*` | backend-engineer | P07-1 |
-| P07-3 | Session admin: thời hạn ngắn theo role; `requireSameOrigin` bắt buộc cho mutation admin | backend-engineer | P07-1 |
-| P07-4 | Audit log (`auditEvents`): đổi template/role, mọi support read | backend-engineer | P07-1 |
+| ~~P07-D1~~ | ~~**Chủ nhà quyết:** nhà cung cấp danh tính (giữ token + session hay Auth.js/hosted), ai là admin, MFA cho `admin`~~ — nhà cung cấp danh tính: tự quản (ADR 0007); admin: ADR 0017; **MFA còn mở, hoãn (Q6)** | owner | — |
+| ~~P07-D2~~ | ~~ADR 0006 → Accepted~~ — xong 2026-11-11 | system-architect | P05 đóng, P07-R0, P07-D1 |
+| ~~P07-1~~ | ~~Role model: `role` trên user (thiếu = `member`), `can()` thuần, map quyền tĩnh~~ — xong (`permissions.ts`, ADR 0006/0017) | backend-engineer | P07-D2 |
+| ~~P07-2~~ | ~~`ADMIN_API_TOKEN` → service principal, bị từ chối `trip:*`~~ — xong (ADR 0006 bước 1–2) | backend-engineer | P07-1 |
+| ~~P07-3~~ | ~~Session admin: thời hạn ngắn theo role; `requireSameOrigin` bắt buộc cho mutation admin~~ — xong (ADR 0010) | backend-engineer | P07-1 |
+| P07-4 | Audit log (`auditEvents`): đổi template/role, mọi support read — **chưa làm; chuyển làm cùng P10-1 (Q6)** | backend-engineer | P07-1 |
 | P07-5 | Test còn thiếu: ma trận `can`; service principal bị từ chối `trip:*`; admin nhận `not_found` trên trip người khác; thiếu role = `member`; member không vào route admin | backend-engineer | P07-1..3 |
-| P07-6 | CMS sửa template/story qua content store; quyết định có lưu lịch sử bản template hay không | system-architect → BE/FE | P07-1 |
-| P07-7 | UI Admin Portal (chỉ qua session + role, token không tới client) | frontend-engineer | P07-3, P07-5 |
+| ~~P07-6~~ | ~~CMS sửa template/story qua content store; quyết định có lưu lịch sử bản template hay không ~~ — story/place/review xong (ADR 0011); **create/delete/template còn token-only, versioning template chưa quyết** | system-architect → BE/FE | P07-1 |
+| ~~P07-7~~ | ~~UI Admin Portal (chỉ qua session + role, token không tới client)~~ — xong (ADR 0010/0011) | frontend-engineer | P07-3, P07-5 |
 | P07-8 | Rate-limit store chung cho đăng nhập admin khi > 1 process | backend-engineer | liên quan P09-1 |
 | P07-9 | Gỡ dùng token trong trình duyệt; token chỉ còn cho CI | backend-engineer | P07-7 |
 
@@ -55,7 +55,7 @@ có trước khi chạy nhiều instance.
 
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
-| P04-1 | Editor ngày/hoạt động/chi phí trong `/my-trips/[id]` dùng API sẵn có | frontend-engineer | — |
+| ~~P04-1~~ | ~~Editor ngày/hoạt động/chi phí trong `/my-trips/[id]` dùng API sẵn có~~ — xong (`docs/features/trip-editor.md`; còn thiếu test component) | frontend-engineer | — |
 | P04-2 | Nối `/plan-your-trip` vào Planner (thay hay giữ trang liên hệ — cần quyết định) | system-architect → FE | P04-1 |
 | P04-3 | Planner map — cần ADR riêng | system-architect | P04-1 |
 
@@ -72,8 +72,61 @@ có trước khi chạy nhiều instance.
 
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
-| P09-1 | SQL + nhiều instance (schema đích ở ADR 0002) | system-architect → BE | P07-1 |
+| P09-1 | SQL + nhiều instance (schema đích ở ADR 0002) — **SQL xong cho dev (ADR 0008/0009/0013, migration 0001–0009); phần "nhiều instance" + rate-limit store chung chưa xác minh (Q12)** | system-architect → BE | P07-1 |
 | P09-2 | ~~Merge `chore/upgrade-vitest-5`~~ (PR #22); rà advisory còn lại | main session | — |
 | P09-3 | Dữ liệu thật của chủ nhà: handle, số điện thoại, email đặt tour | owner | — |
 | P09-4 | `/release-check`, `/qc-check`, `/sec-check` toàn hệ thống | user | P07, P08 hoặc loại trừ có ghi |
-| P09-5 | Chọn nơi chạy + workflow deploy + sao lưu store (D1–D6 trong `DEPLOY-STATUS.md`) | owner → system-architect | D1 trước SQL nếu chọn serverless |
+| P09-5 | **Dev VM đã chạy (ADR 0016);** còn sao lưu (FAIL), `metadataBase`, HSTS, production. Chọn nơi chạy + workflow deploy + sao lưu store (D1–D6 trong `DEPLOY-STATUS.md`) | owner → system-architect | D1 trước SQL nếu chọn serverless |
+
+## Phase 10 — Community Foundations (P1, đề xuất 2026-11-16)
+
+Nguồn: `.claude/contracts/community-platform-audit.md`. Mỗi mục cần ADR riêng trước khi code.
+
+| ID | Việc | Chủ | Phụ thuộc |
+|---|---|---|---|
+| P10-S0 | Ghi nhận ADR 0014/0015 là đã code (trips, reviews, hold, restrictions; migration 0005–0008) — chỉ tài liệu | system-architect | — |
+| P10-1 | `audit_events` (= P07-4) + test | BE | ADR mới |
+| P10-2 | `terms_acceptances` + chặn ghi khi thiếu version; sửa Terms khớp ảnh/video (Q8) | BE + FE; owner xác nhận text | P10-1 |
+| P10-3 | `reports` + nút Report + hàng đợi staff (`community:moderate`) | BE + FE | P10-1 |
+| P10-4 | Smoke `/community-trips`, `/reviews`, admin community trên dev VM; ghi bằng chứng | main session | deploy dev |
+| P10-5 | `/sec-check` + `/qc-check` cho community (ADR 0014/0015) | user gọi | — |
+| P10-6 | Xác minh rate-limit store dùng chung (Q12) | BE | — |
+| P10-7 | Sửa sao lưu dev VM, `metadataBase`, HSTS (Q10) trước UGC mới | owner → architect | — |
+| P10-8 | Đổi nhãn "Stage 8/9" trong `docs/specs-roadmap.*` (cả hai ngôn ngữ) (Q11) | system-architect | — |
+| P10-9 | Cập nhật ADR 0016 Status và ADR 0015 (đóng 7 câu hỏi theo khuyến nghị, Q5) — cả hai ngôn ngữ | system-architect | — |
+
+## Phase 11 — Member Profiles & Creator Terms (P1, đề xuất)
+
+| ID | Việc | Chủ | Phụ thuộc |
+|---|---|---|---|
+| P11-1 | ADR profile: `member_profiles` 1:1, mặc định riêng tư, allow-list | system-architect | P10-2, P11-D1 |
+| P11-D1 | **Chủ nhà cấp** chính sách riêng tư, thời hạn lưu `guestKey`, quyền xuất/xóa dữ liệu (Q9) | owner | — |
+| P11-2 | API + UI hồ sơ, danh sách bài của tác giả | BE + FE | P11-1 |
+
+## Phase 12 — Travel Journal & Blog (P2, đề xuất)
+
+| ID | Việc | Chủ | Phụ thuộc |
+|---|---|---|---|
+| P12-1 | ADR `journal_posts` (state machine như `listing` + `held`; duyệt trước) | system-architect | P10, P11 |
+| P12-2 | API + moderation + trang công khai VI/EN + sitemap | BE + FE | P12-1 |
+
+## Phase 13 — Media Hybrid & Vlog (P2, đề xuất)
+
+| ID | Việc | Chủ | Phụ thuộc |
+|---|---|---|---|
+| P13-1 | ADR media: embed allow-list (YouTube nocookie), CSP `frame-src`, upload ảnh sau | system-architect | P08-1, P12 |
+| P13-2 | `media_assets` + vlog (`journal_posts.kind=vlog`) | BE + FE | P13-1 |
+| P13-3 | `/sec-check` bắt buộc (XL, trust boundary) | user gọi | P13-2 |
+
+## Phase 14 — Engagement (P3, đề xuất)
+
+| ID | Việc | Chủ | Phụ thuộc |
+|---|---|---|---|
+| P14-1 | ADR Save/Follow/Like/Comment; mở rộng restriction ra mọi `targetType` | system-architect | P10–P12, P10-6 |
+| P14-2 | Bốn bảng + API + UI; comment hiện ngay + report + hold | BE + FE | P14-1 |
+
+## Phase 15 — Curated Gallery & Discovery (P4, đề xuất)
+
+| ID | Việc | Chủ | Phụ thuộc |
+|---|---|---|---|
+| P15-1 | Tìm kiếm/lọc/phân trang gallery, collection editor, thông báo; quyết định role `moderator` | system-architect → BE/FE | P12, P14 |

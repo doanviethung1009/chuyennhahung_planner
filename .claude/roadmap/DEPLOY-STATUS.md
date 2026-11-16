@@ -3,7 +3,7 @@
 Roadmap: [`PHASES.md`](PHASES.md) · Phase hiện tại: [`CURRENT.md`](CURRENT.md) ·
 Tồn đọng: [`backlog.md`](backlog.md)
 
-Cập nhật: 2026-11-09, kiểm trên `main` @ `124868e` (sau PR #27).
+Cập nhật: 2026-11-16, kiểm trên `main` @ `e362aea`; bằng chứng deploy lấy từ `.claude/reports/deploy-test-2026-11-15.md` (dev VM, commit `0216f46`, **trước** PR #93–#105).
 
 Một phase chỉ được ghi **Deployed** khi mọi cổng bắt buộc của nó có bằng chứng. Ô nào
 không có bằng chứng trong repo, GitHub hoặc lời xác nhận của chủ nhà thì ghi
@@ -42,11 +42,13 @@ Ký hiệu: ✅ có bằng chứng · ❌ chưa đạt · ⏳ NOT RUN · — kh�
 Ghi chú G2: lần chạy `CI` gần nhất trên `main` đều `success` (#27, #25, #26, #24, #23,
 …); lần merge #12 và #13 bị `cancelled` vì #13 merge chồng lên, commit sau đó xanh.
 
-## Chặn deploy (toàn hệ thống)
+## Dev VM (2026-11-15) — không phải production
 
-Hiện **chưa có môi trường deploy nào**: không có `vercel.json`, `Dockerfile` hay
-workflow deploy; GitHub Deployments API của repo trả về 0 bản ghi. CI chỉ kiểm, không
-phát hành. Trước khi bất kỳ phase nào lên G7/G8:
+`.github/workflows/deploy-dev.yml`, `Dockerfile`, `deploy/**` có; 5 run Deploy dev `success`; rollback và deploy lại chạy thật; `/api/health` 200; smoke 11 route 200; Planner qua API và dữ liệu Postgres bền qua deploy. **FAIL:** chưa có cron sao lưu. **NR:** đăng nhập admin trên trình duyệt, `backup.sh`/khôi phục, smoke `/community-trips` và `/reviews`, kiểm migration 0005–0009 từng cái. Cảnh báo: `metadataBase` chưa đặt; HSTS trên HTTP. G7 = một phần (dev, không phải staging chính thức); G8 vẫn ❌.
+
+## Chặn deploy production
+
+Dòng cũ ("chưa có môi trường deploy, không Dockerfile/workflow") đã **lỗi thời** từ 2026-11-11; môi trường dev tồn tại, production thì chưa. CI chỉ kiểm; deploy dev tự động theo ADR 0016. Trước khi bất kỳ phase nào lên G7/G8:
 
 - [ ] **D1 — Chủ nhà chọn nơi chạy.** Planner và content store ghi file JSON
   (`src/server/persistence/json-store.ts`) và rate limiter nằm trong bộ nhớ một process:

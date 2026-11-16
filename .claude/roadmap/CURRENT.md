@@ -4,11 +4,12 @@ Roadmap đầy đủ: [`PHASES.md`](PHASES.md) · Tồn đọng: [`backlog.md`](
 Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
 
 - **Trạng thái:** In progress.
-- **Cập nhật:** 2026-11-09, kiểm trên `main` @ `124868e` (sau PR #27).
-- **Deploy:** chưa có môi trường nào — xem `DEPLOY-STATUS.md` (D1–D6).
-- **Phase kế tiếp:** **Phase 07 — Admin Portal, CMS & RBAC** (P1), rồi Phase 06 (P2).
-  Lý do: quyết định của chủ dự án ngày 2026-11-09; xem quy tắc "07 trước 06" trong
-  `PHASES.md`.
+- **Cập nhật:** 2026-11-16, kiểm trên `main` @ `e362aea`; chủ dự án chốt khuyến nghị Q1–Q12 của `.claude/contracts/community-platform-audit.md`.
+- **Deploy:** chỉ dev VM (192.168.100.140, đến commit `0216f46` theo báo cáo 2026-11-15); chưa có production — xem `DEPLOY-STATUS.md`.
+- **Phase kế tiếp:** **Phase 10 — Community Foundations** (P1), cùng phần còn thiếu của Phase 07
+  (audit log). Điều kiện: Phase 05 đóng — chạy `/sec-check` + `/qc-check` (khuyến nghị Q4),
+  hoặc chủ nhà chấp nhận rủi ro bằng văn bản. Phase 07 phần lớn đã có code (xem `PHASES.md`).
+  Phase 10 cần ADR riêng trước khi code.
 
 ## Đã ship (có bằng chứng)
 
@@ -70,3 +71,9 @@ phía server; editor lịch trình đầy đủ (thuộc Phase 04); `/plan-your-
 - [ ] P07-D1 — **chủ nhà trả lời:** nhà cung cấp danh tính, ai là admin, MFA cho `admin`.
 - [ ] P07-D2 — ADR 0006 → Accepted (sau 05 đóng + D1).
 - [ ] D1 trong `DEPLOY-STATUS.md` — chủ nhà chọn nơi chạy (ảnh hưởng thời điểm cần SQL).
+
+## Quyết định đã chốt 2026-11-16
+
+Chủ dự án chốt khuyến nghị: Q1 giữ review hiện ngay (ADR 0014); Q2 Journal/Blog/Vlog duyệt trước, comment hiện ngay + report + hold; Q3 thứ tự Phase 10–15 và 10-S0; Q4 chạy sec/qc để đóng 05; Q5 xác nhận đáp án khuyến nghị ADR 0015; Q6 audit log trước, MFA hoãn; Q7 embed YouTube trước, chưa upload; Q8 chủ nhà xác nhận Terms/contact; Q9 chủ nhà cung cấp chính sách riêng tư; Q10 sửa sao lưu/`metadataBase`/HSTS trước UGC mới; Q11 đổi nhãn Stage 8/9; Q12 xác minh rate-limit store chung.
+
+Các quyết định cần hành động bên ngoài (chủ nhà cấp dữ liệu, ADR, sửa `docs/`) chưa xong — xem backlog `P10-*`.
