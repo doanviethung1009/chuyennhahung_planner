@@ -5,7 +5,7 @@
 - **Status:** Accepted as recommended (owner approved 2026-11-15); PR 1 (hold / ask the author, migration `0007_review_hold.sql`) and PR 2 (restrictions, migration `0008_review_restrictions.sql`) implemented. PR 2 deviations: the author sees restrictions through a `restrictions` list on `GET /api/planner/reviews` rather than a field on `OwnReview`, and no new staff limiter was added because session admin writes already pass the 30/min per user limiter (ADR 0010). Question 1–7 under Follow-up stand on the recommended answers until the owner says otherwise
 - **Date:** 2026-11-15
 - **Owner:** system-architect
-- **Decided by:** pending (owner request 2026-11-15: staff may ask the author, and may switch off a given author's or guest's reviews for a place or for that Planner account)
+- **Decided by:** owner, approved as recommended 2026-11-15 (request 2026-11-15: staff may ask the author, and may switch off a given author's or guest's reviews for a place or for that Planner account)
 - **Affects:** `src/server/planner/{schemas,repository}.ts`, `src/server/persistence/planner-rows.ts` + `planner-transfer.ts`, migration `0007`, `src/server/identity/permissions.ts`, `src/app/api/admin/community/**`, `src/components/admin/community/review-queue.tsx`, `src/components/reviews/place-reviews-panel.tsx`, `messages/*.json`. Extends [ADR 0014](0014-community-trips-and-reviews.md); changes none of its public projections.
 
 ## Context
