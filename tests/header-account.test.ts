@@ -37,9 +37,9 @@ describe('header account control', () => {
     expect(source.match(/credentials: 'same-origin'/g)?.length).toBe(2);
   });
 
-  it('shows the admin entry only to the admin role', () => {
+  it('shows the admin entry to every staff role, never to a member', () => {
     const source = read('components/layout/account-menu.tsx');
-    expect(source).toMatch(/user\.role === 'admin' \|\| user\.role === 'super_admin' \?[\s\S]{0,120}href="\/admin"/);
+    expect(source).toMatch(/user\.role !== 'member' \?[\s\S]{0,120}href="\/admin"/);
   });
 
   it('is mounted on desktop and in the mobile drawer', () => {

@@ -273,7 +273,7 @@ function AccountLinks({
           {t('changePassword')}
         </Link>
       </li>
-      {user.role === 'admin' || user.role === 'super_admin' ? (
+      {user.role !== 'member' ? (
         <li>
           <Link href="/admin" onClick={onNavigate} className={className}>
             {t('admin')}
