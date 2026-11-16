@@ -3,26 +3,31 @@
 🇻🇳 English version: [specs-community-roadmap.md](specs-community-roadmap.md)
 
 Trạng thái: **Đề xuất**. Nhãn **[C] [P] [A]**: xem
-[specs-community-overview.vi.md](specs-community-overview.vi.md). Roadmap này thêm các
-phase **sau** những phase trong [specs-roadmap.vi.md](specs-roadmap.vi.md) và không đổi cái
-nào: stage 1–9 và Phase 07 giữ phạm vi và trạng thái. Phase mới mang tiền tố **C** để không
-số nào trùng.
+[specs-community-overview.vi.md](specs-community-overview.vi.md). Định danh roadmap là
+**Phase ID** trong `.claude/roadmap/PHASES.md`: Phase 00–09 cố định và không bị chạm tới, còn
+phần cộng đồng tiếp tục là **Phase 10–15** (định nghĩa ở PR #107, "Roadmap Reconciliation").
+Tên **C1–C7** ở các bản nháp trước chỉ còn là **nhóm spec** (cách gọi một bó tính năng xuyên
+các tài liệu này); chúng không phải phase và không bao giờ xuất hiện làm ID roadmap. Nếu PR
+#107 chưa nằm trên `main`, tài liệu này phụ thuộc vào nó.
 
 ## Mục tiêu và phạm vi
 
-Sắp xếp Community Platform sao cho mỗi phase ra mắt riêng, sau cổng đóng góp, và có thể tắt.
-Triển khai theo từng phase, không bao giờ đồng loạt. [C]
+Sắp xếp Community Platform sao cho mỗi phase ra mắt riêng và có thể tắt. Triển khai theo
+từng phase, không bao giờ đồng loạt. [C]
 
 ## Yêu cầu
 
-- **R1** Nền tảng trước tính năng: quyền sở hữu, khả năng hiển thị, kiểm duyệt, bộ giới hạn
+- **R1** Nền tảng trước tính năng: audit log, báo cáo, ghi nhận đồng ý Terms, limiter ghi
   dùng chung. [C]
 - **R2** Mỗi phase có sản phẩm bàn giao, tiêu chí nghiệm thu, cổng bảo mật và điều kiện
   thoát. [C]
 - **R3** Mọi phase thêm bảng, route hay ranh giới tin cậy đều có ADR riêng viết trước. [C]
 - **R4** Không phase nào bắt đầu trước điều kiện thoát của phase nó phụ thuộc. [P]
-- **R5** Lên sóng mọi đường ghi công khai chờ điều khoản đóng góp và liên hệ gỡ bài của chủ
-  dự án (`contributionOpen`). [C]
+- **R5** Cổng đóng góp (`contributionOpen`) hiện **đang mở trên `main`**: điều khoản và liên
+  hệ gỡ bài đã được điền trong `src/content/site.ts`. Mọi đường ghi công khai mới chỉ ra mắt
+  khi nó còn true, và chủ dự án xác nhận liên hệ đó là hộp thư thật, có người theo dõi (PR
+  #107, Q8). [C]
+- **R6** Phase 05–09 giữ ID, phạm vi và trạng thái; roadmap này không đổi cái nào. [C]
 
 ## Thiết kế
 
@@ -30,55 +35,75 @@ Triển khai theo từng phase, không bao giờ đồng loạt. [C]
 
 ```mermaid
 flowchart LR
-    S5[Stage 5 Planner UI] --> C1
-    S6[Stage 6 PostgreSQL] --> C1
-    P07[Phase 07 vai trò và cổng] --> C1
-    C1[C1 Nền tảng] --> C2[C2 Community MVP]
-    C1 --> C3[C3 Media]
-    C2 --> C4[C4 Nội dung]
-    C3 --> C4
-    C4 --> C5[C5 Tương tác]
-    C1 --> C6[C6 Khám phá và cá nhân hóa]
-    C5 --> C7[C7 Nâng cao]
-    C6 --> C7
+    P04[04 Planner UI - editor xong] --> P10
+    P05[05 Story sang Planner, Chia sẻ] --> P10
+    P07[07 Admin, CMS, RBAC] --> P10
+    P10[10 Nền tảng cộng đồng] --> P11[11 Hồ sơ, Terms, Dùng chuyến này]
+    P11 --> P12[12 Nhật ký và Blog]
+    P08[08 Thư viện media] --> P13[13 Media lai và Vlog]
+    P12 --> P13
+    P12 --> P14[14 Tương tác]
+    P11 --> P14
+    P14 --> P15[15 Thư viện và Khám phá]
+    P12 --> P15
+    P09[09 Sẵn sàng production] -. sao lưu, limiter dùng chung .-> P14
 ```
 
-Stage 5 là "Mở một phần" trong [specs-roadmap.vi.md](specs-roadmap.vi.md): C2 cần trình soạn
-chuyến của nó làm đích sao chép, đã ra mắt (`docs/features/trip-editor.md`).
+Thứ tự khuyến nghị, như trong `PHASES.md`: **05 → 07 → 10 → 11 → 12 → 06 → 08 → 13 → 14 → 09 → 15**.
 
 ### Các phase
 
 | Phase | Chủ đề | Sản phẩm bàn giao | Cổng bảo mật | Điều kiện thoát |
 |---|---|---|---|---|
-| **C1** | Nền tảng | Máy trạng thái `submission.ts`, `ModerationEvent`, bộ giới hạn tốc độ dùng chung trên PostgreSQL, `Profile` với slug tự nguyện, `Trip.origin`, thực thể báo cáo và mở rộng hàng đợi, action sẵn cho thông báo trong `permissions.ts` | Mô hình đe dọa ở trên được rà; test bộ giới hạn qua hai instance | Test ma trận và ánh xạ xanh; các stage hiện có không đổi |
-| **C2** | Community MVP | Nháp/đã đăng/cần sửa/gỡ đăng cho chuyến, bộ lọc thư viện, **Dùng chuyến này** kèm ghi công, điều khiển Báo cáo | `/sec-check` về danh sách cho phép khi sao chép và tính ẩn danh | Test liệt kê ẩn danh xanh; cổng mở |
-| **C3** | Media | `MediaStore`, adapter cục bộ và tương thích S3, pipeline upload ảnh, avatar, hạn mức, tác vụ dọn | `/sec-check` về upload và URL ký; ADR cho thư viện ảnh | Fixture GPS và đa định dạng xanh; sao lưu media được xác minh |
-| **C4** | Nội dung | `Journal` (nhật ký, blog, vlog), editor block, embed video, kiểm duyệt nhật ký | `/sec-check` về rich text, CSP cho embed; ADR cho editor | Bộ XSS vô hại; nhân viên duyệt và gỡ được |
-| **C5** | Tương tác | Theo dõi, thích, lưu, bình luận, thông báo, hồ sơ công khai, quyết định MFA cho nhân viên, quyết định vai trò `moderator` | `/sec-check` về giới hạn lạm dụng và quyền riêng tư; load test đường ghi | Số đếm đúng khi đồng thời; chuỗi xóa được chứng minh |
-| **C6** | Khám phá và cá nhân hóa | Tìm kiếm khớp tiếng Việt không dấu, sở thích, `scoreMatch`, "Gợi ý cho bạn", các lát P1–P3, P6 của [spec cá nhân hóa](specs-planner-personalization.vi.md) | Sở thích vắng mặt trong mọi projection công khai | Trang không có hồ sơ giống hệt `main` |
-| **C7** | Nâng cao | Uy tín, link tiếp thị liên kết, gợi ý vượt quá luật | Mỗi cái một ADR; chưa thiết kế ở đây | Chỉ mở theo quyết định của chủ dự án |
+| **10** | Nền tảng cộng đồng | `10-S0` (ADR 0014/0015, đã có code); `audit_events` cùng máy trạng thái submission (P10-1); `terms_acceptances` (P10-2); `reports`, điều khiển Báo cáo và hàng đợi (P10-3); limiter ghi dùng chung (P10-6); trạng thái đăng chuyến `changes_requested` và `unpublished`, bộ lọc thư viện; sửa sao lưu, `metadataBase`, HSTS (P10-7); [ADR 0019](adr/0019-community-foundation.vi.md) | `/sec-check` bề mặt cộng đồng (P10-5) và quyền riêng tư của log cùng limiter | Test chuyển trạng thái và ánh xạ xanh; test limiter qua hai instance mô phỏng; khôi phục sao lưu chứng minh được trên dev VM |
+| **11** | Hồ sơ thành viên, Creator Terms, Dùng chuyến này | `member_profiles` (mặc định riêng tư, trang công khai tự nguyện, không upload avatar); đồng ý Terms theo phiên bản và text khớp thực tế; **Dùng chuyến này** kèm ghi công và `origin`; chính sách riêng tư do chủ dự án cung cấp (P11-D1) | `/sec-check` về danh sách cho phép khi sao chép và tính ẩn danh | Test liệt kê ẩn danh xanh; Terms cho phép sao chép (xem rủi ro RK16) |
+| **12** | Nhật ký và Blog (tuyển chọn) | `journal_posts` kind `journal`/`blog`, gắn chuyến, tài liệu block, duyệt tuyển chọn; **chỉ văn bản, không ảnh tải lên** | `/sec-check` về rich text và CSP; ADR cho editor | Bộ XSS vô hại; nhân viên duyệt và gỡ được |
+| **13** | Media lai và Vlog | `media_assets`, pipeline upload ảnh, avatar, hạn mức, vlog là `journal_posts.kind=vlog` với embed trong danh sách cho phép; xây trên thư viện media của Phase 08 | `/sec-check` bắt buộc (XL, ranh giới tin cậy); ADR cho thư viện ảnh và lưu trữ | Fixture GPS và đa định dạng xanh; sao lưu media được xác minh |
+| **14** | Tương tác | `saves`, `follows`, `likes`, `comments` (lên ngay, kèm Báo cáo và giữ lại), hạn chế mở rộng cho mọi đích | `/sec-check` về giới hạn lạm dụng và quyền riêng tư; load test đường ghi | Số đếm đúng khi đồng thời; chuỗi xóa được chứng minh; limiter dùng chung được xác minh; quyết định MFA được ghi lại |
+| **15** | Thư viện tuyển chọn và Khám phá | Tìm kiếm khớp tiếng Việt không dấu, lọc và phân trang thư viện, bộ sưu tập của editor, thông báo, sở thích và `scoreMatch` ([spec cá nhân hóa](specs-planner-personalization.vi.md)), quyết định vai trò `moderator` | Sở thích vắng mặt trong mọi projection công khai | Trang không có hồ sơ giống hệt `main` |
+| 16 | Chưa thiết kế | Danh tiếng | ADR riêng | Chỉ mở theo quyết định của chủ dự án |
 
-C6 chỉ phụ thuộc C1, nên P1–P3 của spec cá nhân hóa có thể xây trong khi C2–C5 chờ cổng.
+**Link affiliate vẫn thuộc Phase 06** (AI Planner, Affiliate và Optimization); bộ spec cộng
+đồng không thêm cái nào. Phase 08 xây thư viện media toàn site, Phase 13 dùng nó cho upload
+của thành viên và vlog; cả hai dùng một interface `MediaStore`.
+
+### Ánh xạ nhóm spec sang Phase
+
+| Nhóm spec (tên bản nháp) | Rơi vào |
+|---|---|
+| C1 Nền tảng: máy trạng thái, log sự kiện, limiter dùng chung | Phase 10 (log sự kiện là `audit_events`, P10-1; limiter là P10-6) |
+| C2 Community MVP: trạng thái đăng, bộ lọc thư viện, Báo cáo | Phase 10 |
+| C2 Dùng chuyến này | Phase 11 |
+| Hồ sơ và trang hồ sơ công khai | Phase 11 |
+| C3 Media | Phase 08 (thư viện), Phase 13 (upload của thành viên, avatar) |
+| C4 Nhật ký và blog | Phase 12 |
+| C4 Vlog và embed video | Phase 13 |
+| C5 Theo dõi, thích, lưu, bình luận | Phase 14 |
+| C5 Thông báo | Phase 15 (các phase trước hiện trạng thái và lý do trong "Bài của tôi") |
+| C6 Tìm kiếm, cá nhân hóa | Phase 15 |
+| C7 Danh tiếng | Phase 16, chưa thiết kế |
+| C7 Affiliate | Phase 06, ngoài bộ này |
 
 ### Nợ kỹ thuật công việc này gặp
 
-Bộ giới hạn tốc độ theo tiến trình (ADR 0005); transaction toàn kho (ADR 0009); chưa có bộ
-gửi email; chưa có MFA; auto deploy chưa chạy đầu-cuối (ADR 0016); mô hình `listing` ba
-trạng thái cũ; vai trò `moderator` bị hoãn (ADR 0006).
+Limiter ghi dùng chung chưa xác minh qua nhiều instance (PHASES.md P09-1, Q12); transaction
+toàn kho (ADR 0009); chưa có bộ gửi email; chưa có MFA (PR #107 Q6 hoãn); sao lưu dev VM
+đang lỗi (Q10); mô hình `listing` ba trạng thái cũ; vai trò `moderator` bị hoãn (ADR 0006).
 
 ## Luồng xử lý và trạng thái lỗi
 
 | Tình huống | Xử lý |
 |---|---|
 | Một phase trượt cổng bảo mật | BLOCKED dừng phase; tối đa hai vòng review/sửa, rồi báo chủ dự án |
-| Cổng (`contributionOpen`) vẫn đóng | C1, phần bên trong C3 và C6 vẫn tiến hành; không đường ghi công khai nào lên sóng |
-| Đo được tranh chấp trên kho (DB5) | Chuyển nhóm bảng đó sang repository theo từng dòng trước C5 |
-| Hàng đợi kiểm duyệt tồn đọng tăng | Hoãn ra mắt C4 và C5; không tự duyệt |
+| `contributionOpen` thành false | Đường ghi công khai trả `503`; đọc vẫn chạy |
+| Đo được tranh chấp trên kho | Chuyển nhóm bảng đó sang repository theo từng dòng trước Phase 14 |
+| Hàng đợi kiểm duyệt tồn đọng tăng | Hoãn ra mắt Phase 12 và 14; không tự duyệt |
 
 ## Phụ thuộc và bảo mật
 
-Bên ngoài: điều khoản đóng góp và liên hệ gỡ bài của chủ dự án; điều khoản Cloudflare Tunnel
-cho media [A]; role trên VM PostgreSQL (extension); đăng ký runner deploy (ADR 0016).
+Bên ngoài: chính sách riêng tư và cơ sở pháp lý từ chủ dự án (Q9); văn bản Terms bao phủ việc
+thành viên khác sao chép; điều khoản Cloudflare Tunnel cho media [A]; role trên VM PostgreSQL
+(extension); sao lưu dev VM.
 
 ### Kế hoạch thực thi agent
 
@@ -93,78 +118,84 @@ frontend. Subagent là ngoại lệ và cần chủ dự án duyệt trước. [
 | QC (theo yêu cầu) | Chỉ kết luận | Spec QC, diff |
 | Security (theo yêu cầu) | Chỉ kết luận | Spec bảo mật, diff |
 
-Quy tắc ngân sách token: một phiên cho mỗi phase và PR; `/compact` gần 150k ngữ cảnh; mỗi
-vai chỉ đọc danh sách của mình; không review lại việc không đổi; khảo sát trong
-[tổng quan](specs-community-overview.vi.md) được dùng lại, không lặp lại. Subagent: **0**
-trừ khi được duyệt; tối đa **hai** cùng lúc, kể cả phiên chính tối đa ba; tập file tách
-biệt; không bao giờ hai agent trên một file. `qc` và `security` chỉ chạy khi chủ dự án yêu
-cầu.
+Quy tắc ngân sách token: một phiên cho mỗi phase và PR; `/compact` gần 150k ngữ cảnh; mỗi vai
+chỉ đọc danh sách của mình; không review lại việc không đổi; khảo sát trong
+[tổng quan](specs-community-overview.vi.md) được dùng lại, không lặp lại. Subagent: **0** trừ
+khi được duyệt; tối đa **hai** cùng lúc, tính cả phiên chính tối đa ba; tập file tách biệt;
+không bao giờ hai agent trên một file. `qc` và `security` chỉ chạy khi chủ dự án yêu cầu.
 
 ## Kịch bản kiểm thử
 
-Nghiệm thu theo phase ở [QC](specs-community-qc.vi.md); các điều kiện thoát ở trên được
-kiểm bằng các test đó cùng lưới hồi quy.
+Nghiệm thu theo phase ở [QC](specs-community-qc.vi.md); các điều kiện thoát ở trên được kiểm
+bằng các test đó cùng lưới hồi quy.
 
 ## Câu hỏi còn mở
 
-Xem nhật ký quyết định bên dưới và danh sách riêng của từng spec; các câu chặn ADR đầu tiên
-là 1–4 ở đây.
+Xem nhật ký quyết định bên dưới và danh sách riêng của từng spec. Các câu chặn ADR của Phase
+10: sao lưu (Q10), hộp thư gỡ bài thật (Q8), chính sách riêng tư (Q9), và "Dùng chuyến này"
+có thuộc Phase 11 như đề xuất không.
 
 ## Sổ đăng ký rủi ro
 
 | ID | Rủi ro | Loại | Khả năng | Tác động | Giảm thiểu |
 |---|---|---|---|---|---|
-| RK1 | Thích và bình luận bị xếp hàng trên khóa toàn kho | Hiệu năng | Trung bình | Cao | Repository theo từng dòng cho bảng cộng đồng; load test trước C5 |
+| RK1 | Thích và bình luận bị xếp hàng trên khóa toàn kho | Hiệu năng | Trung bình | Cao | Repository theo từng dòng cho bảng cộng đồng; load test trước Phase 14 |
 | RK2 | XSS lưu trữ qua rich text | Bảo mật | Trung bình | Cao | Tài liệu block, không có đường HTML, test bộ XSS, CSP |
 | RK3 | Lộ GPS từ ảnh | Riêng tư | Cao nếu không xử lý | Cao | Mã hóa lại xóa EXIF; test fixture |
-| RK4 | Bộ giới hạn theo tiến trình giả mạo được để lạm dụng lọt qua | Bảo mật | Cao | Trung bình | Bộ giới hạn dùng chung ở C1 |
+| RK4 | Limiter theo tiến trình reset mỗi lần deploy và không phủ nhiều instance; khóa ẩn danh giả mạo được | Bảo mật | Cao | Trung bình | Limiter dùng chung ở Phase 10 sửa tính bền vững và đa instance; lệnh ghi đã đăng nhập khóa theo `userId`; câu hỏi header proxy đáng tin còn mở (ADR 0019) |
 | RK5 | Hàng đợi kiểm duyệt tồn đọng làm nội dung ngưng trệ | Vận hành | Trung bình | Trung bình | Hiện tuổi hàng đợi, ẩn phần rỗng, quyết định SLA của chủ dự án |
 | RK6 | Đĩa và sao lưu tăng trên homelab | Chi phí, vận hành | Trung bình | Trung bình | Hạn mức, tác vụ dọn, chuyển sang object storage có quản lý trước khi ra công khai |
 | RK7 | Cloudflare Tunnel giới hạn phục vụ media | Vận hành | Chưa rõ [A] | Trung bình | Kiểm điều khoản; phục vụ media từ host lưu trữ, không qua tunnel |
 | RK8 | Thư viện ảnh native vào chuỗi cung ứng | Bảo mật | Trung bình | Trung bình | ADR, rà soát `allowScripts` ghim phiên bản |
 | RK9 | Áp lực RAM trên 16 GB (xử lý ảnh, diệt virus tùy chọn) | Hiệu năng | Trung bình | Trung bình | Giới hạn đồng thời, giới hạn kích thước, bỏ diệt virus cho ảnh |
-| RK10 | Nội dung người dùng đầu tiên kéo theo phỉ báng, bản quyền, dữ liệu cá nhân | Pháp lý | Trung bình | Cao | Cổng đóng góp, liên hệ gỡ bài, duyệt tuyển chọn |
+| RK10 | Nội dung người dùng kéo theo phỉ báng, bản quyền, dữ liệu cá nhân | Pháp lý | Trung bình | Cao | Cổng đóng góp, liên hệ gỡ bài, duyệt tuyển chọn |
 | RK11 | Báo cáo đồng loạt ẩn bình luận trung thực | Lạm dụng | Trung bình | Thấp | Ngưỡng chỉ giữ bình luận, nhân viên quyết định, có log |
 | RK12 | Tác giả ẩn danh lộ qua bản sao hay thông báo | Riêng tư | Thấp | Cao | Danh sách cho phép và test liệt kê |
 | RK13 | Phình phạm vi thành tính năng mạng xã hội | Phạm vi | Cao | Trung bình | Danh sách "ngoài phạm vi", mỗi tính năng một ADR |
-| RK14 | Auto deploy chưa chạy đầu-cuối | Vận hành | Trung bình | Trung bình | Chủ dự án đăng ký runner trước khi C2 ra mắt |
+| RK14 | Bằng chứng deploy đã cũ: lần chạy dev VM (2026-11-15) có trước PR #93–#105 | Vận hành | Trung bình | Trung bình | Chạy lại bài test deploy trước khi Phase 10 ra mắt |
 | RK15 | Tìm kiếm tiếng Việt bỏ sót truy vấn không dấu | Sản phẩm | Trung bình | Thấp | Cột không dấu, chuẩn hóa dự phòng |
+| RK16 | Creator Terms cấp quyền cho Chuyện Nhà Hưng nhưng không cho thành viên khác, nên việc sao chép chuyến có thể thiếu cơ sở pháp lý | Pháp lý | Trung bình | Cao | Chủ dự án và luật sư xác nhận và sửa Terms ở Phase 11 trước khi Dùng chuyến này ra mắt |
+| RK17 | Nội dung cộng đồng đang lên sóng khi điều khiển Báo cáo và audit log chưa tồn tại | An toàn | Trung bình | Cao | Phase 10 trước; sao lưu trước khi có thêm nội dung người dùng (Q10) |
+| RK18 | Hai roadmap lệch nhau (`.claude/roadmap/` và các spec này) | Quy trình | Trung bình | Thấp | Bảng ánh xạ nhóm spec ở trên; PHASES.md là nguồn chuẩn cho ID |
 
 ## Nhật ký quyết định
 
 | # | Quyết định | Ngày | Nguồn |
 |---|---|---|---|
 | 1 | Kiểm duyệt tuyển chọn cho nội dung công khai dài | 2026-11-16 | Brief của chủ dự án |
-| 2 | Đánh giá địa điểm ngắn giữ ADR 0014/0015 (lên ngay, nhân viên gỡ) | 2026-11-16 | Trả lời của chủ dự án |
+| 2 | Đánh giá địa điểm ngắn giữ ADR 0014/0015 (lên ngay, nhân viên gỡ) | 2026-11-16 | Trả lời của chủ dự án, PR #107 Q1 |
 | 3 | Media lai: lưu ảnh nội bộ, video dùng nền tảng ngoài | 2026-11-16 | Brief của chủ dự án |
 | 4 | Sao chép là cá nhân và độc lập; không đồng bộ ngược | 2026-11-16 | Brief của chủ dự án |
 | 5 | Triển khai theo phase, không đồng loạt | 2026-11-16 | Brief của chủ dự án |
 | 6 | Giới hạn agent để tiết kiệm token và chi phí | 2026-11-16 | Brief của chủ dự án |
-| 7 | "Phase 05" và "Phase 06" là Stage 5 và Stage 6; phase mới là C1–C7 | 2026-11-16 | Trả lời của chủ dự án |
-| 8 | Bộ spec gồm mười tài liệu, song ngữ, ngắn gọn | 2026-11-16 | Trả lời của chủ dự án |
-| 9 | Mọi chỉnh sửa chuyến đã đăng đưa nó về hàng duyệt | 2026-11-14 | ADR 0014 |
-| 10 | Điều khoản đóng góp và liên hệ gỡ bài do chủ dự án cung cấp | 2026-11-14 | ADR 0014 |
+| 7 | Phase 05–09 là các ID trong `.claude/roadmap/PHASES.md` (05 Story sang Planner, 06 AI Planner, 07 Admin, 08 Media, 09 Production) và giữ nguyên. Việc này thay cho cách hiểu sai trước đó ("Stage 5 và 6") | 2026-11-16 | Review PR #106 đối chiếu #107 |
+| 8 | Phase cộng đồng là **Phase 10–15**; C1–C7 chỉ là nhóm spec | 2026-11-16 | Chỉ thị của chủ dự án |
+| 9 | Bộ spec gồm mười tài liệu, song ngữ, ngắn gọn | 2026-11-16 | Trả lời của chủ dự án |
+| 10 | Mọi chỉnh sửa chuyến đã đăng đưa nó về hàng duyệt | 2026-11-14 | ADR 0014 |
+| 11 | Nhật ký/blog/vlog tuyển chọn; bình luận lên ngay kèm Báo cáo và giữ lại | 2026-11-16 | PR #107 Q2 |
+| 12 | Vlog embed trước (YouTube), upload ảnh sau | 2026-11-16 | PR #107 Q7 |
 
-Còn mở: vai trò moderator (editor tới C5), slug công khai so với `handle`, thư viện ảnh, thư
-viện editor, lựa chọn lưu trữ, hạn mức và giới hạn, MFA cho nhân viên, mục tiêu quyết định
-đầu tiên.
+Còn mở: vai trò moderator (editor tới Phase 15), slug công khai so với `handle`, thư viện ảnh,
+thư viện editor, lựa chọn lưu trữ, hạn mức, MFA cho nhân viên, mục tiêu quyết định đầu tiên,
+văn bản Terms cho việc sao chép.
 
 ## Tổng hợp theo phase
 
 | Phase | Tính năng | Ưu tiên | Phụ thuộc | Chủ trì | File spec | Tiêu chí nghiệm thu | Trạng thái |
 |---|---|---|---|---|---|---|---|
-| C1 | Máy trạng thái, log sự kiện, bộ giới hạn dùng chung | P0 | Stage 5, 6, Phase 07 | Backend | [kiểm duyệt](specs-community-moderation.vi.md), [kiến trúc](specs-community-architecture.vi.md) | Test chuyển trạng thái và ánh xạ | Đề xuất |
-| C1 | Hồ sơ và slug tự nguyện | P0 | Không | Backend, Frontend | [cơ sở dữ liệu](specs-community-database.vi.md) | Mặc định tắt | Đề xuất |
-| C2 | Đăng chuyến, cần sửa, gỡ đăng | P0 | C1 | Backend, Frontend | [kiểm duyệt](specs-community-moderation.vi.md) | Mọi cạnh được test | Đề xuất |
-| C2 | Dùng chuyến này kèm ghi công | P0 | C1, điều khiển báo cáo | Backend, Frontend | [api](specs-community-api.vi.md) | Nguồn không đổi, ẩn danh giữ vững | Đề xuất |
-| C2 | Điều khiển báo cáo và hàng đợi | P0 | C1 | Backend, Frontend | [kiểm duyệt](specs-community-moderation.vi.md) | Loại trùng, hàng đợi thấy được | Đề xuất |
-| C2 | Bộ lọc thư viện | P1 | Không | Backend | [api](specs-community-api.vi.md) | Query theo danh sách cho phép | Đề xuất |
-| C3 | Upload và lưu trữ ảnh | P0 | C1, ADR | Backend | [media](specs-community-media.vi.md) | Xóa GPS, hạn mức | Đề xuất |
-| C4 | Nhật ký, blog, vlog | P0 | C2, C3, ADR | Backend, Frontend | [fe](specs-community-fe.vi.md) | XSS vô hại, luồng duyệt | Đề xuất |
-| C4 | Embed video | P1 | Editor C4 | Frontend | [media](specs-community-media.vi.md) | Bấm để tải, danh sách cho phép | Đề xuất |
-| C5 | Theo dõi, thích, lưu | P1 | C4 | Backend, Frontend | [cơ sở dữ liệu](specs-community-database.vi.md) | Đúng khi đồng thời | Đề xuất |
-| C5 | Bình luận và thông báo | P1 | C4 | Backend, Frontend | [api](specs-community-api.vi.md) | Hậu kiểm, giữ ở ngưỡng | Đề xuất |
-| C5 | Hồ sơ công khai | P2 | Theo dõi C5 | Frontend | [fe](specs-community-fe.vi.md) | Ẩn danh không bao giờ được liệt kê | Đề xuất |
-| C6 | Tìm kiếm | P1 | C4 | Backend | [cơ sở dữ liệu](specs-community-database.vi.md) | Khớp không dấu | Đề xuất |
-| C6 | Sở thích và khớp | P2 | C1 | Backend, Frontend | [cá nhân hóa](specs-planner-personalization.vi.md) | Không hồ sơ thì giống hệt | Đề xuất |
-| C7 | Uy tín, tiếp thị liên kết, gợi ý | P3 | C5, C6 | Architect trước | chưa có | ADR riêng | Chưa thiết kế |
+| 10 | Audit log và máy trạng thái | P1 | 07 | Backend | [kiểm duyệt](specs-community-moderation.vi.md), [ADR 0019](adr/0019-community-foundation.vi.md) | Test chuyển trạng thái và ánh xạ | Đề xuất |
+| 10 | Limiter ghi dùng chung | P1 | 07 | Backend | [ADR 0019](adr/0019-community-foundation.vi.md) | Test hai instance, từ chối khi lỗi | Đề xuất |
+| 10 | Báo cáo, điều khiển Báo cáo, hàng đợi | P1 | audit log | Backend, Frontend | [kiểm duyệt](specs-community-moderation.vi.md) | Loại trùng, hàng đợi thấy được | Đề xuất |
+| 10 | Ghi nhận đồng ý Terms | P1 | audit log | Backend, Frontend | [bảo mật](specs-community-security.vi.md) | Chặn ghi khi thiếu phiên bản | Đề xuất |
+| 10 | Trạng thái đăng chuyến, bộ lọc thư viện | P1 | audit log | Backend, Frontend | [api](specs-community-api.vi.md) | Mọi cạnh được test | Đề xuất |
+| 11 | Hồ sơ thành viên, trang công khai tự nguyện | P1 | 10, chính sách riêng tư | Backend, Frontend | [cơ sở dữ liệu](specs-community-database.vi.md) | Mặc định tắt | Đề xuất |
+| 11 | Dùng chuyến này kèm ghi công | P1 | 10, Terms | Backend, Frontend | [api](specs-community-api.vi.md) | Nguồn không đổi, ẩn danh giữ vững | Đề xuất |
+| 12 | Nhật ký và blog | P2 | 10, 11 | Backend, Frontend | [fe](specs-community-fe.vi.md) | XSS vô hại, luồng duyệt | Đề xuất |
+| 13 | Upload ảnh, avatar | P2 | 08, 12 | Backend | [media](specs-community-media.vi.md) | Xóa GPS, hạn mức | Đề xuất |
+| 13 | Vlog và embed video | P2 | 12, media của 13 | Frontend | [media](specs-community-media.vi.md) | Bấm để tải, danh sách cho phép | Đề xuất |
+| 14 | Lưu, theo dõi, thích | P3 | 10, 11, 12 | Backend, Frontend | [cơ sở dữ liệu](specs-community-database.vi.md) | Đúng khi đồng thời | Đề xuất |
+| 14 | Bình luận | P3 | 14, limiter đã xác minh | Backend, Frontend | [api](specs-community-api.vi.md) | Lên ngay, Báo cáo, giữ ở ngưỡng | Đề xuất |
+| 15 | Tìm kiếm, lọc, phân trang | P4 | 12, 14 | Backend | [cơ sở dữ liệu](specs-community-database.vi.md) | Khớp không dấu | Đề xuất |
+| 15 | Thông báo | P4 | 14 | Backend, Frontend | [api](specs-community-api.vi.md) | Payload theo danh sách cho phép | Đề xuất |
+| 15 | Sở thích và khớp | P4 | 10 | Backend, Frontend | [cá nhân hóa](specs-planner-personalization.vi.md) | Không hồ sơ thì giống hệt | Đề xuất |
+| 16 | Danh tiếng | P5 | 14, 15 | Architect trước | chưa có | ADR riêng | Chưa thiết kế |

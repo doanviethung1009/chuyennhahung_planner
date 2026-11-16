@@ -39,16 +39,16 @@ nullable columns, JSON-file parity for local development.
 | Entity (table) | Key fields | Notes |
 |---|---|---|
 | `Trip` (existing) | + `origin` JSONB null: `{ sourceToken, sourceTitle, authorDisplay }`; `listing` gains `changes_requested`, `unpublished` | `origin` holds no author when the source was anonymous |
-| `Profile` (`community_profiles`) | `userId` pk, `publicSlug` uq null, `bio` ≤280, `avatarAssetId` null, `visibility` `private`/`public`, `updatedAt` | Off by default; slug is not `handle` |
-| `Journal` (`community_journals`) | `id` pk, `authorId` ix, `kind` `journal`/`blog`/`vlog`, `slug` uq, `title`, `summary`, `coverAssetId`, `body` JSONB blocks, `bodyVersion`, `lang`, `placeSlugs[]`, `tags[]`, `status`, moderation fields, `publishedAt`, `revision`, timestamps | `revision` for `If-Match` |
-| `MediaAsset` (`community_media`) | `id` pk, `ownerId` ix, `kind` `image`, `status`, `mime`, `bytes`, `width`, `height`, `storageKey`, `variants` JSONB, `attachedTo` `{kind,id}` null, `createdAt`, `deletedAt` | Video is never a row here; it is an embed inside `body` |
-| `Follow` | `followerId`, `followeeId`; pk pair | Self-follow refused |
-| `Reaction` | `userId`, `targetKind`, `targetId`, `kind` `like`; pk tuple | One like per user per target |
-| `SavedItem` | `userId`, `targetKind`, `targetId`, `createdAt`; pk tuple | Private |
-| `Comment` | `id` pk, `authorId`, `targetKind`, `targetId`, `parentId` null, `body` ≤1000, `status` `visible`/`removed`, `createdAt` | One reply level only |
-| `Report` | `id` pk, `reporterId` null, `clientKey`, `targetKind`, `targetId`, `reason`, `note` ≤500, `status` `open`/`actioned`/`dismissed`, handler fields | Feeds the queue |
-| `Notification` | `id` pk, `userId` ix, `kind`, `payload` JSONB allow-list, `readAt`, `createdAt` | No email |
-| `ModerationEvent` | `id` pk, `targetKind`, `targetId`, `actorId`, `action`, `fromStatus`, `toStatus`, `reason`, `createdAt` | Append-only |
+| `Profile` (`member_profiles`) | `userId` pk, `publicSlug` uq null, `bio` ≤280, `avatarAssetId` null, `visibility` `private`/`public`, `updatedAt` | Off by default; slug is not `handle` |
+| `Journal` (`journal_posts`) | `id` pk, `authorId` ix, `kind` `journal`/`blog`/`vlog`, `slug` uq, `title`, `summary`, `coverAssetId`, `body` JSONB blocks, `bodyVersion`, `lang`, `placeSlugs[]`, `tags[]`, `status`, moderation fields, `publishedAt`, `revision`, timestamps | `revision` for `If-Match` |
+| `MediaAsset` (`media_assets`) | `id` pk, `ownerId` ix, `kind` `image`, `status`, `mime`, `bytes`, `width`, `height`, `storageKey`, `variants` JSONB, `attachedTo` `{kind,id}` null, `createdAt`, `deletedAt` | Video is never a row here; it is an embed inside `body` |
+| `Follow` (`follows`) | `followerId`, `followeeId`; pk pair | Self-follow refused |
+| `Reaction` (`likes`) | `userId`, `targetKind`, `targetId`, `kind` `like`; pk tuple | One like per user per target |
+| `SavedItem` (`saves`) | `userId`, `targetKind`, `targetId`, `createdAt`; pk tuple | Private |
+| `Comment` (`comments`) | `id` pk, `authorId`, `targetKind`, `targetId`, `parentId` null, `body` ≤1000, `status` `visible`/`removed`, `createdAt` | One reply level only |
+| `Report` (`reports`) | `id` pk, `reporterId` null, `clientKey`, `targetKind`, `targetId`, `reason`, `note` ≤500, `status` `open`/`actioned`/`dismissed`, handler fields | Feeds the queue |
+| `Notification` (Phase 15) | `id` pk, `userId` ix, `kind`, `payload` JSONB allow-list, `readAt`, `createdAt` | No email |
+| `AuditEvent` (`audit_events`) | `id` pk, `targetKind`, `targetId`, `actorId`, `action`, `fromStatus`, `toStatus`, `reason`, `createdAt` | Append-only |
 | `CommunityReview` (existing) | unchanged | ADR 0014/0015 |
 
 ### Relationships (logical, not enforced)
@@ -77,7 +77,7 @@ erDiagram
 
 | Table | Index | For |
 |---|---|---|
-| `community_journals` | `(status, publishedAt desc)` | Explore feed |
+| `journal_posts` | `(status, publishedAt desc)` | Explore feed |
 | | `(authorId, status)` | Author's list, profile |
 | | GIN `tsv` over title, summary, plain body, plus an unaccented copy | Search |
 | | GIN `placeSlugs`, `tags` | Filter |
@@ -91,9 +91,7 @@ erDiagram
 
 ### Migrations (proposed numbering)
 
-`0010` trip `origin` + profile · `0011` journals + media · `0012` social, reports,
-notifications, events · `0013` search columns. Each with rollback note, import/export
-update, and a test through both stores (ADR 0014 precedent). One migration per phase.
+Proposed numbering, one migration per slice: `0010` `audit_events` and rate-limit counters (Phase 10, [ADR 0019](adr/0019-community-foundation.md)) · `0011` reports, `terms_acceptances`, listing states (Phase 10) · `0012` `member_profiles`, trip `origin` (Phase 11) · `0013` `journal_posts` (Phase 12) · `0014` `media_assets` (Phase 13) · `0015` follows, likes, saves, comments (Phase 14) · `0016` search columns, notifications (Phase 15). Each with rollback note, import/export update, and a test through both stores (ADR 0014 precedent).
 
 ## Flows and failure states
 
@@ -108,7 +106,7 @@ update, and a test through both stores (ADR 0014 precedent). One migration per p
 
 ## Dependencies and security
 
-Stage 6 engine, the existing `listing` column (migration `0005`), `plannerUsers`. Public
+The PostgreSQL table engine (ADR 0008/0009), the existing `listing` column (migration `0005`), `plannerUsers`. Public
 projections never select `authorId` for anonymous content. Notification payloads are
 allow-listed to ids and titles, never user text beyond a trimmed title.
 
@@ -122,6 +120,6 @@ concurrent likes (50 parallel) end at the right count.
 
 | # | Question | Recommended |
 |---|---|---|
-| 1 | Separate per-row repository for community tables (DB5) or reuse the document store? | Separate; measure first at C5 |
+| 1 | Separate per-row repository for community tables (DB5) or reuse the document store? | Separate; measure first, before Phase 14 |
 | 2 | Is `CREATE EXTENSION unaccent` allowed on the PostgreSQL VM role? | Check in [deploy-database.md](deploy-database.md) role setup |
-| 3 | Retention for removed content and logs? | 30 days content, 1 year `ModerationEvent` |
+| 3 | Retention for removed content and logs? | 30 days content, 1 year `AuditEvent` (`audit_events`) |

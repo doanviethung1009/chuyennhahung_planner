@@ -33,7 +33,7 @@ khám phá, thông báo, kiểm duyệt tuyển chọn, và các phase để gia
 
 Vị trí trả phí hay quảng bá, tin nhắn riêng, phát trực tiếp, chợ, lọc cộng tác trên dữ
 liệu hành vi, bản đồ Planner và gợi ý AI (cả hai vẫn đóng, xem
-[roadmap](specs-roadmap.vi.md#chưa-mở)), và mọi thay đổi với các stage hiện có hay Phase 07.
+[roadmap](specs-roadmap.vi.md#chưa-mở)), và mọi thay đổi với Phase 00–09.
 
 ## Yêu cầu
 
@@ -47,7 +47,7 @@ liệu hành vi, bản đồ Planner và gợi ý AI (cả hai vẫn đóng, xem
 | Sao chép | Cá nhân: bản sao độc lập thuộc người sao chép | [C] |
 | Triển khai | Theo phase, không đồng loạt | [C] |
 | Agent | Mặc định một agent, tối đa hai cùng lúc, ngữ cảnh hẹp | [C] |
-| Stage hiện có | Stage 5 (Planner UI) và 6 (PostgreSQL) trong [specs-roadmap.vi.md](specs-roadmap.vi.md) giữ nguyên; phase mới đánh số **C1–C7** để không trùng | [C] |
+| Định danh roadmap | Phase 00–09 trong `.claude/roadmap/PHASES.md` giữ nguyên (05 Story sang Planner, 06 AI Planner, 07 Admin, 08 Media, 09 Production); công việc cộng đồng là **Phase 10–15** (PR #107); C1–C7 chỉ là nhóm spec, xem [roadmap](specs-community-roadmap.vi.md) | [C] |
 
 ### Yêu cầu chức năng
 
@@ -59,7 +59,7 @@ liệu hành vi, bản đồ Planner và gợi ý AI (cả hai vẫn đóng, xem
 | F4 | Bài nhật ký, blog, vlog với rich text và media | [P] |
 | F5 | Hồ sơ, theo dõi/bỏ theo dõi, thích, lưu, bình luận, báo cáo | [P] |
 | F6 | Tìm kiếm, lọc và khám phá nội dung đã đăng | [P] |
-| F7 | Thông báo trong ứng dụng | [P] |
+| F7 | Thông báo trong ứng dụng (từ Phase 15) | [P] |
 | F8 | Nhân viên duyệt, từ chối, yêu cầu sửa, gỡ đăng và xóa được | [P], mở rộng ADR 0014 |
 
 ### Yêu cầu phi chức năng
@@ -89,8 +89,8 @@ liệu hành vi, bản đồ Planner và gợi ý AI (cả hai vẫn đóng, xem
 | Giới hạn tốc độ | Trong bộ nhớ, theo tiến trình, khóa client giả mạo được | `src/server/rate-limit.ts`, ADR 0005 |
 | Thông báo, theo dõi, thích, bình luận, báo cáo, tìm kiếm | **Không có** | grep trên `src`, `db/migrations` |
 | Bộ gửi email | **Không có** (chặn đặt lại mật khẩu qua email và thông báo email) | [specs-roadmap.vi.md](specs-roadmap.vi.md#chưa-mở) |
-| Cổng đóng góp | Đóng cho tới khi chủ dự án cung cấp điều khoản và liên hệ gỡ bài | `contributionOpen`, `src/content/site.ts:102` |
-| Triển khai | Docker, nginx, VM app và VM PostgreSQL riêng; auto deploy đã viết, chưa chạy đầu-cuối | [deploy-runbook.vi.md](deploy-runbook.vi.md), ADR 0016 |
+| Cổng đóng góp | **Mở**: điều khoản và liên hệ gỡ bài đã được điền; PR #107 Q8 nhờ chủ dự án xác nhận liên hệ là hộp thư có người theo dõi | `contributionOpen`, `src/content/site.ts:102` |
+| Triển khai | Docker, nginx, VM app và VM PostgreSQL riêng; auto deploy đã chạy đầu-cuối trên dev VM (báo cáo 2026-11-15, trước PR #93–#105) | [deploy-runbook.vi.md](deploy-runbook.vi.md), ADR 0016 |
 | Cloudflare Tunnel, Proxmox | Không có trong repository; lấy từ brief của chủ dự án | [A] |
 
 ## Phân tích khoảng trống
@@ -104,22 +104,20 @@ liệu hành vi, bản đồ Planner và gợi ý AI (cả hai vẫn đóng, xem
 | Hồ sơ, theo dõi, thích, lưu, bình luận | `displayName`, `handle` | Toàn bộ, cộng báo cáo và thông báo |
 | Vai trò `moderator` | Editor giữ `community:moderate` | Vai trò riêng cần ADR (ADR 0006 đã hoãn) |
 | Giới hạn tốc độ dùng chung | Theo tiến trình | Kho dùng chung trước khi có nhiều instance hoặc ghi dễ bị lạm dụng |
-| Nhật ký kiểm toán | Không | Log `ModerationEvent`; đồng thời đóng khoảng trống audit log |
+| Nhật ký kiểm toán | Không | `audit_events` (Phase 10, P10-1); đồng thời đóng khoảng trống audit log |
 | Tìm kiếm | Không | Full-text Postgres với khớp tiếng Việt không dấu |
 
 ## Phụ thuộc và bảo mật
 
-Phụ thuộc: trình soạn chuyến Stage 5 (đích sao chép), PostgreSQL Stage 6 (mọi bảng mới),
-vai trò Phase 07 và cổng quản trị (hàng đợi kiểm duyệt), cổng đóng góp (lên sóng). Chi
+Phụ thuộc: trình soạn chuyến (Phase 04), chia sẻ và sao chép (Phase 05), lưu trữ PostgreSQL (mọi bảng mới),
+vai trò Phase 07 và cổng quản trị (hàng đợi kiểm duyệt), cổng đóng góp (phải còn mở). Chi
 tiết bảo mật ở [bảo mật](specs-community-security.vi.md); rủi ro nổi bật là HTML do người
 dùng viết (giải pháp: block có cấu trúc, không bao giờ HTML thô), siêu dữ liệu ảnh lộ GPS
-(giải pháp: xóa EXIF khi mã hóa lại), và bộ giới hạn theo tiến trình (giải pháp: kho dùng
-chung trước C5).
+(giải pháp: xóa EXIF khi mã hóa lại), và bộ giới hạn theo tiến trình (giải pháp: limiter ghi dùng chung ở Phase 10).
 
 ## Kịch bản kiểm thử
 
-Thuộc [QC](specs-community-qc.vi.md). Nghiệm thu mức tổng quan: khi chưa có dữ liệu cộng
-đồng và cổng còn đóng, mọi trang hiện có hoạt động như trên `main`.
+Thuộc [QC](specs-community-qc.vi.md). Nghiệm thu mức tổng quan: khi chưa có dữ liệu cộng đồng mới, mọi trang hiện có hoạt động như trên `main`.
 
 ## Câu hỏi còn mở
 
@@ -127,4 +125,4 @@ Thuộc [QC](specs-community-qc.vi.md). Nghiệm thu mức tổng quan: khi chư
 |---|---|---|
 | 1 | Hiện có Cloudflare Tunnel đứng trước app không, và Proxmox có phải host duy nhất? | Xác nhận; thiết kế media giả định cả hai |
 | 2 | Chính sách handle nào áp cho hồ sơ công khai (ADR 0018)? | Slug công khai riêng, tự nguyện |
-| 3 | Chủ dự án muốn vai trò `moderator` ngay hay dùng editor ở các phase đầu? | Editor tới C5 |
+| 3 | Chủ dự án muốn vai trò `moderator` ngay hay dùng editor ở các phase đầu? | Editor tới Phase 15 |

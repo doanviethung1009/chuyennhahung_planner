@@ -10,7 +10,7 @@ nằm ở phần đánh giá repository của tài liệu đó; tài liệu này
 
 Đặt Community Platform vào hệ thống hiện có với ít bộ phận chuyển động mới nhất: cùng ứng
 dụng Next.js, kho Planner, cookie session, `can()` và cổng quản trị. Ngoài phạm vi: mọi
-thay đổi với kho Travel Content, stage 5–6 hay Phase 07.
+thay đổi với kho Travel Content, các Phase 00–09.
 
 ## Yêu cầu
 
@@ -23,7 +23,7 @@ thay đổi với kho Travel Content, stage 5–6 hay Phase 07.
   lên cloud bằng cách đổi adapter. [P]
 - **A4** Không framework mới. Dependency runtime mới (editor rich text, thư viện ảnh) mỗi
   cái cần ADR riêng. [C]
-- **A5** Mỗi phase ra mắt sau cổng đóng góp và có thể tắt. [C]
+- **A5** Mỗi phase thêm đường ghi đều tắt được, và cổng đóng góp (`contributionOpen`, đang mở trên `main`) vẫn có hiệu lực. [C]
 
 ## Thiết kế
 
@@ -62,9 +62,9 @@ flowchart TB
 | D4 | Nội dung là **tài liệu block có phiên bản** (JSON), React render, không bao giờ HTML thô. Dùng lại renderer story `src/components/story/story-blocks.tsx` nếu bộ block phù hợp | [P], [A] chưa kiểm chứng việc dùng lại |
 | D5 | Sao chép lấy cấu trúc và tham chiếu địa điểm qua danh sách cho phép vào bản nháp riêng của người sao chép, kèm `origin`; không có liên kết ghi ngược về nguồn | [C] |
 | D6 | Interface `MediaStore` (`createUpload`, `commit`, `url`, `delete`), adapter đĩa cục bộ cho dev và adapter tương thích S3; xem [media](specs-community-media.vi.md) | [P] |
-| D7 | Thông báo là các dòng trong ứng dụng, trang tự poll; chưa có bộ gửi email | [P] |
+| D7 | Thông báo là các dòng trong ứng dụng, trang tự poll, từ Phase 15; các phase trước hiện trạng thái và lý do trong "Bài của tôi"; chưa có bộ gửi email | [P] |
 | D8 | Giới hạn tốc độ chuyển sang kho dùng chung trên PostgreSQL trước mọi đường ghi công khai rộng hơn đánh giá hiện nay | [P] |
-| D9 | Hành động kiểm duyệt ghi nối vào log `ModerationEvent`, đồng thời là audit log còn thiếu cho hành động cộng đồng | [P] |
+| D9 | Hành động kiểm duyệt ghi nối vào `audit_events` (PHASES.md P10-1), audit log còn thiếu, hành động cộng đồng trước | [P] |
 | D10 | Tìm kiếm là full-text PostgreSQL chỉ trên nội dung đã đăng, có cột không dấu cho tiếng Việt | [P], [A] chưa kiểm chứng `unaccent` |
 
 ### Bố cục module
@@ -94,10 +94,10 @@ flowchart TB
 
 ## Phụ thuộc và bảo mật
 
-Trình soạn Stage 5 (đích sao chép), PostgreSQL Stage 6, cổng Phase 07 cho hàng đợi. Các
+Trình soạn chuyến (Phase 04), chia sẻ và sao chép (Phase 05), lưu trữ PostgreSQL (ADR 0008/0009/0013), và cổng Phase 07 cho hàng đợi. Các
 ranh giới tin cậy bị dịch chuyển: rich text người dùng viết, file người dùng tải lên, embed
 đi ra ngoài. Cả ba chi tiết trong [bảo mật](specs-community-security.vi.md) và là khuyến
-nghị chạy `security` theo yêu cầu trước C4 và C5.
+nghị chạy `security` theo yêu cầu trước Phase 13 và Phase 14.
 
 ## Kịch bản kiểm thử
 
@@ -109,5 +109,5 @@ liệt kê danh sách cho phép của projection; test hợp đồng adapter ch�
 
 | # | Câu hỏi | Khuyến nghị |
 |---|---|---|
-| 1 | Bộ block của story có render nhật ký không cần sửa được không? | Kiểm ở C1; mở rộng thay vì rẽ nhánh |
+| 1 | Bộ block của story có render nhật ký không cần sửa được không? | Kiểm ở Phase 12; mở rộng thay vì rẽ nhánh |
 | 2 | Kho JSON có tương đương cho bảng mới, hay cộng đồng chỉ PostgreSQL? | Tương đương, như ADR 0009 giữ |

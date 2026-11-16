@@ -8,7 +8,7 @@
   [specs-roadmap.vi.md](specs-roadmap.vi.md#chưa-mở).
 - **Bị thay thế một phần:** nửa Cộng đồng được mở rộng bởi
   [bộ spec Community Platform](specs-community-overview.vi.md); các lát P1–P3 và P6 là
-  phase C6 của [roadmap của nó](specs-community-roadmap.vi.md).
+  Phase 15 của [roadmap của nó](specs-community-roadmap.vi.md).
 - **Ngày:** 2026-11-16
 - **Chủ trì:** system-architect (thiết kế), chủ dự án (các quyết định trong
   [Câu hỏi còn mở](#câu-hỏi-còn-mở))
@@ -40,7 +40,7 @@ minh lại.
 | Link chia sẻ, màn xem chỉ đọc | Đã có | ADR 0005 |
 | Thư viện chuyến cộng đồng | Đã có; nhân viên duyệt trước; mọi chỉnh sửa đều xếp hàng lại | ADR [0014](adr/0014-community-trips-and-reviews.vi.md) |
 | Đánh giá địa điểm | Đã có; lên ngay; nhân viên có thể gỡ hoặc giữ lại | ADR 0014, [0015](adr/0015-community-review-author-controls.vi.md) |
-| Cổng đóng góp | Đóng cho tới khi chủ dự án điền điều khoản và liên hệ gỡ bài | `contributionOpen` trong `src/content/site.ts` |
+| Cổng đóng góp | Mở: điều khoản và liên hệ gỡ bài đã được điền | `contributionOpen` trong `src/content/site.ts` |
 | Bản đồ Planner, gợi ý AI | Chưa mở | [specs-roadmap.vi.md](specs-roadmap.vi.md#chưa-mở) |
 
 Còn thiếu, mỗi thứ một dòng: Planner không nhớ người đi, thư viện không lọc được và
@@ -243,9 +243,7 @@ rủi ro:
 | P6 | Mục đã lưu và tín hiệu "muốn đi" | Có | P1 |
 | P7 | Hồ sơ người đi công khai, phản hồi hữu ích | Có, mỗi cái một ADR | P4, P5 |
 
-P1–P3 xây an toàn khi cổng đóng góp còn đóng, vì chỉ chạm dữ liệu của chính người đi và
-các chuyến đã duyệt. Từ P4 trở đi không nên lên sóng trước khi chủ dự án cung cấp điều
-khoản đóng góp và liên hệ gỡ bài.
+P1–P3 chỉ chạm dữ liệu của chính người đi và các chuyến đã duyệt, nên xây độc lập được (Phase 15 trong roadmap). Từ P4 trở đi thêm đường ghi công khai và nên chờ Phase 10 (điều khiển Báo cáo, audit log) cùng Terms cho phép sao chép.
 
 ## Hướng nghiệm thu
 

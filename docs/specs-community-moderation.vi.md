@@ -18,10 +18,10 @@ giá địa điểm ngắn và đánh giá khách **không** thuộc quy trình 
 - **M2** Duyệt là lời xác nhận về nội dung như đã xem: sửa trọng yếu một mục đang hiển thị
   đưa nó về hàng duyệt. [C] (ADR 0014 quyết định 4)
 - **M3** Mọi chuyển trạng thái ghi người thực hiện, thời gian, từ, đến và lý do vào
-  `ModerationEvent`. [P]
+  `AuditEvent` (`audit_events`). [P]
 - **M4** Từ chối và yêu cầu sửa kèm lý do tác giả đọc được. [P]
 - **M5** Nhân viên gỡ một mục đang hiển thị ngay, không cần tác giả đồng ý, kèm lý do. [P]
-- **M6** Tác giả được báo từng quyết định qua thông báo trong ứng dụng. [P]
+- **M6** Tác giả thấy từng quyết định và lý do ngay trên mục trong "Bài của tôi"; thông báo trong ứng dụng đến ở Phase 15. [P]
 - **M7** Các trạng thái `listing` hiện có ánh xạ vào mô hình này không mất dữ liệu. [P]
 
 ## Thiết kế
@@ -112,7 +112,7 @@ kỳ vọng của chủ dự án cần xác nhận, không phải cam kết kỹ
 
 ## Phụ thuộc và bảo mật
 
-`submission.ts` ([kiến trúc](specs-community-architecture.vi.md)), bảng `ModerationEvent`
+`submission.ts` ([kiến trúc](specs-community-architecture.vi.md)), bảng `AuditEvent` (`audit_events`)
 ([cơ sở dữ liệu](specs-community-database.vi.md)), thông báo. Quyết định bị chặn bởi
 `community:moderate` ở route và lần nữa ở nơi gọi máy trạng thái; principal `service` được
 quyết định nhưng được ghi rõ là service.
@@ -127,8 +127,8 @@ xếp hàng lại; gỡ bài ẩn ngay trong một request.
 
 | # | Câu hỏi | Khuyến nghị |
 |---|---|---|
-| 1 | Vai trò moderator ngay hay editor tới C5? | Editor tới C5 |
-| 2 | Tác giả có được tự đăng sau khi mục đã duyệt không? | Không ở C2; chỉ thêm nếu được yêu cầu |
+| 1 | Vai trò moderator ngay hay editor tới Phase 15? | Editor tới Phase 15 |
+| 2 | Tác giả có được tự đăng sau khi mục đã duyệt không? | Không ở Phase 10; chỉ thêm nếu được yêu cầu |
 | 3 | Sửa lỗi chính tả nhật ký có bỏ qua duyệt lại không? | Không; cùng quy tắc với chuyến tới khi khối lượng gây khó |
 | 4 | Bình luận: chỉ hậu kiểm, hay tiền kiểm cho tài khoản mới? | Hậu kiểm |
 | 5 | Mục tiêu 3 ngày cho quyết định đầu tiên có chấp nhận được để công bố không? | Chủ dự án xác nhận |

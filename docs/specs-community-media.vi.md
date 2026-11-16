@@ -36,13 +36,13 @@ giờ nằm trong database hay đĩa của app. [C]
 
 | Phương án | Ưu | Nhược | Phù hợp |
 |---|---|---|---|
-| A. Volume bind-mount trên VM app | Không thêm dịch vụ, sao lưu đơn giản cùng backup VM hiện có | Đầy đĩa VM, không CDN, không mở rộng ngang, chặn instance app thứ hai | Dev và pilot C3 |
+| A. Volume bind-mount trên VM app | Không thêm dịch vụ, sao lưu đơn giản cùng backup VM hiện có | Đầy đĩa VM, không CDN, không mở rộng ngang, chặn instance app thứ hai | Dev và pilot Phase 13 |
 | B. Tương thích S3 tự host (ví dụ MinIO) trong Docker Compose | Cùng API với cloud; dữ liệu ở nhà | Thêm một dịch vụ phải vá và sao lưu; RAM và đĩa trên host 16 GB; Cloudflare có thể giới hạn phục vụ media qua tunnel miễn phí [A] | Dùng được sớm |
 | C. Object storage tương thích S3 có quản lý (Cloudflare R2, Backblaze B2, v.v.) | Không tốn đĩa hay RAM cục bộ; bền vững sẵn; chính sách egress khác nhau theo nhà cung cấp | Chi phí định kỳ; dữ liệu ở ngoài; một tài khoản nhà cung cấp | Khuyến nghị khi ảnh ra công khai |
 | D. Dịch vụ CDN ảnh trên cloud | Có sẵn resize | Khóa nhà cung cấp, tính phí mỗi phép biến đổi | Chưa dùng |
 
 **Khuyến nghị [P]:** viết một adapter tương thích S3 cộng adapter đĩa cục bộ. Chạy **A** khi
-phát triển và pilot C3, chuyển sang **C** trước khi ra công khai. Không công bố giá ở đây:
+phát triển và pilot Phase 13, chuyển sang **C** trước khi ra công khai. Không công bố giá ở đây:
 chi phí và hạn mức miễn phí thay đổi và không có trong repository.
 
 ### Pipeline upload
@@ -99,7 +99,7 @@ chủ hoặc nhân viên. Host ảnh được phép thêm vào `remotePatterns`;
 Mã hóa lại là tuyến phòng thủ chính, vì bộ đệm điểm ảnh đã giải mã và mã hóa lại không
 mang nội dung hoạt động. Daemon diệt virus (ví dụ ClamAV) là tùy chọn: nó cần cỡ một
 gigabyte RAM thường trú cho chữ ký, đáng kể trên 16 GB chia với PostgreSQL client, nginx
-và app. Khuyến nghị: bỏ qua cho ảnh ở C3, xem lại nếu từng cho phép upload không phải ảnh.
+và app. Khuyến nghị: bỏ qua cho ảnh ở Phase 13, xem lại nếu từng cho phép upload không phải ảnh.
 [P], [A] con số bộ nhớ cần kiểm chứng
 
 ### Lưu giữ và sao lưu
@@ -125,7 +125,7 @@ và app. Khuyến nghị: bỏ qua cho ảnh ở C3, xem lại nếu từng cho 
 
 ## Phụ thuộc và bảo mật
 
-Cần C1 (quyền sở hữu), bộ giới hạn tốc độ dùng chung, và một ADR cho thư viện ảnh (module
+Cần Phase 08 (thư viện media), Phase 10 (audit log, limiter dùng chung), và một ADR cho thư viện ảnh (module
 native còn cần mục `allowScripts`, một ranh giới chuỗi cung ứng theo
 `.claude/context/project-context.md`). Chi tiết bảo mật ở
 [bảo mật](specs-community-security.vi.md): tránh SSRF bằng cách không bao giờ fetch URL do
@@ -143,7 +143,7 @@ không hỗ trợ bị từ chối.
 | # | Câu hỏi | Khuyến nghị |
 |---|---|---|
 | 1 | App chỉ phục vụ qua Cloudflare Tunnel, và điều đó có giới hạn việc phục vụ ảnh không? | Kiểm theo điều khoản Cloudflare hiện hành trước khi chọn A hay B |
-| 2 | Thư viện ảnh nào, khi dependency native cần ADR và phê duyệt? | Quyết trong ADR của C3 |
+| 2 | Thư viện ảnh nào, khi dependency native cần ADR và phê duyệt? | Quyết trong ADR của Phase 13 |
 | 3 | ClamAV cho ảnh? | Không |
 | 4 | YouTube cộng Vimeo đã đủ chưa? | Đủ |
 | 5 | Các hạn mức ở trên | Chủ dự án xác nhận |

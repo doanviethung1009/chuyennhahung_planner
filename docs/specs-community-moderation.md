@@ -17,10 +17,10 @@ Short place reviews and guest reviews are **out** of this workflow and keep ADR 
 - **M1** Nothing curated reaches a public page without a staff decision. [C]
 - **M2** Approval is a statement about the content as reviewed: a material edit to a
   live item returns it to review. [C] (ADR 0014 decision 4)
-- **M3** Every transition records actor, time, from, to and reason in `ModerationEvent`. [P]
+- **M3** Every transition records actor, time, from, to and reason in `AuditEvent` (`audit_events`). [P]
 - **M4** Reject and request-changes carry a reason the author can read. [P]
 - **M5** Staff can take down a live item at once, without the author's consent, with a reason. [P]
-- **M6** The author is told of each decision through an in-app notification. [P]
+- **M6** The author sees each decision and its reason on the item in "My posts"; in-app notifications arrive in Phase 15. [P]
 - **M7** The existing `listing` states map onto this model with no data loss. [P]
 
 ## Design
@@ -111,7 +111,7 @@ within 3 days — an owner expectation to confirm, not a technical guarantee. [A
 
 ## Dependencies and security
 
-`submission.ts` ([architecture](specs-community-architecture.md)), the `ModerationEvent`
+`submission.ts` ([architecture](specs-community-architecture.md)), the `AuditEvent` (`audit_events`)
 table ([database](specs-community-database.md)), notifications. Decisions are
 `community:moderate`-gated at the route and again in the state machine's caller; a
 `service` principal may decide but is logged as such.
@@ -126,8 +126,8 @@ material edit re-queues; takedown hides within one request.
 
 | # | Question | Recommended |
 |---|---|---|
-| 1 | Moderator role now or editors until C5? | Editors until C5 |
-| 2 | May authors publish an approved item later themselves? | No in C2; add only if asked |
+| 1 | Moderator role now or editors until Phase 15? | Editors until Phase 15 |
+| 2 | May authors publish an approved item later themselves? | No in Phase 10; add only if asked |
 | 3 | Do journal typo edits skip re-review? | No; same rule as trips until volume hurts |
 | 4 | Comments: post-moderated only, or pre-moderated for new accounts? | Post-moderated |
 | 5 | Is a 3-day first-decision target acceptable to publish? | Owner to confirm |

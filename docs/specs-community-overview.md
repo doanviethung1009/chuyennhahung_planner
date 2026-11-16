@@ -33,7 +33,7 @@ discovery, notifications, curated moderation, and the phases to deliver them.
 
 Paid or promoted placement, direct messages, live streaming, a marketplace, collaborative
 filtering on behavioural data, Planner map and AI suggestions (both still closed, see
-[roadmap](specs-roadmap.md#not-open-yet)), and any change to existing stages or Phase 07.
+[roadmap](specs-roadmap.md#not-open-yet)), and any change to Phases 00–09.
 
 ## Requirements
 
@@ -47,7 +47,7 @@ filtering on behavioural data, Planner map and AI suggestions (both still closed
 | Clone | Personal: an independent copy owned by the cloner | [C] |
 | Delivery | By phase, never all at once | [C] |
 | Agents | Single agent by default, at most two at once, narrow context | [C] |
-| Existing stages | Stages 5 (Planner UI) and 6 (PostgreSQL) in [specs-roadmap.md](specs-roadmap.md) are unchanged; new phases are numbered **C1–C7** so nothing collides | [C] |
+| Roadmap identity | Phases 00–09 in `.claude/roadmap/PHASES.md` are unchanged (05 Story to Planner, 06 AI Planner, 07 Admin, 08 Media, 09 Production); community work is **Phase 10–15** (PR #107); C1–C7 are spec groups only, see [roadmap](specs-community-roadmap.md) | [C] |
 
 ### Functional requirements
 
@@ -59,7 +59,7 @@ filtering on behavioural data, Planner map and AI suggestions (both still closed
 | F4 | Journal, blog and vlog posts with rich text and media | [P] |
 | F5 | Profile, follow/unfollow, like, save, comment, report | [P] |
 | F6 | Search, filter and discovery over published content | [P] |
-| F7 | In-app notifications | [P] |
+| F7 | In-app notifications (from Phase 15) | [P] |
 | F8 | Staff can approve, reject, request changes, unpublish and remove | [P], extends ADR 0014 |
 
 ### Non-functional requirements
@@ -89,8 +89,8 @@ Read on 2026-11-16 from `main` (e362aea); paths are real.
 | Rate limiting | In-memory, per process, spoofable client key | `src/server/rate-limit.ts`, ADR 0005 |
 | Notifications, follow, like, comment, report, search | **None** | grep over `src`, `db/migrations` |
 | Email sender | **None** (blocks reset-by-email and email notifications) | [specs-roadmap.md](specs-roadmap.md#not-open-yet) |
-| Contribution gate | Closed until the owner supplies terms and a takedown contact | `contributionOpen`, `src/content/site.ts:102` |
-| Deploy | Docker, nginx, app VM and a separate PostgreSQL VM; auto deploy written, not yet run end to end | [deploy-runbook.md](deploy-runbook.md), ADR 0016 |
+| Contribution gate | **Open**: terms and a takedown contact are filled; PR #107 Q8 asks the owner to confirm the contact is a monitored mailbox | `contributionOpen`, `src/content/site.ts:102` |
+| Deploy | Docker, nginx, app VM and a separate PostgreSQL VM; auto deploy ran end to end on the dev VM (report 2026-11-15, before PR #93–#105) | [deploy-runbook.md](deploy-runbook.md), ADR 0016 |
 | Cloudflare Tunnel, Proxmox | Not mentioned in the repository; taken from the owner's brief | [A] |
 
 ## Gap analysis
@@ -104,21 +104,20 @@ Read on 2026-11-16 from `main` (e362aea); paths are real.
 | Profile, follow, like, save, comment | `displayName`, `handle` | All of it, plus reports and notifications |
 | `moderator` role | Editors hold `community:moderate` | Separate role needs an ADR (ADR 0006 deferred it) |
 | Shared rate limiting | Per process | Shared store before several instances or abuse-prone writes |
-| Audit trail | None | A `ModerationEvent` log; also closes the audit-log gap |
+| Audit trail | None | `audit_events` (Phase 10, P10-1); also closes the audit-log gap |
 | Search | None | Postgres full-text with Vietnamese unaccented matching |
 
 ## Dependencies and security
 
-Depends on: Stage 5 trip editor (copy target), Stage 6 PostgreSQL (all new tables), Phase
-07 roles and the admin portal (moderation queue), the contribution gate (go-live). Security
+Depends on: the trip editor (Phase 04), sharing and cloning (Phase 05), PostgreSQL persistence (all new tables), Phase
+07 roles and the admin portal (moderation queue), the contribution gate (it must stay open). Security
 detail is in [security](specs-community-security.md); the headline risks are user-written
 HTML (answer: structured blocks, never raw HTML), image metadata leaking GPS (answer: strip
-EXIF on re-encode), and a per-process rate limiter (answer: shared store before C5).
+EXIF on re-encode), and a per-process rate limiter (answer: shared write limiter in Phase 10).
 
 ## Test scenarios
 
-Owned by [QC](specs-community-qc.md). Overview-level acceptance: with no community data and
-the gate closed, every existing page behaves as on `main`.
+Owned by [QC](specs-community-qc.md). Overview-level acceptance: with no new community data, every existing page behaves as on `main`.
 
 ## Open questions
 
@@ -126,4 +125,4 @@ the gate closed, every existing page behaves as on `main`.
 |---|---|---|
 | 1 | Is Cloudflare Tunnel in front of the app today, and is Proxmox the only host? | Confirm; media design assumes both |
 | 2 | Which existing handle policy applies to public profiles (ADR 0018)? | Separate opt-in public slug |
-| 3 | Does the owner want a `moderator` role now or editors for the first phases? | Editors until C5 |
+| 3 | Does the owner want a `moderator` role now or editors for the first phases? | Editors until Phase 15 |

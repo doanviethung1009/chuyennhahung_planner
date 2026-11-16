@@ -36,17 +36,17 @@ code is written by this document.
 
 | Page | Internal route | Vietnamese | Phase |
 |---|---|---|---|
-| Explore (trips, journals, vlogs) | `/community` | `/cong-dong` | C2, C4 |
-| Community trips (existing) | `/community-trips` | `/chuyen-di-cong-dong` | exists, filters in C2 |
-| Journal detail | `/journals/[slug]` | `/nhat-ky/[slug]` | C4 |
-| Public profile | `/travellers/[slug]` | `/nguoi-di/[slug]` | C5 |
-| Search | `/search` | `/tim-kiem` | C6 |
-| My journals | `/my-journals` | `/nhat-ky-cua-toi` | C4 |
-| Journal editor | `/my-journals/[id]` | `/nhat-ky-cua-toi/[id]` | C4 |
-| Saved | `/saved` | `/da-luu` | C5 |
-| Notifications | `/notifications` | `/thong-bao` | C5 |
-| Account preferences | `/account/preferences` | `/tai-khoan/so-thich` | C6 |
-| Staff queue (existing, extended) | `/admin/community` | `/quan-tri/cong-dong` | C1+ |
+| Explore (trips, journals, vlogs) | `/community` | `/cong-dong` | Phase 10, 12 |
+| Community trips (existing) | `/community-trips` | `/chuyen-di-cong-dong` | exists, filters in Phase 10 |
+| Journal detail | `/journals/[slug]` | `/nhat-ky/[slug]` | Phase 12 |
+| Public profile | `/travellers/[slug]` | `/nguoi-di/[slug]` | Phase 11 |
+| Search | `/search` | `/tim-kiem` | Phase 15 |
+| My journals | `/my-journals` | `/nhat-ky-cua-toi` | Phase 12 |
+| Journal editor | `/my-journals/[id]` | `/nhat-ky-cua-toi/[id]` | Phase 12 |
+| Saved | `/saved` | `/da-luu` | Phase 14 |
+| Notifications | `/notifications` | `/thong-bao` | Phase 15 |
+| Account preferences | `/account/preferences` | `/tai-khoan/so-thich` | Phase 15 |
+| Staff queue (existing, extended) | `/admin/community` | `/quan-tri/cong-dong` | Phase 10+ |
 
 The English paths are internal canonical names; the Vietnamese ones follow today's
 convention and are proposals. Routes are added to the sitemap only if public.
@@ -63,8 +63,7 @@ it will go back to review. [C]
 trip". Signed out → sign-in, then returns. Result lands on the copy's editor with a banner
 "Copied from <title> by <author or nothing>"; the copy is private. [C]
 
-**Write a journal.** Block editor: heading, paragraph, quote, image, place link, video
-embed. Autosave draft with `If-Match`; image upload with progress and per-image retry;
+**Write a journal.** Block editor: heading, paragraph, quote, place link; image and video embed blocks arrive in Phase 13. Autosave draft with `If-Match`; image upload with progress and per-image retry;
 status panel listing what blocks submission (asset still processing, missing title, no
 `lang`). Submit → In review.
 
@@ -127,6 +126,6 @@ checks at 375 / 768 / 1280 via `npm run verify:ui`; `tests/i18n.test.ts` for par
 
 | # | Question | Recommended |
 |---|---|---|
-| 1 | A single `/community` hub or keep `/community-trips` as the front door? | Hub in C4; keep existing route working |
-| 2 | Which editor library, given the ADR requirement? | Decide in the C4 ADR |
-| 3 | Do authors see who liked or followed? | Counts only in C5 |
+| 1 | A single `/community` hub or keep `/community-trips` as the front door? | Hub in Phase 12; keep existing route working |
+| 2 | Which editor library, given the ADR requirement? | Decide in the Phase 12 ADR |
+| 3 | Do authors see who liked or followed? | Counts only in Phase 14 |

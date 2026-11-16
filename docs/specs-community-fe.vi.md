@@ -36,17 +36,17 @@ liệu này không viết code.
 
 | Trang | Route nội bộ | Tiếng Việt | Phase |
 |---|---|---|---|
-| Khám phá (chuyến, nhật ký, vlog) | `/community` | `/cong-dong` | C2, C4 |
-| Chuyến cộng đồng (có sẵn) | `/community-trips` | `/chuyen-di-cong-dong` | có sẵn, thêm bộ lọc ở C2 |
-| Chi tiết nhật ký | `/journals/[slug]` | `/nhat-ky/[slug]` | C4 |
-| Hồ sơ công khai | `/travellers/[slug]` | `/nguoi-di/[slug]` | C5 |
-| Tìm kiếm | `/search` | `/tim-kiem` | C6 |
-| Nhật ký của tôi | `/my-journals` | `/nhat-ky-cua-toi` | C4 |
-| Trình soạn nhật ký | `/my-journals/[id]` | `/nhat-ky-cua-toi/[id]` | C4 |
-| Đã lưu | `/saved` | `/da-luu` | C5 |
-| Thông báo | `/notifications` | `/thong-bao` | C5 |
-| Sở thích tài khoản | `/account/preferences` | `/tai-khoan/so-thich` | C6 |
-| Hàng đợi nhân viên (có sẵn, mở rộng) | `/admin/community` | `/quan-tri/cong-dong` | C1+ |
+| Khám phá (chuyến, nhật ký, vlog) | `/community` | `/cong-dong` | Phase 10, 12 |
+| Chuyến cộng đồng (có sẵn) | `/community-trips` | `/chuyen-di-cong-dong` | có sẵn, thêm bộ lọc ở Phase 10 |
+| Chi tiết nhật ký | `/journals/[slug]` | `/nhat-ky/[slug]` | Phase 12 |
+| Hồ sơ công khai | `/travellers/[slug]` | `/nguoi-di/[slug]` | Phase 11 |
+| Tìm kiếm | `/search` | `/tim-kiem` | Phase 15 |
+| Nhật ký của tôi | `/my-journals` | `/nhat-ky-cua-toi` | Phase 12 |
+| Trình soạn nhật ký | `/my-journals/[id]` | `/nhat-ky-cua-toi/[id]` | Phase 12 |
+| Đã lưu | `/saved` | `/da-luu` | Phase 14 |
+| Thông báo | `/notifications` | `/thong-bao` | Phase 15 |
+| Sở thích tài khoản | `/account/preferences` | `/tai-khoan/so-thich` | Phase 15 |
+| Hàng đợi nhân viên (có sẵn, mở rộng) | `/admin/community` | `/quan-tri/cong-dong` | Phase 10+ |
 
 Đường dẫn tiếng Anh là tên chuẩn nội bộ; đường dẫn tiếng Việt theo quy ước hiện nay và là
 đề xuất. Route chỉ vào sitemap nếu công khai.
@@ -63,8 +63,7 @@ quay lại hàng duyệt. [C]
 này". Chưa đăng nhập → đăng nhập, rồi quay lại. Kết quả đưa tới trình soạn của bản sao
 với banner "Sao chép từ <tiêu đề> của <tác giả hoặc không có>"; bản sao là riêng tư. [C]
 
-**Viết nhật ký.** Trình soạn block: tiêu đề, đoạn, trích dẫn, ảnh, liên kết địa điểm, nhúng
-video. Tự lưu nháp với `If-Match`; upload ảnh có tiến trình và thử lại từng ảnh; bảng trạng
+**Viết nhật ký.** Trình soạn block: tiêu đề, đoạn, trích dẫn, liên kết địa điểm; khối ảnh và nhúng video đến ở Phase 13. Tự lưu nháp với `If-Match`; upload ảnh có tiến trình và thử lại từng ảnh; bảng trạng
 thái liệt kê điều đang chặn việc gửi duyệt (tài sản đang xử lý, thiếu tiêu đề, thiếu
 `lang`). Gửi → Đang duyệt.
 
@@ -127,6 +126,6 @@ tính khớp; `tests/client-boundary.test.ts` cho import chỉ ở server; token
 
 | # | Câu hỏi | Khuyến nghị |
 |---|---|---|
-| 1 | Một trung tâm `/community` hay giữ `/community-trips` làm cửa chính? | Trung tâm ở C4; giữ route hiện có chạy |
-| 2 | Thư viện editor nào, khi có yêu cầu ADR? | Quyết trong ADR của C4 |
-| 3 | Tác giả có thấy ai đã thích hay theo dõi không? | Chỉ số đếm ở C5 |
+| 1 | Một trung tâm `/community` hay giữ `/community-trips` làm cửa chính? | Trung tâm ở Phase 12; giữ route hiện có chạy |
+| 2 | Thư viện editor nào, khi có yêu cầu ADR? | Quyết trong ADR của Phase 12 |
+| 3 | Tác giả có thấy ai đã thích hay theo dõi không? | Chỉ số đếm ở Phase 14 |

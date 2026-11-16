@@ -5,7 +5,7 @@
 Trạng thái: **Đề xuất**. Nhãn **[C] [P] [A]**: xem
 [specs-community-overview.vi.md](specs-community-overview.vi.md). Đây là mô hình đe dọa lúc
 thiết kế, không phải một lần review. Reviewer `security` **CHƯA CHẠY**; khuyến nghị chạy
-trước C4 và C5 và chỉ chạy khi chủ dự án yêu cầu (`/sec-check`).
+trước Phase 13 và Phase 14 và chỉ chạy khi chủ dự án yêu cầu (`/sec-check`).
 
 ## Mục tiêu và phạm vi
 
@@ -41,7 +41,7 @@ tính năng của Community Platform. Ngoài phạm vi: thay đổi đăng nhậ
 | Bản sao của một chuyến | Người sao chép | Tác giả nguồn không có quyền truy cập |
 | Hồ sơ | User | Công khai chỉ khi user chọn slug công khai |
 | Danh sách đã lưu, sở thích, thông báo | User | Không ai, kể cả nhân viên |
-| `ModerationEvent` | Nhân viên | Tác giả thấy sự kiện trên mục của mình |
+| `AuditEvent` (`audit_events`) | Nhân viên | Tác giả thấy sự kiện trên mục của mình |
 
 Principal `service` (`ADMIN_API_TOKEN`) được kiểm duyệt nhưng không bao giờ là tác giả, và
 không đọc bản nháp riêng tư. `trip:support-read` vẫn bị từ chối (ADR 0006).
@@ -100,5 +100,6 @@ qua hai instance mô phỏng; bí mật vắng mặt trong bundle client.
 | # | Câu hỏi | Khuyến nghị |
 |---|---|---|
 | 1 | Đăng bài có cần email đã xác minh khi đã có bộ gửi email không? | Xem lại khi đó |
-| 2 | Tài khoản nhân viên có `community:moderate` có bắt buộc MFA không? | Có trước C5; MFA chưa xây |
+| 2 | Tài khoản nhân viên có `community:moderate` có bắt buộc MFA không? | Quyết định trước Phase 14 (PR #107 Q6 hoãn MFA và ghi rủi ro); MFA chưa xây |
 | 3 | Slug hồ sơ công khai: độc lập với `handle`? | Có |
+| 4 | Creator Terms có cho phép thành viên khác sao chép một chuyến đã đăng không? | Chủ dự án và luật sư xác nhận và sửa trước khi Dùng chuyến này ra mắt (rủi ro RK16) |

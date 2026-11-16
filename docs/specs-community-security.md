@@ -4,8 +4,7 @@
 
 Status: **Proposed**. Labels **[C] [P] [A]**: see
 [specs-community-overview.md](specs-community-overview.md). This is a design-time threat
-model, not a review. The `security` reviewer has **NOT RUN**; it is recommended before C4
-and C5 and runs only when the owner asks (`/sec-check`).
+model, not a review. The `security` reviewer has **NOT RUN**; it is recommended before Phases 13 and 14 and runs only when the owner asks (`/sec-check`).
 
 ## Goals and scope
 
@@ -41,7 +40,7 @@ Community Platform feature. Out of scope: changes to sign-in, MFA, or the admin 
 | Copy of a trip | The copier | The source's author has no access to it |
 | Profile | The user | Public only if the user chose a public slug |
 | Saved list, preferences, notifications | The user | Nobody, including staff |
-| `ModerationEvent` | Staff | The author sees events on their own items |
+| `AuditEvent` (`audit_events`) | Staff | The author sees events on their own items |
 
 `service` principal (`ADMIN_API_TOKEN`) may moderate but never authors, and never reads
 private drafts. `trip:support-read` stays denied (ADR 0006).
@@ -100,5 +99,6 @@ instances; secrets absent from client bundles.
 | # | Question | Recommended |
 |---|---|---|
 | 1 | Should publishing require a verified email once an email sender exists? | Revisit then |
-| 2 | Must staff accounts with `community:moderate` have MFA? | Yes before C5; MFA is not built |
+| 2 | Must staff accounts with `community:moderate` have MFA? | Decide before Phase 14 (PR #107 Q6 defers MFA and records the risk); MFA is not built |
 | 3 | Public profile slug: independent of `handle`? | Yes |
+| 4 | Do the Creator Terms permit other members to copy a published trip? | Owner and counsel confirm and amend before Use this trip ships (risk RK16) |

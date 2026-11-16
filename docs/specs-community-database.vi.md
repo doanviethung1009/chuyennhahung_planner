@@ -39,16 +39,16 @@ tương đương với file JSON cho phát triển cục bộ.
 | Thực thể (bảng) | Trường chính | Ghi chú |
 |---|---|---|
 | `Trip` (có sẵn) | + `origin` JSONB null: `{ sourceToken, sourceTitle, authorDisplay }`; `listing` thêm `changes_requested`, `unpublished` | `origin` không giữ tác giả khi nguồn ẩn danh |
-| `Profile` (`community_profiles`) | `userId` pk, `publicSlug` uq null, `bio` ≤280, `avatarAssetId` null, `visibility` `private`/`public`, `updatedAt` | Mặc định tắt; slug không phải `handle` |
-| `Journal` (`community_journals`) | `id` pk, `authorId` ix, `kind` `journal`/`blog`/`vlog`, `slug` uq, `title`, `summary`, `coverAssetId`, `body` JSONB block, `bodyVersion`, `lang`, `placeSlugs[]`, `tags[]`, `status`, trường kiểm duyệt, `publishedAt`, `revision`, mốc thời gian | `revision` cho `If-Match` |
-| `MediaAsset` (`community_media`) | `id` pk, `ownerId` ix, `kind` `image`, `status`, `mime`, `bytes`, `width`, `height`, `storageKey`, `variants` JSONB, `attachedTo` `{kind,id}` null, `createdAt`, `deletedAt` | Video không bao giờ là một dòng ở đây; nó là embed trong `body` |
-| `Follow` | `followerId`, `followeeId`; pk là cặp | Không tự theo dõi |
-| `Reaction` | `userId`, `targetKind`, `targetId`, `kind` `like`; pk là bộ | Mỗi người một lượt thích cho mỗi đích |
-| `SavedItem` | `userId`, `targetKind`, `targetId`, `createdAt`; pk là bộ | Riêng tư |
-| `Comment` | `id` pk, `authorId`, `targetKind`, `targetId`, `parentId` null, `body` ≤1000, `status` `visible`/`removed`, `createdAt` | Chỉ một cấp trả lời |
-| `Report` | `id` pk, `reporterId` null, `clientKey`, `targetKind`, `targetId`, `reason`, `note` ≤500, `status` `open`/`actioned`/`dismissed`, trường người xử lý | Đổ vào hàng đợi |
-| `Notification` | `id` pk, `userId` ix, `kind`, `payload` JSONB danh sách cho phép, `readAt`, `createdAt` | Không email |
-| `ModerationEvent` | `id` pk, `targetKind`, `targetId`, `actorId`, `action`, `fromStatus`, `toStatus`, `reason`, `createdAt` | Chỉ nối thêm |
+| `Profile` (`member_profiles`) | `userId` pk, `publicSlug` uq null, `bio` ≤280, `avatarAssetId` null, `visibility` `private`/`public`, `updatedAt` | Mặc định tắt; slug không phải `handle` |
+| `Journal` (`journal_posts`) | `id` pk, `authorId` ix, `kind` `journal`/`blog`/`vlog`, `slug` uq, `title`, `summary`, `coverAssetId`, `body` JSONB block, `bodyVersion`, `lang`, `placeSlugs[]`, `tags[]`, `status`, trường kiểm duyệt, `publishedAt`, `revision`, mốc thời gian | `revision` cho `If-Match` |
+| `MediaAsset` (`media_assets`) | `id` pk, `ownerId` ix, `kind` `image`, `status`, `mime`, `bytes`, `width`, `height`, `storageKey`, `variants` JSONB, `attachedTo` `{kind,id}` null, `createdAt`, `deletedAt` | Video không bao giờ là một dòng ở đây; nó là embed trong `body` |
+| `Follow` (`follows`) | `followerId`, `followeeId`; pk là cặp | Không tự theo dõi |
+| `Reaction` (`likes`) | `userId`, `targetKind`, `targetId`, `kind` `like`; pk là bộ | Mỗi người một lượt thích cho mỗi đích |
+| `SavedItem` (`saves`) | `userId`, `targetKind`, `targetId`, `createdAt`; pk là bộ | Riêng tư |
+| `Comment` (`comments`) | `id` pk, `authorId`, `targetKind`, `targetId`, `parentId` null, `body` ≤1000, `status` `visible`/`removed`, `createdAt` | Chỉ một cấp trả lời |
+| `Report` (`reports`) | `id` pk, `reporterId` null, `clientKey`, `targetKind`, `targetId`, `reason`, `note` ≤500, `status` `open`/`actioned`/`dismissed`, trường người xử lý | Đổ vào hàng đợi |
+| `Notification` (Phase 15) | `id` pk, `userId` ix, `kind`, `payload` JSONB danh sách cho phép, `readAt`, `createdAt` | Không email |
+| `AuditEvent` (`audit_events`) | `id` pk, `targetKind`, `targetId`, `actorId`, `action`, `fromStatus`, `toStatus`, `reason`, `createdAt` | Chỉ nối thêm |
 | `CommunityReview` (có sẵn) | không đổi | ADR 0014/0015 |
 
 ### Quan hệ (logic, không ép buộc)
@@ -77,7 +77,7 @@ erDiagram
 
 | Bảng | Chỉ mục | Cho |
 |---|---|---|
-| `community_journals` | `(status, publishedAt desc)` | Feed khám phá |
+| `journal_posts` | `(status, publishedAt desc)` | Feed khám phá |
 | | `(authorId, status)` | Danh sách của tác giả, hồ sơ |
 | | GIN `tsv` trên title, summary, body thuần, cộng một bản không dấu | Tìm kiếm |
 | | GIN `placeSlugs`, `tags` | Lọc |
@@ -91,9 +91,7 @@ erDiagram
 
 ### Migration (đánh số đề xuất)
 
-`0010` `origin` của chuyến + hồ sơ · `0011` nhật ký + media · `0012` xã hội, báo cáo, thông
-báo, sự kiện · `0013` cột tìm kiếm. Mỗi cái kèm ghi chú rollback, cập nhật import/export,
-và test trên cả hai kho (tiền lệ ADR 0014). Một migration mỗi phase.
+Đánh số đề xuất, một migration mỗi lát: `0010` `audit_events` và bộ đếm giới hạn (Phase 10, [ADR 0019](adr/0019-community-foundation.vi.md)) · `0011` báo cáo, `terms_acceptances`, trạng thái đăng (Phase 10) · `0012` `member_profiles`, `origin` của chuyến (Phase 11) · `0013` `journal_posts` (Phase 12) · `0014` `media_assets` (Phase 13) · `0015` theo dõi, thích, lưu, bình luận (Phase 14) · `0016` cột tìm kiếm, thông báo (Phase 15). Mỗi cái kèm ghi chú rollback, cập nhật import/export, và test trên cả hai kho (tiền lệ ADR 0014).
 
 ## Luồng xử lý và trạng thái lỗi
 
@@ -108,7 +106,7 @@ và test trên cả hai kho (tiền lệ ADR 0014). Một migration mỗi phase.
 
 ## Phụ thuộc và bảo mật
 
-Engine Stage 6, cột `listing` có sẵn (migration `0005`), `plannerUsers`. Projection công
+Engine bảng PostgreSQL (ADR 0008/0009), cột `listing` có sẵn (migration `0005`), `plannerUsers`. Projection công
 khai không bao giờ chọn `authorId` cho nội dung ẩn danh. Payload thông báo là danh sách
 cho phép chỉ gồm id và tiêu đề, không có văn bản người dùng ngoài tiêu đề đã cắt gọn.
 
@@ -122,6 +120,6 @@ phục thì hiện; 50 lượt thích song song kết thúc đúng số đếm.
 
 | # | Câu hỏi | Khuyến nghị |
 |---|---|---|
-| 1 | Repository theo từng dòng riêng cho bảng cộng đồng (DB5) hay dùng lại kho tài liệu? | Riêng; đo trước ở C5 |
+| 1 | Repository theo từng dòng riêng cho bảng cộng đồng (DB5) hay dùng lại kho tài liệu? | Riêng; đo trước, trước Phase 14 |
 | 2 | Role trên VM PostgreSQL có được `CREATE EXTENSION unaccent` không? | Kiểm ở phần cấu hình role trong [deploy-database.vi.md](deploy-database.vi.md) |
-| 3 | Thời gian lưu giữ cho nội dung bị gỡ và log? | 30 ngày nội dung, 1 năm `ModerationEvent` |
+| 3 | Thời gian lưu giữ cho nội dung bị gỡ và log? | 30 ngày nội dung, 1 năm `AuditEvent` (`audit_events`) |

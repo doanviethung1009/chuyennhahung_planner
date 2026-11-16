@@ -10,7 +10,7 @@ in its repository assessment; this document does not repeat them.
 
 Fit the Community Platform into the existing system with the fewest new moving parts:
 the same Next.js app, the Planner store, the session cookie, `can()`, and the admin
-portal. Out of scope: any change to the Travel Content store, to stages 5–6 or to Phase 07.
+portal. Out of scope: any change to the Travel Content store, to Phases 00–09.
 
 ## Requirements
 
@@ -23,7 +23,7 @@ portal. Out of scope: any change to the Travel Content store, to stages 5–6 or
   homelab can move to the cloud by swapping an adapter. [P]
 - **A4** No new framework. New runtime dependencies (rich-text editor, image library) each
   need their own ADR. [C]
-- **A5** Each phase ships behind the contribution gate and can be switched off. [C]
+- **A5** Each phase that adds a write path can be switched off, and the contribution gate (`contributionOpen`, open on `main`) stays in force. [C]
 
 ## Design
 
@@ -62,9 +62,9 @@ flowchart TB
 | D4 | Body is a **versioned block document** (JSON), rendered by React, never raw HTML. Reuse the story block renderer `src/components/story/story-blocks.tsx` if its block set fits | [P], [A] reuse unverified |
 | D5 | Clone copies structure and place references through an allow-list into a private draft owned by the cloner, with `origin`; no link back for writes | [C] |
 | D6 | `MediaStore` interface (`createUpload`, `commit`, `url`, `delete`) with a local-disk adapter for dev and an S3-compatible adapter; see [media](specs-community-media.md) | [P] |
-| D7 | Notifications are in-app rows polled by the page; no email sender exists | [P] |
+| D7 | Notifications are in-app rows polled by the page, from Phase 15; earlier phases show status and reason in "My posts"; no email sender exists | [P] |
 | D8 | Rate limiting moves to a shared PostgreSQL-backed store before any write path with public reach beyond today's reviews | [P] |
-| D9 | Moderation actions append to a `ModerationEvent` log, which doubles as the missing audit log for community actions | [P] |
+| D9 | Moderation actions append to `audit_events` (PHASES.md P10-1), the missing audit log, community actions first | [P] |
 | D10 | Search is PostgreSQL full-text over published content only, with an unaccented column for Vietnamese | [P], [A] `unaccent` availability unverified |
 
 ### Module layout
@@ -94,10 +94,10 @@ flowchart TB
 
 ## Dependencies and security
 
-Stage 5 editor (copy target), Stage 6 PostgreSQL, Phase 07 portal for the queue.
+The trip editor (Phase 04), sharing and cloning (Phase 05), PostgreSQL persistence (ADR 0008/0009/0013), and the Phase 07 portal for the queue.
 Trust boundaries moved by this design: user-authored rich text, user uploads, outbound
 embeds. All three are detailed in [security](specs-community-security.md) and are
-recommendations for an on-demand `security` review before C4 and C5.
+recommendations for an on-demand `security` review before Phase 13 and Phase 14.
 
 ## Test scenarios
 
@@ -109,5 +109,5 @@ adapters. Full list in [QC](specs-community-qc.md).
 
 | # | Question | Recommended |
 |---|---|---|
-| 1 | Can the story block set render journals unchanged? | Check in C1; extend rather than fork |
+| 1 | Can the story block set render journals unchanged? | Check in Phase 12; extend rather than fork |
 | 2 | JSON-file store parity for new tables, or PostgreSQL only for community? | Parity, as ADR 0009 kept it |

@@ -66,7 +66,7 @@ trust boundary, as every current surface is. [C]
 | `POST /api/community/[kind]/[id]/comments` | Comment | Published targets only |
 | `DELETE /api/community/comments/[id]` | Delete own comment | |
 | `POST /api/community/reports` | Report content | Fixed reason list |
-| `GET /api/planner/notifications`, `POST …/read` | Bell | Polled |
+| `GET /api/planner/notifications`, `POST …/read` | Bell (Phase 15) | Polled |
 
 ### Staff
 

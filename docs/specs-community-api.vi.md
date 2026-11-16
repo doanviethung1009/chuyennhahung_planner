@@ -66,7 +66,7 @@ bề mặt hiện nay. [C]
 | `POST /api/community/[kind]/[id]/comments` | Bình luận | Chỉ đích đã đăng |
 | `DELETE /api/community/comments/[id]` | Xóa bình luận của mình | |
 | `POST /api/community/reports` | Báo cáo nội dung | Danh sách lý do cố định |
-| `GET /api/planner/notifications`, `POST …/read` | Chuông | Poll |
+| `GET /api/planner/notifications`, `POST …/read` | Chuông (Phase 15) | Poll |
 
 ### Nhân viên
 

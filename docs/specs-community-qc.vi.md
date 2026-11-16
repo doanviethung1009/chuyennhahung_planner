@@ -43,20 +43,19 @@ Từ `.claude/context/project-context.md`: `tests/i18n.test.ts`, `tests/docs.tes
 `tests/client-boundary.test.ts`, `tests/security-headers.test.ts`,
 `tests/planner-roles.test.ts`, `tests/admin-content-session.test.ts`,
 `tests/planner-password.test.ts`, `tests/planner-google.test.ts`, các suite Travel
-Content, và các test chuyến và đánh giá cộng đồng hiện có. Hành vi Stage 5 và 6 cùng
-Phase 07 được các test này khẳng định không đổi.
+Content, và các test chuyến và đánh giá cộng đồng hiện có. Hành vi Phase 05 đến 09 được các test này khẳng định không đổi.
 
 ### Tiêu chí nghiệm thu theo phase
 
 | Phase | Cho trước / Khi / Thì |
 |---|---|
-| C1 | Cho máy trạng thái, khi thử mọi cặp trạng thái, thì chỉ các cạnh của sơ đồ thành công, còn lại trả `invalid_state`. Cho các dòng `listing` cũ, khi đọc, thì ánh xạ thành `pending/published/rejected` và không mất gì. Cho hai instance mô phỏng, khi một bên chạm giới hạn, thì bên kia cũng thấy. |
-| C2 | Cho một chuyến đã đăng, khi một member dùng nó, thì họ nhận bản nháp riêng có dòng riêng cùng `origin`, và nguồn không đổi từng byte. Cho tác giả ẩn danh, khi sao chép hay đăng, thì không tác giả nào xuất hiện ở bất kỳ đâu. Cho nguồn bị rút, khi đọc các bản sao, thì chúng nguyên vẹn. |
-| C3 | Cho ảnh JPEG có GPS, khi tải lên, thì các biến thể lưu không còn metadata. Cho file không phải ảnh đặt tên `.jpg`, thì `rejected`. Cho tài sản chưa đăng, khi lấy mà không có chữ ký, thì bị từ chối. |
-| C4 | Cho văn bản `<script>` và trình xử lý sự kiện trong mọi trường, khi render, thì vô hại. Cho host video không hỗ trợ được dán vào, thì `422`. Cho nhật ký có tài sản còn đang xử lý, khi gửi duyệt, thì bị chặn. Cho sửa trọng yếu một nhật ký đã đăng, thì quay về `pending`. |
-| C5 | Cho 50 lượt thích song song, thì số đếm là 50. Cho tài khoản bị xóa, thì nội dung công khai, hồ sơ và theo dõi của nó biến mất. Cho ngưỡng báo cáo của nhân viên trên một bình luận, thì bị giữ tới khi nhân viên quyết định. |
-| C6 | Cho chưa có sở thích, thì trang giống `main`. Cho có sở thích, thì `scoreMatch` tất định và `reasons` bằng các số hạng của điểm. Cho truy vấn tiếng Việt không dấu, thì tìm được tiêu đề có dấu. |
-| C7 | Theo ADR, viết khi phase mở. |
+| Phase 10 | Cho máy trạng thái, khi thử mọi cặp trạng thái, thì chỉ các cạnh của sơ đồ thành công, còn lại trả `invalid_state`. Cho các dòng `listing` cũ, khi đọc, thì ánh xạ thành `pending/published/rejected` và không mất gì. Cho hai instance mô phỏng, khi một bên chạm giới hạn, thì bên kia cũng thấy. |
+| Phase 10–11 | Cho một chuyến đã đăng, khi một member dùng nó, thì họ nhận bản nháp riêng có dòng riêng cùng `origin`, và nguồn không đổi từng byte. Cho tác giả ẩn danh, khi sao chép hay đăng, thì không tác giả nào xuất hiện ở bất kỳ đâu. Cho nguồn bị rút, khi đọc các bản sao, thì chúng nguyên vẹn. |
+| Phase 13 (images) | Cho ảnh JPEG có GPS, khi tải lên, thì các biến thể lưu không còn metadata. Cho file không phải ảnh đặt tên `.jpg`, thì `rejected`. Cho tài sản chưa đăng, khi lấy mà không có chữ ký, thì bị từ chối. |
+| Phase 12–13 | Cho văn bản `<script>` và trình xử lý sự kiện trong mọi trường, khi render, thì vô hại. Cho host video không hỗ trợ được dán vào, thì `422`. Cho nhật ký có tài sản còn đang xử lý, khi gửi duyệt, thì bị chặn. Cho sửa trọng yếu một nhật ký đã đăng, thì quay về `pending`. |
+| Phase 14 | Cho 50 lượt thích song song, thì số đếm là 50. Cho tài khoản bị xóa, thì nội dung công khai, hồ sơ và theo dõi của nó biến mất. Cho ngưỡng báo cáo của nhân viên trên một bình luận, thì bị giữ tới khi nhân viên quyết định. |
+| Phase 15 | Cho chưa có sở thích, thì trang giống `main`. Cho có sở thích, thì `scoreMatch` tất định và `reasons` bằng các số hạng của điểm. Cho truy vấn tiếng Việt không dấu, thì tìm được tiêu đề có dấu. |
+| Phase 16 | Theo ADR, viết khi phase mở. |
 
 ## Luồng xử lý và trạng thái lỗi
 
@@ -67,18 +66,17 @@ không khả dụng là ca bắt buộc ở các phase của chúng.
 ## Phụ thuộc và bảo mật
 
 Test phụ thuộc fixture media và một test double cho `MediaStore`. Test bảo mật được liệt kê
-ở [bảo mật](specs-community-security.vi.md). Khuyến nghị `/qc-check` và `/sec-check` ở cuối
-C2, C4 và C5; không cái nào chạy nếu không được yêu cầu.
+ở [bảo mật](specs-community-security.vi.md). Khuyến nghị `/qc-check` và `/sec-check` ở cuối các Phase 10, 12 và 14; không cái nào chạy nếu không được yêu cầu.
 
 ## Kịch bản kiểm thử
 
 Ma trận trên, cộng thêm: gửi duyệt và quyết định đồng thời trên một mục; đua phiên bản trong
 hàng đợi; hạn mức sao chép qua nửa đêm; moderator gỡ khi người đọc đang mở trang;
-`ModerationEvent` được nối thêm cho mọi chuyển trạng thái và không bao giờ bị sửa.
+`AuditEvent` (`audit_events`) được nối thêm cho mọi chuyển trạng thái và không bao giờ bị sửa.
 
 ## Câu hỏi còn mở
 
 | # | Câu hỏi | Khuyến nghị |
 |---|---|---|
 | 1 | Adapter PostgreSQL test được trong CI hay chỉ cục bộ? | Kiểm `.github/workflows/ci.yml`; dùng adapter JSON trong CI nếu không có database |
-| 2 | Có cần load test đường ghi trước C5 không? | Một bài nhỏ, để chốt quyết định DB5 bằng dữ liệu |
+| 2 | Có cần load test đường ghi trước Phase 14 không? | Một bài nhỏ, để chốt quyết định DB5 bằng dữ liệu |

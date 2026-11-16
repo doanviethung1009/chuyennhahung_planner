@@ -45,7 +45,7 @@ disk. [C]
 | D. Cloud image CDN service | Resizing included | Lock-in, per-transform cost | Not now |
 
 **Recommendation [P]:** write one S3-compatible adapter plus the local-disk adapter. Run
-**A** in development and the C3 pilot, and move to **C** before public launch. Do not
+**A** in development and the Phase 13 pilot, and move to **C** before public launch. Do not
 publish prices here: cost and free-tier limits change and are not in the repository.
 
 ### Upload pipeline
@@ -103,7 +103,7 @@ no wildcard.
 Re-encoding is the primary defence, because a decoded and re-encoded pixel buffer carries
 no active content. An antivirus daemon (for example ClamAV) is optional: it needs on the
 order of a gigabyte of resident RAM for signatures, which is significant on 16 GB shared
-with PostgreSQL clients, nginx and the app. Recommended: skip for images in C3, revisit if
+with PostgreSQL clients, nginx and the app. Recommended: skip for images in Phase 13, revisit if
 non-image uploads are ever allowed. [P], [A] memory figure to verify
 
 ### Retention and backup
@@ -129,7 +129,7 @@ non-image uploads are ever allowed. [P], [A] memory figure to verify
 
 ## Dependencies and security
 
-Needs C1 (ownership), the shared rate limiter, and an ADR for the image library (a native
+Needs Phase 08 (media library), Phase 10 (audit log, shared limiter), and an ADR for the image library (a native
 module would also need an `allowScripts` entry, a supply-chain boundary per
 `.claude/context/project-context.md`). Security detail in
 [security](specs-community-security.md): SSRF is avoided by never fetching user-supplied
@@ -147,7 +147,7 @@ unsupported video host refused.
 | # | Question | Recommended |
 |---|---|---|
 | 1 | Is the app served only through Cloudflare Tunnel, and does that limit serving images? | Verify against Cloudflare's current terms before choosing A or B |
-| 2 | Which image library, given a native dependency needs an ADR and approval? | Decide in the C3 ADR |
+| 2 | Which image library, given a native dependency needs an ADR and approval? | Decide in the Phase 13 ADR |
 | 3 | ClamAV for images? | No |
 | 4 | Is YouTube plus Vimeo enough? | Yes |
 | 5 | Quotas above | Owner to confirm |

@@ -7,7 +7,7 @@
   before code, as [specs-roadmap.md](specs-roadmap.md#not-open-yet) requires.
 - **Superseded in part:** the Community half is expanded by the
   [Community Platform spec set](specs-community-overview.md); slices P1–P3 and P6 are
-  phase C6 of [its roadmap](specs-community-roadmap.md).
+  Phase 15 of [its roadmap](specs-community-roadmap.md).
 - **Date:** 2026-11-16
 - **Owner:** system-architect (design), project owner (decisions in
   [Open questions](#open-questions))
@@ -40,7 +40,7 @@ re-inventing them.
 | Share links, read-only view | Shipped | ADR 0005 |
 | Community gallery of trips | Shipped; staff approve first; any edit re-queues | ADR [0014](adr/0014-community-trips-and-reviews.md) |
 | Place reviews | Shipped; live at once; staff can remove or hold | ADR 0014, [0015](adr/0015-community-review-author-controls.md) |
-| Contribution gate | Closed until the owner fills terms and takedown contact | `contributionOpen` in `src/content/site.ts` |
+| Contribution gate | Open: terms and takedown contact are filled | `contributionOpen` in `src/content/site.ts` |
 | Planner map, AI suggestions | Not open | [specs-roadmap.md](specs-roadmap.md#not-open-yet) |
 
 What is missing, in one line each: the Planner does not remember the traveller, the
@@ -242,9 +242,7 @@ Each slice is its own branch, ADR and feature document. Order is by value and ri
 | P6 | Saved items and "want to go" signal | Yes | P1 |
 | P7 | Public traveller profile, helpful reaction | Yes, each | P4, P5 |
 
-P1–P3 are safe to build while the contribution gate is closed, because they touch only
-the traveller's own data and already-approved trips. P4 onwards should not go live
-before the owner supplies the contribution terms and takedown contact.
+P1–P3 touch only the traveller's own data and already-approved trips, so they can be built independently (Phase 15 in the roadmap). P4 onwards adds public write paths and should wait for Phase 10 (Report control, audit log) and for Terms that permit copying.
 
 ## Acceptance direction
 
