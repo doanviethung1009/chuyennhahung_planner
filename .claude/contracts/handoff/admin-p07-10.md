@@ -1,5 +1,5 @@
 # Handoff — P07-10 Admin shell
-- Task: P07-10 · Branch `feat/admin-shell` · PR: PR_URL (not merged; contract stays READY until merge)
+- Task: P07-10 · Branch `feat/admin-shell` · PR: https://github.com/doanviethung1009/chuyennhahung_planner/pull/116 (not merged; contract stays READY until merge)
 - Done: `admin/layout.tsx` (skip link, sidebar, breadcrumb); `AdminNav` → `AdminSidebar` + `AdminBreadcrumb` (client, phone menu, `aria-current`); `adminSidebarGroups(principal)` pure fn of `can()` in `admin-gate.ts`; `readStaffPageAccess` in `cache()`; user console moved to `/admin/users` (`requireStaff(…,'users')`); `/admin` = overview; `/admin/users` in `pathnames` + `returnTo` (query kept); pages dropped `AdminNav`; VI/EN keys; ADR 0020 → Accepted; docs (`features/admin-shell.*`, README rows, architecture routes, project-context).
 - Outside the plan: none. `tests/runbook.test.ts` assertion re-pointed from `admin-nav.tsx` to `adminSidebarGroups` (same behaviour).
 - Migration: none. API/DB/RBAC: none changed.
