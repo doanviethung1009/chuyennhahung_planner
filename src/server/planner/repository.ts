@@ -350,6 +350,20 @@ export class PlannerRepository {
   // -------------------------------------------------------------------------
 
   /**
+   * The rate-limit key for a sign-in attempt: the account's id when the email
+   * or handle matches one, otherwise the identifier itself. An account reached
+   * by its handle and by its email therefore shares one bucket (ADR 0018). The
+   * key never leaves the server, so it says nothing about existence.
+   */
+  async signInBucketKey(identifier: string): Promise<string> {
+    const key = identifier.trim().toLowerCase();
+    const byEmail = key.includes('@');
+    const data = await this.snapshot();
+    const user = data.users.find((row) => (byEmail ? row.email === key : row.handle === key));
+    return `account:${user ? user.id : key}`;
+  }
+
+  /**
    * Email-or-handle + password sign-in. Every failure — unknown account, no password set,
    * wrong password — is the same 401 with the same message, and an unknown
    * email still pays for one scrypt run, so neither the answer nor its timing

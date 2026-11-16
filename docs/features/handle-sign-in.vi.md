@@ -28,7 +28,7 @@ Không đổi dữ liệu lưu. Các khóa `signIn.description`, `signIn.divider
 |---|---|
 | `src/server/planner/schemas.ts` | `signInSchema` nhận `identifier` (và `email` cũ) |
 | `src/server/planner/repository.ts` | `signInWithPassword` theo email hoặc handle; `resetUserPassword` bỏ ràng buộc email |
-| `src/app/api/planner/session/route.ts` | Khóa giới hạn theo tài khoản là identifier |
+| `src/app/api/planner/session/route.ts` | Khóa giới hạn theo tài khoản là id tài khoản khớp (`signInBucketKey`) |
 | `src/components/planner/sign-in-form.tsx` | Ô văn bản ghi email hoặc mã tài khoản |
 | `messages/{vi,en}.json` | Nhãn và thông báo lỗi |
 

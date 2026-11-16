@@ -41,7 +41,7 @@ export function POST(request: Request) {
 
     // A second bucket per account, so guessing one password from many
     // addresses is slowed too (ADR 0007). It throttles; it never locks.
-    const perAccount = signInAccountLimiter.check(`account:${input.identifier}`);
+    const perAccount = signInAccountLimiter.check(await repository.signInBucketKey(input.identifier));
     if (!perAccount.ok) throw rateLimited(perAccount.retryAfterSeconds);
 
     const { user, token, expiresAt } = await repository.signInWithPassword(

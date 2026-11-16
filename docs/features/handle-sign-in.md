@@ -28,7 +28,7 @@ No stored data changes. Message keys `signIn.description`, `signIn.divider`, `si
 |---|---|
 | `src/server/planner/schemas.ts` | `signInSchema` accepts `identifier` (and legacy `email`) |
 | `src/server/planner/repository.ts` | `signInWithPassword` by email or handle; `resetUserPassword` without the email guard |
-| `src/app/api/planner/session/route.ts` | Per-account rate-limit key is the identifier |
+| `src/app/api/planner/session/route.ts` | Per-account rate-limit key is the matched account's id (`signInBucketKey`) |
 | `src/components/planner/sign-in-form.tsx` | Text field labelled email or account code |
 | `messages/{vi,en}.json` | Labels and errors |
 

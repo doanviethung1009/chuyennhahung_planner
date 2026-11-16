@@ -225,6 +225,18 @@ describe('refusals name their reason (ADR 0018)', () => {
   });
 });
 
+describe('sign-in rate-limit key (ADR 0018)', () => {
+  it('is the same for an account reached by handle, email or another casing', async () => {
+    const planner = makePlanner();
+    await planner.createUser({ handle: 'chung-xo', displayName: 'C', email: 'chung@example.com' });
+    const keys = await Promise.all(
+      ['chung-xo', 'Chung@Example.com', ' CHUNG-XO '].map((id) => planner.signInBucketKey(id)),
+    );
+    expect(new Set(keys).size).toBe(1);
+    expect(await planner.signInBucketKey('khong-co')).not.toBe(keys[0]);
+  });
+});
+
 describe('signing in with a handle (ADR 0018)', () => {
   it('matches the handle case-insensitively and an email still works', async () => {
     const planner = makePlanner();

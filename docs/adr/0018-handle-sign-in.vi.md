@@ -14,7 +14,7 @@
 
 1. `POST /api/planner/session` nhận `{ identifier, password }`; `identifier` là email hoặc handle. Dạng cũ `{ email, password }` vẫn được nhận và đọc như `identifier`.
 2. Máy chủ cắt khoảng trắng, chuyển chữ thường, tra theo email nếu có `@` (handle không có ký tự này), còn lại tra theo handle. Handle và email đều duy nhất nên tối đa một ứng viên.
-3. Giữ nguyên có chủ đích: một `401` chung cho tài khoản không tồn tại, chưa có mật khẩu, sai mật khẩu và (theo `isDisabled`) tài khoản bị khóa hoặc xóa mềm; luôn chạy một lần scrypt; giới hạn tốc độ theo IP và theo tài khoản (nhóm theo tài khoản nay lấy khóa là identifier); bước bắt đổi mật khẩu tạm.
+3. Giữ nguyên có chủ đích: một `401` chung cho tài khoản không tồn tại, chưa có mật khẩu, sai mật khẩu và (theo `isDisabled`) tài khoản bị khóa hoặc xóa mềm; luôn chạy một lần scrypt; giới hạn tốc độ theo IP và theo tài khoản (nhóm theo tài khoản lấy khóa là id của tài khoản khớp, nên handle và email dùng chung một nhóm); bước bắt đổi mật khẩu tạm.
 4. `resetUserPassword` không còn đòi email. Handle là tên đăng nhập nên cấp lại mật khẩu cho tài khoản chưa có email nay chạy được.
 5. Không đổi schema hay migration; handle đã lưu chữ thường.
 
@@ -22,7 +22,7 @@
 
 | Phương án | Ưu | Nhược |
 |---|---|---|
-| A (chọn): một trường `identifier`, email hoặc handle | Một form, không lộ tài khoản có tồn tại, thay đổi nhỏ | Handle và email dùng chung không gian khóa giới hạn tốc độ |
+| A (chọn): một trường `identifier`, email hoặc handle | Một form, không lộ tài khoản có tồn tại, thay đổi nhỏ | Thêm một lần đọc snapshot mỗi lượt để xác định khóa |
 | B: trường hoặc route riêng cho handle | Rõ ràng | Hai dạng đăng nhập phải giữ giống hệt nhau; form phải hỏi dạng nào |
 
 B thua vì thêm bề mặt mà không có lợi ích.

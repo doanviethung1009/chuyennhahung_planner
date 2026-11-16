@@ -14,7 +14,7 @@
 
 1. `POST /api/planner/session` accepts `{ identifier, password }`; `identifier` is an email or a handle. The old `{ email, password }` body is still accepted and read as an `identifier`.
 2. The server lower-cases and trims it, and looks the account up by email when it contains `@` (a handle cannot), otherwise by handle. Handles and emails are unique, so there is one candidate at most.
-3. Unchanged on purpose: one generic `401` for unknown account, no password, wrong password and (as `isDisabled`) a banned or soft-deleted account; one scrypt run in every case; the per-IP and per-account rate limits (the account bucket is now keyed by the identifier); the temporary-password gate.
+3. Unchanged on purpose: one generic `401` for unknown account, no password, wrong password and (as `isDisabled`) a banned or soft-deleted account; one scrypt run in every case; the per-IP and per-account rate limits (the account bucket is keyed by the matched account's id, so handle and email share one bucket); the temporary-password gate.
 4. `resetUserPassword` no longer requires an email. The handle is the sign-in name, so a reset on an account with no email now works.
 5. No schema or migration change; the stored handle is already lower-case.
 
@@ -22,7 +22,7 @@
 
 | Option | For | Against |
 |---|---|---|
-| A (chosen): one `identifier` field, email or handle | One form, no enumeration signal, small change | Handle and email share one rate-limit key space |
+| A (chosen): one `identifier` field, email or handle | One form, no enumeration signal, small change | One extra snapshot read per attempt to resolve the key |
 | B: a separate handle field or route | Explicit | Two sign-in shapes to keep identical; the form must ask which |
 
 B lost because it adds a surface without a benefit.
