@@ -613,129 +613,50 @@ nên database sập sẽ hiện thành `503` của Planner chứ không thành v
 
 ### Stack tự host (Docker Compose + nginx)
 
-[`deploy/compose.app.yml`](../deploy/compose.app.yml) thêm service `app` vào một
-stack đã chạy `nginx`: mạng `edge`, không publish cổng, volume tên `app-data` cho
-`.data/`, và service `tools` thuộc profile `tools`. **Tự nó không nối database
-nào.** Có hai bố cục được hỗ trợ, mỗi bố cục thêm đúng một file overlay lên trên —
-không bố cục nào phải sửa file của bố cục kia:
+Service `app` ([`deploy/compose.app.yml`](../deploy/compose.app.yml)) gia nhập một stack đã
+chạy `nginx`; không publish cổng nào và `.data/` nằm trên volume. Chọn một layout
+database, mỗi layout một file overlay: [`compose.app.local-db.yml`](../deploy/compose.app.local-db.yml)
+(`postgres` cùng stack, mạng riêng, không TLS) hoặc
+[`compose.app.external-db.yml`](../deploy/compose.app.external-db.yml) (PostgreSQL trên VM
+riêng, TLS `verify-full`, mount CA). Nếu VM chưa có stack,
+[`deploy/compose.yml`](../deploy/compose.yml) là một stack như vậy, với bind mount dưới
+`DEPLOY_ROOT` (`/opt/chuyennhahung`) do `sudo deploy/scripts/setup-host.sh <layout>` chuẩn bị.
 
-| Bố cục | Overlay | Kết nối database |
-|---|---|---|
-| Cùng một compose | [`compose.app.local-db.yml`](../deploy/compose.app.local-db.yml) | service `postgres`, mạng riêng `backend`, không TLS |
-| Postgres trên VM riêng | [`compose.app.external-db.yml`](../deploy/compose.app.external-db.yml) | qua mạng LAN, TLS `verify-full`, mount CA |
+Lệnh từng bước nằm ở các runbook, không ở đây: từ VM trống đến app chạy ở
+[deploy-runbook.vi.md](deploy-runbook.vi.md); kết nối database, chứng chỉ và import ở
+[deploy-database.vi.md](deploy-database.vi.md); sao lưu, rollback và giới hạn ở
+[Deploy bằng Docker trên một VM](features/docker-deploy.vi.md) và
+[deploy-operations.vi.md](deploy-operations.vi.md). Cần nhớ:
 
-Đặt bản checkout cạnh file compose của stack (hoặc đặt `APP_SRC`) rồi thêm vào
-`.env` của stack (mode 600, không bao giờ commit) các giá trị chung dưới đây cùng
-`PLANNER_DATABASE_URL` của bố cục bạn chọn. `compose.yml` là file compose của chính
-stack:
-
-```bash
-NEXT_PUBLIC_SITE_URL=https://chuyennhahung.vn        # hoặc http://<host> trước khi có TLS
-ADMIN_API_TOKEN=<openssl rand -base64 36>
-TRUST_PROXY_HEADERS=true
-```
-
-Mật khẩu có ký tự dành riêng của URL (`@`, `:`, `/`, `?`, `#`, `&`) phải được
-percent-encode trong `PLANNER_DATABASE_URL`. Dùng cùng ba file `-f` cho mọi lệnh
-của một bố cục (`build`, `up`, `run --rm tools`); trộn lẫn sẽ khởi động app mà
-không có phần nối database.
-
-#### Cùng một compose
-
-`compose.yml` của stack định nghĩa service `postgres` và mạng `backend`. Overlay
-thêm `depends_on: postgres` và mạng `backend` cho `app` và `tools`. Kết nối nằm
-trong mạng Docker riêng và cổng 5432 không publish, nên không TLS, không CA:
-
-```bash
-PLANNER_DATABASE_URL=postgres://cnh_app:<password>@postgres:5432/cnh_planner
-```
-
-```bash
-docker compose -f compose.yml -f compose.app.yml -f compose.app.local-db.yml build app
-docker compose -f compose.yml -f compose.app.yml -f compose.app.local-db.yml up -d app
-docker compose -f compose.yml -f compose.app.yml -f compose.app.local-db.yml run --rm tools   # db:migrate, không bắt buộc
-docker compose -f compose.yml -f compose.app.yml -f compose.app.local-db.yml run --rm tools \
-  npm run planner:import -- /import/planner.json                                              # ./import được mount chỉ đọc
-```
-
-#### Postgres trên VM riêng
-
-PostgreSQL chạy trên VM riêng và app kết nối qua mạng LAN bằng TLS `verify-full`
-— thiết lập certificate, `pg_hba.conf` và firewall như trong
-[Chạy Planner trên PostgreSQL](#chạy-planner-trên-postgresql). Overlay mount CA
-của database chỉ đọc từ `/opt/chuyennhahung/secrets/pg-ca.crt` vào
-`/run/secrets/pg-ca.crt` trong `app` và `tools`; không service nào vào mạng
-`backend`. Chép CA vào đó **trước** khi `up` (`chmod 644`; đây là certificate
-công khai, không phải secret) — bind mount một file chưa có sẽ khiến Docker tạo
-một thư mục ở chỗ đó:
-
-```bash
-PLANNER_DATABASE_URL=postgres://cnh_app:<password>@<DB_IP>:5432/cnh_planner?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt
-```
-
-```bash
-docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml build app
-docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml up -d app
-docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml run --rm tools   # db:migrate, không bắt buộc
-docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml run --rm tools \
-  npm run planner:import -- /import/planner.json                                                 # ./import được mount chỉ đọc
-```
-
-Nếu Planner trả `503` sau khi khởi động, hãy kiểm tra từ VM app rằng cổng 5432 của
-VM database truy cập được và SAN của certificate có đúng IP dùng trong URL.
-
-#### Một replica, host nhỏ
-
-Chạy **đúng một** replica `app` trừ khi cả `PLANNER_DATABASE_URL` và `CONTENT_DATABASE_URL`
-đều được đặt, và kể cả khi đó rate limiter vẫn nằm trong bộ nhớ tiến trình nên replica thứ
-hai nhân đôi mức cho phép. Không có `CONTENT_DATABASE_URL`, content store của Travel là file
-JSON trên volume ([ADR 0013](adr/0013-content-on-postgres-tables.vi.md)) và replica thứ hai
-sẽ chia đôi nó. Trên host nhỏ
-(2 GB RAM) `next build` là lúc tốn bộ nhớ nhất — giữ swap, hoặc build ở máy khác
-rồi chuyển image bằng `docker save | docker load`.
+- `.env` của stack (mode 600, không commit) cần `NEXT_PUBLIC_SITE_URL`, `ADMIN_API_TOKEN`,
+  `TRUST_PROXY_HEADERS=true` và URL database của layout. Mật khẩu có `@ : / ? # &` phải
+  được percent-encode trong URL.
+- Dùng cùng một bộ file `-f` cho mọi lệnh của một layout (`build`, `up`, `run --rm tools`);
+  trộn lẫn sẽ khởi động app thiếu phần nối database.
+- Với `external-db`, chép CA công khai vào `secrets/pg-ca.crt` (`chmod 644`) **trước** `up`;
+  bind mount file chưa có khiến Docker tạo ra một thư mục. Nếu Planner trả `503`, kiểm tra
+  5432 truy cập được và SAN của chứng chỉ có IP dùng trong URL.
+- Chạy **đúng một** replica `app` trừ khi cả `PLANNER_DATABASE_URL` và `CONTENT_DATABASE_URL`
+  đều được đặt, và kể cả khi đó rate limiter vẫn nằm trong bộ nhớ tiến trình nên replica thứ
+  hai nhân đôi mức cho phép. Không có `CONTENT_DATABASE_URL`, content store là file JSON trên
+  volume ([ADR 0013](adr/0013-content-on-postgres-tables.vi.md)).
+- Trên host 2 GB, `next build` tốn bộ nhớ nhất: giữ swap, hoặc build ở máy khác rồi chuyển
+  image bằng `docker save | docker load`.
 
 ### Tự động deploy lên dev
 
 Merge vào `main` sẽ deploy lên VM dev khi CI xanh
-([ADR 0016](adr/0016-auto-deploy-dev.vi.md), [tính năng](features/auto-deploy-dev.vi.md)).
-Debug và QC vẫn ở local; không có gì ở đây chạy cho pull request. Runner của GitHub
-build image (VM không build nổi) và đẩy
+([ADR 0016](adr/0016-auto-deploy-dev.vi.md), [tính năng](features/auto-deploy-dev.vi.md));
+không có gì chạy cho pull request. Runner của GitHub build image và đẩy
 `ghcr.io/<owner>/chuyennhahung-app:sha-<commit>`; runner trên VM chạy
-[`deploy/deploy.sh`](../deploy/deploy.sh).
+[`deploy/deploy.sh`](../deploy/deploy.sh). Chủ nhà cài runner một lần theo
+[deploy-runner.vi.md](deploy-runner.vi.md) (đặt `DEV_SITE_URL` khi origin dev không phải
+`http://192.168.100.140`; `DB_OVERLAY=local-db` cho database cục bộ).
 
-#### Cài runner (chủ nhà, một lần)
-
-Làm theo [deploy-runner.vi.md](deploy-runner.vi.md): user riêng, service systemd đã
-hardening, nhãn `cnh-dev`. Ngoài ra, một lần: đặt biến repository `DEV_SITE_URL` khi
-origin dev không phải `http://192.168.100.140` (nó bị đóng vào image), và sau khi image
-đầu tiên được đẩy, kiểm tra package `chuyennhahung-app` đọc được bởi Actions của
-repository này. Với layout PostgreSQL khác `external-db`, đặt `DB_OVERLAY=local-db`
-trong `Environment=` của service runner (bước 5 của runbook).
-
-#### Deploy, deploy lại, rollback
-
-Merge một PR; theo dõi **Actions → Deploy dev**. Run chỉ thành công khi container báo
-healthy trong 180 giây; nếu không, tag trước được khôi phục và run thất bại. Để deploy
-lại hoặc rollback tay, chạy **Deploy dev** từ `main` với `tag` = `sha-<commit>` (không
-build). Tag đang chạy nằm trong `/opt/chuyennhahung/.deployed-tag`. Rollback không hoàn
-tác migration DB.
-### Stack một VM với bind mount
-
-Nếu VM chưa có stack, [`deploy/compose.yml`](../deploy/compose.yml) là một stack như vậy:
-nginx, service `postgres` tuỳ chọn (profile `local-db`) và các mạng, cùng
-[`deploy/compose.app.bind.yml`](../deploy/compose.app.bind.yml) đặt content store trên host.
-Mọi trạng thái là bind mount dưới `DEPLOY_ROOT` (mặc định `/opt/chuyennhahung`):
-`data/app`, `data/postgres`, `logs/nginx`, `import`, `secrets/pg-ca.crt`, `backups`. Chạy
-`sudo deploy/scripts/setup-host.sh <layout>` trước (tạo chúng với chủ sở hữu mà container
-cần), điền `deploy/.env` từ `deploy/.env.example`, rồi từ `deploy/`:
-
-```bash
-docker compose -f compose.yml -f compose.app.yml -f compose.app.bind.yml -f compose.app.external-db.yml up -d --build
-docker compose --profile local-db -f compose.yml -f compose.app.yml -f compose.app.bind.yml -f compose.app.local-db.yml up -d --build
-```
-
-Sao lưu bằng `deploy/scripts/backup.sh <layout>`. Runbook đầy đủ, bước cập nhật, rollback
-và các giới hạn còn mở nằm ở [Deploy bằng Docker trên một VM](features/docker-deploy.vi.md).
+Run chỉ thành công khi container healthy trong 180 giây; nếu không, tag trước được khôi
+phục. Để deploy lại hoặc rollback tay, chạy **Deploy dev** từ `main` với
+`tag` = `sha-<commit>` (không build); tag đang chạy nằm trong `/opt/chuyennhahung/.deployed-tag`.
+Rollback không hoàn tác migration DB.
 
 ### Header của reverse proxy
 

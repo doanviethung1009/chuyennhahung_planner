@@ -621,132 +621,51 @@ so a database outage shows as Planner `503`s, not as a restart loop.
 
 ### Self-hosted stack (Docker Compose + nginx)
 
-[`deploy/compose.app.yml`](../deploy/compose.app.yml) adds the `app` service to
-a stack that already runs `nginx`: network `edge`, no published port, a named
-volume `app-data` for `.data/`, and a `tools` service under the `tools` profile.
-It wires **no database on its own**. Two layouts are supported, and each adds
-exactly one overlay file on top — neither needs the other edited:
+The `app` service ([`deploy/compose.app.yml`](../deploy/compose.app.yml)) joins a stack
+that already runs `nginx`; no port is published and `.data/` lives on a volume. Pick
+one database layout, each one overlay file: [`compose.app.local-db.yml`](../deploy/compose.app.local-db.yml)
+(`postgres` in the same stack, private network, no TLS) or
+[`compose.app.external-db.yml`](../deploy/compose.app.external-db.yml) (PostgreSQL on a
+separate VM, TLS `verify-full`, CA mounted). If the VM has no stack yet,
+[`deploy/compose.yml`](../deploy/compose.yml) is one, with bind mounts under `DEPLOY_ROOT`
+(`/opt/chuyennhahung`) prepared by `sudo deploy/scripts/setup-host.sh <layout>`.
 
-| Layout | Overlay | Database link |
-|---|---|---|
-| Same compose stack | [`compose.app.local-db.yml`](../deploy/compose.app.local-db.yml) | `postgres` service, private `backend` network, no TLS |
-| PostgreSQL on a separate VM | [`compose.app.external-db.yml`](../deploy/compose.app.external-db.yml) | across the LAN, TLS `verify-full`, CA mounted |
+The step-by-step commands live in the runbooks, not here: from a blank VM to a running
+app in [deploy-runbook.md](deploy-runbook.md); the database link, certificate and import
+in [deploy-database.md](deploy-database.md); backup, rollback and limits in
+[Docker deploy on one VM](features/docker-deploy.md) and
+[deploy-operations.md](deploy-operations.md). What to remember:
 
-Put the checkout next to the stack's compose file (or set `APP_SRC`) and add to
-the stack's `.env` (mode 600, never committed) the shared values below plus the
-`PLANNER_DATABASE_URL` of your layout. `compose.yml` stands for the stack's own
-compose file:
-
-```bash
-NEXT_PUBLIC_SITE_URL=https://chuyennhahung.vn        # or http://<host> before TLS
-ADMIN_API_TOKEN=<openssl rand -base64 36>
-TRUST_PROXY_HEADERS=true
-```
-
-A password with URL-reserved characters (`@`, `:`, `/`, `?`, `#`, `&`) must be
-percent-encoded in `PLANNER_DATABASE_URL`. Use the same three `-f` files for
-every command of a layout (`build`, `up`, `run --rm tools`); mixing them
-starts the app without its database wiring.
-
-#### Same compose stack
-
-The stack's `compose.yml` defines the `postgres` service and the `backend`
-network. The overlay adds `depends_on: postgres` and the `backend` network to
-`app` and `tools`. The link stays on the private Docker network and 5432 is not
-published, so no TLS and no CA:
-
-```bash
-PLANNER_DATABASE_URL=postgres://cnh_app:<password>@postgres:5432/cnh_planner
-```
-
-```bash
-docker compose -f compose.yml -f compose.app.yml -f compose.app.local-db.yml build app
-docker compose -f compose.yml -f compose.app.yml -f compose.app.local-db.yml up -d app
-docker compose -f compose.yml -f compose.app.yml -f compose.app.local-db.yml run --rm tools   # db:migrate, optional
-docker compose -f compose.yml -f compose.app.yml -f compose.app.local-db.yml run --rm tools \
-  npm run planner:import -- /import/planner.json                                              # ./import is mounted read-only
-```
-
-#### PostgreSQL on a separate VM
-
-PostgreSQL runs on its own VM and the app reaches it across the LAN with TLS
-`verify-full` — set up the certificate, `pg_hba.conf` and firewall as in
-[Run the Planner on PostgreSQL](#run-the-planner-on-postgresql). The overlay
-mounts the database CA read-only from `/opt/chuyennhahung/secrets/pg-ca.crt` at
-`/run/secrets/pg-ca.crt` in `app` and `tools`; neither joins a `backend`
-network. Copy the CA there **before** `up` (`chmod 644`; it is a public
-certificate, not a secret) — a bind mount of a missing file makes Docker create
-a directory in its place:
-
-```bash
-PLANNER_DATABASE_URL=postgres://cnh_app:<password>@<DB_IP>:5432/cnh_planner?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt
-```
-
-```bash
-docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml build app
-docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml up -d app
-docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml run --rm tools   # db:migrate, optional
-docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml run --rm tools \
-  npm run planner:import -- /import/planner.json                                                 # ./import is mounted read-only
-```
-
-If the Planner answers `503` after start-up, check from the app VM that 5432 on
-the DB VM is reachable and that the certificate's SAN carries the IP used in
-the URL.
-
-#### One replica, small host
-
-Run **exactly one** `app` replica unless both `PLANNER_DATABASE_URL` and
-`CONTENT_DATABASE_URL` are set, and even then the rate limiters live in process
-memory, so a second replica multiplies the allowed rate. Without `CONTENT_DATABASE_URL`
-the Travel content store is a JSON file on the volume ([ADR 0013](adr/0013-content-on-postgres-tables.md)),
-and a second replica would split it.
-On a small host (2 GB RAM) `next build` is the memory peak — keep swap on, or
-build on another machine and move the image with `docker save | docker load`.
+- The stack's `.env` (mode 600, never committed) needs `NEXT_PUBLIC_SITE_URL`,
+  `ADMIN_API_TOKEN`, `TRUST_PROXY_HEADERS=true` and the database URL of the layout. A
+  password with `@ : / ? # &` must be percent-encoded in the URL.
+- Use the same set of `-f` files for every command of a layout (`build`, `up`,
+  `run --rm tools`); mixing them starts the app without its database wiring.
+- For `external-db`, copy the public CA to `secrets/pg-ca.crt` (`chmod 644`) **before**
+  `up`; a bind mount of a missing file makes Docker create a directory instead. If the
+  Planner answers `503`, check that 5432 is reachable and the certificate SAN carries the
+  IP used in the URL.
+- Run **exactly one** `app` replica unless both `PLANNER_DATABASE_URL` and
+  `CONTENT_DATABASE_URL` are set, and even then the rate limiters live in process memory,
+  so a second replica multiplies the allowed rate. Without `CONTENT_DATABASE_URL` the
+  content store is a JSON file on the volume ([ADR 0013](adr/0013-content-on-postgres-tables.md)).
+- On a 2 GB host `next build` is the memory peak: keep swap on, or build elsewhere and
+  move the image with `docker save | docker load`.
 
 ### Auto deploy to dev
 
 Merging into `main` deploys to the dev VM once CI is green
-([ADR 0016](adr/0016-auto-deploy-dev.md), [feature](features/auto-deploy-dev.md)).
-Debug and QC stay local; nothing here runs for a pull request. A hosted runner
-builds the image (the VM cannot build) and pushes
+([ADR 0016](adr/0016-auto-deploy-dev.md), [feature](features/auto-deploy-dev.md)); nothing
+runs for a pull request. A hosted runner builds the image and pushes
 `ghcr.io/<owner>/chuyennhahung-app:sha-<commit>`; the runner on the VM runs
-[`deploy/deploy.sh`](../deploy/deploy.sh).
+[`deploy/deploy.sh`](../deploy/deploy.sh). The owner sets the runner up once by following
+[deploy-runner.md](deploy-runner.md) (set `DEV_SITE_URL` when the dev origin is not
+`http://192.168.100.140`; `DB_OVERLAY=local-db` for a local database).
 
-#### Set up the runner (owner, once)
-
-Follow [deploy-runner.md](deploy-runner.md): a dedicated user, a hardened systemd
-service, label `cnh-dev`. Also, once: set the repository variable `DEV_SITE_URL` when
-the dev origin is not `http://192.168.100.140` (it is baked into the image), and after
-the first image is pushed check that package `chuyennhahung-app` is readable by this
-repository's Actions. For a PostgreSQL layout other than `external-db`, set
-`DB_OVERLAY=local-db` in the runner service's `Environment=` (step 5 of the runbook).
-
-#### Deploy, redeploy, roll back
-
-Merge a PR; watch **Actions → Deploy dev**. The run succeeds only when the
-container reports healthy within 180 s; otherwise the previous tag is restored and
-the run fails. To redeploy or roll back by hand, run **Deploy dev** from `main` with
-`tag` = `sha-<commit>` (no build). The tag now running is in
-`/opt/chuyennhahung/.deployed-tag`. A rollback does not undo database migrations.
-### One-VM stack with bind mounts
-
-If the VM has no stack yet, [`deploy/compose.yml`](../deploy/compose.yml) is one:
-nginx, an optional `postgres` service (profile `local-db`) and the networks, with
-[`deploy/compose.app.bind.yml`](../deploy/compose.app.bind.yml) putting the content store
-on the host. Every piece of state is a bind mount under `DEPLOY_ROOT`
-(default `/opt/chuyennhahung`): `data/app`, `data/postgres`, `logs/nginx`, `import`,
-`secrets/pg-ca.crt`, `backups`. Run `sudo deploy/scripts/setup-host.sh <layout>` first (it
-creates them with the owners the containers need), fill `deploy/.env` from
-`deploy/.env.example`, then from `deploy/`:
-
-```bash
-docker compose -f compose.yml -f compose.app.yml -f compose.app.bind.yml -f compose.app.external-db.yml up -d --build
-docker compose --profile local-db -f compose.yml -f compose.app.yml -f compose.app.bind.yml -f compose.app.local-db.yml up -d --build
-```
-
-Back up with `deploy/scripts/backup.sh <layout>`. The full runbook, update and rollback
-steps and the open limits are in [Docker deploy on one VM](features/docker-deploy.md).
+A run succeeds only when the container is healthy within 180 s; otherwise the previous
+tag is restored. To redeploy or roll back by hand, run **Deploy dev** from `main` with
+`tag` = `sha-<commit>` (no build); the running tag is in `/opt/chuyennhahung/.deployed-tag`.
+A rollback does not undo database migrations.
 
 ### Reverse proxy headers
 
