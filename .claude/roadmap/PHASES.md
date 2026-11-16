@@ -186,12 +186,14 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
   `/community-trips` và `/reviews` trên dev, `/sec-check` + `/qc-check` cho community.
 - **Quyết định đã chốt:** giữ review hiện ngay theo ADR 0014 (Q1), thêm Report + audit log
   trước khi cân nhắc siết.
+- **ADR thiết kế:** [ADR 0019](../../docs/adr/0019-community-foundation.md) (Proposed, PR #106) — máy trạng thái kiểm duyệt, `audit_events` (P10-1) và limiter ghi dùng chung (P10-6).
 - **Phụ thuộc:** 07; ADR 0014/0015.
 
 ## Phase 11 — Member Profiles & Creator Terms
 - **Trạng thái:** Designed. `member_profiles` (1:1 theo `userId`, mặc định riêng tư), đồng
   ý Terms theo phiên bản, sửa Terms cho khớp (hiện nhắc ảnh/video khi chưa có upload).
-- **Phụ thuộc:** 10; chính sách riêng tư do chủ nhà cung cấp (Q9).
+- **Thêm (đề xuất, từ bộ spec Community Platform):** **Dùng chuyến này** — thành viên đã đăng nhập sao chép một chuyến cộng đồng đã đăng thành bản nháp riêng, ghi công qua `origin`, không đồng bộ ngược (yêu cầu của chủ dự án; audit PR #107 chưa liệt kê). Cần Terms cho phép sao chép (P11-D2) và nút Report (P10-3) có trước.
+- **Phụ thuộc:** 10; chính sách riêng tư do chủ nhà cung cấp (Q9); Terms cho phép sao chép.
 
 ## Phase 12 — Travel Journal & Blog (curated)
 - **Trạng thái:** Designed. `journal_posts` kind `journal|blog`, duyệt trước (Q2), gắn trip.
@@ -199,7 +201,7 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
 
 ## Phase 13 — Media Hybrid & Vlog
 - **Trạng thái:** Designed. Embed allow-list trước (YouTube, Q7), upload ảnh sau, `kind=vlog`.
-  Thực thi trên nền Phase 08 (ID 08 giữ nguyên phạm vi).
+  Thực thi trên nền Phase 08 (ID 08 giữ nguyên phạm vi). **Ranh giới:** Phase 08 xây thư viện media toàn site và interface `MediaStore`; Phase 13 chỉ dùng nó cho upload của thành viên, avatar và vlog (một interface, không xây lần hai).
 - **Phụ thuộc:** 08, 12; ADR storage + chính sách media.
 
 ## Phase 14 — Engagement: Save · Follow · Like · Comment
@@ -210,3 +212,20 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
 - **Trạng thái:** Designed. Tìm kiếm/lọc/phân trang gallery, collection do editor tuyển,
   thông báo; role `moderator` là quyết định riêng.
 - **Phụ thuộc:** 12, 14.
+
+## Nhóm spec Community Platform ↔ Phase
+
+Bộ spec song ngữ `docs/specs-community-*.md` (PR #106) gọi các bó tính năng là **nhóm spec
+C1–C7**. Chúng **không** phải Phase ID: Phase 10–15 ở trên là định danh roadmap, và Phase
+00–09 không đổi. Bảng ánh xạ đầy đủ nằm ở `docs/specs-community-roadmap.md`.
+
+| Nhóm spec | Rơi vào |
+|---|---|
+| C1 Nền tảng (máy trạng thái, log sự kiện, limiter dùng chung) | Phase 10 (`audit_events` = P10-1, limiter = P10-6) |
+| C2 Trạng thái đăng chuyến, bộ lọc thư viện, Báo cáo | Phase 10 |
+| C2 Dùng chuyến này; hồ sơ và trang công khai | Phase 11 |
+| C3 Media | Phase 08 (thư viện), Phase 13 (upload thành viên, avatar) |
+| C4 Nhật ký, blog | Phase 12; vlog và embed video: Phase 13 |
+| C5 Theo dõi, thích, lưu, bình luận | Phase 14; thông báo: Phase 15 |
+| C6 Tìm kiếm, cá nhân hóa | Phase 15 |
+| C7 Danh tiếng | Chưa gán (không thiết kế); affiliate thuộc Phase 06 |

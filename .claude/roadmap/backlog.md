@@ -85,12 +85,12 @@ Nguồn: `.claude/contracts/community-platform-audit.md`. Mỗi mục cần ADR 
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
 | P10-S0 | Ghi nhận ADR 0014/0015 là đã code (trips, reviews, hold, restrictions; migration 0005–0008) — chỉ tài liệu | system-architect | — |
-| P10-1 | `audit_events` (= P07-4) + test | BE | ADR mới |
+| P10-1 | `audit_events` (= P07-4) + test | BE | ADR 0019 (đề xuất, PR #106) |
 | P10-2 | `terms_acceptances` + chặn ghi khi thiếu version; sửa Terms khớp ảnh/video (Q8) | BE + FE; owner xác nhận text | P10-1 |
 | P10-3 | `reports` + nút Report + hàng đợi staff (`community:moderate`) | BE + FE | P10-1 |
 | P10-4 | Smoke `/community-trips`, `/reviews`, admin community trên dev VM; ghi bằng chứng | main session | deploy dev |
 | ~~P10-5~~ | ~~`/sec-check` + `/qc-check` cho community (ADR 0014/0015)~~ — chạy 2026-11-16: sec PASS_WITH_WARNINGS, qc PASS_WITH_NOTES, không BLOCKED; xem P10-10..16 | user gọi | — |
-| P10-6 | Xác minh rate-limit store dùng chung (Q12) | BE | — |
+| P10-6 | Xác minh rate-limit store dùng chung (Q12); thiết kế limiter ghi dùng chung trên PostgreSQL ở ADR 0019 (đề xuất, PR #106) | BE | — |
 | P10-7 | Sửa sao lưu dev VM, `metadataBase`, HSTS (Q10) trước UGC mới | owner → architect | — |
 | ~~P10-8~~ | ~~Đổi nhãn "Stage 8/9" trong `docs/specs-roadmap.*` (cả hai ngôn ngữ) (Q11)~~ — xong ở PR #107 | system-architect | — |
 | ~~P10-9~~ | ~~Cập nhật ADR 0016 Status và ADR 0015 (đóng 7 câu hỏi theo khuyến nghị, Q5) — cả hai ngôn ngữ~~ — xong ở PR #107 | system-architect | — |
@@ -109,6 +109,9 @@ Nguồn: `.claude/contracts/community-platform-audit.md`. Mỗi mục cần ADR 
 | P11-1 | ADR profile: `member_profiles` 1:1, mặc định riêng tư, allow-list | system-architect | P10-2, P11-D1 |
 | P11-D1 | **Chủ nhà cấp** chính sách riêng tư, thời hạn lưu `guestKey`, quyền xuất/xóa dữ liệu (Q9) | owner | — |
 | P11-2 | API + UI hồ sơ, danh sách bài của tác giả | BE + FE | P11-1 |
+| P11-D2 | **Chủ nhà + người am hiểu pháp lý xác nhận:** Creator Terms hiện cấp quyền cho Chuyện Nhà Hưng, chưa cho thành viên khác sao chép chuyến; sửa Terms cho phép sao chép trước khi ra "Dùng chuyến này" | owner | P10-2 |
+| P11-3 | ADR "Dùng chuyến này": danh sách trường được sao chép (không ghi chú tự do, chi phí riêng, share token), `Trip.origin`, ghi công, nguồn bị rút/ẩn danh | system-architect | P10-3, P11-D2 |
+| P11-4 | API `POST /api/community/trips/[token]/use` + UI nút; hạn mức sao chép; test nguồn không đổi và ẩn danh | BE + FE | P11-3 |
 
 ## Phase 12 — Travel Journal & Blog (P2, đề xuất)
 
@@ -121,6 +124,7 @@ Nguồn: `.claude/contracts/community-platform-audit.md`. Mỗi mục cần ADR 
 
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
+| P13-0 | Ranh giới với Phase 08: P08-1 xây `MediaStore` và thư viện chung; Phase 13 chỉ dùng cho upload của thành viên, avatar và vlog | system-architect | P08-1 |
 | P13-1 | ADR media: embed allow-list (YouTube nocookie), CSP `frame-src`, upload ảnh sau | system-architect | P08-1, P12 |
 | P13-2 | `media_assets` + vlog (`journal_posts.kind=vlog`) | BE + FE | P13-1 |
 | P13-3 | `/sec-check` bắt buộc (XL, trust boundary) | user gọi | P13-2 |
