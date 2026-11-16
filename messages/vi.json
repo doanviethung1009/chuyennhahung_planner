@@ -567,7 +567,9 @@
       "emailHint": "Email không bắt buộc. Nếu chưa có, hãy bấm Cấp lại mật khẩu để tạo mật khẩu tạm; họ đăng nhập bằng mã tài khoản (handle).",
       "roleLabel": "Vai trò",
       "submit": "Tạo người dùng",
-      "submitting": "Đang tạo…"
+      "submitting": "Đang tạo…",
+      "open": "Thêm người dùng",
+      "cancel": "Hủy"
     },
     "secret": {
       "heading": "Lưu ngay bây giờ: bí mật của {handle}",
@@ -626,11 +628,10 @@
       "label": "Khu quản trị",
       "users": "Người dùng",
       "overview": "Tổng quan",
-      "content": "Nội dung",
       "stories": "Chuyến đi",
       "places": "Địa điểm",
       "reviews": "Đánh giá",
-      "community": "Chuyến đi cộng đồng",
+      "community": "Cộng đồng",
       "runbook": "Runbook"
     },
     "overview": {

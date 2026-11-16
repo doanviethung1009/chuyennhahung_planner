@@ -567,7 +567,9 @@
       "emailHint": "An email is optional. Without one, use Reset password to issue a temporary password they sign in with using the handle.",
       "roleLabel": "Role",
       "submit": "Create user",
-      "submitting": "Creating…"
+      "submitting": "Creating…",
+      "open": "Add a user",
+      "cancel": "Cancel"
     },
     "secret": {
       "heading": "Save this now: secrets for {handle}",
@@ -626,11 +628,10 @@
       "label": "Admin area",
       "users": "Users",
       "overview": "Overview",
-      "content": "Content",
       "stories": "Stories",
       "places": "Places",
       "reviews": "Reviews",
-      "community": "Community trips",
+      "community": "Community",
       "runbook": "Runbook"
     },
     "overview": {

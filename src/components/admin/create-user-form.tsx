@@ -22,6 +22,7 @@ export function CreateUserForm({ onCreate, actorRole }: { onCreate: (input: Crea
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<AdminRole>('member');
   const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -39,18 +40,35 @@ export function CreateUserForm({ onCreate, actorRole }: { onCreate: (input: Crea
       setDisplayName('');
       setEmail('');
       setRole('member');
+      setOpen(false);
     }
   }
 
-  return (
-    <section aria-labelledby="admin-create-heading" className="grid gap-5">
+  if (!open) {
+    return (
       <div>
-        <h2 id="admin-create-heading" className="font-display text-2xl text-foreground">
-          {t('heading')}
-        </h2>
-        <p className="mt-2 text-base text-foreground-muted">{t('intro')}</p>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-expanded={false}
+          aria-controls="admin-create-form"
+          className={buttonClass({ size: 'md' })}
+        >
+          {t('open')}
+        </button>
       </div>
-      <form onSubmit={submit} className="grid gap-5 md:grid-cols-2" aria-busy={busy}>
+    );
+  }
+
+  return (
+    <section aria-labelledby="admin-create-heading" className="grid gap-5 rounded-md border border-border-strong bg-surface p-5">
+      <div>
+        <h3 id="admin-create-heading" className="font-display text-xl text-foreground">
+          {t('heading')}
+        </h3>
+        <p className="mt-1 text-sm text-foreground-muted">{t('intro')}</p>
+      </div>
+      <form id="admin-create-form" onSubmit={submit} className="grid gap-5 md:grid-cols-2" aria-busy={busy}>
         <Field id="admin-handle" label={t('handleLabel')} hint={t('handleHint')}>
           <input
             id="admin-handle"
@@ -104,9 +122,19 @@ export function CreateUserForm({ onCreate, actorRole }: { onCreate: (input: Crea
             ))}
           </select>
         </Field>
-        <div className="md:col-span-2">
+        <div className="flex flex-wrap gap-3 md:col-span-2">
           <button type="submit" disabled={busy} className={buttonClass({ size: 'md' })}>
             {busy ? t('submitting') : t('submit')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            disabled={busy}
+            aria-expanded
+            aria-controls="admin-create-form"
+            className={buttonClass({ variant: 'secondary', size: 'md' })}
+          >
+            {t('cancel')}
           </button>
         </div>
       </form>

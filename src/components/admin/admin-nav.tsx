@@ -29,38 +29,53 @@ export function AdminNav({
   const aria = (section: AdminSection) => (current === section ? ('page' as const) : undefined);
 
   return (
-    <nav aria-label={t('label')} className="flex flex-wrap items-center gap-x-6 gap-y-3">
-      {canUsers ? (
-        <Link href="/admin" className={cls('overview')} aria-current={aria('overview')}>
-          {t('users')}
-        </Link>
-      ) : (
-        <Link href="/admin" className={cls('overview')} aria-current={aria('overview')}>
-          {t('overview')}
-        </Link>
-      )}
-      {canContent ? (
-        <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t('content')}>
-          <span className="text-sm font-semibold text-foreground-muted">{t('content')}</span>
-          <Link href="/admin/content/stories" className={cls('stories')} aria-current={aria('stories')}>
-            {t('stories')}
-          </Link>
-          <Link href="/admin/content/places" className={cls('places')} aria-current={aria('places')}>
-            {t('places')}
-          </Link>
-          <Link href="/admin/content/reviews" className={cls('reviews')} aria-current={aria('reviews')}>
-            {t('reviews')}
-          </Link>
-          <Link href="/admin/community" className={cls('community')} aria-current={aria('community')}>
-            {t('community')}
-          </Link>
-        </div>
-      ) : null}
-      {canRunbook ? (
-        <Link href="/admin/runbook" className={cls('runbook')} aria-current={aria('runbook')}>
-          {t('runbook')}
-        </Link>
-      ) : null}
+    <nav aria-label={t('label')}>
+      <ul className="flex flex-wrap items-center gap-2">
+        {canUsers ? (
+          <li>
+            <Link href="/admin" className={cls('overview')} aria-current={aria('overview')}>
+              {t('users')}
+            </Link>
+          </li>
+        ) : (
+          <li>
+            <Link href="/admin" className={cls('overview')} aria-current={aria('overview')}>
+              {t('overview')}
+            </Link>
+          </li>
+        )}
+        {canContent ? (
+          <>
+            <li>
+              <Link href="/admin/content/stories" className={cls('stories')} aria-current={aria('stories')}>
+                {t('stories')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/admin/content/places" className={cls('places')} aria-current={aria('places')}>
+                {t('places')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/admin/content/reviews" className={cls('reviews')} aria-current={aria('reviews')}>
+                {t('reviews')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/admin/community" className={cls('community')} aria-current={aria('community')}>
+                {t('community')}
+              </Link>
+            </li>
+          </>
+        ) : null}
+        {canRunbook ? (
+          <li>
+            <Link href="/admin/runbook" className={cls('runbook')} aria-current={aria('runbook')}>
+              {t('runbook')}
+            </Link>
+          </li>
+        ) : null}
+      </ul>
     </nav>
   );
 }

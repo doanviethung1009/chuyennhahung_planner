@@ -245,6 +245,7 @@ export function AdminConsole({ currentUserId, currentHandle, actorRole }: Props)
           </h2>
           {users ? <p className="text-sm text-foreground-muted">{t('users.count', { count: users.length })}</p> : null}
         </div>
+        <CreateUserForm actorRole={actorRole} onCreate={createUser} />
         {users === null ? (
           <p className="text-base text-foreground-muted">{t('users.loading')}</p>
         ) : users.length === 0 ? (
@@ -261,7 +262,6 @@ export function AdminConsole({ currentUserId, currentHandle, actorRole }: Props)
         ) : null}
       </section>
 
-      <CreateUserForm actorRole={actorRole} onCreate={createUser} />
     </div>
   );
 }
