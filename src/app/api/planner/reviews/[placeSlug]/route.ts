@@ -16,8 +16,9 @@ async function placeSlugOf(context: Context): Promise<string> {
 }
 
 /**
- * Writes (or replaces) the signed-in author's review of a place. It always
- * lands `pending`: a Planner review waits for staff (ADR 0014).
+ * Writes (or replaces) the signed-in author's review of a place. It is published
+ * at once (`approved`); there is no pre-moderation, and staff can remove it
+ * afterwards (ADR 0014, amended 2026-11-15).
  */
 export function PUT(request: Request, context: Context) {
   return plannerRoute(request, async ({ userId }, repository) => {
