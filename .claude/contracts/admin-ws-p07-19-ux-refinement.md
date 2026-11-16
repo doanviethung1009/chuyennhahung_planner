@@ -1,5 +1,5 @@
 # Task Contract: P07-19 Admin UX refinement — own root layout, top bar, `AdminPageHeader`, sidebar polish
-- Class: L (route-tree change, one PR) · Branch: `feat/admin-ux-refinement` · Depends on: P07-10 merged (PR #116, #119), ADR 0023 Accepted (owner) · Must land **before** P07-11 · Index: [admin-workspace-index.md](admin-workspace-index.md)
+- Class: L (route-tree change, one PR) · Branch: `feat/admin-ux-refinement` · Depends on: P07-10 merged (PR #116, #119), ADR 0023 Accepted (owner, 2026-11-17) · Must land **before** P07-11 · Index: [admin-workspace-index.md](admin-workspace-index.md)
 - Desired outcome: the admin area looks and behaves like one workspace in the brand's style, apart from the visitor site: no public header, nav or footer; a slim top bar, one sidebar, one compact page header; the sidebar no longer slides under a sticky header.
 - Scope IN: move `src/app/[locale]/admin/**` → `src/app/(admin)/[locale]/admin/**` (git mv, URLs unchanged); new admin root layout `src/app/(admin)/[locale]/layout.tsx` and one admin `not-found`; `src/app/fonts.ts` shared by both root layouts; admin top bar (brand, "View site", `LocaleSwitcher`, handle + role, sign-out); `AdminPageHeader` used by every admin page; sidebar polish (below); breadcrumb kept; the Overview group folded into one top link; distinct h1/`<title>` per page (users page "Người dùng"/"Users"); remove the duplicate signed-in/sign-out row from `AdminConsole`; one CSS variable `--admin-bar-h`.
 - Scope OUT: routing/`pathnames`, `requireStaff`, RBAC, APIs, data, dashboard cards (P07-11), new screens, any change to a public page or to `SiteHeader`/`SiteFooter`/`MainNav`/`AccountMenu`, new dependencies or icon sets, Phase 10, a dark theme.
@@ -34,4 +34,4 @@
 - Docs: frontend role writes `docs/features/admin-shell.*` updates; architect role flips ADR 0023 to Accepted and edits `docs/architecture.*`, the index and roadmap in the same PR.
 - Budget: sub-agents 0; one PR (the move, root layout, header and sidebar depend on each other); stop and ask if a file outside the lists above is needed or if the spike fails.
 - Order: after P07-10, **before P07-11** (P07-11 fills `/admin` inside this frame and builds on `AdminPageHeader`); P07-14 and Phase 10.5 edit `community/page.tsx` at the new path.
-- State: DESIGNED — awaiting the owner's approval of the extra-files list and of ADR 0023.
+- State: READY (owner approved ADR 0023 and the extra-files list 2026-11-17; the feature session starts with the build spike)

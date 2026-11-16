@@ -2,7 +2,7 @@
 
 🇻🇳 English version: [0023-admin-root-layout.md](0023-admin-root-layout.md)
 
-- **Trạng thái:** Đề xuất
+- **Trạng thái:** Đã chấp nhận
 - **Ngày:** 2026-11-17
 - **Chủ sở hữu:** system-architect
 - **Ảnh hưởng:** `src/app/[locale]/admin/**` (chuyển vào route group), root layout admin mới, `src/app/fonts.ts`, `src/components/admin/**`, `messages/*.json`, một biến CSS

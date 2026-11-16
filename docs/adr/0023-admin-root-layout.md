@@ -2,7 +2,7 @@
 
 🇻🇳 Bản tiếng Việt: [0023-admin-root-layout.vi.md](0023-admin-root-layout.vi.md)
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-17
 - **Owner:** system-architect
 - **Affects:** `src/app/[locale]/admin/**` (moved to a route group), a new admin root layout, `src/app/fonts.ts`, `src/components/admin/**`, `messages/*.json`, one CSS variable
