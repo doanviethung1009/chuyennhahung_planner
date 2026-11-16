@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { redirect } from '@/i18n/navigation';
-import type { Locale } from '@/i18n/routing';
-import { can } from '@/server/identity/permissions';
+import type { Locale, StaticPathname } from '@/i18n/routing';
+import { can, type Principal } from '@/server/identity/permissions';
 import { readStaffPageAccess } from '@/server/planner/admin-page';
 
 /**
@@ -38,4 +38,47 @@ export async function requireStaff(locale: Locale, returnTo: string, need: 'cont
 /** Admin pages are never indexed, whatever the metadata helper says. */
 export function noIndex(metadata: Metadata): Metadata {
   return { ...metadata, robots: { index: false, follow: false } };
+}
+
+/** One sidebar link: the internal route plus the message key under `adminContent.nav`. */
+export type AdminLinkKey = 'overview' | 'stories' | 'places' | 'reviews' | 'community' | 'users' | 'runbook';
+export type AdminGroupId = 'overview' | 'content' | 'community' | 'people' | 'operations';
+export type AdminNavLink = { href: StaticPathname; label: AdminLinkKey };
+export type AdminNavGroup = { id: AdminGroupId; links: AdminNavLink[] };
+
+/**
+ * What the admin sidebar shows for a principal (ADR 0020 §2). A pure function
+ * of `can`: it only hides links, it never authorizes — every page and API call
+ * checks the role again. A group with no visible link is dropped; Media stays
+ * unrendered until Phase 08. Link `label`s are keys under `adminContent.nav`.
+ */
+export function adminSidebarGroups(principal: Principal): AdminNavGroup[] {
+  const content = can(principal, 'content:write');
+  const groups: AdminNavGroup[] = [
+    { id: 'overview', links: [{ href: '/admin', label: 'overview' }] },
+    {
+      id: 'content',
+      links: content
+        ? [
+            { href: '/admin/content/stories', label: 'stories' },
+            { href: '/admin/content/places', label: 'places' },
+            { href: '/admin/content/reviews', label: 'reviews' },
+          ]
+        : [],
+    },
+    {
+      id: 'community',
+      // The community page itself is gated on `content:write` (ADR 0014).
+      links: content ? [{ href: '/admin/community', label: 'community' }] : [],
+    },
+    {
+      id: 'people',
+      links: can(principal, 'user:provision') ? [{ href: '/admin/users', label: 'users' }] : [],
+    },
+    {
+      id: 'operations',
+      links: can(principal, 'runbook:read') ? [{ href: '/admin/runbook', label: 'runbook' }] : [],
+    },
+  ];
+  return groups.filter((group) => group.links.length > 0);
 }

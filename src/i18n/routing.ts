@@ -43,6 +43,7 @@ export const pathnames = {
     en: '/admin/content/places/[slug]',
   },
   '/admin/content/reviews': { vi: '/quan-tri/noi-dung/danh-gia', en: '/admin/content/reviews' },
+  '/admin/users': { vi: '/quan-tri/nguoi-dung', en: '/admin/users' },
   '/admin/community': { vi: '/quan-tri/cong-dong', en: '/admin/community' },
   '/admin/runbook': { vi: '/quan-tri/runbook', en: '/admin/runbook' },
   '/about': { vi: '/ve-nha-hung', en: '/about' },

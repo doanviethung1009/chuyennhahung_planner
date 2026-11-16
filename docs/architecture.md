@@ -83,6 +83,7 @@ folders. The visible URL per locale is defined once, in
 | `/sign-in` | `/dang-nhap` | `/en/sign-in` |
 | `/account/password` | `/doi-mat-khau` | `/en/account/password` |
 | `/admin` | `/quan-tri` | `/en/admin` |
+| `/admin/users` | `/quan-tri/nguoi-dung` | `/en/admin/users` |
 | `/admin/content/stories` | `/quan-tri/noi-dung/chuyen-di` | `/en/admin/content/stories` |
 | `/admin/content/stories/[slug]` | `/quan-tri/noi-dung/chuyen-di/[slug]` | `/en/admin/content/stories/[slug]` |
 | `/admin/content/places` | `/quan-tri/noi-dung/dia-diem` | `/en/admin/content/places` |

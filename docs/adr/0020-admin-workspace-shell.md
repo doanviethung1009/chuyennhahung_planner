@@ -2,7 +2,7 @@
 
 🇻🇳 Bản tiếng Việt: [0020-admin-workspace-shell.vi.md](0020-admin-workspace-shell.vi.md)
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-17
 - **Owner:** system-architect
 - **Affects:** `src/app/[locale]/admin/**`, `src/components/admin/admin-nav.tsx`, `src/i18n/routing.ts`, `src/lib/return-to.ts`, `src/server/identity/permissions.ts` (one action), `messages/*.json`

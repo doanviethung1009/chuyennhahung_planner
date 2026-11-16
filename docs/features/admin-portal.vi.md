@@ -4,6 +4,8 @@
 
 ## Mục đích
 
+> Từ ADR 0020, bảng người dùng nằm ở `/admin/users` (`/quan-tri/nguoi-dung`); `/admin` là trang tổng quan. Xem [admin-shell.vi.md](admin-shell.vi.md).
+
 Một trang trên trình duyệt để quản trị viên đã đăng nhập quản lý người dùng
 Planner mà không cần `curl`: xem danh sách, tạo người dùng, đổi vai trò, cấp lại
 mật khẩu. Trang phục vụ chủ site và không ai khác; không có liên kết nào từ

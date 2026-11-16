@@ -26,6 +26,7 @@ New features start from [`_template.md`](_template.md) /
 | Planner on PostgreSQL | [planner-postgres-persistence.md](planner-postgres-persistence.md) | `PLANNER_DATABASE_URL` store, advisory-lock transaction, migrations, import and export |
 | Travel Content on PostgreSQL | [content-postgres-tables.md](content-postgres-tables.md) | `CONTENT_DATABASE_URL` store, one table per collection on the shared table engine, seeding under a lock, import and export |
 | Admin roles | [admin-roles.md](admin-roles.md) | `role` on the user, `permissions.ts`, `PATCH /api/admin/planner/users/[userId]` to promote the first admin |
+| Admin shell | [admin-shell.md](admin-shell.md) | One layout for every admin page: grouped role-aware sidebar, breadcrumb, skip link, phone menu; `/admin` overview and the user console at `/admin/users` (ADR 0020) |
 | Admin portal | [admin-portal.md](admin-portal.md) | `/quan-tri` — admin-only user list, create, role change and password reset in the browser (ADR 0010) |
 | Admin user filter | [admin-user-filter.md](admin-user-filter.md) | Search (name, handle, email) and role filter on the `/quan-tri` users table, client-side |
 | Auto deploy to dev | [auto-deploy-dev.md](auto-deploy-dev.md) | `deploy-dev` workflow: green `main` builds an image, the VM's self-hosted runner deploys it, health probe and rollback (ADR 0016) |

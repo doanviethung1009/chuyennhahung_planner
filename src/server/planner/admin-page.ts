@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { ContentError } from '@/server/content/errors';
 import { can, type Role } from '@/server/identity/permissions';
@@ -70,7 +71,7 @@ export type StaffPageAccess =
       principal: { kind: 'session'; userId: string; handle: string; role: Role };
     };
 
-export async function readStaffPageAccess(): Promise<StaffPageAccess> {
+export const readStaffPageAccess = cache(async (): Promise<StaffPageAccess> => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return { status: 'anonymous' };
 
@@ -101,4 +102,4 @@ export async function readStaffPageAccess(): Promise<StaffPageAccess> {
     }
     throw error;
   }
-}
+});

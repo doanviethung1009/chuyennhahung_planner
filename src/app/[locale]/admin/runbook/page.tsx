@@ -6,7 +6,6 @@ import { buildPageMetadata } from '@/lib/metadata';
 import { noIndex, requireStaff } from '@/lib/admin-gate';
 import { Container } from '@/components/ui/container';
 import { PageHeader } from '@/components/layout/page-header';
-import { AdminNav } from '@/components/admin/admin-nav';
 import { Markdown } from '@/components/runbook/markdown';
 import {
   DEFAULT_RUNBOOK_DOC,
@@ -51,7 +50,7 @@ export default async function AdminRunbookPage({ params, searchParams }: Params)
   setRequestLocale(locale);
 
   // `runbook:read` = super admin only (ADR 0017); admins and editors get a 404.
-  const access = await requireStaff(locale, getPathname({ href: '/admin/runbook' as const, locale }), 'runbook');
+  await requireStaff(locale, getPathname({ href: '/admin/runbook' as const, locale }), 'runbook');
   const t = await getTranslations('adminRunbook');
 
   const raw = (await searchParams).doc;
@@ -76,7 +75,6 @@ export default async function AdminRunbookPage({ params, searchParams }: Params)
       <PageHeader title={t('title')} description={t('description')} />
       <Container width="wide">
         <div className="grid gap-8 py-10 md:py-14">
-          <AdminNav current="runbook" canUsers={access.canUsers} canRunbook={access.canRunbook} canContent={access.canContent} />
           <nav aria-label={t('docsLabel')} className="flex flex-wrap items-center gap-2">
             {RUNBOOK_DOCS.map((doc) => (
               <Link

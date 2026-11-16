@@ -647,13 +647,28 @@
       "places": "Địa điểm",
       "reviews": "Đánh giá",
       "community": "Cộng đồng",
-      "runbook": "Runbook"
+      "runbook": "Runbook",
+      "groups": {
+        "overview": "Tổng quan",
+        "content": "Nội dung",
+        "community": "Cộng đồng",
+        "people": "Người dùng",
+        "operations": "Vận hành"
+      },
+      "skip": "Bỏ qua tới nội dung quản trị",
+      "openMenu": "Menu",
+      "closeMenu": "Đóng menu",
+      "breadcrumb": "Đường dẫn",
+      "home": "Quản trị"
     },
     "overview": {
       "heading": "Chào mừng đến khu quản trị",
       "signedInAs": "Đang đăng nhập là {handle}.",
       "body": "Với vai trò biên tập viên, bạn có thể sửa chuyến đi, địa điểm và đánh giá. Phần quản lý người dùng chỉ dành cho quản trị viên.",
-      "goStories": "Mở danh sách chuyến đi"
+      "goStories": "Mở danh sách chuyến đi",
+      "title": "Quản trị",
+      "metaTitle": "Quản trị",
+      "description": "Mọi thứ bạn quản lý được trên trang, gom về một chỗ."
     },
     "notice": {
       "title": "Lưu ý: bản đã xuất bản hiện ngay trên trang công khai",

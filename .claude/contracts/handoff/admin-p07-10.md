@@ -1,0 +1,11 @@
+# Handoff — P07-10 Admin shell
+- Task: P07-10 · Branch `feat/admin-shell` · PR: PR_URL (not merged; contract stays READY until merge)
+- Done: `admin/layout.tsx` (skip link, sidebar, breadcrumb); `AdminNav` → `AdminSidebar` + `AdminBreadcrumb` (client, phone menu, `aria-current`); `adminSidebarGroups(principal)` pure fn of `can()` in `admin-gate.ts`; `readStaffPageAccess` in `cache()`; user console moved to `/admin/users` (`requireStaff(…,'users')`); `/admin` = overview; `/admin/users` in `pathnames` + `returnTo` (query kept); pages dropped `AdminNav`; VI/EN keys; ADR 0020 → Accepted; docs (`features/admin-shell.*`, README rows, architecture routes, project-context).
+- Outside the plan: none. `tests/runbook.test.ts` assertion re-pointed from `admin-nav.tsx` to `adminSidebarGroups` (same behaviour).
+- Migration: none. API/DB/RBAC: none changed.
+- Tests: typecheck PASS · lint PASS · `npm run test` PASS (68 files, 939 passed, 42 skipped) · `npm run build` PASS (`/[locale]/admin/users` routed).
+- NOT RUN: manual 375/768/1280px pass and signed-in role walk-through (needs a staff session); `qc`, `security` reviews (not called).
+- Security: no new auth path; layout never redirects/404s (pages keep their gate, so no oracle); hiding ≠ authorization; `noindex` on `/admin/users`. No findings.
+- Decisions: only existing routes are linked (collections, integrity, audit, system, roles, media come with P07-12…18). Community link follows the page's `content:write` gate.
+- Risk: a bookmarked `/quan-tri` now shows the overview; `aria-current` matching relies on next-intl `usePathname` returning the internal path (prefix match used) — worth eyeballing in the visual pass.
+- Next: P07-11 (dashboard) fills `/admin`; P07-12 adds `/admin/users/roles` to the People group.

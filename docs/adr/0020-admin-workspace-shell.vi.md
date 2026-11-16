@@ -2,7 +2,7 @@
 
 🇻🇳 English version: [0020-admin-workspace-shell.md](0020-admin-workspace-shell.md)
 
-- **Trạng thái:** Đề xuất
+- **Trạng thái:** Đã chấp nhận
 - **Ngày:** 2026-11-17
 - **Chủ trì:** system-architect
 - **Ảnh hưởng:** `src/app/[locale]/admin/**`, `src/components/admin/admin-nav.tsx`, `src/i18n/routing.ts`, `src/lib/return-to.ts`, `src/server/identity/permissions.ts` (một action), `messages/*.json`
