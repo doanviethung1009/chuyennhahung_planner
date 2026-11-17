@@ -138,6 +138,8 @@ export const WRITE_LIMITS = {
    * The key is forgeable, so the repository also caps one place at 20 a day.
    */
   guestReview: { name: 'guest-review', limit: 3, windowMs: 60 * 60_000 },
+  /** Content reports (batch 10.5): 10 per day per member, or per client for a guest. */
+  report: { name: 'report', limit: 10, windowMs: 24 * 60 * 60_000 },
 } as const;
 export type WriteLimitName = keyof typeof WRITE_LIMITS;
 /** Sign-in attempts: 10 per minute per client. A separate bucket. */

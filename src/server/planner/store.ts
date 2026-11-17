@@ -15,6 +15,7 @@ import type {
   ReviewRestriction,
   AuditEvent,
   TermsAcceptance,
+  Report,
 } from './schemas';
 
 /**
@@ -50,6 +51,8 @@ export interface PlannerData {
   auditEvents: AuditEvent[];
   /** ADR 0019 §4. Absent in older files; reads as empty. */
   termsAcceptances: TermsAcceptance[];
+  /** ADR 0019, batch 10.5. Absent in older files; reads as empty. */
+  reports: Report[];
 }
 
 export type PlannerStore = DocumentStore<PlannerData>;
@@ -67,6 +70,7 @@ export function emptyPlannerData(): PlannerData {
     reviewRestrictions: [],
     auditEvents: [],
     termsAcceptances: [],
+    reports: [],
   };
 }
 
@@ -84,6 +88,7 @@ function normalize(partial: Partial<PlannerData>): PlannerData {
     reviewRestrictions: partial.reviewRestrictions ?? [],
     auditEvents: partial.auditEvents ?? [],
     termsAcceptances: partial.termsAcceptances ?? [],
+    reports: partial.reports ?? [],
   };
 }
 

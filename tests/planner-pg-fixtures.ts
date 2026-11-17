@@ -106,6 +106,8 @@ export async function runScenario(planner: PlannerRepository): Promise<{
   );
   // ADR 0015: one restriction (on the guest, so the Planner review stays public for other tests).
   const guestReview = (await planner.listReviewQueue()).find((item) => item.source === 'homepage');
+  // Batch 10.5: one open report of that review (before it is restricted and so hidden).
+  await planner.createReport({ targetKind: 'review', targetId: guestReview!.id, reason: 'spam', note: 'quảng cáo' }, { userId, clientKey: 'scenario' });
   await planner.createRestriction({ reviewId: guestReview!.id, scope: 'place', reason: 'spam lặp lại' }, 'scenario');
 
   return { userId, tripId, activityId, copyId: copy.trip.id };

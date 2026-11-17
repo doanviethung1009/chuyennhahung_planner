@@ -6,6 +6,7 @@ import {
   reviewRestrictionSchema,
   auditEventSchema,
   termsAcceptanceSchema,
+  reportSchema,
   oauthAttemptSchema,
   plannerSessionSchema,
   plannerUserSchema,
@@ -42,6 +43,7 @@ const documentSchema = z
     reviewRestrictions: z.array(reviewRestrictionSchema).default([]),
     auditEvents: z.array(auditEventSchema).default([]),
     termsAcceptances: z.array(termsAcceptanceSchema).default([]),
+    reports: z.array(reportSchema).default([]),
   })
   .strict();
 
@@ -149,6 +151,7 @@ export async function importPlannerDocument(
       reviewRestrictions: incoming.reviewRestrictions.length,
       auditEvents: incoming.auditEvents.length,
       termsAcceptances: incoming.termsAcceptances.length,
+      reports: incoming.reports.length,
     },
   };
 }

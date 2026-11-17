@@ -1,12 +1,13 @@
 import { getTranslations } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
 import { formatDate } from '@/lib/format';
+import { ReportButton } from '@/components/reports/report-button';
 import type { PlaceReviewSummary, PublicCommunityReview } from '@/server/planner/schemas';
 
 /**
  * Traveller reviews. Every string from a traveller is rendered as plain text by
  * React — no HTML, no clickable links — and is labelled self-reported, never
- * verified (ADR 0014). Keys are positional because a review has no public id.
+ * verified (ADR 0014). Each review has an opaque public id, used as the key and by the report control.
  */
 export async function ReviewList({
   reviews,
@@ -32,9 +33,9 @@ export async function ReviewList({
         </p>
       ) : null}
       <ul className="grid list-none gap-4 p-0 md:grid-cols-2 lg:grid-cols-3">
-        {reviews.map((review, index) => (
+        {reviews.map((review) => (
           <li
-            key={`${review.createdAt}-${index}`}
+            key={review.id}
             className="flex flex-col gap-3 rounded-xl border border-border-subtle bg-surface p-5"
           >
             {placeNames ? (
@@ -50,6 +51,7 @@ export async function ReviewList({
               {review.author ?? t('anonymous')} · {t('visited', { date: formatDate(review.visitedOn, locale) })}
             </p>
             <p className="text-xs text-foreground-muted">{t('selfReported')}</p>
+            <ReportButton target={{ kind: 'review', id: review.id }} />
           </li>
         ))}
       </ul>

@@ -60,6 +60,7 @@ hay bỏ một route nghĩa là sửa bảng này ở cả hai ngôn ngữ.
 | GET | `/api/community/trips` | Công khai, giới hạn tần suất | Chuyến cộng đồng đã duyệt |
 | GET | `/api/community/reviews` | Công khai, giới hạn tần suất | Đánh giá cộng đồng đang hiển thị |
 | POST | `/api/community/reviews` | Công khai, giới hạn tần suất | Đánh giá khách từ trang chủ (hiện ngay) |
+| POST | `/api/community/reports` | Công khai (khách hoặc thành viên), giới hạn 10/ngày | Báo cáo chuyến hoặc đánh giá cộng đồng (không cần Điều khoản) |
 | POST | `/api/planner/session` | Công khai, giới hạn tần suất | Đăng nhập (token hoặc email + mật khẩu), mở cookie phiên |
 | GET | `/api/planner/session` | Du khách (cookie phiên hoặc access token) | Tôi là ai (kiểm tra phiên) |
 | DELETE | `/api/planner/session` | Du khách (cookie phiên hoặc access token) | Đăng xuất |
@@ -110,6 +111,8 @@ hay bỏ một route nghĩa là sửa bảng này ở cả hai ngôn ngữ.
 | PATCH | `/api/admin/community/reviews/[id]` | Admin token hoặc phiên admin | Duyệt, từ chối, giữ hoặc gỡ đánh giá (`community:moderate`) |
 | GET | `/api/planner/terms` | Du khách (cookie phiên hoặc access token) | Trạng thái Điều khoản Người tạo hiện hành |
 | POST | `/api/planner/terms` | Du khách (cookie phiên hoặc access token) | Chấp nhận phiên bản Điều khoản Người tạo hiện hành (idempotent) |
+| GET | `/api/admin/community/reports` | Token admin hoặc phiên admin | Hàng đợi báo cáo, `?status=open\|actioned\|dismissed` (`community:moderate`) |
+| POST | `/api/admin/community/reports/[id]/resolve` | Token admin hoặc phiên admin | Bỏ qua hoặc đánh dấu đã xử lý báo cáo, idempotent, ghi một sự kiện (`community:moderate`) |
 | GET | `/api/admin/community/events` | Admin token hoặc phiên admin | Log kiểm toán cho một `?targetId=` (`community:moderate`) |
 | GET | `/api/admin/community/restrictions` | Admin token hoặc phiên admin | Danh sách hạn chế đánh giá (`community:restrict`) |
 | POST | `/api/admin/community/restrictions` | Admin token hoặc phiên admin | Hạn chế một người (`community:restrict`) |

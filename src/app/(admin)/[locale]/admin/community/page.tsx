@@ -8,6 +8,7 @@ import { Container } from '@/components/ui/container';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { ListingQueue } from '@/components/admin/community/listing-queue';
 import { CommunityReviewQueue } from '@/components/admin/community/review-queue';
+import { ReportQueue } from '@/components/admin/community/report-queue';
 import { RestrictionList } from '@/components/admin/community/restriction-list';
 import { can } from '@/server/identity/permissions';
 
@@ -36,6 +37,7 @@ export default async function AdminCommunityPage({ params }: Params) {
 
   const access = await requireStaff(locale, getPathname({ href: '/admin/community' as const, locale }), 'content');
   const t = await getTranslations('adminCommunity');
+  const tReports = await getTranslations('adminReports');
   const canRestrict = can(access.principal, 'community:restrict');
 
   return (
@@ -54,6 +56,12 @@ export default async function AdminCommunityPage({ params }: Params) {
               {t('reviewsHeading')}
             </h2>
             <CommunityReviewQueue canRestrict={canRestrict} />
+          </section>
+          <section aria-labelledby="queue-reports-heading" className="grid gap-4">
+            <h2 id="queue-reports-heading" className="font-display text-2xl font-semibold">
+              {tReports('heading')}
+            </h2>
+            <ReportQueue />
           </section>
           {canRestrict ? (
             <section aria-labelledby="queue-restrictions-heading" className="grid gap-4">

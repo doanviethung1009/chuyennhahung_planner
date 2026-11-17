@@ -60,6 +60,7 @@ adding or removing a route means editing this table in both languages.
 | GET | `/api/community/trips` | Public, rate-limited | Approved community trips |
 | GET | `/api/community/reviews` | Public, rate-limited | Live community reviews |
 | POST | `/api/community/reviews` | Public, rate-limited | Guest review from the home page (live at once) |
+| POST | `/api/community/reports` | Public (guest or member), rate-limited 10/day | Report a community trip or review (no Terms needed) |
 | POST | `/api/planner/session` | Public, rate-limited | Sign in (token or email + password), opens the session cookie |
 | GET | `/api/planner/session` | Traveller (session cookie or access token) | Who am I (session probe) |
 | DELETE | `/api/planner/session` | Traveller (session cookie or access token) | Sign out |
@@ -110,6 +111,8 @@ adding or removing a route means editing this table in both languages.
 | PATCH | `/api/admin/community/reviews/[id]` | Admin token or admin session | Approve, reject, hold or remove a review (`community:moderate`) |
 | GET | `/api/planner/terms` | Traveller (session cookie or access token) | Current Creator Terms status |
 | POST | `/api/planner/terms` | Traveller (session cookie or access token) | Accept the current Creator Terms version (idempotent) |
+| GET | `/api/admin/community/reports` | Admin token or admin session | Report queue, `?status=open\|actioned\|dismissed` (`community:moderate`) |
+| POST | `/api/admin/community/reports/[id]/resolve` | Admin token or admin session | Dismiss or mark a report actioned, idempotent, logs one event (`community:moderate`) |
 | GET | `/api/admin/community/events` | Admin token or admin session | Audit log for one `?targetId=` (`community:moderate`) |
 | GET | `/api/admin/community/restrictions` | Admin token or admin session | List review restrictions (`community:restrict`) |
 | POST | `/api/admin/community/restrictions` | Admin token or admin session | Restrict a person (`community:restrict`) |
