@@ -1,0 +1,34 @@
+# Overlay (OPTIONAL, OFF by default): QC/DBA access to the stack's PostgreSQL
+# through an SSH tunnel — "Option A". Runbook: docs/deploy-db-access.md.
+#
+# Publishes the database on the VM's LOOPBACK only: 127.0.0.1:15432 -> 5432.
+# Nothing is reachable from the LAN or the Internet; the QC machine reaches it
+# by `ssh -L` to the VM. Only for the local-db layout (the `postgres` service
+# of compose.yml, profile local-db) — with external-db there is no such service.
+#
+# Use it INSTEAD of compose.postgres-lan.yml, never together: Compose appends
+# `ports` lists, so both files would publish both bindings.
+#
+#   cd /opt/chuyennhahung/src/deploy
+#   docker compose --project-directory . --env-file /opt/chuyennhahung/.env \
+#     --profile local-db -f compose.yml -f compose.app.yml -f compose.app.bind.yml \
+#     -f compose.app.local-db.yml -f compose.postgres-ssh.yml \
+#     up -d --no-deps postgres
+#
+# `backend` is `internal: true`, and Docker does not publish ports for a
+# container attached only to internal networks, so postgres also joins the
+# non-internal `dbaccess` network below. `app` stays on `backend` only.
+# deploy/deploy.sh does not use this file and only ever recreates `app`
+# (--no-deps), so a deploy neither adds nor removes this port mapping.
+# The password lives in the stack's .env / in psql, never in this file.
+
+services:
+  postgres:
+    ports:
+      - "127.0.0.1:15432:5432"
+    networks:
+      - backend
+      - dbaccess
+
+networks:
+  dbaccess: {}
