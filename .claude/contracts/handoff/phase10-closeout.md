@@ -11,3 +11,4 @@
   Terms, `termsVersion`), D10 (proxy/log nginx thật).
 - W1/W2 đã merge (#143); `/sec-check` lại cho phần này: NOT RUN.
 - Kiểm tra: typecheck PASS; lint PASS; test PASS (84 file pass, 3 skipped; 1097 passed, 78 skipped, không có Postgres); build NOT RUN.
+- 2026-11-18: cổng Terms (403 rồi cho phép), UI Terms 3 độ rộng, chuyến request→approve→remove (audit đủ) PASS. NOT RUN: limiter qua restart, restrictions.
