@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -59,6 +59,40 @@ describe('deploy/deploy.sh', () => {
     const bad = spawnSync('bash', [script, 'a;b'], { env, encoding: 'utf8' });
     expect(bad.status).toBe(2);
     expect(bad.stderr).toContain('invalid image tag');
+  });
+
+  describe('--init-env', () => {
+    const script = join(root, 'deploy/deploy.sh');
+    const run = (stack: string, extra: Record<string, string> = {}) =>
+      spawnSync('bash', [script, '--init-env'], {
+        env: { ...process.env, STACK_DIR: stack, SITE_URL: 'http://10.0.0.1', RUNNER_GROUP: 'no-such-group-xyz', ...extra },
+        encoding: 'utf8',
+      });
+
+    it('writes a private .env with generated secrets, never prints them, and never overwrites', () => {
+      const stack = mkdtempSync(join(tmpdir(), 'cnh-stack-'));
+      const first = run(stack);
+      expect(first.status).toBe(0);
+      const env = readFileSync(join(stack, '.env'), 'utf8');
+      expect(env).toContain('NEXT_PUBLIC_SITE_URL=http://10.0.0.1');
+      for (const key of ['ADMIN_API_TOKEN', 'GUEST_KEY_SECRET', 'POSTGRES_ADMIN_PASSWORD', 'CNH_APP_PASSWORD', 'PLANNER_DATABASE_URL']) {
+        expect(env).toMatch(new RegExp(`^${key}=\\S{16,}$`, 'm'));
+      }
+      expect(statSync(join(stack, '.env')).mode & 0o077).toBe(0);
+      const secret = env.match(/^ADMIN_API_TOKEN=(.+)$/m)![1];
+      expect(first.stdout + first.stderr).not.toContain(secret);
+
+      const second = run(stack);
+      expect(second.status).toBe(1);
+      expect(readFileSync(join(stack, '.env'), 'utf8')).toBe(env);
+    });
+
+    it('needs SITE_URL and, for external-db, PLANNER_DATABASE_URL', () => {
+      const stack = mkdtempSync(join(tmpdir(), 'cnh-stack-'));
+      expect(run(stack, { SITE_URL: '' }).status).not.toBe(0);
+      expect(run(stack, { DB_OVERLAY: 'external-db' }).status).not.toBe(0);
+      expect(existsSync(join(stack, '.env'))).toBe(false);
+    });
   });
 });
 

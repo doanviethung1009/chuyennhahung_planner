@@ -185,6 +185,13 @@ với đúng chủ sở hữu mà container cần. Làm bước này **trước*
 Tạo `/opt/chuyennhahung/.env` một lần. Khối lệnh này sinh secret và chỉ ghi vào file; đừng in
 file ra hay dán nó ở đâu cả.
 
+Cách tắt: `SITE_URL=http://<ip-app> sudo -E ./deploy/deploy.sh --init-env` làm việc tương tự
+cho `local-db` (thêm `DB_OVERLAY=external-db PLANNER_DATABASE_URL=...` nếu dùng database
+ngoài). Lệnh ghi file với secret tự sinh, mode 640, group `cnh-runner` (đổi bằng
+`RUNNER_GROUP`), không in secret, và từ chối ghi đè `.env` đã có. Chạy tay bằng root; runner
+không ghi được vào thư mục, nên một lần deploy thường không bao giờ tạo hay sửa `.env`. Khối
+lệnh bên dưới là cách làm tay tương đương.
+
 ```bash
 umask 077
 CNH=$(openssl rand -hex 24)

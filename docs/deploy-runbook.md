@@ -191,6 +191,13 @@ creates a missing bind path as `root`, and a missing file path as a directory.
 Create `/opt/chuyennhahung/.env` once. This block generates the secrets and writes them
 to the file only; do not print the file or paste it anywhere.
 
+Shortcut: `SITE_URL=http://<ip-app> sudo -E ./deploy/deploy.sh --init-env` does the same
+for `local-db` (add `DB_OVERLAY=external-db PLANNER_DATABASE_URL=...` for an external
+database). It writes the file with generated secrets, mode 640 and group `cnh-runner`
+(`RUNNER_GROUP` to change it), prints no secret, and refuses to overwrite an existing
+`.env`. Run it by hand as root; the runner cannot write the directory, so a normal
+deploy never creates or changes `.env`. The block below is the manual equivalent.
+
 ```bash
 umask 077
 CNH=$(openssl rand -hex 24)

@@ -11,9 +11,68 @@
 # database overlay); `$STACK_DIR/.env` (mode 600) is passed to Compose and the
 # state lives under DEPLOY_ROOT bind mounts. This script never reads or prints
 # .env itself.
+#
+# First-time setup, run ONCE by hand as root (the runner cannot write STACK_DIR):
+#
+#   SITE_URL=http://<ip-app> sudo -E ./deploy/deploy.sh --init-env
+#
+# writes `$STACK_DIR/.env` with freshly generated secrets (mode 640, group
+# RUNNER_GROUP, default cnh-runner) and refuses to overwrite an existing file:
+# PostgreSQL takes its password at the first start, so regenerating would make
+# the file and the database disagree. It never prints a secret. For
+# DB_OVERLAY=external-db also set PLANNER_DATABASE_URL (and optionally
+# CONTENT_DATABASE_URL); nothing is generated for the database then.
 set -euo pipefail
 
-TAG="${1:?usage: deploy.sh <image-tag>}"
+init_env() {
+  local stack="${STACK_DIR:-/opt/chuyennhahung}" file site overlay="${DB_OVERLAY:-local-db}"
+  file="$stack/.env"
+  site="${SITE_URL:?set SITE_URL, e.g. http://<ip-app>}"
+  case "$overlay" in external-db | local-db) ;; *) echo "DB_OVERLAY must be external-db or local-db" >&2; exit 2 ;; esac
+  [[ "$site" =~ ^https?://[^[:space:]]+$ ]] || { echo "SITE_URL must be an http(s) URL" >&2; exit 2; }
+  [[ -d "$stack" ]] || { echo "$stack does not exist (create it first, see docs/deploy-runbook.md)" >&2; exit 2; }
+  [[ ! -e "$file" ]] || { echo "$file already exists; not overwriting (rotate secrets by hand)" >&2; exit 1; }
+  command -v openssl >/dev/null || { echo "openssl is required" >&2; exit 2; }
+  # Validate everything before the first byte is written: a half-written .env
+  # would block a rerun (no overwrite) and hold a partial set of secrets.
+  [[ "$overlay" == local-db || -n "${PLANNER_DATABASE_URL:-}" ]] \
+    || { echo "set PLANNER_DATABASE_URL for external-db" >&2; exit 2; }
+
+  umask 077
+  {
+    echo "NEXT_PUBLIC_SITE_URL=$site"
+    echo "TRUST_PROXY_HEADERS=true"
+    echo "ADMIN_API_TOKEN=$(openssl rand -base64 36)"
+    echo "GUEST_KEY_SECRET=$(openssl rand -hex 32)"
+    echo "GOOGLE_SIGNUP_ENABLED=false"
+    if [[ "$overlay" == local-db ]]; then
+      local pw
+      pw="$(openssl rand -hex 24)"
+      echo "POSTGRES_ADMIN_PASSWORD=$(openssl rand -hex 24)"
+      echo "CNH_APP_PASSWORD=$pw"
+      echo "PLANNER_DATABASE_URL=postgres://cnh_app:$pw@postgres:5432/cnh_planner"
+      echo "CONTENT_DATABASE_URL=postgres://cnh_app:$pw@postgres:5432/cnh_content"
+    else
+      echo "PLANNER_DATABASE_URL=$PLANNER_DATABASE_URL"
+      [[ -z "${CONTENT_DATABASE_URL:-}" ]] || echo "CONTENT_DATABASE_URL=$CONTENT_DATABASE_URL"
+    fi
+  } | (set -o noclobber; cat >"$file")
+
+  local group="${RUNNER_GROUP:-cnh-runner}"
+  if getent group "$group" >/dev/null 2>&1; then
+    chgrp "$group" "$file" && chmod 640 "$file"
+  else
+    echo "group $group not found: $file stays mode 600; chgrp/chmod 640 it once the runner exists" >&2
+  fi
+  echo "wrote $file (secrets not shown)"
+}
+
+if [[ "${1:-}" == "--init-env" ]]; then
+  init_env
+  exit 0
+fi
+
+TAG="${1:?usage: deploy.sh <image-tag> | deploy.sh --init-env}"
 : "${APP_IMAGE:?set APP_IMAGE, e.g. ghcr.io/<owner>/chuyennhahung-app}"
 STACK_DIR="${STACK_DIR:-/opt/chuyennhahung}"
 DB_OVERLAY="${DB_OVERLAY:-external-db}"
