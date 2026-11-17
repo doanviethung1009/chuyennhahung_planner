@@ -52,7 +52,7 @@ Saving sends only the editable keys with `If-Match: "<updatedAt>"`. A stale stam
 ## Limits and open questions
 
 - Public pages still read `src/content/**`; edits are not visible publicly, and no refresh interval is promised.
-- Since P07-16, editors create a draft story or place at `/admin/content/{stories,places}/new` (`POST` with `content:write`, same-origin, always a draft for stories) and archive a story from the list or the editor. **Places have no draft or archive state**, so a new place is public at once and the form says so; hard delete stays token-only. No delete, template, collection or integrity screens; no audit log, so edits are unattributed.
+- Since P07-16, editors create a draft story or place at `/admin/content/{stories,places}/new` (`POST` with `content:write`, same-origin, always a draft for stories; the slug `new` is refused by the server) and archive a story from the list or the editor. **Places have no draft or archive state**, so a new place is public at once and the form says so; hard delete stays token-only. No delete, template, collection or integrity screens; no audit log, so edits are unattributed.
 - Story blocks can be edited but not added, removed or reordered.
 - `If-Match` is optional for token callers, so `curl` can still overwrite.
 - Editors have no sign-out button on the overview page yet.

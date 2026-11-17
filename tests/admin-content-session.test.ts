@@ -274,6 +274,16 @@ describe('create story and place (P07-16)', () => {
     expect(bad.status).toBe(422);
   });
 
+  it('refuses the reserved slug "new" on the server for session and token', async () => {
+    const editor = await makeUser('editor');
+    for (const o of [{ cookie: editor.cookie }, { bearer: ADMIN_TOKEN }]) {
+      const story = await postStory(storyFixture({ slug: 'new' }), o);
+      expect(story.status).toBe(422);
+      expect((await story.json()).error.issues[0].path).toBe('slug');
+      expect((await postPlace(placeFixture({ slug: 'new' }), o)).status).toBe(422);
+    }
+  });
+
   it('lets an editor archive a created story through the status route', async () => {
     const editor = await makeUser('editor');
     const name = slug('arch');
