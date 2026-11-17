@@ -131,6 +131,34 @@ describe('deploy/deploy.sh', () => {
       expect(r.stdout + r.stderr).not.toContain('pw@');
     });
 
+    /** A directory of fake commands placed first on PATH. */
+    const shims = (cmds: Record<string, string>) => {
+      const dir = mkdtempSync(join(tmpdir(), 'cnh-shim-'));
+      for (const [name, body] of Object.entries(cmds)) {
+        writeFileSync(join(dir, name), `#!/usr/bin/env bash\n${body}\n`);
+        chmodSync(join(dir, name), 0o755);
+      }
+      return { PATH: `${dir}:${process.env.PATH}` };
+    };
+
+    it('writes nothing and exits 1 when openssl fails or returns nothing', () => {
+      for (const body of ['exit 1', 'exit 0']) {
+        const stack = newStack();
+        const r = run(stack, shims({ openssl: body }));
+        expect(r.status, body).toBe(1);
+        expect(existsSync(envOf(stack)), body).toBe(false);
+      }
+    });
+
+    it('exits 1 with a clear message when chgrp fails, leaving the file private', () => {
+      const stack = newStack();
+      const r = run(stack, { ...shims({ getent: 'exit 0', chgrp: 'exit 1' }), RUNNER_GROUP: 'fake-runner' });
+      expect(r.status).toBe(1);
+      expect(r.stderr).toContain('stays mode 600');
+      expect(r.stdout).not.toContain('wrote');
+      expect(statSync(envOf(stack)).mode & 0o077).toBe(0);
+    });
+
     const gid = spawnSync('id', ['-gn'], { encoding: 'utf8' }).stdout.trim();
     const hasGetent = spawnSync('getent', ['group', gid]).status === 0;
     it.skipIf(!hasGetent || !gid)('sets group and mode 640 when the runner group exists', () => {
