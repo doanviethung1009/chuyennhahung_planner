@@ -1,6 +1,6 @@
 # Task Contract 10.6 — Security Hardening
 - Task IDs: **10.6a** P10-12, P10-15, P10-16 · **10.6b** P10-11 (unblocked: ADR 0024 Accepted 2026-11-17 (D4)). Two PRs; 10.6b may be deferred without blocking 10.7.
-- Class: M (10.6a) · L (10.6b: key change + migration) · State: READY (owner approved D1-D12 as recommended, 2026-11-16) · Subagents: 0
+- Class: M (10.6a) · L (10.6b: key change + migration) · State: DONE (10.6a PR #129, 10.6b PR #132, merged 2026-11-17) · Subagents: 0
 - Objective: close the findings of the 2026-11-16 `/sec-check` and `/qc-check` that touch Phase 10 write paths (backlog P10-11..P10-16), without widening scope.
 - Scope:
   - **P10-15 (D9):** server-side refusal of community writes (listing request, Planner review, guest review) when `contributionOpen` is false (`src/content/site.ts:102`; today UI-only: `community-reviews-section.tsx:16`, `share-panel.tsx:189`, `review-form.tsx:54`). A shared server helper, one `forbidden` reason `contribution_closed`.

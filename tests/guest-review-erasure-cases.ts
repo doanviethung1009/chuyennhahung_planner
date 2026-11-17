@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest';
 import { isContentError } from '../src/server/content/repository';
-import { ERASED_REVIEW_BODY, guestReviewInputSchema } from '../src/server/planner/schemas';
+import { ERASED_REASON, ERASED_REVIEW_BODY, guestReviewInputSchema } from '../src/server/planner/schemas';
 import type { PlannerRepository } from '../src/server/planner/repository';
 import type { PlannerStore } from '../src/server/planner/store';
 import { exportPlannerDocument } from '../src/server/persistence/planner-transfer';
@@ -145,5 +145,90 @@ export function registerErasureCases(setup: () => Promise<ErasureCtx>): void {
     const id = await guestId(ctx);
     await ctx.planner.eraseGuestReview(id, 'staff-1', 'yêu cầu xóa');
     expect(await codeOf(guest(ctx, '203.0.113.99'))).toBe('rate_limited');
+  });
+
+  const MARK = 'ZZQUOTE-sensitive-fragment';
+  /** A guest review with every place its text can leak to: reject-less remove reason, report note and handler reason, restriction reason. */
+  const plant = async (ctx: ErasureCtx) => {
+    await guest(ctx);
+    const id = await guestId(ctx);
+    await ctx.planner.decideReview(id, 'remove', 'staff-1', `vi phạm ${MARK}`);
+    await ctx.planner.createReport({ targetKind: 'review', targetId: id, reason: 'spam', note: `trích ${MARK}` }, { userId: null, clientKey: '198.51.100.5' }).catch(() => undefined);
+    return id;
+  };
+
+  it('erase: clears report notes, earlier audit reasons and restriction reasons; keeps non-identifying metadata', async () => {
+    const ctx = await setup();
+    await guest(ctx);
+    const id = await guestId(ctx);
+    await ctx.planner.createReport({ targetKind: 'review', targetId: id, reason: 'spam', note: `trích ${MARK}` }, { userId: null, clientKey: '198.51.100.5' });
+    const { id: rst } = await ctx.planner.createRestriction({ reviewId: id, scope: 'place', reason: `lặp lại ${MARK}` }, 'staff-1');
+    const [report] = await ctx.planner.listReports('open');
+    await ctx.planner.resolveReport(report!.id, { outcome: 'actioned', reason: `đã đọc ${MARK}` }, 'staff-1');
+    await ctx.planner.decideReview(id, 'remove', 'staff-1', `vi phạm ${MARK}`);
+    expect(JSON.stringify(await ctx.store.read())).toContain(MARK);
+    const before = (await ctx.store.read()).auditEvents.filter((e) => e.targetId === id || e.targetId === rst);
+
+    await ctx.planner.eraseGuestReview(id, 'staff-2', 'Phiếu #42');
+    const data = await ctx.store.read();
+    const left = JSON.stringify(data).split(MARK).length - 1;
+    expect(left).toBe(0);
+    for (const dump of [JSON.stringify(data), await exportPlannerDocument(ctx.store)]) expect(dump).not.toContain(MARK);
+    const restriction = data.reviewRestrictions.find((r) => r.id === rst)!;
+    expect(restriction.reason).toBe(ERASED_REASON);
+    expect(restriction.guestKey).toBeTruthy(); // abuse control stays until it ends
+    expect(restriction.liftedAt).toBeNull();
+    const after = data.auditEvents.filter((e) => e.targetId === id || e.targetId === rst);
+    expect(after.map((e) => [e.id, e.actorId, e.action, e.fromStatus, e.toStatus, e.createdAt])).toEqual(
+      [...before.map((e) => [e.id, e.actorId, e.action, e.fromStatus, e.toStatus, e.createdAt]), [expect.any(String), 'staff-2', 'erase', 'removed', 'removed', expect.any(String)]],
+    );
+    expect(after.filter((e) => e.action !== 'erase').every((e) => e.reason === null)).toBe(true);
+    expect(after.find((e) => e.action === 'erase')!.reason).toBe('Phiếu #42');
+    const [row] = await ctx.planner.listReports();
+    expect(row).toMatchObject({ note: null, handlerReason: null, status: 'actioned', signedIn: false });
+  });
+
+  it('erase: leaves other reviews, reports and restrictions untouched', async () => {
+    const ctx = await setup();
+    await guest(ctx, '203.0.113.1');
+    await guest(ctx, '203.0.113.2');
+    const [a, b] = (await ctx.planner.listReviewQueue()).filter((r) => r.source === 'homepage');
+    await ctx.planner.createReport({ targetKind: 'review', targetId: b!.id, reason: 'spam', note: `khác ${MARK}` }, { userId: null, clientKey: '198.51.100.6' });
+    await ctx.planner.decideReview(b!.id, 'remove', 'staff-1', `lý do khác ${MARK}`);
+    await ctx.planner.eraseGuestReview(a!.id, 'staff-1', 'yêu cầu xóa');
+    const data = await ctx.store.read();
+    expect(data.reports[0]!.note).toBe(`khác ${MARK}`);
+    expect(data.auditEvents.find((e) => e.targetId === b!.id && e.action === 'remove')!.reason).toBe(`lý do khác ${MARK}`);
+    expect(data.communityReviews.find((r) => r.id === b!.id)!.body).toBe(SECRET_TEXT);
+  });
+
+  it('erase: the original rating is gone and an erased review stays out of the public summary', async () => {
+    const ctx = await setup();
+    for (let i = 0; i < 3; i += 1) await guest(ctx, `203.0.113.${i + 1}`); // rating 4 each
+    const queue = (await ctx.planner.listReviewQueue()).filter((r) => r.source === 'homepage');
+    const before = (await ctx.planner.listApprovedReviews()).summary;
+    expect(before.count).toBe(3);
+    await ctx.planner.eraseGuestReview(queue[0]!.id, 'staff-1', 'yêu cầu xóa');
+    const row = (await ctx.store.read()).communityReviews.find((r) => r.id === queue[0]!.id)!;
+    expect(row.rating).toBe(1);
+    const after = (await ctx.planner.listApprovedReviews()).summary;
+    expect(after.count).toBe(2);
+    if (after.average !== null) expect(after.average).toBe(4); // the placeholder 1 never enters the mean
+  });
+
+  it('erase: backfill — a review erased before the cleanup existed is cleaned on the next call, with no second erase event', async () => {
+    const ctx = await setup();
+    const id = await plant(ctx);
+    await ctx.planner.eraseGuestReview(id, 'staff-1', 'yêu cầu xóa');
+    // Simulate the PR #139 state: erased row, residue back in a report and an earlier event.
+    await ctx.store.transact(async (data) => {
+      data.reports = data.reports.map((r) => (r.targetId === id ? { ...r, note: `cũ ${MARK}` } : r));
+      data.auditEvents = data.auditEvents.map((e) => (e.targetId === id && e.action === 'remove' ? { ...e, reason: `cũ ${MARK}` } : e));
+    });
+    expect(JSON.stringify(await ctx.store.read())).toContain(MARK);
+    await ctx.planner.eraseGuestReview(id, 'staff-2', 'yêu cầu xóa lần hai');
+    const data = await ctx.store.read();
+    expect(JSON.stringify(data)).not.toContain(MARK);
+    expect((await events(ctx, id)).filter((e) => e.action === 'erase')).toHaveLength(1);
   });
 }

@@ -1,4 +1,31 @@
-# Phase hiện tại — Phase 10: Community Foundations (GẦN ĐÓNG, CHƯA ĐÓNG — cập nhật 2026-11-17)
+# Bảng điều khiển — Chuyện Nhà Hưng
+
+Roadmap: [`PHASES.md`](PHASES.md) · Tồn đọng: [`backlog.md`](backlog.md) · Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
+
+Cập nhật: 2026-11-18, gộp với `main` sau PR #139–#144.
+
+## Nguồn chính cho từng loại trạng thái
+| Cần biết | Xem |
+|---|---|
+| Phase nào, tiến độ | `PHASES.md` (bảng Tổng quan, một dòng mỗi phase) |
+| Đang làm gì, kế tiếp | file này |
+| Việc tồn đọng theo ID | `backlog.md` |
+| Đã deploy chưa | `DEPLOY-STATUS.md` |
+| Một batch/task xong chưa | dòng `State:` đầu contract trong `.claude/contracts/` |
+| Bằng chứng | PR, `.claude/contracts/handoff/`, `.claude/reports/` |
+
+## Hiện tại
+- **Phase đang làm:** Phase 10 — Community Foundations (gần đóng, chưa đóng) + phần còn lại của Phase 07 (Admin workspace).
+- **Batch hiện tại (Phase 10):** không có batch code nào đang chạy; 10.1–10.7 DONE (`.claude/contracts/phase10-index.md`).
+- **Batch kế tiếp:** không có. **Batch 10.8 bị bỏ** (chủ dự án chốt 2026-11-18); việc còn mở của Phase 10 chuyển sang Phase 11/backlog.
+- **Việc kế tiếp:** (1) **Phase 11** — duyệt ADR 0025 (PR #141) rồi lập contract; chặn bởi P11-D1 (chính sách riêng tư) và P11-D2 (công tắc sao chép); (2) Phase 07 còn lại: P07-12, P07-13 (chặn), P07-14/15/17.
+
+Chi tiết Phase 10, điều kiện đóng và lịch sử Phase 05 ở bên dưới.
+
+---
+
+# Phase 10: Community Foundations (GẦN ĐÓNG, CHƯA ĐÓNG)
+
 
 Roadmap đầy đủ: [`PHASES.md`](PHASES.md) · Tồn đọng: [`backlog.md`](backlog.md) ·
 Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
@@ -13,9 +40,9 @@ Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
 
 1. Đồng bộ tài liệu với thực tế — chính PR `docs/phase10-roadmap-sync`.
 2. W1 và W2: đã sửa và merge ở PR #143 (`9f27432`); chạy lại `/sec-check` cho phần này là khuyến nghị, hiện NOT RUN.
-3. Smoke có đăng nhập — **một phần** (2026-11-17, admin1): đọc hàng đợi admin + UI 375/768/1280 PASS; NOT RUN: thao tác ghi/audit chain, cổng Terms (cần member), bộ đếm qua restart. Chờ chủ dự án chấp nhận NOT RUN hoặc cấp member/lệnh restart.
+3. Smoke có đăng nhập — **gần đủ** (2026-11-18, admin1): hàng đợi admin, UI 375/768/1280, báo cáo lập→resolve→gỡ, cổng Terms chặn rồi cho phép + UI Terms 3 độ rộng, chuyến request→approve→remove (audit đủ) đều PASS. NOT RUN: bộ đếm limiter qua restart (cần restart app trên VM), view restrictions chi tiết. Chờ chủ dự án restart-test hoặc chấp nhận NOT RUN.
 4. Việc của chủ dự án: P10-7 (sao lưu, `metadataBase`, HSTS), D5 (text Terms), D10; thêm `GUEST_KEY_SECRET=` vào `deploy/.env.example` (kiểm 2026-11-17: chưa có trên `main`).
-5. Về #139: chủ dự án đã chốt "xóa hết" (2026-11-17); còn phải làm task code xóa `reports.note` và bỏ số sao gốc khi ẩn danh hóa review khách (chưa làm).
+5. Về #139: chủ dự án đã chốt "xóa hết" (2026-11-17); task xóa `reports.note`/số sao gốc **xong ở PR #150** (+ test bổ sung #149).
 
 ---
 
@@ -42,7 +69,7 @@ Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
 Kiểm tra: xem PR của branch này (typecheck, lint, test chạy lại khi cập nhật).
 CI trên `main` @ `124868e`: **success** (typecheck, lint, test, build).
 
-## Tiêu chí đóng Phase 05 (còn 2, 3)
+### Tiêu chí đóng Phase 05 (còn 2, 3)
 
 1. **Kiểm thủ công trên trình duyệt** — luồng ẩn danh → tùy chỉnh → lưu → đăng nhập →
    khôi phục nháp → lưu trip → share → mở link ở cửa sổ riêng tư; 375/768/1280px.
@@ -67,26 +94,26 @@ CI trên `main` @ `124868e`: **success** (typecheck, lint, test, build).
 Khi 1–5 xong (hoặc chủ nhà chấp nhận rủi ro bằng văn bản cho mục 2–3), chuyển Phase 05
 sang `Done` trong `PHASES.md` và mở Phase 07 ở file này.
 
-## Ngoài phạm vi Phase 05 (không làm ở đây)
+### Ngoài phạm vi Phase 05 (không làm ở đây)
 
 Gallery trip public; identity provider thật/đăng ký; Planner map; AI; SQL; nháp ẩn danh
 phía server; editor lịch trình đầy đủ (thuộc Phase 04); `/plan-your-trip`; tour redirect.
 
-## Việc đang song song ở nơi khác
+### Việc đang song song ở nơi khác
 
 - ADR 0006 và `tests/client-boundary.test.ts` đã merge (PR #25). Nhãn "Phase 06" cho
   Admin Portal đã đổi thành **Phase 07** ở ADR 0006, `docs/architecture.*` và addendum
   contract (branch này) — P07-R0 xong khi branch này merge.
 - `chore/upgrade-vitest-5` đã merge (PR #22).
 
-## Chuẩn bị mở Phase 07 (song song, không chờ 05 đóng)
+### Chuẩn bị mở Phase 07 (song song, không chờ 05 đóng)
 
 - [x] P07-R0 — ADR 0006 đã commit, nhãn phase đã đổi.
 - [ ] P07-D1 — **chủ nhà trả lời:** nhà cung cấp danh tính, ai là admin, MFA cho `admin`.
 - [ ] P07-D2 — ADR 0006 → Accepted (sau 05 đóng + D1).
 - [ ] D1 trong `DEPLOY-STATUS.md` — chủ nhà chọn nơi chạy (ảnh hưởng thời điểm cần SQL).
 
-## Quyết định đã chốt 2026-11-16
+### Quyết định đã chốt 2026-11-16
 
 Chủ dự án chốt khuyến nghị: Q1 giữ review hiện ngay (ADR 0014); Q2 Journal/Blog/Vlog duyệt trước, comment hiện ngay + report + hold; Q3 thứ tự Phase 10–15 và 10-S0; Q4 chạy sec/qc để đóng 05; Q5 xác nhận đáp án khuyến nghị ADR 0015; Q6 audit log trước, MFA hoãn; Q7 embed YouTube trước, chưa upload; Q8 chủ nhà xác nhận Terms/contact; Q9 chủ nhà cung cấp chính sách riêng tư; Q10 sửa sao lưu/`metadataBase`/HSTS trước UGC mới; Q11 đổi nhãn Stage 8/9; Q12 xác minh rate-limit store chung.
 

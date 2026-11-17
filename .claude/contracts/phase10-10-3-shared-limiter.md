@@ -1,6 +1,6 @@
 # Task Contract 10.3 — PostgreSQL Shared Rate Limiter
 - Task ID: P10-6; related P10-13 (429 tests), P10-12/P10-11 (key, see 10.6)
-- Class: L (trust boundary: abuse control) · State: READY (owner approved D1-D12 as recommended, 2026-11-16) · Subagents: 0
+- Class: L (trust boundary: abuse control) · State: DONE (PR #117, merged 2026-11-16) · Subagents: 0
 - Objective: the two review write limiters survive restarts and span two app instances, failing closed when the database is down.
 - Scope:
   - **Step 0 (P10-13):** HTTP 429 tests with `Retry-After` for the Planner review limiter (5/h, `src/app/api/planner/reviews/[placeSlug]/route.ts:27`) and guest limiter (3/h, `src/app/api/community/reviews/route.ts:42`); the 30-day default restriction expiry test for guests. Pass on the **current** in-memory code first.
