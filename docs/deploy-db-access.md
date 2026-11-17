@@ -80,7 +80,7 @@ ss -ltn | grep 15432                        # expect 127.0.0.1:15432, not 0.0.0.
 
 Enable Option B — only after the firewall rules of section H are in place, with
 `DB_BIND_ADDR=<VM LAN IP>` in the stack's `.env` (no address is baked into the overlay;
-Compose refuses to start without it):
+Compose refuses to start without it; run `./deploy/deploy.sh --check` first, it refuses `0.0.0.0`):
 
 ```bash
 $BASE -f compose.postgres-lan.yml up -d --no-deps postgres

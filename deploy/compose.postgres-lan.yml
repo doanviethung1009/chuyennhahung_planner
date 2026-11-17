@@ -4,7 +4,9 @@
 # Publishes the database on the VM's LAN address ONLY: ${DB_BIND_ADDR}:15432
 # -> 5432. Never 0.0.0.0, never the router, never Cloudflare Tunnel. Set
 # DB_BIND_ADDR in the stack's .env to the VM's LAN IP (no address is baked in;
-# unset, Compose refuses to start). Never set it to 0.0.0.0. Only for the local-db layout.
+# unset, Compose refuses to start). Never set it to 0.0.0.0.
+# `deploy.sh --check` refuses a DB_BIND_ADDR that is not a single IPv4 address or is
+# 0.0.0.0: run it before enabling this overlay (deploy.sh itself never uses this file). Only for the local-db layout.
 #
 # SECURITY: Docker publishes ports through iptables chains that bypass `ufw`.
 # Restrict who may connect in the DOCKER-USER chain (and/or the Proxmox

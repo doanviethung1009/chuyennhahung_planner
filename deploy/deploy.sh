@@ -30,6 +30,12 @@
 # (secret lengths, TLS rule, CA file, mode) and prints key names and ok/FAIL only.
 set -euo pipefail
 
+# True when the URL's query carries EXACTLY these TLS parameters: whole-parameter
+# matches, so `sslmode=verify-fullx` or `x=sslmode=verify-full` do not pass.
+tls_ok() {
+  [[ "$1" =~ [\?\&]sslmode=verify-full(\&|$) && "$1" =~ [\?\&]sslrootcert=/run/secrets/pg-ca\.crt(\&|$) ]]
+}
+
 init_env() {
   local stack="${STACK_DIR:-/opt/chuyennhahung}" file site overlay
   file="$stack/.env"
@@ -50,7 +56,7 @@ init_env() {
       [[ "$url" =~ ^postgres(ql)?:// && "$url" =~ $safe ]] \
         || { echo "database URLs must start with postgres:// and contain no spaces or \$" >&2; exit 2; }
       # The link crosses the LAN: TLS with full verification is not optional.
-      [[ "$url" == *sslmode=verify-full* && "$url" == *sslrootcert=/run/secrets/pg-ca.crt* ]] \
+      tls_ok "$url" \
         || { echo "database URLs must carry sslmode=verify-full and sslrootcert=/run/secrets/pg-ca.crt" >&2; exit 2; }
     done
   fi
@@ -120,17 +126,18 @@ check_env() {
   [[ "$v" =~ ^postgres(ql)?:// ]] && echo "ok   PLANNER_DATABASE_URL" || bad "PLANNER_DATABASE_URL missing or not postgres://"
   local bind
   bind="$(val DB_BIND_ADDR)"
-  [[ "$bind" != 0.0.0.0 && "$bind" != "::" ]] || bad "DB_BIND_ADDR must be the VM LAN IP, never 0.0.0.0 or ::"
+  [[ -z "$bind" || ( "$bind" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ && "$bind" != 0.0.0.0 ) ]] \
+    || bad "DB_BIND_ADDR must be one IPv4 address of the VM (its LAN IP), never 0.0.0.0 or ::"
   if [[ "$overlay" == local-db ]]; then
     for k in POSTGRES_ADMIN_PASSWORD CNH_APP_PASSWORD; do
       [[ -n "$(val "$k")" ]] && echo "ok   $k" || bad "$k missing"
     done
   else
-    [[ "$v" == *sslmode=verify-full* && "$v" == *sslrootcert=/run/secrets/pg-ca.crt* ]] \
+    tls_ok "$v" \
       && echo "ok   PLANNER_DATABASE_URL TLS" || bad "external-db needs sslmode=verify-full and sslrootcert=/run/secrets/pg-ca.crt in PLANNER_DATABASE_URL"
     v="$(val CONTENT_DATABASE_URL)"
     if [[ -n "$v" ]]; then
-      [[ "$v" =~ ^postgres(ql)?:// && "$v" == *sslmode=verify-full* && "$v" == *sslrootcert=/run/secrets/pg-ca.crt* ]] \
+      [[ "$v" =~ ^postgres(ql)?:// ]] && tls_ok "$v" \
         && echo "ok   CONTENT_DATABASE_URL TLS" || bad "CONTENT_DATABASE_URL must be postgres:// with sslmode=verify-full and sslrootcert=/run/secrets/pg-ca.crt"
     fi
     [[ -f "$root/secrets/pg-ca.crt" ]] && echo "ok   $root/secrets/pg-ca.crt is a file" || bad "$root/secrets/pg-ca.crt is missing or not a file"

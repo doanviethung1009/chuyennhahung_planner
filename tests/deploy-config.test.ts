@@ -333,6 +333,9 @@ describe('external-db TLS rule', () => {
       { PLANNER_DATABASE_URL: 'postgres://u:p@db/cnh_planner' },
       { PLANNER_DATABASE_URL: 'postgres://u:p@db/cnh_planner?sslmode=verify-full' },
       { PLANNER_DATABASE_URL: `postgres://u:p@db/cnh_planner${tls}`, CONTENT_DATABASE_URL: 'postgres://u:p@db/cnh_content' },
+      { PLANNER_DATABASE_URL: `postgres://u:p@db/cnh_planner?sslmode=verify-fullx&sslrootcert=/run/secrets/pg-ca.crt` },
+      { PLANNER_DATABASE_URL: `postgres://u:p@db/cnh_planner?x=sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt` },
+      { PLANNER_DATABASE_URL: `postgres://u:p@db/cnh_planner?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crtx` },
     ];
     for (const extra of cases) {
       const r = run(extra);
@@ -394,6 +397,12 @@ PLANNER_DATABASE_URL=postgres://u:p@db/cnh_planner?sslmode=verify-full&sslrootce
     expect(open.status).toBe(1);
     expect(open.stderr).toContain('DB_BIND_ADDR');
     expect(check(stackWith(`${good}DB_BIND_ADDR=10.0.0.5\n`)).status).toBe(0);
+    for (const bad of ['::', '10.0.0.5,0.0.0.0', 'db.example', '0.0.0.0']) {
+      expect(check(stackWith(`${good}DB_BIND_ADDR=${bad}\n`)).status, bad).toBe(1);
+    }
+    const fake = check(stackWith(good.replace('?sslmode=verify-full&', '?x=sslmode=verify-full&')));
+    expect(fake.status).toBe(1);
+    expect(fake.stderr).toContain('PLANNER_DATABASE_URL');
   });
 
   it('local-db needs the Postgres passwords instead of TLS', () => {
