@@ -23,6 +23,7 @@ Chỉ staff (`community:moderate`: editor, admin, service token), `Cache-Control
 | trip | `request` mọi trạng thái → `pending`; `withdraw` → `draft`; `approve` `pending` → `published`; `reject` `pending` → `rejected`; `remove` `published` → `removed`; `requeue` `published` → `pending` (do sửa) | chủ chuyến / staff / `service` |
 | trip | `withdraw` → `draft`, lý do `implicit_end` (rời `public`, lưu trữ, thu hồi link) | `system` (`service`) |
 | review | `approve`, `reject`, `hold`, `remove`; `republish` `held` → `approved` (tác giả sửa) | staff / tác giả |
+| review | `guest_limit` (không đổi trạng thái; actor `system`; tối đa một lần mỗi giờ) khi khách chạm giới hạn đánh giá theo giờ | route |
 | user | `restrict` → `active`; `lift` `active` → `lifted` (cả khi xoá tài khoản, actor `account deleted`) | staff / `service` |
 
 Tên trạng thái theo máy trạng thái kiểm duyệt `src/server/community/submission.ts` (ADR 0019 §1): `draft`, `pending`, `approved`, `published`, `rejected`, `removed` đang được lưu; `changes_requested`, `unpublished`, `archived` có trong module nhưng chưa lưu. `remove` của staff là `removed` trong module và `rejected` trong listing đã lưu.

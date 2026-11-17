@@ -4,7 +4,7 @@
 
 ## Summary
 
-The two review write limits — 5 per hour per signed-in traveller and 3 per hour per guest client (ADR [0014](../adr/0014-community-trips-and-reviews.md)) — used to live in process memory: a restart reset them and two app instances doubled them. When the Planner runs on PostgreSQL they now count in a shared table, so a restart keeps the count and every instance sees the same one. If the database cannot be reached the write is refused with `503`, never allowed (ADR [0019](../adr/0019-community-foundation.md) §3). Visitors see no change; without PostgreSQL the in-process limiters are unchanged.
+The two review write limits — 5 per hour per signed-in traveller and 10 per hour per guest client (ADR [0014](../adr/0014-community-trips-and-reviews.md)) — used to live in process memory: a restart reset them and two app instances doubled them. When the Planner runs on PostgreSQL they now count in a shared table, so a restart keeps the count and every instance sees the same one. If the database cannot be reached the write is refused with `503`, never allowed (ADR [0019](../adr/0019-community-foundation.md) §3). Visitors see no change; without PostgreSQL the in-process limiters are unchanged.
 
 ## Routes
 
@@ -43,7 +43,7 @@ Table `rate_limit_counters` (migration `0011_rate_limit_counters.sql`, manual ro
 
 ## Limits and open questions
 
-- **`x-forwarded-for` can still be forged.** The guest key is the client's first forwarded hop; rotating it bypasses the 3/hour limit. Not fixed here (batch 10.6: HMAC key and proxy header trust). The repository's 20-a-day cap per place remains the backstop.
+- **`x-forwarded-for` can still be forged.** The guest key is the client's first forwarded hop; rotating it bypasses the 10/hour limit. Not fixed here (batch 10.6: HMAC key and proxy header trust). The repository's 20-a-day cap per place remains the backstop.
 - A fixed window allows up to twice the limit across a window boundary; the old in-memory limiter was a sliding window.
 - One database round trip per limited write; its cost is **not measured** (assumption: the database is on the LAN).
 - The database is now a dependency of these two writes: while it is down they answer `503`, as the rest of the Planner already does.

@@ -23,6 +23,7 @@ Staff only (`community:moderate`: editor, admin, service token), `Cache-Control:
 | trip | `request` any → `pending`; `withdraw` any → `draft`; `approve` `pending` → `published`; `reject` `pending` → `rejected`; `remove` `published` → `removed`; `requeue` `published` → `pending` (an edit) | owner / staff / `service` |
 | trip | `withdraw` → `draft`, reason `implicit_end` (left `public`, archived, share revoked) | `system` (`service`) |
 | review | `approve`, `reject`, `hold`, `remove` (`pending`/`approved`/`held` → new status); `republish` `held` → `approved` (author edit) | staff / author |
+| review | `guest_limit` (no status change; actor `system`; at most one per hour) when a guest hits the hourly review limit | route |
 | user | `restrict` → `active`; `lift` `active` → `lifted` (also when the account is deleted, actor `account deleted`) | staff / `service` |
 
 State names are those of the moderation state machine `src/server/community/submission.ts` (ADR 0019 §1): `draft`, `pending`, `approved`, `published`, `rejected`, `removed` are stored today; `changes_requested`, `unpublished`, `archived` exist in the module but are not stored yet. A staff `remove` is `removed` in the module and `rejected` in the stored listing.

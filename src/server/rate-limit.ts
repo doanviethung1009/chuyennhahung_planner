@@ -134,10 +134,11 @@ export const WRITE_LIMITS = {
   /** Reviews written by a signed-in traveller: 5 per hour per user (ADR 0014). */
   plannerReview: { name: 'planner-review', limit: 5, windowMs: 60 * 60_000 },
   /**
-   * Reviews from a visitor with no account: 3 per hour per client (ADR 0014).
+   * Reviews from a visitor with no account: 10 per hour per client (owner, 2026-11-17;
+   * was 3 in ADR 0014). Reaching it is recorded for staff (`guest_limit` event).
    * The key is forgeable, so the repository also caps one place at 20 a day.
    */
-  guestReview: { name: 'guest-review', limit: 3, windowMs: 60 * 60_000 },
+  guestReview: { name: 'guest-review', limit: 10, windowMs: 60 * 60_000 },
   /** Content reports (batch 10.5): 10 per day per member, or per client for a guest. */
   report: { name: 'report', limit: 10, windowMs: 24 * 60 * 60_000 },
 } as const;
