@@ -1,0 +1,11 @@
+ ✓ tests/content-postgres.integration.test.ts (9 tests) 43476ms
+   ✓ Travel Content on PostgreSQL (TEST_DATABASE_URL) > ends the seed in the same state as the in-memory store  7115ms
+   ✓ Travel Content on PostgreSQL (TEST_DATABASE_URL) > edits, publishes and deletes through the repository like the memory store  8585ms
+   ✓ Travel Content on PostgreSQL (TEST_DATABASE_URL) > keeps slug lists, dates, enums and nullable fields intact in the tables  6081ms
+   ✓ Travel Content on PostgreSQL (TEST_DATABASE_URL) > enforces the primary key and the CHECK constraints in the database  6334ms
+   ✓ Travel Content on PostgreSQL (TEST_DATABASE_URL) > never loses an update between two pools writing at once  3906ms
+   ✓ Travel Content on PostgreSQL (TEST_DATABASE_URL) > sees another instance's write on its next read (revision-validated cache)  564ms
+   ✓ Travel Content on PostgreSQL (TEST_DATABASE_URL) > creates a story as a draft and a place, and refuses a duplicate slug without overwriting (P07-16)  7523ms
+   ✓ Travel Content on PostgreSQL (TEST_DATABASE_URL) > rolls back a mutation that throws and leaves the revision alone  1166ms
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
