@@ -53,6 +53,7 @@ không schema nằm không).
 
 ### 2. `AuditEvent`: log chỉ nối thêm trong cùng transaction
 
+- Một ngoại lệ có tên (ADR 0024 §8, xóa review khách): `redactEventReasons` bỏ trống `reason` do staff gõ của các event về review đã xóa và hạn chế khách của nó, không bao giờ đụng action, người thực hiện, trạng thái hay thời gian.
 - Trường: `id`, `targetKind` (`trip`, `review`, `user`), `targetId`, `actorId`, `actorKind`
   (`user` hoặc `service`), `action`, `fromStatus`, `toStatus`, `reason` (≤500), `createdAt`.
 - Ghi **trong cùng transaction kho Planner** với thay đổi nó mô tả, nên một quyết định và

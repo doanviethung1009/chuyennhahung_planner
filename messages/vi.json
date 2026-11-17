@@ -1167,7 +1167,7 @@
       "reasonLabelGuest": "Lý do gỡ (chỉ lưu nội bộ)",
       "erase": "Xóa nội dung",
       "eraseTitle": "Xóa nội dung đánh giá của khách",
-      "eraseWarning": "Không thể hoàn tác. Lời đánh giá, tên hiển thị, khoá kết nối và ngày ghé thăm bị xóa hẳn khỏi hệ thống; chỉ còn dòng nhật ký ghi ai xóa và lý do. Đánh giá bị gỡ khỏi trang. Chỉ dùng khi có yêu cầu xóa dữ liệu qua hộp thư gỡ bài.",
+      "eraseWarning": "Không thể hoàn tác. Lời đánh giá, tên hiển thị, khoá kết nối và ngày ghé thăm bị xóa hẳn khỏi hệ thống, cùng ghi chú của người báo cáo và lý do của nhân viên viết về nó; chỉ còn dòng nhật ký ghi ai xóa và lý do. Đánh giá bị gỡ khỏi trang. Chỉ dùng khi có yêu cầu xóa dữ liệu qua hộp thư gỡ bài.",
       "eraseReasonLabel": "Lý do xóa (lưu nội bộ, tối đa 500 ký tự)",
       "eraseReasonHelp": "Ghi mã phiếu hoặc ngày nhận thư. Không ghi tên, email hay thông tin cá nhân của người yêu cầu.",
       "eraseConfirm": "Xóa vĩnh viễn nội dung",

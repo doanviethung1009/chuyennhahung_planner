@@ -59,6 +59,22 @@ export function appendEvent(
   return row;
 }
 
+/**
+ * The one named exception to "append-only" (ADR 0024 §8, guest review erasure):
+ * blanks the staff-typed `reason` of the events on `targetIds`, because it may
+ * quote erased text. Action, actor, statuses and time stay, and so does any
+ * `erase` event (the proof the request was handled). Returns how many changed.
+ */
+export function redactEventReasons(data: Pick<PlannerData, 'auditEvents'>, targetIds: ReadonlySet<string>): number {
+  let changed = 0;
+  data.auditEvents = data.auditEvents.map((event) => {
+    if (event.reason === null || event.action === 'erase' || !targetIds.has(event.targetId)) return event;
+    changed += 1;
+    return { ...event, reason: null };
+  });
+  return changed;
+}
+
 /** Newest first; the staff route's order. */
 export function eventsForTarget(data: Pick<PlannerData, 'auditEvents'>, targetId: string): AuditEvent[] {
   return data.auditEvents

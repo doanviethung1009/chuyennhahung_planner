@@ -37,7 +37,7 @@ import {
 } from '../community/submission';
 import { termsVersion as defaultTermsVersion } from '@/content/site';
 import { guestKeyOf, readGuestKeySecret, type SecretSource } from '../community/guest-key';
-import { appendEvent, eventsForTarget, type NewAuditEvent } from '../community/events';
+import { appendEvent, eventsForTarget, redactEventReasons, type NewAuditEvent } from '../community/events';
 import {
   DEFAULT_SCRYPT_COST_LOG2,
   dummyPasswordHash,
@@ -68,6 +68,7 @@ import {
   type PublicPlannerUser,
   type ShareState,
   type CommunityReview,
+  ERASED_REASON,
   ERASED_REVIEW_BODY,
   type GuestReviewInput,
   type OwnReview,
@@ -2091,6 +2092,22 @@ export class PlannerRepository {
       if (review.source !== 'homepage') {
         throw invalidState('only a guest review can be erased here; account reviews follow the account or the author');
       }
+      // Residual staff/reporter text that may quote the review (runs on an erased row too: a
+      // review erased before this cleanup existed still gets it, and no second event is written).
+      const targets = new Set<string>([reviewId]);
+      data.reports = data.reports.map((row) => {
+        if (row.targetKind !== 'review' || row.targetId !== reviewId || (row.note === null && row.handlerReason === null)) return row;
+        return { ...row, note: null, handlerReason: null };
+      });
+      if (review.guestKey !== null) {
+        data.reviewRestrictions = data.reviewRestrictions.map((row) => {
+          if (row.subject !== 'guest' || row.guestKey !== review.guestKey || row.placeSlug !== review.placeSlug) return row;
+          targets.add(row.id);
+          if (row.reason === ERASED_REASON) return row;
+          return { ...row, reason: ERASED_REASON };
+        });
+      }
+      redactEventReasons(data, targets);
       if (review.body === ERASED_REVIEW_BODY && review.guestKey === null && review.authorName === null) return;
       const at = this.timestamp();
       this.record(data, {

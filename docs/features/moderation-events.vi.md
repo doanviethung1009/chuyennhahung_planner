@@ -23,7 +23,7 @@ Chỉ staff (`community:moderate`: editor, admin, service token), `Cache-Control
 | trip | `request` mọi trạng thái → `pending`; `withdraw` → `draft`; `approve` `pending` → `published`; `reject` `pending` → `rejected`; `remove` `published` → `removed`; `requeue` `published` → `pending` (do sửa) | chủ chuyến / staff / `service` |
 | trip | `withdraw` → `draft`, lý do `implicit_end` (rời `public`, lưu trữ, thu hồi link) | `system` (`service`) |
 | review | `approve`, `reject`, `hold`, `remove`; `republish` `held` → `approved` (tác giả sửa) | staff / tác giả |
-| review | `erase` (ADR 0024 §8) mọi trạng thái → `removed`; lý do chỉ là chữ của staff, không bao giờ là nội dung đã xóa hay khóa | admin / `service` |
+| review | `erase` (ADR 0024 §8) mọi trạng thái → `removed`; lý do chỉ là chữ của staff, không bao giờ là nội dung đã xóa hay khóa; khi xóa, `reason` của các event cũ về review và về hạn chế của khách đó cũng bị bỏ trống — ngoại lệ duy nhất của chỉ-ghi-thêm, chỉ phần lý do (`redactEventReasons`) | admin / `service` |
 | review | `guest_limit` (không đổi trạng thái; actor `system`; tối đa một lần mỗi giờ) khi khách chạm giới hạn đánh giá theo giờ | route |
 | user | `restrict` → `active`; `lift` `active` → `lifted` (cả khi xoá tài khoản, actor `account deleted`) | staff / `service` |
 

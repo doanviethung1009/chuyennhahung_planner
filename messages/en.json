@@ -1167,7 +1167,7 @@
       "reasonLabelGuest": "Reason for removal (kept internally)",
       "erase": "Erase content",
       "eraseTitle": "Erase this guest review's content",
-      "eraseWarning": "This cannot be undone. The review text, display name, connection key and visit date are wiped from the system; only an audit line (who erased it and why) remains. The review leaves the site. Use only for a data-erasure request received at the takedown mailbox.",
+      "eraseWarning": "This cannot be undone. The review text, display name, connection key and visit date are wiped from the system, along with reporters' notes and staff reasons written about it; only an audit line (who erased it and why) remains. The review leaves the site. Use only for a data-erasure request received at the takedown mailbox.",
       "eraseReasonLabel": "Reason for erasing (kept internally, up to 500 characters)",
       "eraseReasonHelp": "Give a ticket number or the date the mail arrived. Do not write the requester's name, email or other personal details.",
       "eraseConfirm": "Erase content for good",
