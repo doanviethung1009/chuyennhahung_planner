@@ -7,6 +7,8 @@ import { buildPageMetadata } from '@/lib/metadata';
 import { siteConfig } from '@/content/site';
 import { getDestination } from '@/content/destinations';
 import { getPublicContent } from '@/server/content/public';
+import { getPublicPlaces } from '@/server/content/public-places';
+import { PlaceCard } from '@/components/cards/place-card';
 import { getApprovedReviews, getReviewPlaces } from '@/server/community/public';
 import { ReviewList } from '@/components/reviews/review-list';
 import { getItinerariesForDestination } from '@/content/itineraries';
@@ -49,9 +51,12 @@ export default async function DestinationPage({ params }: Params) {
     getTranslations('common'),
     getTranslations('region'),
   ]);
+  const tPlaces = await getTranslations('places');
 
   const relatedStories = await (await getPublicContent()).listStoriesForDestination(slug);
   const relatedItineraries = getItinerariesForDestination(slug);
+
+  const places = await getPublicPlaces(slug);
 
   // Traveller reviews of this destination's places (ADR 0014): approved only.
   const destinationPlaces = (await getReviewPlaces()).filter((place) => place.destinationSlug === slug);
@@ -172,6 +177,24 @@ export default async function DestinationPage({ params }: Params) {
           <Prose paragraphs={destination.body[locale]} />
         </div>
       </Container>
+
+      {places.length > 0 ? (
+        <section aria-labelledby="destination-places-heading" className="border-t border-border-subtle py-12 md:py-16">
+          <Container width="wide">
+            <h2 id="destination-places-heading" className="font-display text-2xl font-semibold md:text-3xl">
+              {tPlaces('sectionTitle')}
+            </h2>
+            <p className="mt-2 mb-8 max-w-2xl text-foreground-muted">{tPlaces('sectionLead')}</p>
+            <ul className="grid list-none grid-cols-1 gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3">
+              {places.map((place) => (
+                <li key={place.slug}>
+                  <PlaceCard place={place} locale={locale} />
+                </li>
+              ))}
+            </ul>
+          </Container>
+        </section>
+      ) : null}
 
       {relatedStories.length > 0 ? (
         <section

@@ -1322,5 +1322,39 @@
     "action": "Mark as actioned",
     "done": "Report updated.",
     "loading": "Loading…"
+  },
+  "places": {
+    "sectionTitle": "Places here",
+    "sectionLead": "Spots we stopped at, with the time to set aside and a rough cost.",
+    "viewPlace": "View place",
+    "backToDestination": "Back to {destination}",
+    "categoryLabel": "Type of place",
+    "locationLabel": "Location",
+    "durationLabel": "Suggested time",
+    "costLabel": "Estimated cost",
+    "ratingLabel": "Hưng's rating",
+    "ratingValue": "{rating}/5",
+    "ratingValueLabel": "{rating} out of 5",
+    "noteTitle": "Hưng's note",
+    "aboutTitle": "About",
+    "galleryTitle": "Photos",
+    "imageAlt": "{name} — photo {index}",
+    "minutes": "{minutes} min",
+    "hoursMinutes": "{hours} h {minutes} min",
+    "hours": "{hours} h",
+    "reviewsTitle": "What travellers say about this place",
+    "reviewsEmpty": "No reviews for this place yet.",
+    "categories": {
+      "cafe": "Café",
+      "restaurant": "Restaurant",
+      "street-food": "Street food",
+      "viewpoint": "Viewpoint",
+      "stay": "Place to stay",
+      "market": "Market",
+      "museum": "Museum",
+      "nature": "Nature",
+      "activity": "Activity",
+      "transport": "Getting around"
+    }
   }
 }

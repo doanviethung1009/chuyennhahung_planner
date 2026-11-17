@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { siteConfig } from '@/content/site';
 import { destinations } from '@/content/destinations';
 import { getPublicContent } from '@/server/content/public';
+import { loadPublicPlaces } from '@/server/content/public-places';
 import { itineraries } from '@/content/itineraries';
 import { getPathname } from '@/i18n/navigation';
 import { defaultLocale, locales } from '@/i18n/routing';
@@ -65,6 +66,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ),
   );
 
+  const placePages = (await loadPublicPlaces()).map((place) =>
+    entry(
+      { pathname: '/places/[slug]', params: { slug: place.slug } },
+      { priority: 0.7, changeFrequency: 'monthly' },
+    ),
+  );
+
   const itineraryPages = itineraries.map((itinerary) =>
     entry(
       { pathname: '/itineraries/[slug]', params: { slug: itinerary.slug } },
@@ -72,5 +80,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ),
   );
 
-  return [...staticPages, ...storyPages, ...destinationPages, ...itineraryPages];
+  return [...staticPages, ...storyPages, ...destinationPages, ...placePages, ...itineraryPages];
 }

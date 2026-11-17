@@ -162,3 +162,9 @@ Việc còn mở — chưa có ID backlog riêng, chờ chủ dự án xếp:
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
 | P15-1 | Tìm kiếm/lọc/phân trang gallery, collection editor, thông báo; quyết định role `moderator` | system-architect → BE/FE | P12, P14 |
+
+## Places UI (đề xuất 2026-11-18, ngoài số Phase)
+
+| ID | Việc | Chủ | Phụ thuộc |
+|---|---|---|---|
+| PLACES-UI-S1 | Public Places UI: mục "Địa điểm" trên `/destinations/[slug]`, trang `/dia-diem/[slug]` (EN `/places/[slug]`), review chỉ đọc, ADR 0026. Contract: `.claude/contracts/places-ui-s1-public-places.md` | main session (FE+BE) | — |

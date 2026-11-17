@@ -1322,5 +1322,39 @@
     "action": "Đánh dấu đã xử lý",
     "done": "Đã cập nhật báo cáo.",
     "loading": "Đang tải…"
+  },
+  "places": {
+    "sectionTitle": "Địa điểm ở đây",
+    "sectionLead": "Những chỗ Nhà Hưng đã ghé, kèm giờ nên dành và chi phí ước tính.",
+    "viewPlace": "Xem địa điểm",
+    "backToDestination": "Về {destination}",
+    "categoryLabel": "Loại địa điểm",
+    "locationLabel": "Vị trí",
+    "durationLabel": "Thời lượng gợi ý",
+    "costLabel": "Chi phí ước tính",
+    "ratingLabel": "Điểm của Hưng",
+    "ratingValue": "{rating}/5",
+    "ratingValueLabel": "{rating} trên 5 điểm",
+    "noteTitle": "Ghi chú của Hưng",
+    "aboutTitle": "Giới thiệu",
+    "galleryTitle": "Hình ảnh",
+    "imageAlt": "{name} — ảnh {index}",
+    "minutes": "{minutes} phút",
+    "hoursMinutes": "{hours} giờ {minutes} phút",
+    "hours": "{hours} giờ",
+    "reviewsTitle": "Người đi nói gì về nơi này",
+    "reviewsEmpty": "Chưa có đánh giá nào cho địa điểm này.",
+    "categories": {
+      "cafe": "Quán cà phê",
+      "restaurant": "Nhà hàng",
+      "street-food": "Ăn vặt vỉa hè",
+      "viewpoint": "Điểm ngắm cảnh",
+      "stay": "Nơi lưu trú",
+      "market": "Chợ",
+      "museum": "Bảo tàng",
+      "nature": "Thiên nhiên",
+      "activity": "Hoạt động",
+      "transport": "Di chuyển"
+    }
   }
 }

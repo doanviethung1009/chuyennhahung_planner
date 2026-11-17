@@ -13,7 +13,7 @@ and budgeting — while the Planner *UI* is still a later phase; see
 | Concern | Choice | Where |
 |---|---|---|
 | Framework | Next.js 16, App Router, React 19 | [`src/app/`](../src/app) |
-| Rendering | Server components. Pages that read Travel content (`/`, `/stories`, `/stories/[slug]`, `/destinations/[slug]`, sitemap) are `force-dynamic`; the rest prerender at build ([ADR 0012](adr/0012-public-travel-from-content-repository.md)) | all `page.tsx` |
+| Rendering | Server components. Pages that read Travel content (`/`, `/stories`, `/stories/[slug]`, `/destinations/[slug]`, `/places/[slug]`, sitemap) are `force-dynamic`; the rest prerender at build ([ADR 0012](adr/0012-public-travel-from-content-repository.md)) | all `page.tsx` |
 | Language | TypeScript `strict` + `noUncheckedIndexedAccess` | [`tsconfig.json`](../tsconfig.json) |
 | i18n | `next-intl` 4, VI unprefixed, EN at `/en` | [`src/i18n/`](../src/i18n) |
 | Styling | Tailwind v4, CSS-first `@theme` tokens | [`src/app/globals.css`](../src/app/globals.css) |
@@ -70,6 +70,7 @@ folders. The visible URL per locale is defined once, in
 | `/stories/[slug]` | `/chuyen-di-choi/[slug]` | `/en/stories/[slug]` |
 | `/destinations` | `/kham-pha` | `/en/destinations` |
 | `/destinations/[slug]` | `/kham-pha/[slug]` | `/en/destinations/[slug]` |
+| `/places/[slug]` | `/dia-diem/[slug]` | `/en/places/[slug]` |
 | `/map` | `/ban-do` | `/en/map` |
 | `/itineraries` | `/len-lich-trinh` | `/en/itineraries` |
 | `/itineraries/[slug]` | `/len-lich-trinh/[slug]` | `/en/itineraries/[slug]` |

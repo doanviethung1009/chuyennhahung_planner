@@ -1,0 +1,39 @@
+# Task Contract: Places UI — S2 Place Reviews UI
+- ID: **PLACES-UI-S2** (cùng track với [PLACES-UI-S1](places-ui-s1-public-places.md); thêm dòng vào `.claude/roadmap/backlog.md` trong PR). Không thuộc Phase 07/10/11; không mở rộng phạm vi Phase 10.
+- Class: M–L (UI + client logic; L nếu phải thêm phân trang ở API) · Branch: `feat/place-reviews-ui` · One contract = one session = one branch = one PR, single agent.
+- Desired outcome: ngay trên trang địa điểm, khách và thành viên xem được danh sách review và viết review của mình, không cần vào trang chủ hay `/my-trips`.
+- Scope IN:
+  - Khối review trên `/dia-diem/[slug]` (EN `/places/[slug]`): điểm trung bình (chỉ hiện từ 3 review, theo ADR 0014), danh sách, nhãn "tự khai", `ReportButton`.
+  - Form viết review trên trang địa điểm với `place` đã cố định (không dropdown):
+    - Khách: `ReviewForm mode="guest"` với một địa điểm → `POST /api/community/reviews`.
+    - Thành viên đã đăng nhập: `ReviewForm mode="planner"` → `PUT /api/planner/reviews/[placeSlug]`, kèm `TermsAccept`, sửa/xóa review của mình, hiện trạng thái `held`/restriction như `PlaceReviewsPanel`.
+  - Nhận biết phiên đăng nhập ở client (đọc `GET /api/planner/session`), mặc định hiện form khách khi chưa đăng nhập; không đoán quyền ở client.
+  - Trạng thái: cổng `contributionOpen` đóng (403 `contribution_closed`), rate limit 429 (thông báo rõ, không lộ ngưỡng nội bộ), validation lỗi, thành công.
+- Scope OUT: trang địa điểm (S1); nút thêm vào chuyến (S3); audit log UI (S4); admin; sửa quy tắc kiểm duyệt, giới hạn, schema review; migration; mọi thay đổi Phase 10 ngoài việc **thêm prop tùy chọn** cho `ReviewForm`/`ReviewList` nếu cần (không đổi hành vi hiện có).
+- Dependencies: **S1 đã merge** (cần route và trang địa điểm). Tùy chọn: Phase 10 contract/ADR 0014/0015/0024 đọc lại trước khi sửa component review.
+- Evidence (đã kiểm):
+  - `src/components/reviews/review-form.tsx` đã có hai mode; mode `planner` nhận `place`, `existing`, `defaultVisitedOn`, `onSaved`, `onUnauthorized`, kèm `TermsAccept` (dòng ~252).
+  - `src/components/reviews/place-reviews-panel.tsx` có logic own review/restriction/held/delete để tái sử dụng hoặc tách.
+  - `PUT /api/planner/reviews/[placeSlug]` chỉ yêu cầu slug hợp lệ và Terms đã đồng ý, **không** yêu cầu địa điểm nằm trong chuyến → không cần đổi API để review từ trang địa điểm.
+  - `GET /api/community/reviews?placeSlug=` đã lọc theo địa điểm nhưng `listApprovedReviews(slugs, limit = 20)` **chưa có phân trang** (limit mặc định 20, route không nhận `limit`/`cursor`).
+  - `src/components/reviews/review-list.tsx` là server component, nhận `summary` và `placeNames`.
+- Quyết định mở (chốt khi vào session, ghi vào contract):
+  1. Chỉ hiện tối đa 20 review mới nhất (không đổi API) hay thêm `limit`/`cursor` vào `GET /api/community/reviews` (đổi API → backend role, test route, cập nhật `docs/specs-community-api.*`). **Khuyến nghị: 20 mới nhất ở S2, phân trang để sau**, trừ khi owner muốn khác.
+  2. Hiển thị review sau khi gửi: guest/planner review `approved` ngay (ADR 0014) nên có thể thêm vào danh sách tại chỗ hay chỉ báo thành công. Khuyến nghị: báo thành công + `router.refresh()`.
+- Interface contract: không API/DB mới nếu chọn khuyến nghị (1). Tên component mới đề xuất `src/components/places/place-review-section.tsx` (client) bọc `ReviewForm`; danh sách vẫn render server-side.
+- Files dự kiến (xác nhận khi vào code): `src/components/places/place-review-section.tsx`, `src/components/reviews/review-form.tsx` (prop tùy chọn, nếu cần), `src/components/reviews/place-reviews-panel.tsx` (tách logic dùng chung, nếu cần), trang địa điểm của S1, `messages/vi.json`, `messages/en.json`, `tests/place-review-section.test.tsx`, `docs/features/places.*` (cập nhật), `docs/features/community-reviews.*` (thêm đường mới), `docs/usage.*`.
+- Acceptance criteria:
+  - Khách và thành viên gửi được review từ trang địa điểm; thành viên sửa/xóa được review của mình; thành viên chưa đồng ý Terms không gửi được (nút disabled, thông báo đúng).
+  - Review hiển thị là văn bản thuần (HTML/link không thực thi), có nhãn "tự khai", mỗi review có `ReportButton`.
+  - Trạng thái restriction/`held` hiển thị cho tác giả như ở `/my-trips`.
+  - Một `<h1>`, nhãn form gắn đúng, lỗi đọc được bằng screen reader (`role="alert"`/`status`), mục tiêu ≥44px, focus nhìn thấy, không `href="#"`, đủ chuỗi VI+EN.
+  - Không thay đổi hành vi form ở trang chủ và `/my-trips`.
+  - `typecheck`, `lint`, `test` pass và ghi rõ output.
+- Test cases: guest gửi thành công/429/validation/honeypot không lộ; member gửi, sửa, xóa; 401 giữa chừng → `onUnauthorized`; 403 `terms_not_accepted`; 403 `contribution_closed`; restriction và `held`; XSS-style body hiển thị inert; summary ẩn dưới 3 review; parity VI/EN; kiểm thủ công 375/768/1280, cả khi đã/chưa đăng nhập.
+- Rủi ro conflict: cao ở `messages/*.json` và trang địa điểm của S1 → chỉ bắt đầu khi S1 đã merge; trung bình ở `review-form.tsx`/`place-reviews-panel.tsx` (dùng chung với trang chủ và `/my-trips`, chỉ thêm prop tùy chọn, giữ test hiện có xanh).
+- Security / migration: không migration; có nhập liệu công khai và ghi dữ liệu thành viên → **khuyến nghị `/sec-check`** (honeypot, rate limit, CSRF qua `requireSameOrigin`, không lộ `guestKey`); `/qc-check` khuyến nghị. Cả hai **chỉ chạy khi chủ dự án xác nhận mở subagent**; đến lúc đó ghi NOT RUN.
+- Rollback: revert PR; không đổi dữ liệu. Review đã gửi vẫn tồn tại và vẫn gỡ được qua admin.
+- Budget: sub-agents 0. Không merge khi chưa được duyệt.
+- State: DESIGNED (chờ S1 merge và chốt quyết định mở 1–2)
+- Feature document owner: main session — cập nhật `docs/features/places.md` + `.vi.md` và `docs/features/community-reviews.md` + `.vi.md`.
+- Architecture/usage doc updates: `docs/usage.*`; `docs/architecture.*` chỉ khi thêm phân trang ở API.
