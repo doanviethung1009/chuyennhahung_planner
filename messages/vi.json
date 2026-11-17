@@ -1092,6 +1092,7 @@
     "metaTitle": "Duyệt chuyến đi cộng đồng",
     "title": "Duyệt chuyến đi cộng đồng",
     "description": "Duyệt hoặc gỡ các chuyến đi công khai muốn hiện ở trang chủ. Chuyến chờ duyệt nằm trên cùng.",
+    "newTab": "(mở trong tab mới)",
     "loading": "Đang tải…",
     "empty": "Chưa có yêu cầu nào.",
     "meta": "{owner} · {destination} · {days} ngày · {activities} hoạt động · hiển thị: {author}",
@@ -1129,9 +1130,11 @@
     "reviewsHeading": "Đánh giá địa điểm",
     "reviews": {
       "empty": "Chưa có đánh giá nào.",
-      "meta": "{place} · {rating} sao · {author} · {source}",
+      "meta": "{rating} sao · {author} · {source}",
       "account": "Tài khoản: {name}",
       "anonymous": "ẩn danh",
+      "guestLimitBadge": "Khách chạm giới hạn",
+      "guestLimitAt": "Kết nối này chạm giới hạn review theo giờ lúc {date}. Bài gửi bị từ chối; hãy xem các review gần nhất của khách.",
       "sources": {
         "planner": "viết trong Planner",
         "homepage": "khách trên trang chủ"

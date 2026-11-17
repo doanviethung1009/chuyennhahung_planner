@@ -9,6 +9,7 @@ import { inputClass } from '@/components/planner/field';
 import { LiveNotice } from '@/components/admin/content/notices';
 import { useErrorNotice, type Notice } from '@/components/admin/content/use-record';
 import type { ReviewQueueItem } from '@/server/planner/schemas';
+import { PlaceLink, placeLabel } from './place-link';
 
 type Decision = 'approve' | 'reject' | 'remove' | 'hold';
 
@@ -99,13 +100,24 @@ export function CommunityReviewQueue({ canRestrict }: { canRestrict: boolean }) 
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="grid gap-1">
                     <p className="text-sm text-foreground-muted">
+                      <PlaceLink place={item.place} slug={item.placeSlug} />
+                      {' · '}
                       {tr('meta', {
-                        place: item.placeSlug,
                         rating: item.rating,
                         author: item.author ?? tr('anonymous'),
                         source: tr(`sources.${item.source}`),
                       })}
                     </p>
+                    {item.guestLimitAt ? (
+                      <p className="text-sm font-medium text-foreground">
+                        <span className="inline-flex items-center rounded-pill border border-border-strong bg-surface-muted px-3 py-1 text-xs">
+                          {tr('guestLimitBadge')}
+                        </span>{' '}
+                        <span className="text-foreground-muted">
+                          {tr('guestLimitAt', { date: new Date(item.guestLimitAt).toLocaleString(locale) })}
+                        </span>
+                      </p>
+                    ) : null}
                     {item.authorAccount ? (
                       <p className="text-sm text-foreground-muted">{tr('account', { name: item.authorAccount })}</p>
                     ) : null}
@@ -198,7 +210,7 @@ export function CommunityReviewQueue({ canRestrict }: { canRestrict: boolean }) 
                             checked={muting.scope === scope}
                             onChange={() => setMuting({ id: item.id, scope })}
                           />
-                          {tr(`muteScopes.${scope}`, { place: item.placeSlug })}
+                          {tr(`muteScopes.${scope}`, { place: placeLabel(item.place, item.placeSlug, locale) })}
                         </label>
                       ))}
                     </fieldset>

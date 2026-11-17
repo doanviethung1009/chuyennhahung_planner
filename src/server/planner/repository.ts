@@ -73,6 +73,7 @@ import {
   type PlaceReviewSummary,
   type PlannerReviewInput,
   type PublicCommunityReview,
+  type PlaceRef,
   type ReviewQueueItem,
   type CreateReportInput,
   type ReportListItem,
@@ -1940,19 +1941,45 @@ export class PlannerRepository {
     };
   }
 
+  /** Catalogue lookup for staff lists: one read per distinct slug; an unknown slug (or a failed read) is `null`. */
+  private async placeRefs(slugs: Iterable<string | null>): Promise<Map<string, PlaceRef>> {
+    const refs = new Map<string, PlaceRef>();
+    await Promise.all(
+      [...new Set([...slugs].filter((slug): slug is string => slug !== null))].map(async (slug) => {
+        try {
+          const place = await this.catalog.getPlace(slug);
+          if (place) refs.set(slug, { name: { vi: place.name.vi, en: place.name.en }, destinationSlug: place.destinationSlug });
+        } catch {
+          // Falls back to the raw slug.
+        }
+      }),
+    );
+    return refs;
+  }
+
   /** The staff queue: pending first, then the rest, newest first. */
   async listReviewQueue(status?: ReviewStatus): Promise<ReviewQueueItem[]> {
     const data = await this.snapshot();
     const rank: Record<ReviewStatus, number> = { pending: 0, held: 1, approved: 2, rejected: 3, removed: 4 };
     const at = this.timestamp();
-    return data.communityReviews
+    const rows = data.communityReviews
       .filter((review) => !status || review.status === status)
       .sort((a, b) => rank[a.status] - rank[b.status] || b.createdAt.localeCompare(a.createdAt))
-      .slice(0, 200)
+      .slice(0, 200);
+    const places = await this.placeRefs(rows.map((review) => review.placeSlug));
+    const limitAt = new Map<string, string>();
+    for (const event of data.auditEvents) {
+      if (event.action === 'guest_limit' && event.createdAt > (limitAt.get(event.targetId) ?? '')) {
+        limitAt.set(event.targetId, event.createdAt);
+      }
+    }
+    return rows
       .map((review) => ({
         id: review.id,
         source: review.source,
         placeSlug: review.placeSlug,
+        place: places.get(review.placeSlug) ?? null,
+        guestLimitAt: limitAt.get(review.id) ?? null,
         rating: review.rating,
         body: review.body,
         lang: review.lang,
@@ -2283,14 +2310,17 @@ export class PlannerRepository {
     const data = await this.snapshot();
     const at = this.timestamp();
     const live = new Set(this.activeRestrictions(data, at).map((row) => row.id));
-    return data.reviewRestrictions
+    const rows = data.reviewRestrictions
       .filter((row) => !activeOnly || live.has(row.id))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .slice(0, 200)
+      .slice(0, 200);
+    const places = await this.placeRefs(rows.map((row) => row.placeSlug));
+    return rows
       .map((row) => ({
         id: row.id,
         subject: row.subject,
         placeSlug: row.placeSlug,
+        place: row.placeSlug ? (places.get(row.placeSlug) ?? null) : null,
         reason: row.reason,
         author: data.users.find((user) => user.id === row.authorId)?.displayName ?? null,
         createdAt: row.createdAt,

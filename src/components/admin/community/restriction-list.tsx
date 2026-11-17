@@ -8,6 +8,7 @@ import { api } from '@/components/planner/api';
 import { LiveNotice } from '@/components/admin/content/notices';
 import { useErrorNotice, type Notice } from '@/components/admin/content/use-record';
 import type { RestrictionListItem } from '@/server/planner/schemas';
+import { PlaceLink } from './place-link';
 
 /**
  * Staff list of switched-off authors (ADR 0015). Shows the reason, who did it
@@ -65,7 +66,8 @@ export function RestrictionList() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="grid gap-1">
                   <p className="text-base font-medium">
-                    {item.author ?? t('guest')} · {item.placeSlug ?? t('allPlaces')}
+                    {item.author ?? t('guest')} ·{' '}
+                    {item.placeSlug ? <PlaceLink place={item.place} slug={item.placeSlug} /> : t('allPlaces')}
                   </p>
                   {/* Staff-written: plain text only. */}
                   <p className="whitespace-pre-line break-words text-base">{t('reason', { reason: item.reason })}</p>
