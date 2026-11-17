@@ -91,22 +91,28 @@ Nguồn: `.claude/contracts/community-platform-audit.md`. Mỗi mục cần ADR 
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
 | P10-S0 | Ghi nhận ADR 0014/0015 là đã code (trips, reviews, hold, restrictions; migration 0005–0008) — chỉ tài liệu | system-architect | — |
-| P10-1 | `audit_events` (= P07-4) + test | BE | ADR 0019 (đề xuất, PR #106) |
-| P10-2 | `terms_acceptances` + chặn ghi khi thiếu version; sửa Terms khớp ảnh/video (Q8) | BE + FE; owner xác nhận text | P10-1 |
-| P10-3 | `reports` + nút Report + hàng đợi staff (`community:moderate`) | BE + FE | P10-1 |
-| P10-4 | Smoke `/community-trips`, `/reviews`, admin community trên dev VM; ghi bằng chứng | main session | deploy dev |
+| ~~P10-1~~ | ~~`audit_events` (= P07-4) + test~~ — xong ở batch 10.2 (PR #115, migration `0010`, [ADR 0019](../../docs/adr/0019-community-foundation.md) Accepted); `/sec-check` về quyền riêng tư của log: NOT RUN | BE | — |
+| ~~P10-2~~ | ~~`terms_acceptances` + chặn ghi khi thiếu version~~ — xong ở batch 10.4 (PR #122, migration `0012`). **Còn mở (owner D5):** sửa text Terms khớp ảnh/video (Q8), tăng `termsVersion`, ghim lại hash; UI 375/768/1280 của điều khiển đồng ý Terms cần phiên đăng nhập: NOT RUN | BE + FE; owner xác nhận text | — |
+| ~~P10-3~~ | ~~`reports` + nút Report + hàng đợi staff~~ — xong ở batch 10.5 (PR #126, migration `0013`); smoke dev 2026-11-17: nút Report 375/768/1280 PASS, hàng đợi admin NOT RUN (cần đăng nhập) | BE + FE | — |
+| P10-4 | Smoke trên dev VM — chạy 2026-11-17 ở batch 10.7: trang công khai, API, limiter dùng chung 429, nút Report PASS; luồng cần đăng nhập/admin và khởi động lại app NOT RUN — xem `.claude/contracts/handoff/phase10-10.7.md`. **Còn mở:** phần NOT RUN do owner hoặc phiên có tài khoản dev | main session | deploy dev |
 | ~~P10-5~~ | ~~`/sec-check` + `/qc-check` cho community (ADR 0014/0015)~~ — chạy 2026-11-16: sec PASS_WITH_WARNINGS, qc PASS_WITH_NOTES, không BLOCKED; xem P10-10..16 | user gọi | — |
-| P10-6 | Xác minh rate-limit store dùng chung (Q12); thiết kế limiter ghi dùng chung trên PostgreSQL ở ADR 0019 (đề xuất, PR #106) | BE | — |
-| P10-7 | Sửa sao lưu dev VM, `metadataBase`, HSTS (Q10) trước UGC mới | owner → architect | — |
+| ~~P10-6~~ | ~~Limiter ghi dùng chung trên PostgreSQL~~ — xong ở batch 10.3 (PR #117, migration `0011`; retention 48 h ở 10.5); Q12 đóng | BE | — |
+| P10-7 | **Còn mở (owner):** sửa sao lưu dev VM, `metadataBase`, HSTS (Q10) trước UGC mới. Quan sát 2026-11-17: dev trả `Strict-Transport-Security` trên HTTP/IP (chưa xác minh trên HTTPS thật); sao lưu và `metadataBase` chưa kiểm được từ ngoài VM | owner → architect | — |
 | ~~P10-8~~ | ~~Đổi nhãn "Stage 8/9" trong `docs/specs-roadmap.*` (cả hai ngôn ngữ) (Q11)~~ — xong ở PR #107 | system-architect | — |
 | ~~P10-9~~ | ~~Cập nhật ADR 0016 Status và ADR 0015 (đóng 7 câu hỏi theo khuyến nghị, Q5) — cả hai ngôn ngữ~~ — xong ở PR #107 | system-architect | — |
 | ~~P10-10~~ | ~~Sửa comment cũ "luôn `pending`" ở `src/app/api/planner/reviews/[placeSlug]/route.ts`~~ — xong ở PR #107 (từ `/sec-check` #4, `/qc-check` #1) | main session | — |
 | ~~P10-11~~ | ~~`guestKey` HMAC-SHA256 (secret `GUEST_KEY_SECRET`), xóa khóa khách sau 30 ngày, restriction khách tối đa 30 ngày, migration `0014`~~ — xong ở batch 10.6b ([ADR 0024](../../docs/adr/0024-guest-identity-privacy.md)); **chủ dự án phải cấp `GUEST_KEY_SECRET` trên VM trước khi deploy**; Chính sách riêng tư và xóa review khách theo yêu cầu vẫn là task riêng (P11-D1) | backend-engineer | — |
 | P10-12 | (10.6a: test + quyết định không thêm trần toàn cục xong; còn mở: kiểm cấu hình thật trên VM, owner D10) Chống giả `x-forwarded-for` cho limiter khách: nginx ghi đè (đã có `deploy-config.test.ts`), xác nhận cấu hình thật trên VM; cân nhắc trần theo giờ toàn cục (`/sec-check` #2, #3; liên quan P10-6) | BE + owner | P10-6 |
-| P10-13 | Test HTTP 429 cho limiter review Planner (5/giờ) và khách (3/giờ); test hạn 30 ngày mặc định của restriction khách (`/qc-check`) | BE | — |
-| P10-14 | Ca integration Postgres cho `community_reviews` và `review_restrictions` (migration 0007, 0008, `planner-rows`) (`/qc-check`) | BE | DB test |
+| ~~P10-13~~ | ~~Test HTTP 429 cho limiter review Planner (5/giờ) và khách (3/giờ); test hạn 30 ngày~~ — xong ở batch 10.3 (`tests/review-limiter-routes.test.ts`) | BE | — |
+| ~~P10-14~~ | ~~Ca integration Postgres cho `community_reviews` và `review_restrictions`~~ — xong ở batch 10.2 | BE | DB test |
 | ~~P10-15~~ | (xong ở 10.6a, bắt buộc ở server) **Quyết định chủ dự án:** có bắt buộc `contributionOpen` ở server (API từ chối ghi khi cổng đóng) hay chỉ ở UI (`/qc-check` #2) | owner → BE | — |
 | ~~P10-16~~ | (xong ở 10.6a) `authorName` của khách: lọc/chặn giả danh nhân viên (`/sec-check` #5) | BE | — |
+
+**Việc còn mở khi đóng Phase 10 (2026-11-17, batch 10.7)** — chưa có ID backlog riêng, chờ chủ dự án xếp:
+- Trang Chính sách riêng tư (P11-D1) và thao tác staff xóa review của khách theo yêu cầu.
+- Trạng thái đăng chuyến `changes_requested`/`unpublished` và bộ lọc thư viện (ADR 0019): batch 10.1 chỉ dựng máy trạng thái, chưa hiển thị ra API/UI.
+- Owner: P10-7 (sao lưu dev, `metadataBase`, HSTS), D10 (cấu hình proxy thật, log nginx còn IP thô), D5 (text Terms), thêm `GUEST_KEY_SECRET=` vào `deploy/.env.example`.
+- Review độc lập `/sec-check` (đường ghi ẩn danh của report/limiter) và `/qc-check` toàn phase: NOT RUN.
 
 ## Phase 11 — Member Profiles & Creator Terms (P1, đề xuất)
 

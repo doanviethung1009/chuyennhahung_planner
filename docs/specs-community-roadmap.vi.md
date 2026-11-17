@@ -183,11 +183,11 @@ công tắc sao chép theo chuyến và phạm vi đăng lại (Điều 3 Terms)
 
 | Phase | Tính năng | Ưu tiên | Phụ thuộc | Chủ trì | File spec | Tiêu chí nghiệm thu | Trạng thái |
 |---|---|---|---|---|---|---|---|
-| 10 | Audit log và máy trạng thái | P1 | 07 | Backend | [kiểm duyệt](specs-community-moderation.vi.md), [ADR 0019](adr/0019-community-foundation.vi.md) | Test chuyển trạng thái và ánh xạ | Đề xuất |
-| 10 | Limiter ghi dùng chung | P1 | 07 | Backend | [ADR 0019](adr/0019-community-foundation.vi.md) | Test hai instance, từ chối khi lỗi | Đề xuất |
-| 10 | Báo cáo, điều khiển Báo cáo, hàng đợi | P1 | audit log | Backend, Frontend | [kiểm duyệt](specs-community-moderation.vi.md) | Loại trùng, hàng đợi thấy được | Đề xuất |
-| 10 | Ghi nhận đồng ý Terms | P1 | audit log | Backend, Frontend | [bảo mật](specs-community-security.vi.md) | Chặn ghi khi thiếu phiên bản | Đề xuất |
-| 10 | Trạng thái đăng chuyến, bộ lọc thư viện | P1 | audit log | Backend, Frontend | [api](specs-community-api.vi.md) | Mọi cạnh được test | Đề xuất |
+| 10 | Audit log và máy trạng thái | P1 | 07 | Backend | [kiểm duyệt](specs-community-moderation.vi.md), [ADR 0019](adr/0019-community-foundation.vi.md) | Test chuyển trạng thái và ánh xạ | Đã làm (smoke dev một phần, 2026-11-17) |
+| 10 | Limiter ghi dùng chung | P1 | 07 | Backend | [ADR 0019](adr/0019-community-foundation.vi.md) | Test hai instance, từ chối khi lỗi | Đã làm (smoke dev một phần, 2026-11-17) |
+| 10 | Báo cáo, điều khiển Báo cáo, hàng đợi | P1 | audit log | Backend, Frontend | [kiểm duyệt](specs-community-moderation.vi.md) | Loại trùng, hàng đợi thấy được | Đã làm (smoke dev một phần, 2026-11-17) |
+| 10 | Ghi nhận đồng ý Terms | P1 | audit log | Backend, Frontend | [bảo mật](specs-community-security.vi.md) | Chặn ghi khi thiếu phiên bản | Đã làm (smoke dev một phần, 2026-11-17) |
+| 10 | Trạng thái đăng chuyến, bộ lọc thư viện | P1 | audit log | Backend, Frontend | [api](specs-community-api.vi.md) | Mọi cạnh được test | Còn mở: mới có máy trạng thái (batch 10.1); `changes_requested`/`unpublished` và bộ lọc thư viện chưa làm |
 | 11 | Hồ sơ thành viên, trang công khai tự nguyện | P1 | 10, chính sách riêng tư | Backend, Frontend | [cơ sở dữ liệu](specs-community-database.vi.md) | Mặc định tắt | Đề xuất |
 | 11 | Dùng chuyến này kèm ghi công | P1 | 10, công tắc sao chép (Điều 3 Terms) | Backend, Frontend | [api](specs-community-api.vi.md) | Nguồn không đổi, ẩn danh giữ vững | Đề xuất |
 | 12 | Nhật ký và blog | P2 | 10, 11 | Backend, Frontend | [fe](specs-community-fe.vi.md) | XSS vô hại, luồng duyệt | Đề xuất |
