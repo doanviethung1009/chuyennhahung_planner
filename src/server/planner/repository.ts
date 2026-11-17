@@ -1895,6 +1895,22 @@ export class PlannerRepository {
    */
   async recordGuestReviewLimitHit(clientKey: string): Promise<void> {
     const guestKey = this.guestKeyFor(clientKey);
+    // sec-check W1: a rejected request must stay cheaper than an accepted one. Skip the
+    // store-wide transaction when this guest already has an event in the last hour, first
+    // from a bounded in-process memo, then from an unlocked read.
+    const now = Date.parse(this.timestamp());
+    const memo = this.limitHitMemo.get(guestKey);
+    if (memo !== undefined && now - memo < 60 * 60_000) return;
+    const peek = await this.snapshot();
+    const peekLatest = peek.communityReviews
+      .filter((review) => review.guestKey === guestKey)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+    if (!peekLatest) return;
+    const peekSince = new Date(now - 60 * 60_000).toISOString();
+    if (peek.auditEvents.some((e) => e.targetId === peekLatest.id && e.action === 'guest_limit' && e.createdAt > peekSince)) {
+      this.rememberLimitHit(guestKey, now);
+      return;
+    }
     await this.transaction((data) => {
       const latest = data.communityReviews
         .filter((review) => review.guestKey === guestKey)
@@ -1913,6 +1929,15 @@ export class PlannerRepository {
         reason: 'guest review limit reached (10 per hour from one connection)',
       });
     });
+    this.rememberLimitHit(guestKey, now);
+  }
+
+  /** Guest keys whose `guest_limit` event is already recorded this hour. Bounded; reset when full. */
+  private readonly limitHitMemo = new Map<string, number>();
+
+  private rememberLimitHit(guestKey: string, at: number): void {
+    if (this.limitHitMemo.size >= 5000) this.limitHitMemo.clear();
+    this.limitHitMemo.set(guestKey, at);
   }
 
   /** Approved reviews for the given places (all places when omitted), newest first. */

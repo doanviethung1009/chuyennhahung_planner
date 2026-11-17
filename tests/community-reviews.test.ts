@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { isContentError } from '../src/server/content/repository';
 import {
   createRestrictionSchema,
@@ -368,6 +368,22 @@ describe('guest reviews are published at once and bounded', () => {
     const events = await planner.listEvents(reviewId);
     expect(events.map((e) => [e.action, e.actorId])).toEqual([['guest_limit', 'system']]);
     expect(JSON.stringify(events)).not.toMatch(/1\.1\.1\.1/);
+  });
+
+  it('records a new guest_limit event once the hour has passed, and skips the store transaction inside it (sec-check W1)', async () => {
+    const clock = makeClock();
+    const planner = makePlanner({ now: clock.now });
+    await planner.createGuestReview(guest(), '1.1.1.1');
+    const reviewId = (await planner.listApprovedReviews()).items[0]!.id;
+    await planner.recordGuestReviewLimitHit('1.1.1.1');
+    const transaction = vi.spyOn(planner as unknown as { transaction: () => unknown }, 'transaction');
+    for (let i = 0; i < 5; i += 1) await planner.recordGuestReviewLimitHit('1.1.1.1');
+    expect(transaction).not.toHaveBeenCalled(); // rejected requests no longer lock the whole store
+    clock.advanceMinutes(61);
+    await planner.recordGuestReviewLimitHit('1.1.1.1');
+    expect(transaction).toHaveBeenCalledTimes(1);
+    transaction.mockRestore();
+    expect((await planner.listEvents(reviewId)).filter((e) => e.action === 'guest_limit')).toHaveLength(2);
   });
 
   it('shows staff the place name and a guest_limit time on the queue, with no key or address', async () => {
