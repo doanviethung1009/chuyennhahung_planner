@@ -9,7 +9,7 @@
   4. `listReviewQueue` caps at 200 and has no total method: a count ≥ 200 carries `atLeast: true` and shows "200+" with a note; no repository change.
 - Activity card omitted: `/api/admin/community/events` needs a `targetId`; waits for P07-13.
 - Migration: none. API/DB/RBAC: one new read-only route; `permissions.ts` untouched.
-- Tests: typecheck PASS · lint PASS · `npm run test` PASS (73 files, 978 passed, 48 skipped) · `npm run build` PASS (before the last edit; not re-run). PostgreSQL store: NOT RUN (repository methods only).
+- Tests: typecheck PASS · lint PASS · `npm run test` PASS (73 files, 979 passed, 48 skipped) · `npm run build` PASS (re-run after the cache commit, no errors). PostgreSQL store: NOT RUN (repository methods only).
 - Role matrix (tests): anonymous 401, member 403, editor 3 cards, admin 5, service 5 (no runtime). Real check on the dev server as super admin: 6 cards, `no-store` route, payload ids/counts/links only.
 - Responsive (dev server, super admin, local test accounts on a scratch store, since removed): 375px one column, 768px, 1280px three columns; no horizontal overflow; one `<h1>`; link targets 44px.
 - Checklist (self-run inline, **not** the independent agents): QC — acceptance items, VI/EN parity, docs twins, one `<h1>`, empty and degraded states PASS; Security — same helpers as other admin routes, `no-store`, no secret/email/handle/exception text in payload, same-origin cookie check inherited from `resolveAdminPrincipal`, no new write path PASS. `security` agent: PASS (see above). `qc` agent: NOT RUN.
