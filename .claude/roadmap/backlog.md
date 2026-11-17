@@ -36,7 +36,7 @@ không sửa ý.
 | ~~P07-1~~ | ~~Role model: `role` trên user (thiếu = `member`), `can()` thuần, map quyền tĩnh~~ — xong (`permissions.ts`, ADR 0006/0017) | backend-engineer | P07-D2 |
 | ~~P07-2~~ | ~~`ADMIN_API_TOKEN` → service principal, bị từ chối `trip:*`~~ — xong (ADR 0006 bước 1–2) | backend-engineer | P07-1 |
 | ~~P07-3~~ | ~~Session admin: thời hạn ngắn theo role; `requireSameOrigin` bắt buộc cho mutation admin~~ — xong (ADR 0010) | backend-engineer | P07-1 |
-| P07-4 | Audit log (`auditEvents`): đổi template/role, mọi support read — **chưa làm; chuyển làm cùng P10-1 (Q6)** | backend-engineer | P07-1 |
+| ~~P07-4~~ | ~~Audit log (`auditEvents`)~~ — **trùng P10-1, xong ở batch 10.2 (PR #115)**; còn mở: sự kiện đổi template/role/support read → xem P07-13 | backend-engineer | P07-1 |
 | P07-5 | Test còn thiếu: ma trận `can`; service principal bị từ chối `trip:*`; admin nhận `not_found` trên trip người khác; thiếu role = `member`; member không vào route admin | backend-engineer | P07-1..3 |
 | ~~P07-6~~ | ~~CMS sửa template/story qua content store; quyết định có lưu lịch sử bản template hay không ~~ — story/place/review xong (ADR 0011); **create/delete/template còn token-only, versioning template chưa quyết** | system-architect → BE/FE | P07-1 |
 | ~~P07-7~~ | ~~UI Admin Portal (chỉ qua session + role, token không tới client)~~ — xong (ADR 0010/0011) | frontend-engineer | P07-3, P07-5 |
@@ -107,6 +107,8 @@ Nguồn: `.claude/contracts/community-platform-audit.md`. Mỗi mục cần ADR 
 | ~~P10-14~~ | ~~Ca integration Postgres cho `community_reviews` và `review_restrictions`~~ — xong ở batch 10.2 | BE | DB test |
 | ~~P10-15~~ | (xong ở 10.6a, bắt buộc ở server) **Quyết định chủ dự án:** có bắt buộc `contributionOpen` ở server (API từ chối ghi khi cổng đóng) hay chỉ ở UI (`/qc-check` #2) | owner → BE | — |
 | ~~P10-16~~ | (xong ở 10.6a) `authorName` của khách: lọc/chặn giả danh nhân viên (`/sec-check` #5) | BE | — |
+
+> **Batch 10.8 bị bỏ (chủ dự án chốt 2026-11-18):** không có contract 10.8. Các mục "việc còn mở" dưới đây chuyển sang Phase 11 và backlog; chủ dự án/architect gán ID `P11-*` khi lập contract Phase 11. Mục P07-4 trùng P10-1 (xong).
 
 **Phase 10 chưa đóng (cập nhật 2026-11-17).** Review độc lập toàn phase: `/sec-check` PASS_WITH_WARNINGS, `/qc-check` PASS_WITH_WARNINGS, không BLOCKED (typecheck/lint PASS; test 1156 pass với PostgreSQL cục bộ, 1084 pass + 73 skip khi không có DB; build NOT RUN). Việc ngoài contract đã merge: #137 (giới hạn review khách 10/giờ + sự kiện `guest_limit`), #138 (tên địa điểm + nhãn `guest_limit` trong admin), #139 (staff ẩn danh hóa review khách; self-review PASS_WITH_WARNINGS). Điều kiện đóng: `CURRENT.md`.
 

@@ -1,6 +1,6 @@
 # Task Contract 10.5 — Report Content + Admin Moderation Queue
 - Task ID: P10-3
-- Class: L (new anonymous write path + personal data) · State: READY (owner approved D1-D12 as recommended, 2026-11-16) · Subagents: 0
+- Class: L (new anonymous write path + personal data) · State: DONE (PR #126, merged 2026-11-17) · Subagents: 0
 - Objective: any reader can report a published community trip or review; staff see and resolve reports in the admin portal; every resolution is logged.
 - Scope:
   - Table `reports`, `db/migrations/0013_reports.sql` + rollback, JSON key `reports`; fields per `docs/specs-community-database.md`: `id`, `reporterId|null`, `clientKey`, `targetKind` (`trip|review`), `targetId`, `reason` (fixed list: spam, harassment, personal data, copyright, misleading, other), `note` ≤500, `status` open/actioned/dismissed, handler fields; index `(status, created_at)`.
