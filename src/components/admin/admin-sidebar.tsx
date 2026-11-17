@@ -9,7 +9,7 @@ import { LocaleSwitcher } from '@/components/layout/locale-switcher';
 import { AdminSignOut } from './admin-sign-out';
 
 const linkBase =
-  'flex min-h-11 items-center border-l-[3px] px-3 text-sm transition-colors duration-200 ease-gentle md:min-h-10';
+  'flex min-h-11 items-center border-l-[3px] px-3 text-sm transition-colors duration-200 ease-gentle';
 const linkIdle =
   'border-transparent font-medium text-foreground hover:bg-surface-muted hover:text-primary-strong';
 // Active = a 3px bar + weight + tint, never colour alone (ADR 0023).
@@ -111,7 +111,7 @@ export function AdminMobileMenu({ groups, handle, roleLabel }: { groups: AdminNa
       </button>
       <div
         id={menuId}
-        className={`${open ? 'block' : 'hidden'} absolute inset-x-0 top-full max-h-[calc(100dvh-var(--admin-bar-h))] overflow-y-auto border-b border-border-subtle bg-surface px-5 py-4 shadow-lg`}
+        className={`${open ? 'block' : 'hidden'} absolute inset-x-0 top-full max-h-[calc(100dvh-var(--admin-bar-h))] overflow-y-auto border-b border-border-subtle bg-surface px-5 py-4 shadow-lift`}
       >
         <nav aria-label={t('label')}>
           <NavList groups={groups} />
