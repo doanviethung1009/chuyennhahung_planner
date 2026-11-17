@@ -209,14 +209,88 @@ describe('guard matrix on opted-in routes', () => {
   });
 });
 
+describe('create story and place (P07-16)', () => {
+  const slug = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2, 8)}`;
+  const postStory = (body: unknown, o: Opts = {}) =>
+    r.stories.POST(req({ method: 'POST', path: '/api/admin/travel/stories', body, ...o }));
+  const postPlace = (body: unknown, o: Opts = {}) =>
+    r.places.POST(req({ method: 'POST', path: '/api/admin/travel/places', body, ...o }));
+
+  it('lets editor and admin create, refuses member (403) and anonymous (401)', async () => {
+    const editor = await makeUser('editor');
+    const admin = await makeUser('admin');
+    const member = await makeUser('member');
+    for (const who of [editor, admin]) {
+      expect((await postPlace(placeFixture({ slug: slug('np') }), { cookie: who.cookie })).status).toBe(201);
+      expect((await postStory(storyFixture({ slug: slug('ns') }), { cookie: who.cookie })).status).toBe(201);
+    }
+    expect((await postPlace(placeFixture({ slug: slug('np') }), { cookie: member.cookie })).status).toBe(403);
+    expect((await postStory(storyFixture({ slug: slug('ns') }), { cookie: member.cookie })).status).toBe(403);
+    expect((await postPlace(placeFixture({ slug: slug('np') }))).status).toBe(401);
+    expect((await postStory(storyFixture({ slug: slug('ns') }))).status).toBe(401);
+  });
+
+  it('keeps the token path working', async () => {
+    expect((await postPlace(placeFixture({ slug: slug('tp') }), { bearer: ADMIN_TOKEN })).status).toBe(201);
+    expect((await postStory(storyFixture({ slug: slug('ts') }), { bearer: ADMIN_TOKEN })).status).toBe(201);
+  });
+
+  it('always creates a story as a draft, even when the body says published', async () => {
+    const editor = await makeUser('editor');
+    const name = slug('draft');
+    const response = await postStory({ ...storyFixture({ slug: name }), status: 'published', publishedAt: '2024-01-01T00:00:00.000Z' }, { cookie: editor.cookie });
+    expect(response.status).toBe(201);
+    const created = await response.json();
+    expect(created.status).toBe('draft');
+    expect(created.publishedAt).toBeNull();
+    const repo = await content.getRepository();
+    expect((await repo.listStories({ status: 'published' } as never)).some((s) => s.slug === name)).toBe(false);
+  });
+
+  it('refuses a duplicate slug with slug_conflict and overwrites nothing', async () => {
+    const editor = await makeUser('editor');
+    const name = slug('dup');
+    expect((await postStory(storyFixture({ slug: name }), { cookie: editor.cookie })).status).toBe(201);
+    const again = await postStory(storyFixture({ slug: name, excerpt: { vi: 'Ghi đè', en: 'Overwrite' } }), { cookie: editor.cookie });
+    expect(again.status).toBe(409);
+    expect((await again.json()).error.code).toBe('slug_conflict');
+    const repo = await content.getRepository();
+    expect((await repo.getStory(name))?.excerpt.en).not.toBe('Overwrite');
+
+    const place = slug('dupp');
+    expect((await postPlace(placeFixture({ slug: place }), { cookie: editor.cookie })).status).toBe(201);
+    const dup = await postPlace(placeFixture({ slug: place }), { cookie: editor.cookie });
+    expect(dup.status).toBe(409);
+    expect((await dup.json()).error.code).toBe('slug_conflict');
+  });
+
+  it('enforces same-origin and the body schema on the session path', async () => {
+    const editor = await makeUser('editor');
+    const name = slug('csrf');
+    expect((await postStory(storyFixture({ slug: name }), { cookie: editor.cookie, origin: 'https://evil.test' })).status).toBe(403);
+    const repo = await content.getRepository();
+    expect(await repo.getStory(name).catch(() => null)).toBeFalsy();
+    const bad = await postPlace({ slug: 'x' }, { cookie: editor.cookie });
+    expect(bad.status).toBe(422);
+  });
+
+  it('lets an editor archive a created story through the status route', async () => {
+    const editor = await makeUser('editor');
+    const name = slug('arch');
+    await postStory(storyFixture({ slug: name }), { cookie: editor.cookie });
+    const archived = await r.storyStatus.POST(
+      req({ method: 'POST', path: `/api/admin/travel/stories/${name}/status`, body: { action: 'archive' }, cookie: editor.cookie }),
+      slugParams(name),
+    );
+    expect(archived.status).toBe(200);
+    expect((await archived.json()).status).toBe('archived');
+  });
+});
+
 describe('routes that stay token-only', () => {
   it('reject a session (even admin) and still accept the token', async () => {
     const admin = await makeUser('admin');
-    // Create and delete, templates and integrity never opted in.
-    const create = (o: Opts) =>
-      r.places.POST(req({ method: 'POST', path: '/api/admin/travel/places', body: placeFixture({ slug: `tok-${Math.random().toString(36).slice(2, 8)}` }), ...o }));
-    expect([401, 403]).toContain((await create({ cookie: admin.cookie })).status);
-    expect((await create({ bearer: ADMIN_TOKEN })).status).toBe(201);
+    // Delete, templates and integrity never opted in (create did in P07-16).
     const del = (o: Opts) =>
       r.place.DELETE(req({ method: 'DELETE', path: '/api/admin/travel/places/cms-never', ...o }), slugParams('cms-never'));
     expect([401, 403]).toContain((await del({ cookie: admin.cookie })).status);

@@ -24,8 +24,10 @@ const KEEPS_QUERY: readonly AppPathname[] = [
   '/admin',
   '/admin/users',
   '/admin/content/stories',
+  '/admin/content/stories/new',
   '/admin/content/stories/[slug]',
   '/admin/content/places',
+  '/admin/content/places/new',
   '/admin/content/places/[slug]',
   '/admin/content/reviews',
 ];

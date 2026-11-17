@@ -44,7 +44,7 @@ Authorization: Bearer <ADMIN_API_TOKEN>
 Compared with `timingSafeEqual`. A token shorter than 32 characters is treated
 as a misconfiguration, not a weak secret.
 
-**Session access (ADR 0011).** Some routes also accept a browser session cookie (same-origin proof required on mutations): list `GET` of `stories`, `places`, `reviews`, and `GET` / `PATCH` of `stories/[slug]`, `places/[slug]`, `reviews/[id]` and `PATCH stories/[slug]/places` need the `content:write` action (`editor`, `admin`); `POST stories/[slug]/status` and `reviews/[id]/status` need `story:publish`. Everything else (create, `DELETE`, `templates/**`, `collections/**`, `integrity`) stays token-only.
+**Session access (ADR 0011).** Some routes also accept a browser session cookie (same-origin proof required on mutations): list `GET` of `stories`, `places`, `reviews`, and `GET` / `PATCH` of `stories/[slug]`, `places/[slug]`, `reviews/[id]` and `PATCH stories/[slug]/places` and, since P07-16, `POST stories` and `POST places` need the `content:write` action (`editor`, `admin`); `POST stories/[slug]/status` and `reviews/[id]/status` need `story:publish`. Everything else (`DELETE`, `templates/**`, `collections/**`, `integrity`) stays token-only.
 
 **Optimistic concurrency.** `PATCH` on those routes accepts an optional `If-Match: "<updatedAt>"` header (the record's last `updatedAt`, quoted). If the record changed since, the answer is **412** `version_conflict` and nothing is written. No header keeps last-write-wins; an empty header is `400`.
 

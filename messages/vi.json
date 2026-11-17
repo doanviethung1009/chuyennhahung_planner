@@ -732,7 +732,8 @@
       "password_change_required": "Hãy đổi mật khẩu tạm trước khi tiếp tục.",
       "invalid_state": "Thao tác bị từ chối vì trạng thái hiện tại của nội dung, ví dụ chuyến đi còn liên kết đến đánh giá chưa xuất bản hoặc còn mẫu công khai dùng đến.",
       "not_found": "Không tìm thấy bản ghi này. Có thể nó đã bị xoá.",
-      "bad_request": "Yêu cầu không hợp lệ. Hãy tải lại trang rồi thử lại."
+      "bad_request": "Yêu cầu không hợp lệ. Hãy tải lại trang rồi thử lại.",
+      "slug_conflict": "Đã có bản ghi dùng slug này. Không có gì bị ghi đè; hãy chọn slug khác."
     },
     "form": {
       "loading": "Đang tải…",
@@ -755,7 +756,8 @@
       "retry": "Tải lại danh sách",
       "empty": "Chưa có mục nào.",
       "count": "{count, plural, other {# mục}}",
-      "updated": "cập nhật {date}"
+      "updated": "cập nhật {date}",
+      "archived": "Đã lưu trữ chuyến đi."
     },
     "stories": {
       "metaTitle": "Quản lý chuyến đi",
@@ -819,7 +821,11 @@
       "seoOgImage": "Ảnh chia sẻ",
       "seoCanonical": "Đường dẫn chuẩn",
       "seoNoindex": "Không cho công cụ tìm kiếm lập chỉ mục",
-      "destinationHint": "Để trống nếu chuyến đi không gắn với một điểm đến."
+      "destinationHint": "Để trống nếu chuyến đi không gắn với một điểm đến.",
+      "newMetaTitle": "Chuyến đi mới",
+      "newTitle": "Chuyến đi mới",
+      "newDescription": "Điền các trường bắt buộc. Chuyến đi được lưu ở dạng nháp và mở trong trình chỉnh sửa để bổ sung phần còn lại.",
+      "newButton": "Chuyến đi mới"
     },
     "places": {
       "metaTitle": "Quản lý địa điểm",
@@ -855,7 +861,11 @@
       "fieldRating": "Điểm chấm",
       "ratingHint": "Từ 1 đến 5, bước 0,5. Để trống nếu chưa chấm.",
       "fieldImages": "Ảnh",
-      "imagesHint": "Mỗi dòng một đường dẫn /images/… hoặc địa chỉ https."
+      "imagesHint": "Mỗi dòng một đường dẫn /images/… hoặc địa chỉ https.",
+      "newMetaTitle": "Địa điểm mới",
+      "newTitle": "Địa điểm mới",
+      "newDescription": "Điền các trường bắt buộc. Sau đó địa điểm mở trong trình chỉnh sửa để thêm ảnh, đánh giá và ghi chú.",
+      "newButton": "Địa điểm mới"
     },
     "reviews": {
       "metaTitle": "Duyệt đánh giá",
@@ -886,6 +896,18 @@
       "title": "Không tìm thấy trang",
       "description": "Trang này không tồn tại hoặc bạn không có quyền xem.",
       "cta": "Về trang chủ"
+    },
+    "create": {
+      "fieldSlug": "Slug (tên trong URL)",
+      "slugHint": "Chữ thường nối bằng dấu gạch ngang, tối thiểu 3 ký tự. Không đổi được về sau.",
+      "reservedSlug": "Slug này được dành riêng. Hãy chọn slug khác.",
+      "slugConflict": "Đã có bản ghi dùng slug này. Không có gì bị ghi đè; hãy chọn slug khác.",
+      "storyNote": "Chuyến đi mới luôn được lưu ở dạng nháp và không hiển thị với khách cho đến khi bạn xuất bản.",
+      "placeNote": "Địa điểm không có trạng thái nháp: địa điểm mới hiển thị với khách ngay khi tạo. Hãy kiểm tra kỹ thông tin trước khi lưu.",
+      "fieldFirstParagraph": "Đoạn đầu tiên",
+      "firstParagraphHint": "Khối đầu tiên của nội dung chuyến đi. Thêm các khối khác sau trong trình chỉnh sửa.",
+      "submitStory": "Tạo chuyến đi nháp",
+      "submitPlace": "Tạo địa điểm"
     }
   },
   "storyPage": {

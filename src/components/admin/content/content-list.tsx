@@ -32,6 +32,8 @@ export function ContentList({ kind }: { kind: 'stories' | 'places' }) {
   const [items, setItems] = useState<Item[] | null>(null);
   const [filter, setFilter] = useState<(typeof STATUSES)[number]>('');
   const [error, setError] = useState<Notice | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
+  const [archiving, setArchiving] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -51,8 +53,33 @@ export function ContentList({ kind }: { kind: 'stories' | 'places' }) {
     void load();
   }, [load]);
 
+  async function archive(slug: string) {
+    setArchiving(slug);
+    setNotice(null);
+    try {
+      await api(`/api/admin/travel/stories/${encodeURIComponent(slug)}/status`, { method: 'POST', body: { action: 'archive' } });
+      setNotice({ kind: 'ok', text: t('list.archived') });
+      await load();
+    } catch (failure) {
+      setNotice(describe(failure));
+    } finally {
+      setArchiving(null);
+    }
+  }
+
   return (
     <div className="grid gap-6">
+      <div>
+        {kind === 'stories' ? (
+          <Link href="/admin/content/stories/new" className={buttonClass({ size: 'md' })}>
+            {t('stories.newButton')}
+          </Link>
+        ) : (
+          <Link href="/admin/content/places/new" className={buttonClass({ size: 'md' })}>
+            {t('places.newButton')}
+          </Link>
+        )}
+      </div>
       {kind === 'stories' ? (
         <div className="max-w-xs">
           <label htmlFor="content-status-filter" className="block text-sm font-medium text-foreground">
@@ -75,7 +102,7 @@ export function ContentList({ kind }: { kind: 'stories' | 'places' }) {
         </div>
       ) : null}
 
-      <LiveNotice notice={error} />
+      <LiveNotice notice={error ?? notice} />
       {error ? (
         <div>
           <button type="button" onClick={() => void load()} className={buttonClass({ variant: 'secondary', size: 'sm' })}>
@@ -119,7 +146,19 @@ export function ContentList({ kind }: { kind: 'stories' | 'places' }) {
                       {item.slug} · {t('list.updated', { date: new Date(item.updatedAt).toLocaleString(locale) })}
                     </p>
                   </div>
-                  {item.status ? <StatusBadge status={item.status} /> : null}
+                  <div className="flex flex-wrap items-center gap-3">
+                    {item.status ? <StatusBadge status={item.status} /> : null}
+                    {kind === 'stories' && item.status && item.status !== 'archived' ? (
+                      <button
+                        type="button"
+                        disabled={archiving !== null}
+                        onClick={() => void archive(item.slug)}
+                        className={buttonClass({ variant: 'secondary', size: 'sm' })}
+                      >
+                        {t('actions.archive')}
+                      </button>
+                    ) : null}
+                  </div>
                 </li>
               );
             })}

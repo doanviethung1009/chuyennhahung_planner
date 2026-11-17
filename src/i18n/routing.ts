@@ -33,11 +33,13 @@ export const pathnames = {
   '/community-trips': { vi: '/chuyen-di-cong-dong', en: '/community-trips' },
   '/admin': { vi: '/quan-tri', en: '/admin' },
   '/admin/content/stories': { vi: '/quan-tri/noi-dung/chuyen-di', en: '/admin/content/stories' },
+  '/admin/content/stories/new': { vi: '/quan-tri/noi-dung/chuyen-di/moi', en: '/admin/content/stories/new' },
   '/admin/content/stories/[slug]': {
     vi: '/quan-tri/noi-dung/chuyen-di/[slug]',
     en: '/admin/content/stories/[slug]',
   },
   '/admin/content/places': { vi: '/quan-tri/noi-dung/dia-diem', en: '/admin/content/places' },
+  '/admin/content/places/new': { vi: '/quan-tri/noi-dung/dia-diem/moi', en: '/admin/content/places/new' },
   '/admin/content/places/[slug]': {
     vi: '/quan-tri/noi-dung/dia-diem/[slug]',
     en: '/admin/content/places/[slug]',

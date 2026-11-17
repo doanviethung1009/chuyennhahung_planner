@@ -732,7 +732,8 @@
       "password_change_required": "Change your temporary password before continuing.",
       "invalid_state": "Refused because of the content's current state, for example a story that still links to an unpublished review or is used by a public template.",
       "not_found": "This record was not found. It may have been deleted.",
-      "bad_request": "The request was not valid. Reload the page and try again."
+      "bad_request": "The request was not valid. Reload the page and try again.",
+      "slug_conflict": "A record with this slug already exists. Nothing was overwritten; choose another slug."
     },
     "form": {
       "loading": "Loading…",
@@ -755,7 +756,8 @@
       "retry": "Reload the list",
       "empty": "Nothing here yet.",
       "count": "{count, plural, one {# item} other {# items}}",
-      "updated": "updated {date}"
+      "updated": "updated {date}",
+      "archived": "Story archived."
     },
     "stories": {
       "metaTitle": "Manage stories",
@@ -819,7 +821,11 @@
       "seoOgImage": "Share image",
       "seoCanonical": "Canonical path",
       "seoNoindex": "Ask search engines not to index this",
-      "destinationHint": "Leave empty if the story is not tied to one destination."
+      "destinationHint": "Leave empty if the story is not tied to one destination.",
+      "newMetaTitle": "New story",
+      "newTitle": "New story",
+      "newDescription": "Fill in the required fields. The story is saved as a draft and opens in the editor for the rest.",
+      "newButton": "New story"
     },
     "places": {
       "metaTitle": "Manage places",
@@ -855,7 +861,11 @@
       "fieldRating": "Our rating",
       "ratingHint": "From 1 to 5 in half steps. Leave empty if not rated.",
       "fieldImages": "Images",
-      "imagesHint": "One /images/… path or https address per line."
+      "imagesHint": "One /images/… path or https address per line.",
+      "newMetaTitle": "New place",
+      "newTitle": "New place",
+      "newDescription": "Fill in the required fields. The place opens in the editor afterwards for images, rating and notes.",
+      "newButton": "New place"
     },
     "reviews": {
       "metaTitle": "Review moderation",
@@ -886,6 +896,18 @@
       "title": "Page not found",
       "description": "This page does not exist, or you do not have access to it.",
       "cta": "Back to the site"
+    },
+    "create": {
+      "fieldSlug": "Slug (URL name)",
+      "slugHint": "Lowercase words joined by hyphens, at least 3 characters. It cannot be changed later.",
+      "reservedSlug": "This slug is reserved. Choose another one.",
+      "slugConflict": "A record with this slug already exists. Nothing was overwritten; choose another slug.",
+      "storyNote": "A new story is always saved as a draft and stays hidden from visitors until you publish it.",
+      "placeNote": "Places have no draft state: a new place is visible to visitors as soon as you create it. Check the details before you save.",
+      "fieldFirstParagraph": "First paragraph",
+      "firstParagraphHint": "The first block of the story body. Add more blocks later in the editor.",
+      "submitStory": "Create draft story",
+      "submitPlace": "Create place"
     }
   },
   "storyPage": {

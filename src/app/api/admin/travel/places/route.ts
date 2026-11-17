@@ -1,6 +1,5 @@
 import { adminContentRoute } from '@/server/admin/content-route';
 import {
-  adminRoute,
   jsonCreated,
   jsonOk,
   parseJsonBody,
@@ -20,7 +19,7 @@ export function GET(request: Request) {
 }
 
 export function POST(request: Request) {
-  return adminRoute(request, async () => {
+  return adminContentRoute(request, { action: 'content:write', session: true }, async () => {
     const input = await parseJsonBody(request, placeCreateSchema);
     const repository = await getRepository();
     return jsonCreated(await repository.createPlace(input));
