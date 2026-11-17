@@ -107,6 +107,38 @@ export function registerErasureCases(setup: () => Promise<ErasureCtx>): void {
     expect(await ctx.planner.resolveReport(report!.id, { outcome: 'actioned', reason: 'đã xóa' }, 'staff-1')).toBe('actioned');
   });
 
+  it('erase: clears reports.note on every report of the review, keeps other reports, leaves no quoted text', async () => {
+    const ctx = await setup();
+    await guest(ctx);
+    await guest(ctx, '203.0.113.50');
+    const [a, b] = (await ctx.planner.listReviewQueue()).filter((r) => r.source === 'homepage');
+    const note = 'Ghi lai: "so dien thoai 0900000000" cua Zeta';
+    await ctx.planner.createReport({ targetKind: 'review', targetId: a!.id, reason: 'other', note }, { userId: null, clientKey: '198.51.100.5' });
+    await ctx.planner.createReport({ targetKind: 'review', targetId: a!.id, reason: 'other', note }, { userId: null, clientKey: '198.51.100.6' });
+    await ctx.planner.createReport({ targetKind: 'review', targetId: b!.id, reason: 'other', note: 'giu lai ghi chu nay' }, { userId: null, clientKey: '198.51.100.7' });
+    const [first] = await ctx.planner.listReports('open');
+    await ctx.planner.resolveReport(first!.id, { outcome: 'dismissed', reason: 'ok' }, 'staff-1'); // a handled report is wiped too
+
+    await ctx.planner.eraseGuestReview(a!.id, 'staff-1', 'yêu cầu xóa');
+    const rows = (await ctx.store.read()).reports;
+    expect(rows.filter((r) => r.targetId === a!.id).map((r) => r.note)).toEqual([null, null]);
+    expect(rows.find((r) => r.targetId === b!.id)!.note).toBe('giu lai ghi chu nay');
+    expect(rows).toHaveLength(3);
+    expect(JSON.stringify(rows)).not.toContain('Zeta');
+    expect(JSON.stringify(rows)).not.toContain('0900000000');
+  });
+
+  it('erase: the original star is gone and the erased review is not in the average', async () => {
+    const ctx = await setup();
+    await guest(ctx); // 4 stars
+    const id = await guestId(ctx);
+    await ctx.planner.eraseGuestReview(id, 'staff-1', 'yêu cầu xóa');
+    const row = (await ctx.store.read()).communityReviews.find((r) => r.id === id)!;
+    expect(row.rating).toBe(1);
+    expect(row.status).toBe('removed');
+    expect((await ctx.planner.listApprovedReviews()).items).toEqual([]);
+  });
+
   it('erase: the 20-per-place-per-day cap still counts an erased row', async () => {
     const ctx = await setup();
     for (let i = 0; i < 20; i += 1) await guest(ctx, `203.0.113.${i + 10}`);

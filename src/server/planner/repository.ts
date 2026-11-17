@@ -2080,8 +2080,10 @@ export class PlannerRepository {
    * (ADR 0024 §8): anonymised in place, status `removed`, no way back. The row
    * stays so the audit log, open reports and the per-place daily cap keep their
    * references. Only `homepage` reviews; any status (a plain remove keeps the
-   * text). Idempotent: an already erased review writes nothing. One event, whose
-   * reason is staff text only: never content or a key.
+   * text). Also clears `note` on every report of the review (it may quote the
+   * text); the original star is overwritten with 1 and a `removed` review is not
+   * in the average. Idempotent: an already erased review writes only the note
+   * clean-up. One event, whose reason is staff text only: never content or a key.
    */
   eraseGuestReview(reviewId: string, actor: string, reason: string): Promise<void> {
     return this.transaction((data) => {
@@ -2090,6 +2092,15 @@ export class PlannerRepository {
       if (!review) throw notFound('review', reviewId);
       if (review.source !== 'homepage') {
         throw invalidState('only a guest review can be erased here; account reviews follow the account or the author');
+      }
+      // A reporter's free-text note may quote the review: drop it on every report
+      // of this review, whatever its status. Done before the idempotent early
+      // return so a repeat call still clears a note that survived an older erase.
+      const wiped = data.reports.some((row) => row.targetKind === 'review' && row.targetId === reviewId && row.note !== null);
+      if (wiped) {
+        data.reports = data.reports.map((row) =>
+          row.targetKind === 'review' && row.targetId === reviewId && row.note !== null ? { ...row, note: null } : row,
+        );
       }
       if (review.body === ERASED_REVIEW_BODY && review.guestKey === null && review.authorName === null) return;
       const at = this.timestamp();
