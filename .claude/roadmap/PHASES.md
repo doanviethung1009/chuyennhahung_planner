@@ -179,6 +179,8 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
 - **Phạm vi:** SQL + nhiều instance (schema đích đã có ở ADR 0002), store chung cho rate
   limiter, nhà cung cấp danh tính thật, xử lý advisory phụ thuộc, dữ liệu thật của chủ
   nhà, checklist phát hành (`/release-check`), `/qc-check` và `/sec-check` toàn hệ thống.
+  **Thêm (2026-11-18):** D5 hoàn thiện Terms trước go-live (P09-6, **DEFERRED**, chưa Done) và
+  rủi ro tuyên bố xóa khóa khách 30 ngày chưa khớp code (P09-7).
 - **Phụ thuộc:** 07; 08 hoặc quyết định loại 08 khỏi bản launch (ghi lại); SQL trước khi
   có hơn một instance.
 
