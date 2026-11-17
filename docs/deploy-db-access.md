@@ -99,6 +99,43 @@ overlay file removes the mapping.
 
 ## E. Configure DBeaver
 
+### Create the tunnel-only SSH account (Option A)
+
+Give QC a dedicated account that can open **this one tunnel and nothing else**: no
+password, no shell, no sudo, no `docker` group. Below, `<ssh_user>` is `qc_tunnel`.
+
+On the QC machine, make a key pair (the private key never leaves it) and send the owner
+the **public** file `qc_tunnel_ed25519.pub` only:
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/qc_tunnel_ed25519 -C "qc-<name>"
+```
+
+On the VM, as the owner (`<PUBLIC_KEY_LINE>` is the content of the `.pub` file):
+
+```bash
+sudo adduser --disabled-password --gecos "" --shell /usr/sbin/nologin qc_tunnel
+sudo install -d -m 700 -o qc_tunnel -g qc_tunnel /home/qc_tunnel/.ssh
+echo 'restrict,port-forwarding,permitopen="127.0.0.1:15432" <PUBLIC_KEY_LINE>' \
+  | sudo tee /home/qc_tunnel/.ssh/authorized_keys >/dev/null
+sudo chown qc_tunnel:qc_tunnel /home/qc_tunnel/.ssh/authorized_keys
+sudo chmod 600 /home/qc_tunnel/.ssh/authorized_keys
+id qc_tunnel          # expect: no sudo, no docker group
+```
+
+`restrict` turns off shell, terminal, agent and X11 forwarding; `port-forwarding` allows
+tunnels again; `permitopen` limits them to `127.0.0.1:15432`. No `sshd_config` change
+is needed (if it has `AllowUsers`, add `qc_tunnel`). Check from the QC machine:
+
+```bash
+ssh -i ~/.ssh/qc_tunnel_ed25519 -N -L 15432:127.0.0.1:15432 qc_tunnel@192.168.100.140   # stays open: OK
+ssh -i ~/.ssh/qc_tunnel_ed25519 qc_tunnel@192.168.100.140                              # must NOT give a shell
+ssh -i ~/.ssh/qc_tunnel_ed25519 -N -L 2222:127.0.0.1:22 qc_tunnel@192.168.100.140      # forward must be refused
+```
+
+Remove access when done: `sudo deluser --remove-home qc_tunnel` (or only delete the line
+in `authorized_keys` to pause it).
+
 Option A — tunnel from the QC machine (or let DBeaver do the same on the SSH tab):
 
 ```bash
@@ -215,7 +252,7 @@ outside port scan of your public IP shows it closed.
 ## J. Rollback
 
 1. Disable the option (section D, last command) — no port is published again.
-2. Option B: remove the `DOCKER-USER` and Proxmox rules.
+2. Option B: remove the `DOCKER-USER` and Proxmox rules. Option A: remove the SSH account (`sudo deluser --remove-home qc_tunnel`).
 3. Remove the role if no longer needed: in each database
    `REVOKE ALL ON ALL TABLES IN SCHEMA public FROM qc_readonly; REVOKE USAGE ON SCHEMA public FROM qc_readonly;
    REVOKE CONNECT ON DATABASE <db> FROM qc_readonly;`, then `DROP ROLE qc_readonly;`.
@@ -226,7 +263,7 @@ outside port scan of your public IP shows it closed.
 
 - [ ] PostgreSQL container healthy (`docker ps` shows `healthy`).
 - [ ] App still connects to the database (`/api/health` OK, a Planner page loads).
-- [ ] SSH tunnel connects from DBeaver (Option A).
+- [ ] SSH tunnel connects from DBeaver (Option A), and the SSH account has no shell.
 - [ ] LAN direct connects from the allowed machine (Option B).
 - [ ] A machine that is not allowed is refused (Option B).
 - [ ] `qc_readonly` can only SELECT (section G).
