@@ -57,7 +57,7 @@ Giao diện: `src/components/reports/report-button.tsx` — nút thật (≥44px
 
 ## Limits and open questions
 
-- Giới hạn của khách dựa trên `x-forwarded-for`, client có thể giả mạo (gia cố ở batch 10.6); quy tắc chống trùng theo người báo cáo cũng dùng cùng khóa.
+- Giới hạn của khách dựa trên `x-forwarded-for`, client có thể giả mạo (batch 10.6a đã ghim hành vi sau nginx của repo, nơi nó không giả được; cấu hình thật trên VM là việc chủ dự án kiểm, D10); quy tắc chống trùng theo người báo cáo cũng dùng cùng khóa.
 - Không có ngưỡng, không báo lại người báo cáo, không kháng nghị. Báo cáo về mục đã gỡ vẫn nằm trong danh sách và được đánh dấu không còn xử lý được.
 - Rollback: gỡ nút và các route; chạy SQL rollback bằng tay; các dòng đã lưu vô hại, và `id` của đánh giá để lại cũng không sao.
 - Khuyến nghị `/sec-check` (đường ghi ẩn danh, dữ liệu cá nhân trong ghi chú), chưa chạy.

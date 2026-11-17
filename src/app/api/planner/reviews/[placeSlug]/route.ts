@@ -1,4 +1,5 @@
 import { ContentError, rateLimited } from '@/server/content/errors';
+import { requireContributionOpen } from '@/server/community/contribution-gate';
 import { slugSchema } from '@/server/content/schemas';
 import { parseJsonBody } from '@/server/content/http';
 import { plannerJson, plannerRoute } from '@/server/planner/http';
@@ -22,6 +23,7 @@ async function placeSlugOf(context: Context): Promise<string> {
  */
 export function PUT(request: Request, context: Context) {
   return plannerRoute(request, async ({ userId }, repository) => {
+    requireContributionOpen();
     const placeSlug = await placeSlugOf(context);
     const input = await parseJsonBody(request, plannerReviewInputSchema);
     await repository.requireTermsAccepted(userId);

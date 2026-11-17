@@ -6,6 +6,8 @@ Status: **Proposed**. Labels **[C] [P] [A]**: see
 [specs-community-overview.md](specs-community-overview.md). This is a design-time threat
 model, not a review. A `security` review of the **existing** community surface ran on 2026-11-16 (PASS_WITH_WARNINGS; findings are backlog items P10-11 to P10-16); it did not cover this design. For the new phases the reviewer has **NOT RUN**; it is recommended before Phases 13 and 14 and runs only when the owner asks (`/sec-check`).
 
+Finding status (batch 10.6a): P10-15 closed (server gate `contribution_closed`), P10-16 closed (reserved-name filter), P10-12 closed in code/tests with the real VM proxy check left to the owner (D10); the global hourly cap was evaluated and not added. P10-11 (HMAC `guestKey`) stays open, blocked on D4 (batch 10.6b).
+
 ## Goals and scope
 
 Say who may do what, who owns what, what is private, and how abuse is limited, for every
