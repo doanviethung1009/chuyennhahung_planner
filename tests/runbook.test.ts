@@ -94,7 +94,7 @@ describe('admin runbook tab', () => {
   });
 
   it('is gated to runbook:read (super admin) and hides the nav link from other roles', () => {
-    const page = readFileSync(join(root, 'src/app/[locale]/admin/runbook/page.tsx'), 'utf8');
+    const page = readFileSync(join(root, 'src/app/(admin)/[locale]/admin/runbook/page.tsx'), 'utf8');
     expect(page).toMatch(/requireStaff\([\s\S]*?'runbook'\)/);
     const gate = readFileSync(join(root, 'src/lib/admin-gate.ts'), 'utf8');
     expect(gate).toMatch(/can\(principal, 'runbook:read'\) \? \[\{ href: '\/admin\/runbook'/);

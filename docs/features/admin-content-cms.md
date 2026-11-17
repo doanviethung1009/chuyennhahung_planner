@@ -34,8 +34,8 @@ Saving sends only the editable keys with `If-Match: "<updatedAt>"`. A stale stam
 
 | Path | Role |
 |---|---|
-| `src/app/[locale]/admin/page.tsx` | Shell: gate, Users for admins, overview for editors |
-| `src/app/[locale]/admin/content/**/page.tsx` | Five content pages |
+| `src/app/(admin)/[locale]/admin/page.tsx` | Shell: gate, Users for admins, overview for editors |
+| `src/app/(admin)/[locale]/admin/content/**/page.tsx` | Five content pages |
 | `src/lib/admin-gate.ts` | Shared gate and `noindex` helper |
 | `src/components/admin/admin-nav.tsx`, `content-notice.tsx` | Role-aware nav; public-site limitation notice |
 | `src/components/admin/content/form-kit.tsx` | Path-addressed fields, localized pairs |

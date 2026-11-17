@@ -31,7 +31,7 @@ the existing `/quan-tri/:path*` and `/en/admin/:path*` no-index headers and the
 
 ## How it works
 
-1. `src/app/[locale]/admin/runbook/page.tsx` calls `requireStaff(..., 'runbook')`: anonymous redirects to sign-in with `returnTo`, a temporary password redirects to change-password, any role without `runbook:read` (everyone but `super_admin`, ADR 0017) gets `notFound()`. The page is `force-dynamic` and `noindex`.
+1. `src/app/(admin)/[locale]/admin/runbook/page.tsx` calls `requireStaff(..., 'runbook')`: anonymous redirects to sign-in with `returnTo`, a temporary password redirects to change-password, any role without `runbook:read` (everyone but `super_admin`, ADR 0017) gets `notFound()`. The page is `force-dynamic` and `noindex`.
 2. `readRunbookDoc` reads `docs/<id>[.vi].md` from `process.cwd()`. The Docker runner stage copies `docs/` to `/app/docs` for this.
 3. `src/components/runbook/markdown.tsx` parses the Markdown into React elements (no HTML strings, no `dangerouslySetInnerHTML`). A link is kept only if it is `http(s)` or another allow-listed runbook; anything else is plain text. A document's `#` renders as `h2` because the page owns the one `<h1>`.
 4. `AdminNav` shows the tab only when the viewer can manage users. Hiding is not authorization: the page gate checks again.
@@ -41,7 +41,7 @@ the existing `/quan-tri/:path*` and `/en/admin/:path*` no-index headers and the
 
 | Path | Role |
 |---|---|
-| `src/app/[locale]/admin/runbook/page.tsx` | Gate, document tabs, article |
+| `src/app/(admin)/[locale]/admin/runbook/page.tsx` | Gate, document tabs, article |
 | `src/server/runbook/docs.ts` | Allow-list and file read |
 | `src/components/runbook/markdown.tsx` | Safe Markdown renderer |
 | `src/components/admin/admin-nav.tsx` | Runbook link, shown to `runbook:read` only |

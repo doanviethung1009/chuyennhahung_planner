@@ -122,7 +122,7 @@ describe('design tokens', () => {
 
   it('loads both typefaces with the Vietnamese subset', () => {
     const layout = readFileSync(
-      resolve(import.meta.dirname, '../src/app/[locale]/layout.tsx'),
+      resolve(import.meta.dirname, '../src/app/fonts.ts'),
       'utf8',
     );
     const subsets = [...layout.matchAll(/subsets:\s*\[([^\]]+)\]/g)];

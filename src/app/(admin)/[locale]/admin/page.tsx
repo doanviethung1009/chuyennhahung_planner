@@ -5,7 +5,7 @@ import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
 import { noIndex, requireStaff } from '@/lib/admin-gate';
 import { Container } from '@/components/ui/container';
-import { PageHeader } from '@/components/layout/page-header';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 
 // Reads the session cookie on every request: never prerendered or cached.
 export const dynamic = 'force-dynamic';
@@ -40,7 +40,7 @@ export default async function AdminPage({ params }: Params) {
 
   return (
     <>
-      <PageHeader title={tc('title')} description={tc('description')} />
+      <AdminPageHeader title={tc('title')} description={tc('description')} />
       <Container width="wide">
         <div className="grid gap-10 py-10 md:py-14">
           <section aria-labelledby="admin-overview-heading" className="grid gap-4">

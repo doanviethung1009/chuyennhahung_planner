@@ -44,7 +44,8 @@ Add the token first.
 
 The base layer sets `color-scheme: light`, the sticky-header height `--header-h`
 (4rem, 4.75rem from `64rem` up — the mobile drawer offsets itself by it),
-`text-wrap: balance` on headings and `pretty` on paragraphs, and the Vietnamese
+the admin top-bar height `--admin-bar-h` (3.5rem; the admin sidebar sticks
+below it — ADR 0023), `text-wrap: balance` on headings and `pretty` on paragraphs, and the Vietnamese
 font stack on `body`.
 
 Primitives in `src/components/ui/` are the second half of the system: `Button`

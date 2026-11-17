@@ -44,7 +44,7 @@ API: `PUT|DELETE /api/planner/[id]/listing` (chủ chuyến), `GET /api/communit
 | `src/components/cards/community-trip-card.tsx`, `src/components/sections/community-trips-section.tsx` | UI công khai |
 | `src/app/[locale]/community-trips/page.tsx` | gallery |
 | `src/components/planner/share-panel.tsx` | điều khiển của chủ chuyến |
-| `src/app/[locale]/admin/community/page.tsx`, `src/components/admin/community/listing-queue.tsx` | hàng đợi staff |
+| `src/app/(admin)/[locale]/admin/community/page.tsx`, `src/components/admin/community/listing-queue.tsx` | hàng đợi staff |
 | `src/content/site.ts` | `contribution` (dữ liệu chủ nhà) |
 
 ## Kiểm thử

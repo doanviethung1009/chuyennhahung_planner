@@ -34,8 +34,8 @@ Khi lưu, chỉ các khoá sửa được được gửi kèm `If-Match: "<updat
 
 | Path | Vai trò |
 |---|---|
-| `src/app/[locale]/admin/page.tsx` | Khung: cổng, Người dùng cho admin, tổng quan cho biên tập viên |
-| `src/app/[locale]/admin/content/**/page.tsx` | Năm trang nội dung |
+| `src/app/(admin)/[locale]/admin/page.tsx` | Khung: cổng, Người dùng cho admin, tổng quan cho biên tập viên |
+| `src/app/(admin)/[locale]/admin/content/**/page.tsx` | Năm trang nội dung |
 | `src/lib/admin-gate.ts` | Cổng dùng chung và helper `noindex` |
 | `src/components/admin/admin-nav.tsx`, `content-notice.tsx` | Điều hướng theo vai trò; thông báo giới hạn trang công khai |
 | `src/components/admin/content/form-kit.tsx` | Trường theo đường dẫn, cặp vi/en |

@@ -5,7 +5,7 @@ import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
 import { noIndex, requireStaff } from '@/lib/admin-gate';
 import { Container } from '@/components/ui/container';
-import { PageHeader } from '@/components/layout/page-header';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { AdminConsole } from '@/components/admin/admin-console';
 
 // Reads the session cookie on every request: never prerendered or cached.
@@ -16,11 +16,12 @@ type Params = { params: Promise<{ locale: Locale }> };
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'admin' });
+  const tn = await getTranslations({ locale, namespace: 'adminContent.nav' });
   return noIndex(
     buildPageMetadata({
       href: '/admin/users' as const,
       locale,
-      title: t('metaTitle'),
+      title: tn('users'),
       description: t('shellDescription'),
     }),
   );
@@ -37,13 +38,14 @@ export default async function AdminUsersPage({ params }: Params) {
 
   const access = await requireStaff(locale, getPathname({ href: '/admin/users' as const, locale }), 'users');
   const t = await getTranslations('admin');
+  const tn = await getTranslations('adminContent.nav');
 
   return (
     <>
-      <PageHeader title={t('title')} description={t('shellDescription')} />
+      <AdminPageHeader title={tn('users')} description={t('shellDescription')} />
       <Container width="wide">
         <div className="grid gap-10 py-10 md:py-14">
-          <AdminConsole currentUserId={access.principal.userId} actorRole={access.principal.role} currentHandle={access.principal.handle} />
+          <AdminConsole currentUserId={access.principal.userId} actorRole={access.principal.role} />
         </div>
       </Container>
     </>

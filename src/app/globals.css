@@ -100,6 +100,8 @@
     color-scheme: light;
     /* Sticky header height. The mobile nav drawer offsets itself by this. */
     --header-h: 4rem;
+    /* Admin top bar height (ADR 0023); the admin sidebar sticks below it. */
+    --admin-bar-h: 3.5rem;
   }
 
   @media (min-width: 64rem) {
