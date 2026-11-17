@@ -830,6 +830,21 @@ export const reviewDecisionSchema = z
     path: ['reason'],
   });
 
+/**
+ * `POST /api/admin/community/reviews/[id]/erase` body (ADR 0024 §8). The reason is
+ * staff text kept in the audit log: a ticket or mail reference, never the
+ * requester's personal data.
+ */
+export const reviewEraseSchema = z.object({ reason: z.string().trim().min(3).max(500) }).strict();
+
+/**
+ * What an erased guest review keeps as its body: a fixed sentence, because the
+ * column is NOT NULL and the schema wants 60+ characters (so no migration). Also
+ * how an erased row is recognised, which makes the erase idempotent.
+ */
+export const ERASED_REVIEW_BODY =
+  'Nội dung đã được gỡ theo yêu cầu xóa dữ liệu. / Content removed on a data-erasure request.';
+
 /** A guest restriction lasts 30 days unless staff say otherwise, and never more than 30 (ADR 0015, cap lowered from 90 by ADR 0024). */
 export const GUEST_RESTRICTION_DEFAULT_DAYS = 30;
 /** ADR 0024: 30, so the key a restriction holds never outlives the guest-key retention. */
@@ -979,6 +994,8 @@ export interface ReviewQueueItem {
   guestLimitAt: string | null;
   rating: number;
   body: string;
+  /** Content was erased on a data-removal request (ADR 0024 §8); `body` is then a fixed notice. */
+  erased: boolean;
   lang: 'vi' | 'en';
   visitedOn: string;
   author: string | null;

@@ -1123,6 +1123,7 @@
       "reject": "Rejected.",
       "remove": "Removed from the home page.",
       "hold": "Review hidden and question sent to the author.",
+      "erase": "Review content erased for good.",
       "mute": "Author switched off. Their reviews are hidden until you lift it."
     },
     "tripsHeading": "Trips",
@@ -1163,7 +1164,14 @@
       "muteConfirm": "Switch off",
       "reasonLabelHold": "Your question (the author will see it; the review is hidden until they edit it)",
       "reasonLabel": "Reason (the author will see it)",
-      "reasonLabelGuest": "Reason for removal (kept internally)"
+      "reasonLabelGuest": "Reason for removal (kept internally)",
+      "erase": "Erase content",
+      "eraseTitle": "Erase this guest review's content",
+      "eraseWarning": "This cannot be undone. The review text, display name, connection key and visit date are wiped from the system; only an audit line (who erased it and why) remains. The review leaves the site. Use only for a data-erasure request received at the takedown mailbox.",
+      "eraseReasonLabel": "Reason for erasing (kept internally, up to 500 characters)",
+      "eraseReasonHelp": "Give a ticket number or the date the mail arrived. Do not write the requester's name, email or other personal details.",
+      "eraseConfirm": "Erase content for good",
+      "erased": "Content erased on a data-erasure request."
     },
     "restrictions": {
       "empty": "No author has been switched off.",

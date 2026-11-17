@@ -55,7 +55,7 @@ export default async function AdminCommunityPage({ params }: Params) {
             <h2 id="queue-reviews-heading" className="font-display text-2xl font-semibold">
               {t('reviewsHeading')}
             </h2>
-            <CommunityReviewQueue canRestrict={canRestrict} />
+            <CommunityReviewQueue canRestrict={canRestrict} canErase={can(access.principal, 'community:erase')} />
           </section>
           <section aria-labelledby="queue-reports-heading" className="grid gap-4">
             <h2 id="queue-reports-heading" className="font-display text-2xl font-semibold">

@@ -18,7 +18,7 @@ type Decision = 'approve' | 'reject' | 'remove' | 'hold';
  * wait here as `pending`; guest reviews are already live and can only be
  * removed. Review text is shown as plain text.
  */
-export function CommunityReviewQueue({ canRestrict }: { canRestrict: boolean }) {
+export function CommunityReviewQueue({ canRestrict, canErase = false }: { canRestrict: boolean; canErase?: boolean }) {
   const t = useTranslations('adminCommunity');
   const tr = useTranslations('adminCommunity.reviews');
   const locale = useLocale() as Locale;
@@ -30,6 +30,8 @@ export function CommunityReviewQueue({ canRestrict }: { canRestrict: boolean }) 
   const [reason, setReason] = useState('');
   const [muting, setMuting] = useState<{ id: string; scope: 'place' | 'all' } | null>(null);
   const [muteReason, setMuteReason] = useState('');
+  const [erasing, setErasing] = useState<string | null>(null);
+  const [eraseReason, setEraseReason] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -57,6 +59,25 @@ export function CommunityReviewQueue({ canRestrict }: { canRestrict: boolean }) 
       setAsking(null);
       setReason('');
       setNotice({ kind: 'ok', text: t(`done.${decision}`) });
+      await load();
+    } catch (failure) {
+      setNotice(describe(failure));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function erase(item: ReviewQueueItem, why: string) {
+    setBusyId(item.id);
+    setNotice(null);
+    try {
+      await api(`/api/admin/community/reviews/${encodeURIComponent(item.id)}/erase`, {
+        method: 'POST',
+        body: { reason: why },
+      });
+      setErasing(null);
+      setEraseReason('');
+      setNotice({ kind: 'ok', text: t('done.erase') });
       await load();
     } catch (failure) {
       setNotice(describe(failure));
@@ -122,11 +143,15 @@ export function CommunityReviewQueue({ canRestrict }: { canRestrict: boolean }) 
                       <p className="text-sm text-foreground-muted">{tr('account', { name: item.authorAccount })}</p>
                     ) : null}
                     {/* Traveller-written: plain text only. */}
-                    <p lang={item.lang} className="whitespace-pre-line break-words text-base">
-                      {item.body}
-                    </p>
+                    {item.erased ? (
+                      <p className="text-base italic text-foreground-muted">{tr('erased')}</p>
+                    ) : (
+                      <p lang={item.lang} className="whitespace-pre-line break-words text-base">
+                        {item.body}
+                      </p>
+                    )}
                     <p className="text-sm text-foreground-muted">
-                      {tr('visited', { date: item.visitedOn })} ·{' '}
+                      {item.erased ? null : <>{tr('visited', { date: item.visitedOn })} · </>}
                       {tr('created', { date: new Date(item.createdAt).toLocaleString(locale) })}
                     </p>
                     {item.rejectReason ? (
@@ -180,7 +205,20 @@ export function CommunityReviewQueue({ canRestrict }: { canRestrict: boolean }) 
                       {tr('remove')}
                     </button>
                   ) : null}
-                  {canRestrict && !item.restricted && item.status !== 'pending' ? (
+                  {canErase && item.source === 'homepage' && !item.erased ? (
+                    <button
+                      type="button"
+                      disabled={busyId === item.id}
+                      className={buttonClass({ variant: 'secondary', size: 'sm' })}
+                      onClick={() => {
+                        setErasing(item.id);
+                        setEraseReason('');
+                      }}
+                    >
+                      {tr('erase')}
+                    </button>
+                  ) : null}
+                  {canRestrict && !item.erased && !item.restricted && item.status !== 'pending' ? (
                     <button
                       type="button"
                       disabled={busyId === item.id}
@@ -191,6 +229,61 @@ export function CommunityReviewQueue({ canRestrict }: { canRestrict: boolean }) 
                     </button>
                   ) : null}
                 </div>
+
+                {erasing === item.id ? (
+                  <form
+                    role="group"
+                    aria-labelledby={`erase-title-${item.id}`}
+                    className="grid gap-3 border-t border-border-subtle pt-4"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void erase(item, eraseReason.trim());
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Escape') setErasing(null);
+                    }}
+                  >
+                    <p id={`erase-title-${item.id}`} className="text-base font-medium">
+                      {tr('eraseTitle')}
+                    </p>
+                    <p role="alert" className="text-sm text-foreground">
+                      {tr('eraseWarning')}
+                    </p>
+                    <label htmlFor={`erase-reason-${item.id}`} className="text-sm font-medium">
+                      {tr('eraseReasonLabel')}
+                    </label>
+                    <textarea
+                      id={`erase-reason-${item.id}`}
+                      aria-describedby={`erase-help-${item.id}`}
+                      className={inputClass}
+                      rows={3}
+                      required
+                      minLength={3}
+                      maxLength={500}
+                      autoFocus
+                      value={eraseReason}
+                      onChange={(e) => setEraseReason(e.target.value)}
+                    />
+                    <p id={`erase-help-${item.id}`} className="text-sm text-foreground-muted">
+                      {tr('eraseReasonHelp')}
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <button type="submit" disabled={busyId === item.id} className={buttonClass({ size: 'sm' })}>
+                        {tr('eraseConfirm')}
+                      </button>
+                      <button
+                        type="button"
+                        className={buttonClass({ variant: 'ghost', size: 'sm' })}
+                        onClick={() => {
+                          setErasing(null);
+                          setEraseReason('');
+                        }}
+                      >
+                        {t('cancel')}
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
 
                 {muting?.id === item.id ? (
                   <form
