@@ -13,7 +13,7 @@ Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
 
 1. Đồng bộ tài liệu với thực tế — chính PR `docs/phase10-roadmap-sync`.
 2. W1 và W2: đã sửa và merge ở PR #143 (`9f27432`); chạy lại `/sec-check` cho phần này là khuyến nghị, hiện NOT RUN.
-3. Smoke có đăng nhập — **một phần** (2026-11-17, admin1): đọc hàng đợi admin + UI 375/768/1280 PASS; NOT RUN: thao tác ghi/audit chain, cổng Terms (cần member), bộ đếm qua restart. Chờ chủ dự án chấp nhận NOT RUN hoặc cấp member/lệnh restart.
+3. Smoke có đăng nhập — **một phần** (2026-11-17, admin1): hàng đợi admin + UI 375/768/1280 PASS; báo cáo lập→resolve→gỡ review có audit event PASS; NOT RUN: chuỗi request→approve→remove của chuyến, cổng Terms (cần member), bộ đếm qua restart. Chờ chủ dự án chấp nhận NOT RUN hoặc cấp member/lệnh restart.
 4. Việc của chủ dự án: P10-7 (sao lưu, `metadataBase`, HSTS), D5 (text Terms), D10; thêm `GUEST_KEY_SECRET=` vào `deploy/.env.example` (kiểm 2026-11-17: chưa có trên `main`).
 5. Về #139: chủ dự án đã chốt "xóa hết" (2026-11-17); còn phải làm task code xóa `reports.note` và bỏ số sao gốc khi ẩn danh hóa review khách (chưa làm).
 

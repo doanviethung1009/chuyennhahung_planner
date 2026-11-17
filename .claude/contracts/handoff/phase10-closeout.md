@@ -3,7 +3,7 @@
 - Không đổi code. Phase 10 **vẫn chưa đóng**; chỉ chủ dự án quyết định đóng.
 - Smoke dev VM: **một phần**. Chủ dự án tự đăng nhập `admin1` trong pane (tôi không nhập mật khẩu). PASS: `/quan-tri`,
   `/quan-tri/cong-dong` (hàng đợi chuyến/đánh giá/báo cáo tải được), 375/768/1280 không tràn, 1 h1, không nút <44px.
-  NOT RUN: ghi (approve/remove, lập/resolve báo cáo — không đổi dữ liệu dev), cổng Terms (cần member),
+  PASS thêm: báo cáo lập→resolve→gỡ review thử (audit: report_actioned, remove). NOT RUN: approve/remove chuyến, cổng Terms (cần member),
   limiter qua restart (cần restart VM). Không gửi POST báo cáo hàng loạt. Mật khẩu đã lộ trong chat: nên đổi.
 - `GUEST_KEY_SECRET=` trong `deploy/.env.example`: **chưa có** trên `main` @ `9f27432`; sửa `deploy/`
   bị quy tắc quyền của session chặn → chủ dự án tự thêm dòng `GUEST_KEY_SECRET=` (không giá trị).
