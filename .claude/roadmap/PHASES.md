@@ -198,7 +198,7 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
 - **Phụ thuộc:** 07; ADR 0014/0015.
 
 ## Phase 11 — Member Profiles & Creator Terms
-- **Trạng thái:** Designed. `member_profiles` (1:1 theo `userId`, mặc định riêng tư), đồng
+- **Trạng thái:** Designed; ADR [0025](../../docs/adr/0025-member-profiles-and-use-this-trip.md) viết xong (Proposed, chờ chủ dự án). `member_profiles` (1:1 theo `userId`, mặc định riêng tư), đồng
   ý Terms theo phiên bản, sửa Terms cho khớp (hiện nhắc ảnh/video khi chưa có upload).
 - **Thêm (đề xuất, từ bộ spec Community Platform):** **Dùng chuyến này** — thành viên đã đăng nhập sao chép một chuyến cộng đồng đã đăng thành bản nháp riêng, ghi công qua `origin`, không đồng bộ ngược (yêu cầu của chủ dự án; audit PR #107 chưa liệt kê). Điều 3 Terms đã cho phép sao chép khi người tạo bật; cần công tắc sao chép theo từng chuyến (P11-D2 chốt mặc định và phạm vi đăng lại) và nút Report (P10-3) có trước.
 - **Phụ thuộc:** 10; chính sách riêng tư do chủ nhà cung cấp (Q9); quyết định công tắc sao chép (P11-D2).

@@ -4,7 +4,7 @@
 
 Status: **Proposed**. Labels **[C] [P] [A]**: see
 [specs-community-overview.md](specs-community-overview.md). Next free migration number is
-`0015` (`db/migrations/0014_guest_key_privacy.sql` exists, ADR 0024; the Phase 11 `0014` named below is renumbered when written). No migration is
+`0015` (`db/migrations/0014_guest_key_privacy.sql` exists, ADR 0024; Phase 11 takes `0015` and `0016`, [ADR 0025](adr/0025-member-profiles-and-use-this-trip.md)). No migration is
 written or run by this document.
 
 ## Goals and scope
@@ -38,8 +38,8 @@ nullable columns, JSON-file parity for local development.
 
 | Entity (table) | Key fields | Notes |
 |---|---|---|
-| `Trip` (existing) | + `origin` JSONB null: `{ sourceToken, sourceTitle, authorDisplay }`; `listing` gains `changes_requested`, `unpublished` and `allowCopy` (creator's per-trip copy switch, Terms Article 3) | `origin` holds no author when the source was anonymous |
-| `Profile` (`member_profiles`) | `userId` pk, `publicSlug` uq null, `bio` ≤280, `avatarAssetId` null, `visibility` `private`/`public`, `updatedAt` | Off by default; slug is not `handle` |
+| `Trip` (existing) | + `origin` JSONB null: `{ sourceTripId, sourceTitle, sourceAuthor, copiedAt }` (refined by ADR 0025; `sourceTripId` internal); `listing` gains `changes_requested`, `unpublished` and `allowCopy` (creator's per-trip copy switch, Terms Article 3) | `origin` holds no author when the source was anonymous |
+| `Profile` (`member_profiles`) | `userId` pk, `publicSlug` uq null, `bio` ≤280, `avatarAssetId` null (added in Phase 13, not in `0015`, ADR 0025), `visibility` `private`/`public`, `updatedAt` | Off by default; slug is not `handle` |
 | `Journal` (`journal_posts`) | `id` pk, `authorId` ix, `kind` `journal`/`blog`/`vlog`, `slug` uq, `title`, `summary`, `coverAssetId`, `body` JSONB blocks, `bodyVersion`, `lang`, `placeSlugs[]`, `tags[]`, `status`, moderation fields, `publishedAt`, `revision`, timestamps | `revision` for `If-Match` |
 | `MediaAsset` (`media_assets`) | `id` pk, `ownerId` ix, `kind` `image`, `status`, `mime`, `bytes`, `width`, `height`, `storageKey`, `variants` JSONB, `attachedTo` `{kind,id}` null, `createdAt`, `deletedAt` | Video is never a row here; it is an embed inside `body` |
 | `Follow` (`follows`) | `followerId`, `followeeId`; pk pair | Self-follow refused |
@@ -91,7 +91,7 @@ erDiagram
 
 ### Migrations (proposed numbering)
 
-Proposed numbering, one migration per slice: `0010` `audit_events` (Phase 10, shipped) · `0011` rate-limit counters (Phase 10, shipped, [ADR 0019](adr/0019-community-foundation.md)) · `0012` `terms_acceptances` (Phase 10, shipped) · `0013` `reports` (Phase 10, shipped) · `0014` guest-key privacy (Phase 10, shipped, [ADR 0024](adr/0024-guest-identity-privacy.md)) · next free `member_profiles`, trip `origin`, listing states (Phase 11) · `0015` `journal_posts` (Phase 12) · `0016` `media_assets` (Phase 13) · `0017` follows, likes, saves, comments (Phase 14) · `0018` search columns, notifications (Phase 15). Each with rollback note, import/export update, and a test through both stores (ADR 0014 precedent).
+Proposed numbering, one migration per slice: `0010` `audit_events` (Phase 10, shipped) · `0011` rate-limit counters (Phase 10, shipped, [ADR 0019](adr/0019-community-foundation.md)) · `0012` `terms_acceptances` (Phase 10, shipped) · `0013` `reports` (Phase 10, shipped) · `0014` guest-key privacy (Phase 10, shipped, [ADR 0024](adr/0024-guest-identity-privacy.md)) · `0015` `member_profiles`, `0016` trip `origin` (Phase 11, proposed, [ADR 0025](adr/0025-member-profiles-and-use-this-trip.md); listing states are added with their own slice) · `0017` `journal_posts` (Phase 12) · `0018` `media_assets` (Phase 13) · `0019` follows, likes, saves, comments (Phase 14) · `0020` search columns, notifications (Phase 15). Each with rollback note, import/export update, and a test through both stores (ADR 0014 precedent).
 
 ## Flows and failure states
 

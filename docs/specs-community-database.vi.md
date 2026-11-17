@@ -4,7 +4,7 @@
 
 Trạng thái: **Đề xuất**. Nhãn **[C] [P] [A]**: xem
 [specs-community-overview.vi.md](specs-community-overview.vi.md). Số migration trống kế
-tiếp là `0015` (đã có `db/migrations/0014_guest_key_privacy.sql`, ADR 0024; `0014` của Phase 11 nêu bên dưới sẽ được đánh số lại khi viết). Tài liệu
+tiếp là `0015` (đã có `db/migrations/0014_guest_key_privacy.sql`, ADR 0024; Phase 11 dùng `0015` và `0016`, [ADR 0025](adr/0025-member-profiles-and-use-this-trip.vi.md)). Tài liệu
 này không viết hay chạy migration nào.
 
 ## Mục tiêu và phạm vi
@@ -38,8 +38,8 @@ tương đương với file JSON cho phát triển cục bộ.
 
 | Thực thể (bảng) | Trường chính | Ghi chú |
 |---|---|---|
-| `Trip` (có sẵn) | + `origin` JSONB null: `{ sourceToken, sourceTitle, authorDisplay }`; `listing` thêm `changes_requested`, `unpublished` và `allowCopy` (công tắc sao chép theo từng chuyến của người tạo, Điều 3 Terms) | `origin` không giữ tác giả khi nguồn ẩn danh |
-| `Profile` (`member_profiles`) | `userId` pk, `publicSlug` uq null, `bio` ≤280, `avatarAssetId` null, `visibility` `private`/`public`, `updatedAt` | Mặc định tắt; slug không phải `handle` |
+| `Trip` (có sẵn) | + `origin` JSONB null: `{ sourceTripId, sourceTitle, sourceAuthor, copiedAt }` (ADR 0025 làm rõ; `sourceTripId` nội bộ); `listing` thêm `changes_requested`, `unpublished` và `allowCopy` (công tắc sao chép theo từng chuyến của người tạo, Điều 3 Terms) | `origin` không giữ tác giả khi nguồn ẩn danh |
+| `Profile` (`member_profiles`) | `userId` pk, `publicSlug` uq null, `bio` ≤280, `avatarAssetId` null (thêm ở Phase 13, không ở `0015`, ADR 0025), `visibility` `private`/`public`, `updatedAt` | Mặc định tắt; slug không phải `handle` |
 | `Journal` (`journal_posts`) | `id` pk, `authorId` ix, `kind` `journal`/`blog`/`vlog`, `slug` uq, `title`, `summary`, `coverAssetId`, `body` JSONB block, `bodyVersion`, `lang`, `placeSlugs[]`, `tags[]`, `status`, trường kiểm duyệt, `publishedAt`, `revision`, mốc thời gian | `revision` cho `If-Match` |
 | `MediaAsset` (`media_assets`) | `id` pk, `ownerId` ix, `kind` `image`, `status`, `mime`, `bytes`, `width`, `height`, `storageKey`, `variants` JSONB, `attachedTo` `{kind,id}` null, `createdAt`, `deletedAt` | Video không bao giờ là một dòng ở đây; nó là embed trong `body` |
 | `Follow` (`follows`) | `followerId`, `followeeId`; pk là cặp | Không tự theo dõi |
@@ -91,7 +91,7 @@ erDiagram
 
 ### Migration (đánh số đề xuất)
 
-Đánh số đề xuất, một migration mỗi lát: `0010` `audit_events` (Phase 10, đã có) · `0011` bộ đếm giới hạn (Phase 10, đã có, [ADR 0019](adr/0019-community-foundation.vi.md)) · `0012` `terms_acceptances` (Phase 10, đã có) · `0013` `reports` (Phase 10, đã có) · `0014` quyền riêng tư khóa khách (Phase 10, đã có, [ADR 0024](adr/0024-guest-identity-privacy.vi.md)) · số trống kế tiếp `member_profiles`, `origin` của chuyến, trạng thái đăng (Phase 11) · `0015` `journal_posts` (Phase 12) · `0016` `media_assets` (Phase 13) · `0017` theo dõi, thích, lưu, bình luận (Phase 14) · `0018` cột tìm kiếm, thông báo (Phase 15). Mỗi cái kèm ghi chú rollback, cập nhật import/export, và test trên cả hai kho (tiền lệ ADR 0014).
+Đánh số đề xuất, một migration mỗi lát: `0010` `audit_events` (Phase 10, đã có) · `0011` bộ đếm giới hạn (Phase 10, đã có, [ADR 0019](adr/0019-community-foundation.vi.md)) · `0012` `terms_acceptances` (Phase 10, đã có) · `0013` `reports` (Phase 10, đã có) · `0014` quyền riêng tư khóa khách (Phase 10, đã có, [ADR 0024](adr/0024-guest-identity-privacy.vi.md)) · `0015` `member_profiles`, `0016` `origin` của chuyến (Phase 11, đề xuất, [ADR 0025](adr/0025-member-profiles-and-use-this-trip.vi.md); trạng thái đăng thêm ở lát riêng) · `0017` `journal_posts` (Phase 12) · `0018` `media_assets` (Phase 13) · `0019` theo dõi, thích, lưu, bình luận (Phase 14) · `0020` cột tìm kiếm, thông báo (Phase 15). Mỗi cái kèm ghi chú rollback, cập nhật import/export, và test trên cả hai kho (tiền lệ ADR 0014).
 
 ## Luồng xử lý và trạng thái lỗi
 
