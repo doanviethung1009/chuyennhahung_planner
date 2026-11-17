@@ -92,5 +92,6 @@ Harder: `content:write` and the new wrapper are security-critical and need the s
 
 - Task Contract: `.claude/contracts/phase07-admin-content-cms.md`. Feature document `docs/features/admin-content-cms.md` + `.vi.md` (frontend-engineer).
 - `docs/architecture.md` / `.vi.md`: route table, guard contract, Phase 07 backlog. `docs/usage.md` / `.vi.md`: editor sign-in and the `If-Match` header. `docs/travel-content-api.md`: `If-Match` and session access.
-- Later slices: audit log, create and delete, templates and collections editing, MFA for `admin`/`editor`, on-demand revalidation.
+- P07-16 amendment: `POST stories` and `POST places` now accept the session (`content:write`); delete stays token-only. Places have no status, so a created place is public immediately.
+- Later slices: audit log, delete, templates and collections editing, MFA for `admin`/`editor`, on-demand revalidation.
 - Open: how an editor account is created (`role: 'editor'` via the existing admin portal) and who the first editors are.

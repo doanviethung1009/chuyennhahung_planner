@@ -492,6 +492,8 @@ database (never one with real data). `npm run test` then also runs
 and drops. Without the variable that file is skipped, and the run should be
 reported as **not run**, not as passing.
 
+**Provisioning the scratch database.** The application's database user usually lacks `CREATEDB`, so a database admin creates an empty database owned by that user (`CREATE DATABASE <scratch> OWNER <app_user>;`); drop it when done. Never point `TEST_DATABASE_URL` at a database with real data. When the server is only reachable from its own host, reach it through an SSH tunnel (`ssh -N -L <local_port>:127.0.0.1:<db_port> <user>@<host>`) and use `127.0.0.1:<local_port>` in the URL. Set the variable in your own shell: do not paste the URL or the password into chat, a commit or a document.
+
 ### Run Travel Content on PostgreSQL
 
 With `CONTENT_DATABASE_URL` set, the stories, places, collections, reviews and

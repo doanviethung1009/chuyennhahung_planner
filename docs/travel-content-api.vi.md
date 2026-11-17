@@ -44,7 +44,7 @@ Authorization: Bearer <ADMIN_API_TOKEN>
 So sánh bằng `timingSafeEqual`. Một token ngắn hơn 32 ký tự được coi là cấu hình
 sai, không phải là một secret yếu.
 
-**Truy cập bằng session (ADR 0011).** Một số route còn nhận cookie session của trình duyệt (mutation cần chứng minh same-origin): `GET` danh sách `stories`, `places`, `reviews`, và `GET` / `PATCH` của `stories/[slug]`, `places/[slug]`, `reviews/[id]` cùng `PATCH stories/[slug]/places` cần action `content:write` (`editor`, `admin`); `POST stories/[slug]/status` và `reviews/[id]/status` cần `story:publish`. Phần còn lại (tạo, `DELETE`, `templates/**`, `collections/**`, `integrity`) vẫn chỉ dùng token.
+**Truy cập bằng session (ADR 0011).** Một số route còn nhận cookie session của trình duyệt (mutation cần chứng minh same-origin): `GET` danh sách `stories`, `places`, `reviews`, và `GET` / `PATCH` của `stories/[slug]`, `places/[slug]`, `reviews/[id]` cùng `PATCH stories/[slug]/places` và, từ P07-16, `POST stories` và `POST places` cần action `content:write` (`editor`, `admin`); `POST stories/[slug]/status` và `reviews/[id]/status` cần `story:publish`. Phần còn lại (`DELETE`, `templates/**`, `collections/**`, `integrity`) vẫn chỉ dùng token.
 
 **Kiểm soát đồng thời lạc quan.** `PATCH` trên các route đó nhận header tuỳ chọn `If-Match: "<updatedAt>"` (`updatedAt` cuối của bản ghi, có ngoặc kép). Nếu bản ghi đã đổi, phản hồi là **412** `version_conflict` và không ghi gì. Không có header thì giữ nguyên ghi sau thắng; header rỗng là `400`.
 

@@ -52,7 +52,7 @@ Khi lưu, chỉ các khoá sửa được được gửi kèm `If-Match: "<updat
 ## Giới hạn và câu hỏi còn mở
 
 - Từ ADR 0012, trang công khai đọc cùng kho nội dung: bản đã xuất bản hiện ở lần tải trang kế tiếp ([public-travel-cms.vi.md](public-travel-cms.vi.md)); bản nháp và bản lưu trữ không hiện.
-- Chưa có màn hình tạo, xoá, mẫu, bộ sưu tập hay kiểm tra toàn vẹn; chưa có nhật ký kiểm toán nên chỉnh sửa không gắn với người sửa.
+- Từ P07-16, biên tập viên tạo chuyến đi hoặc địa điểm nháp tại `/admin/content/{stories,places}/new` (`POST` với `content:write`, cùng nguồn gốc, chuyến đi luôn là nháp; server từ chối slug `new`) và lưu trữ chuyến đi từ danh sách hoặc trình sửa. **Địa điểm không có trạng thái nháp hay lưu trữ**, nên địa điểm mới hiển thị công khai ngay và biểu mẫu có cảnh báo; xoá cứng vẫn chỉ dùng token. Chưa có màn hình xoá, mẫu, bộ sưu tập hay kiểm tra toàn vẹn; chưa có nhật ký kiểm toán nên chỉnh sửa không gắn với người sửa.
 - Khối bài viết sửa được chữ nhưng chưa thêm, xoá hay đổi thứ tự.
 - `If-Match` là tuỳ chọn với người gọi bằng token, nên `curl` vẫn có thể ghi đè.
 - Biên tập viên chưa có nút đăng xuất ở trang tổng quan.

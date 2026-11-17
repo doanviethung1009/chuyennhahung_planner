@@ -348,9 +348,10 @@ Trang `/admin` là bảng điều khiển (P07-11, [feature](features/admin-dash
 |---|---|---|
 | `stories`, `places`, `reviews` | GET danh sách | `content:write` |
 | `stories/[slug]`, `places/[slug]`, `reviews/[id]` | GET, PATCH | `content:write` |
+| `stories`, `places` | POST (tạo; chuyến đi luôn là nháp) | `content:write` |
 | `stories/[slug]/places` | PATCH | `content:write` |
 | `stories/[slug]/status`, `reviews/[id]/status` | POST | `story:publish` |
-| POST tạo, DELETE, `templates/**`, `collections/**`, `integrity` | mọi method | chỉ token (`adminRoute`) |
+| DELETE, `templates/**`, `collections/**`, `integrity` | mọi method | chỉ token (`adminRoute`) |
 
 PATCH nhận header tuỳ chọn `If-Match: "<updatedAt>"` (`ifMatchStamp`); repository so sánh trong transaction và ghi cũ trả **412** `version_conflict`. Không có header nghĩa là ghi sau thắng.
 

@@ -145,6 +145,24 @@ describe.skipIf(!url)('Travel Content on PostgreSQL (TEST_DATABASE_URL)', () => 
     expect((await store.read()).places.map((place) => place.slug)).toEqual(['diem-moi']);
   });
 
+  it('creates a story as a draft and a place, and refuses a duplicate slug without overwriting (P07-16)', async () => {
+    const repository = repo();
+    await seedTravelContent(repository);
+    const story = await repository.createStory(storyFixture({ slug: 'pg-create-story' }));
+    expect(story.status).toBe('draft');
+    expect(story.publishedAt).toBeNull();
+    expect((await repository.listStories({ status: 'published' } as never)).some((item) => item.slug === 'pg-create-story')).toBe(false);
+
+    await repository.createPlace(placeFixture({ slug: 'pg-create-place' }));
+    const other = { vi: 'Ghi đè', en: 'Overwrite' };
+    await expect(repository.createStory(storyFixture({ slug: 'pg-create-story', excerpt: other }))).rejects.toMatchObject({ code: 'slug_conflict' });
+    await expect(repository.createPlace(placeFixture({ slug: 'pg-create-place', location: other }))).rejects.toMatchObject({ code: 'slug_conflict' });
+    expect((await repository.getStory('pg-create-story')).excerpt.en).not.toBe('Overwrite');
+
+    const archived = await repository.setStoryStatus('pg-create-story', { action: 'archive' });
+    expect(archived.status).toBe('archived');
+  });
+
   it('rolls back a mutation that throws and leaves the revision alone', async () => {
     const before = String((await pool.query('SELECT revision FROM content_revision')).rows[0].revision);
     await expect(

@@ -186,7 +186,11 @@ export const placeInputSchema = z.object({
   affiliateLinks: z.array(affiliateLinkSchema).max(10).default([]),
 });
 
-export const placeCreateSchema = placeInputSchema;
+/** `/admin/content/{stories,places}/new` is the create page, so a record with this slug could never be opened there. */
+const notReservedSlug = (input: { slug: string }) => input.slug !== 'new';
+const reservedSlugIssue = { message: 'this slug is reserved', path: ['slug'] };
+
+export const placeCreateSchema = placeInputSchema.refine(notReservedSlug, reservedSlugIssue);
 /** PATCH semantics: every field optional, slug immutable (URLs are permanent). */
 export const placeUpdateSchema = z.object(updateShape(placeInputSchema.omit({ slug: true }).shape)).partial();
 
@@ -311,7 +315,7 @@ export const storyInputSchema = z.object({
   seo: seoSchema,
 });
 
-export const storyCreateSchema = storyInputSchema;
+export const storyCreateSchema = storyInputSchema.refine(notReservedSlug, reservedSlugIssue);
 export const storyUpdateSchema = z.object(updateShape(storyInputSchema.omit({ slug: true }).shape)).partial();
 
 export const storySchema = storyInputSchema.extend({

@@ -349,9 +349,10 @@ The `/admin` page is the dashboard (P07-11, [feature](features/admin-dashboard.m
 |---|---|---|
 | `stories`, `places`, `reviews` | GET list | `content:write` |
 | `stories/[slug]`, `places/[slug]`, `reviews/[id]` | GET, PATCH | `content:write` |
+| `stories`, `places` | POST (create; stories always draft) | `content:write` |
 | `stories/[slug]/places` | PATCH | `content:write` |
 | `stories/[slug]/status`, `reviews/[id]/status` | POST | `story:publish` |
-| POST create, DELETE, `templates/**`, `collections/**`, `integrity` | any | token-only (`adminRoute`) |
+| DELETE, `templates/**`, `collections/**`, `integrity` | any | token-only (`adminRoute`) |
 
 PATCH accepts an optional `If-Match: "<updatedAt>"` (`ifMatchStamp`); the repository compares inside the transaction and a stale write answers **412** `version_conflict`. No header means last write wins.
 

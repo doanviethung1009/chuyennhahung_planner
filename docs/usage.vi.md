@@ -485,6 +485,8 @@ Script export tự đặt quyền `0600`; `pg_dump` thì không, nên chạy
 và xoá. Không có biến này, file đó bị bỏ qua và lần chạy phải được báo là **chưa
 chạy**, không phải là đã qua.
 
+**Chuẩn bị database nháp.** User database của ứng dụng thường không có quyền `CREATEDB`, nên admin database tạo một database trống thuộc user đó (`CREATE DATABASE <scratch> OWNER <app_user>;`) và xoá đi khi xong. Không bao giờ trỏ `TEST_DATABASE_URL` vào database có dữ liệu thật. Khi máy chủ chỉ truy cập được từ chính nó, đi qua đường hầm SSH (`ssh -N -L <cổng_local>:127.0.0.1:<cổng_db> <user>@<host>`) và dùng `127.0.0.1:<cổng_local>` trong URL. Đặt biến trong shell của bạn: không dán URL hay mật khẩu vào chat, commit hay tài liệu.
+
 ### Chạy Travel Content trên PostgreSQL
 
 Khi đặt `CONTENT_DATABASE_URL`, story, place, collection, review và template nằm trong
