@@ -35,4 +35,4 @@
 - Docs: frontend role writes `docs/features/admin-shell.*` updates; architect role flips ADR 0023 to Accepted and edits `docs/architecture.*`, the index and roadmap in the same PR.
 - Budget: sub-agents 0; one PR (the move, root layout, header and sidebar depend on each other); stop and ask if a file outside the lists above is needed or if the spike fails.
 - Order: after P07-10, **before P07-11** (P07-11 fills `/admin` inside this frame and builds on `AdminPageHeader`); P07-14 and Phase 10.5 edit `community/page.tsx` at the new path.
-- State: READY (owner approved ADR 0023 and the extra-files list 2026-11-17; the feature session starts with the build spike)
+- State: DONE (PR #124 merged 2026-11-17, merge commit 8747870; owner approved ADR 0023 and the extra-files list 2026-11-17). Open acceptance line: public-HTML byte diff of `/`, `/stories`, `/sign-in` not run.
