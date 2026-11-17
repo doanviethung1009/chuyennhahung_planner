@@ -56,7 +56,7 @@ flowchart LR
   P02 --> P03[03 Planner Core]
   P03 --> P04[04 Planner UI - Partial]
   P02 --> P05
-  P03 --> P05[05 Story→Planner - HIỆN TẠI]
+  P03 --> P05[05 Story→Planner - Done]
   P05 --> P07[07 Admin/CMS/RBAC - P1]
   P05 --> P06[06 AI/Affiliate/Optim - P2]
   P04 -. editor .-> P06
@@ -178,7 +178,7 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
   có hơn một instance.
 
 ## Phase 10 — Community Foundations
-- **Trạng thái:** **Gần đóng (2026-11-17)** — batch 10.1–10.6b đã merge (PR #112, #115, #117, #122, #126, #129, #132; migration `0010`–`0014`); smoke dev 10.7 xem `.claude/contracts/handoff/phase10-10.7.md`. Còn mở: P10-4 phần cần đăng nhập, P10-7 và D10/D5 (owner), trạng thái đăng chuyến mở rộng + bộ lọc, Chính sách riêng tư, `/sec-check` + `/qc-check` (NOT RUN). Chi tiết ở `backlog.md`.
+- **Trạng thái:** **Gần đóng (2026-11-17) — chưa đóng.** Batch 10.1–10.7 đã merge (PR #112, #115, #117, #122, #126, #129, #132, #136; migration `0010`–`0014`), cộng việc ngoài contract: #137 (giới hạn review khách 10/giờ + `guest_limit`), #138 (tên địa điểm + nhãn trong admin), #139 (staff ẩn danh hóa review khách; self-review PASS_WITH_WARNINGS). **Review toàn phase 2026-11-17:** `/sec-check` PASS_WITH_WARNINGS và `/qc-check` PASS_WITH_WARNINGS, không BLOCKED (typecheck/lint PASS; test 1156 pass với PostgreSQL cục bộ, 1084 pass + 73 skip khi không có DB; build NOT RUN). Điều kiện đóng và việc còn mở: `CURRENT.md` và `backlog.md`. Phase kế tiếp: 11 (ADR 0025 Proposed, PR #141).
 - **10-S0 — đã có code, deploy chưa xác minh:** [ADR 0014](../../docs/adr/0014-community-trips-and-reviews.md)
   (Community Trips + Reviews) và [ADR 0015](../../docs/adr/0015-community-review-author-controls.md)
   (hold, restrictions); migration `0005`–`0008`; `tests/community-*.test.ts`,
