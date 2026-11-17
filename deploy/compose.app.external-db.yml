@@ -4,7 +4,7 @@
 #   docker compose -f compose.yml -f compose.app.yml -f compose.app.external-db.yml up -d app
 #
 # The link crosses the LAN, so TLS with full verification is required. In the
-# stack's .env (mode 600, never committed):
+# stack's .env (mode 600, or 640 with the runner group; never committed):
 #   PLANNER_DATABASE_URL=postgres://cnh_app:<password>@<DB_IP>:5432/cnh_planner?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt
 #
 # Put the CA that signed the DB server certificate (its SAN must contain

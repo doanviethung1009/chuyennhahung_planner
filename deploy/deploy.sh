@@ -8,12 +8,94 @@
 #
 # The compose files used are the ones next to this script (the commit being
 # deployed: compose.yml, compose.app.yml, the bind-mount overlay and the
-# database overlay); `$STACK_DIR/.env` (mode 600) is passed to Compose and the
+# database overlay); `$STACK_DIR/.env` (mode 600, or 640 with the runner group) is passed to Compose and the
 # state lives under DEPLOY_ROOT bind mounts. This script never reads or prints
 # .env itself.
+#
+# First-time setup, run ONCE by hand as root (the runner cannot write STACK_DIR).
+# DB_OVERLAY is required here: there is no safe default for the file's shape.
+#
+#   sudo SITE_URL=http://<ip-app> DB_OVERLAY=local-db ./deploy/deploy.sh --init-env
+#
+# writes `$STACK_DIR/.env` with freshly generated secrets (mode 640, group
+# RUNNER_GROUP, default cnh-runner) and refuses to overwrite an existing file:
+# PostgreSQL takes its password at the first start, so regenerating would make
+# the file and the database disagree. It never prints a secret. For
+# DB_OVERLAY=external-db also set PLANNER_DATABASE_URL (and optionally
+# CONTENT_DATABASE_URL); nothing is generated for the database then. Do not put
+# a database password on a command line you keep in shell history.
 set -euo pipefail
 
-TAG="${1:?usage: deploy.sh <image-tag>}"
+init_env() {
+  local stack="${STACK_DIR:-/opt/chuyennhahung}" file site overlay
+  file="$stack/.env"
+  site="${SITE_URL:?set SITE_URL, e.g. http://<ip-app>}"
+  overlay="${DB_OVERLAY:?set DB_OVERLAY to local-db or external-db}"
+  case "$overlay" in external-db | local-db) ;; *) echo "DB_OVERLAY must be external-db or local-db" >&2; exit 2 ;; esac
+  # A value lands on one line of a Compose env file: no whitespace or control
+  # characters (a newline would inject keys) and no `$` (Compose interpolates it).
+  local safe='^[^[:space:][:cntrl:]$]+$'
+  [[ "$site" =~ ^https?:// && "$site" =~ $safe ]] || { echo "SITE_URL must be an http(s) URL without spaces or \$" >&2; exit 2; }
+  [[ -d "$stack" ]] || { echo "$stack does not exist (create it first, see docs/deploy-runbook.md)" >&2; exit 2; }
+  [[ ! -e "$file" ]] || { echo "$file already exists; not overwriting (rotate secrets by hand)" >&2; exit 1; }
+  command -v openssl >/dev/null || { echo "openssl is required" >&2; exit 2; }
+  if [[ "$overlay" == external-db ]]; then
+    local url
+    [[ -n "${PLANNER_DATABASE_URL:-}" ]] || { echo "set PLANNER_DATABASE_URL for external-db" >&2; exit 2; }
+    for url in "$PLANNER_DATABASE_URL" "${CONTENT_DATABASE_URL:-postgres://-}"; do
+      [[ "$url" =~ ^postgres(ql)?:// && "$url" =~ $safe ]] \
+        || { echo "database URLs must start with postgres:// and contain no spaces or \$" >&2; exit 2; }
+    done
+  fi
+
+  # Build the whole content first: a failed `openssl` aborts here, before any
+  # byte is written (a half-written .env would block a rerun and hold a partial
+  # set of secrets).
+  local admin guest pw="" pgadmin="" body
+  admin="$(openssl rand -base64 36)" && guest="$(openssl rand -hex 32)" || { echo "openssl rand failed" >&2; exit 1; }
+  if [[ "$overlay" == local-db ]]; then
+    pw="$(openssl rand -hex 24)" && pgadmin="$(openssl rand -hex 24)" || { echo "openssl rand failed" >&2; exit 1; }
+  fi
+  [[ -n "$admin" && -n "$guest" && ( "$overlay" != local-db || ( -n "$pw" && -n "$pgadmin" ) ) ]] \
+    || { echo "openssl rand returned nothing" >&2; exit 1; }
+  body="NEXT_PUBLIC_SITE_URL=$site
+TRUST_PROXY_HEADERS=true
+ADMIN_API_TOKEN=$admin
+GUEST_KEY_SECRET=$guest
+GOOGLE_SIGNUP_ENABLED=false
+"
+  if [[ "$overlay" == local-db ]]; then
+    body+="POSTGRES_ADMIN_PASSWORD=$pgadmin
+CNH_APP_PASSWORD=$pw
+PLANNER_DATABASE_URL=postgres://cnh_app:$pw@postgres:5432/cnh_planner
+CONTENT_DATABASE_URL=postgres://cnh_app:$pw@postgres:5432/cnh_content
+"
+  else
+    body+="PLANNER_DATABASE_URL=$PLANNER_DATABASE_URL
+"
+    [[ -z "${CONTENT_DATABASE_URL:-}" ]] || body+="CONTENT_DATABASE_URL=$CONTENT_DATABASE_URL
+"
+  fi
+
+  # umask 077 + noclobber: created private, and atomically refused if it exists.
+  (umask 077; set -o noclobber; printf '%s' "$body" >"$file") || { echo "could not create $file" >&2; exit 1; }
+
+  local group="${RUNNER_GROUP:-cnh-runner}"
+  if getent group "$group" >/dev/null 2>&1; then
+    chgrp "$group" "$file" && chmod 640 "$file" \
+      || { echo "wrote $file but chgrp/chmod to $group failed: it stays mode 600; fix by hand" >&2; exit 1; }
+  else
+    echo "group $group not found: $file stays mode 600; chgrp/chmod 640 it once the runner exists" >&2
+  fi
+  echo "wrote $file (secrets not shown)"
+}
+
+if [[ "${1:-}" == "--init-env" ]]; then
+  init_env
+  exit 0
+fi
+
+TAG="${1:?usage: deploy.sh <image-tag> | deploy.sh --init-env}"
 : "${APP_IMAGE:?set APP_IMAGE, e.g. ghcr.io/<owner>/chuyennhahung-app}"
 STACK_DIR="${STACK_DIR:-/opt/chuyennhahung}"
 DB_OVERLAY="${DB_OVERLAY:-external-db}"

@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -59,6 +59,113 @@ describe('deploy/deploy.sh', () => {
     const bad = spawnSync('bash', [script, 'a;b'], { env, encoding: 'utf8' });
     expect(bad.status).toBe(2);
     expect(bad.stderr).toContain('invalid image tag');
+  });
+
+  describe('--init-env', () => {
+    const script = join(root, 'deploy/deploy.sh');
+    const clean = { ...process.env };
+    for (const k of ['DB_OVERLAY', 'PLANNER_DATABASE_URL', 'CONTENT_DATABASE_URL', 'SITE_URL', 'STACK_DIR', 'RUNNER_GROUP']) delete clean[k];
+    const run = (stack: string, extra: Record<string, string> = {}) =>
+      spawnSync('bash', [script, '--init-env'], {
+        env: { ...clean, STACK_DIR: stack, SITE_URL: 'http://10.0.0.1', DB_OVERLAY: 'local-db', RUNNER_GROUP: 'no-such-group-xyz', ...extra },
+        encoding: 'utf8',
+      });
+    const newStack = () => mkdtempSync(join(tmpdir(), 'cnh-stack-'));
+    const envOf = (stack: string) => join(stack, '.env');
+
+    it('writes a private .env with generated secrets, never prints them, and never overwrites', () => {
+      const stack = newStack();
+      const first = run(stack);
+      expect(first.status).toBe(0);
+      const env = readFileSync(envOf(stack), 'utf8');
+      expect(env).toContain('NEXT_PUBLIC_SITE_URL=http://10.0.0.1');
+      for (const key of ['ADMIN_API_TOKEN', 'GUEST_KEY_SECRET', 'POSTGRES_ADMIN_PASSWORD', 'CNH_APP_PASSWORD', 'PLANNER_DATABASE_URL']) {
+        expect(env).toMatch(new RegExp(`^${key}=\\S{16,}$`, 'm'));
+      }
+      expect(statSync(envOf(stack)).mode & 0o077).toBe(0);
+      for (const key of ['ADMIN_API_TOKEN', 'GUEST_KEY_SECRET', 'POSTGRES_ADMIN_PASSWORD', 'CNH_APP_PASSWORD']) {
+        const secret = env.match(new RegExp(`^${key}=(.+)$`, 'm'))![1];
+        expect(first.stdout + first.stderr).not.toContain(secret);
+      }
+
+      const second = run(stack);
+      expect(second.status).toBe(1);
+      expect(readFileSync(envOf(stack), 'utf8')).toBe(env);
+    });
+
+    it('requires SITE_URL and DB_OVERLAY, and PLANNER_DATABASE_URL for external-db, writing nothing', () => {
+      const stack = newStack();
+      expect(run(stack, { SITE_URL: '' }).status).not.toBe(0);
+      expect(run(stack, { DB_OVERLAY: '' }).status).not.toBe(0);
+      expect(run(stack, { DB_OVERLAY: 'external-db' }).status).not.toBe(0);
+      expect(existsSync(envOf(stack))).toBe(false);
+    });
+
+    it('rejects values that would inject keys or be interpolated, writing nothing', () => {
+      const stack = newStack();
+      const ext = { DB_OVERLAY: 'external-db' };
+      const bad: Record<string, string>[] = [
+        { SITE_URL: 'http://a\nADMIN_API_TOKEN=x' },
+        { SITE_URL: 'http://a b' },
+        { SITE_URL: 'http://a/$HOME' },
+        { SITE_URL: 'ftp://a' },
+        { ...ext, PLANNER_DATABASE_URL: 'postgres://u:p@h/db\nADMIN_API_TOKEN=x' },
+        { ...ext, PLANNER_DATABASE_URL: 'postgres://u:pa$ss@h/db' },
+        { ...ext, PLANNER_DATABASE_URL: 'mysql://u:p@h/db' },
+        { ...ext, PLANNER_DATABASE_URL: 'postgres://u:p@h/db', CONTENT_DATABASE_URL: 'postgres://u:p@h/c d' },
+      ];
+      for (const extra of bad) expect(run(stack, extra).status, JSON.stringify(extra)).toBe(2);
+      expect(existsSync(envOf(stack))).toBe(false);
+    });
+
+    it('external-db writes the given URLs and no database passwords', () => {
+      const stack = newStack();
+      const r = run(stack, {
+        DB_OVERLAY: 'external-db',
+        PLANNER_DATABASE_URL: 'postgres://cnh_app:pw@db.example:5432/cnh_planner?sslmode=verify-full',
+      });
+      expect(r.status).toBe(0);
+      const env = readFileSync(envOf(stack), 'utf8');
+      expect(env).toContain('PLANNER_DATABASE_URL=postgres://cnh_app:pw@db.example:5432/cnh_planner?sslmode=verify-full');
+      expect(env).not.toMatch(/^(POSTGRES_ADMIN_PASSWORD|CNH_APP_PASSWORD|CONTENT_DATABASE_URL)=/m);
+      expect(r.stdout + r.stderr).not.toContain('pw@');
+    });
+
+    /** A directory of fake commands placed first on PATH. */
+    const shims = (cmds: Record<string, string>) => {
+      const dir = mkdtempSync(join(tmpdir(), 'cnh-shim-'));
+      for (const [name, body] of Object.entries(cmds)) {
+        writeFileSync(join(dir, name), `#!/usr/bin/env bash\n${body}\n`);
+        chmodSync(join(dir, name), 0o755);
+      }
+      return { PATH: `${dir}:${process.env.PATH}` };
+    };
+
+    it('writes nothing and exits 1 when openssl fails or returns nothing', () => {
+      for (const body of ['exit 1', 'exit 0']) {
+        const stack = newStack();
+        const r = run(stack, shims({ openssl: body }));
+        expect(r.status, body).toBe(1);
+        expect(existsSync(envOf(stack)), body).toBe(false);
+      }
+    });
+
+    it('exits 1 with a clear message when chgrp fails, leaving the file private', () => {
+      const stack = newStack();
+      const r = run(stack, { ...shims({ getent: 'exit 0', chgrp: 'exit 1' }), RUNNER_GROUP: 'fake-runner' });
+      expect(r.status).toBe(1);
+      expect(r.stderr).toContain('stays mode 600');
+      expect(r.stdout).not.toContain('wrote');
+      expect(statSync(envOf(stack)).mode & 0o077).toBe(0);
+    });
+
+    const gid = spawnSync('id', ['-gn'], { encoding: 'utf8' }).stdout.trim();
+    const hasGetent = spawnSync('getent', ['group', gid]).status === 0;
+    it.skipIf(!hasGetent || !gid)('sets group and mode 640 when the runner group exists', () => {
+      const stack = newStack();
+      expect(run(stack, { RUNNER_GROUP: gid }).status).toBe(0);
+      expect(statSync(envOf(stack)).mode & 0o777).toBe(0o640);
+    });
   });
 });
 

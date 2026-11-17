@@ -11,7 +11,7 @@
 # This file alone wires no database: it has no `depends_on`, no `backend`
 # network and no CA mount, so neither overlay has to undo anything.
 #
-# Every value comes from the stack's .env (mode 600, never committed):
+# Every value comes from the stack's .env (mode 600, or 640 with the runner group; never committed):
 #   NEXT_PUBLIC_SITE_URL   public origin, e.g. http://192.168.100.140 — build-time
 #   PLANNER_DATABASE_URL   depends on the overlay — see its header
 #   ADMIN_API_TOKEN        ≥ 32 characters (openssl rand -base64 36)
