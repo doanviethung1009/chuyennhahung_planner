@@ -1199,5 +1199,68 @@
         "invalid_reference": "Địa điểm hoặc ngày đến không hợp lệ."
       }
     }
+  },
+  "communityReports": {
+    "button": "Báo cáo",
+    "buttonTrip": "Báo cáo chuyến đi này",
+    "buttonReview": "Báo cáo đánh giá này",
+    "title": "Báo cáo nội dung này",
+    "introTrip": "Cho chúng mình biết chuyến đi này có vấn đề gì. Đội ngũ đọc từng báo cáo; bạn không cần tài khoản.",
+    "introReview": "Cho chúng mình biết đánh giá này có vấn đề gì. Đội ngũ đọc từng báo cáo; bạn không cần tài khoản.",
+    "reason": "Lý do",
+    "note": "Chi tiết (không bắt buộc)",
+    "noteHint": "Tối đa {max} ký tự. Chỉ văn bản thường. Đừng ghi thông tin liên hệ của bạn.",
+    "reasons": {
+      "spam": "Spam hoặc quảng cáo",
+      "harassment": "Quấy rối hoặc thù ghét",
+      "personal_data": "Lộ thông tin cá nhân",
+      "copyright": "Vi phạm bản quyền hoặc sản phẩm của người khác",
+      "misleading": "Gây hiểu lầm hoặc sai sự thật",
+      "other": "Lý do khác"
+    },
+    "submit": "Gửi báo cáo",
+    "cancel": "Hủy",
+    "close": "Đóng",
+    "sent": "Cảm ơn bạn. Đội ngũ sẽ xem xét.",
+    "errors": {
+      "rate_limited": "Hôm nay bạn đã gửi khá nhiều báo cáo. Vui lòng thử lại sau.",
+      "not_found": "Nội dung này không còn nữa.",
+      "generic": "Chưa gửi được báo cáo. Vui lòng thử lại."
+    }
+  },
+  "adminReports": {
+    "heading": "Báo cáo",
+    "description": "Báo cáo của người đọc về chuyến đi và đánh giá cộng đồng. Đánh dấu \"đã xử lý\" không gỡ nội dung nào: hãy dùng thao tác gỡ ở hàng đợi phía trên.",
+    "filter": "Hiển thị",
+    "statuses": {
+      "open": "Đang mở",
+      "actioned": "Đã xử lý",
+      "dismissed": "Đã bỏ qua"
+    },
+    "empty": "Chưa có báo cáo nào.",
+    "kinds": {
+      "trip": "Chuyến đi",
+      "review": "Đánh giá"
+    },
+    "reasons": {
+      "spam": "Spam hoặc quảng cáo",
+      "harassment": "Quấy rối hoặc thù ghét",
+      "personal_data": "Lộ thông tin cá nhân",
+      "copyright": "Vi phạm bản quyền hoặc sản phẩm của người khác",
+      "misleading": "Gây hiểu lầm hoặc sai sự thật",
+      "other": "Lý do khác"
+    },
+    "gone": "Đã gỡ hoặc không còn công khai: không còn gì để xử lý.",
+    "removedLabel": "(đã gỡ)",
+    "signedIn": "Người đọc đã đăng nhập",
+    "guest": "Người đọc khách",
+    "note": "Ghi chú: {note}",
+    "filed": "Gửi lúc {date}",
+    "handled": "{status} bởi {by} lúc {date}: {reason}",
+    "reasonLabel": "Ghi chú quyết định (tối thiểu 3 ký tự)",
+    "dismiss": "Bỏ qua",
+    "action": "Đánh dấu đã xử lý",
+    "done": "Đã cập nhật báo cáo.",
+    "loading": "Đang tải…"
   }
 }

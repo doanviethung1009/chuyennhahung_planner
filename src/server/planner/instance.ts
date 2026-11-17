@@ -92,7 +92,9 @@ function buildLimiters(databaseUrl: string | null): WriteLimiters {
     pool
       ? createPostgresRateLimiter({ pool, ...spec })
       : asAsyncLimiter(createRateLimiter({ limit: spec.limit, windowMs: spec.windowMs }));
-  return { plannerReview: make(WRITE_LIMITS.plannerReview), guestReview: make(WRITE_LIMITS.guestReview) };
+  return { plannerReview: make(WRITE_LIMITS.plannerReview), guestReview: make(WRITE_LIMITS.guestReview),
+    report: make(WRITE_LIMITS.report),
+  };
 }
 
 let instance: Promise<Built> | null = null;

@@ -1199,5 +1199,68 @@
         "invalid_reference": "The place or the visit date is not valid."
       }
     }
+  },
+  "communityReports": {
+    "button": "Report",
+    "buttonTrip": "Report this trip",
+    "buttonReview": "Report this review",
+    "title": "Report this content",
+    "introTrip": "Tell us what is wrong with this trip. Staff read every report; you do not need an account.",
+    "introReview": "Tell us what is wrong with this review. Staff read every report; you do not need an account.",
+    "reason": "Reason",
+    "note": "Details (optional)",
+    "noteHint": "Up to {max} characters. Plain text. Do not include your own contact details.",
+    "reasons": {
+      "spam": "Spam or advertising",
+      "harassment": "Harassment or hate",
+      "personal_data": "Shows personal data",
+      "copyright": "Copyright or someone else's work",
+      "misleading": "Misleading or false",
+      "other": "Something else"
+    },
+    "submit": "Send report",
+    "cancel": "Cancel",
+    "close": "Close",
+    "sent": "Thank you. Staff will look at it.",
+    "errors": {
+      "rate_limited": "You have sent many reports today. Please try again later.",
+      "not_found": "This content is no longer available.",
+      "generic": "The report could not be sent. Please try again."
+    }
+  },
+  "adminReports": {
+    "heading": "Reports",
+    "description": "Reader reports of community trips and reviews. Marking a report as actioned does not remove anything: use the remove action in the queue above.",
+    "filter": "Show",
+    "statuses": {
+      "open": "Open",
+      "actioned": "Actioned",
+      "dismissed": "Dismissed"
+    },
+    "empty": "No reports here.",
+    "kinds": {
+      "trip": "Trip",
+      "review": "Review"
+    },
+    "reasons": {
+      "spam": "Spam or advertising",
+      "harassment": "Harassment or hate",
+      "personal_data": "Shows personal data",
+      "copyright": "Copyright or someone else's work",
+      "misleading": "Misleading or false",
+      "other": "Something else"
+    },
+    "gone": "Already removed or no longer public: nothing left to act on.",
+    "removedLabel": "(removed)",
+    "signedIn": "Signed-in reader",
+    "guest": "Guest reader",
+    "note": "Note: {note}",
+    "filed": "Filed {date}",
+    "handled": "{status} by {by} on {date}: {reason}",
+    "reasonLabel": "Decision note (at least 3 characters)",
+    "dismiss": "Dismiss",
+    "action": "Mark as actioned",
+    "done": "Report updated.",
+    "loading": "Loading…"
   }
 }

@@ -73,6 +73,10 @@ import {
   type PlannerReviewInput,
   type PublicCommunityReview,
   type ReviewQueueItem,
+  type CreateReportInput,
+  type ReportListItem,
+  type ReportStatus,
+  type ResolveReportInput,
   type ReviewStatus,
   MIN_REVIEWS_FOR_AVERAGE,
   type CommunityTripCard,
@@ -931,6 +935,8 @@ export class PlannerRepository {
       // Personal data on public pages goes with the account (ADR 0014).
       data.communityReviews = data.communityReviews.filter((review) => review.authorId !== userId);
       data.termsAcceptances = data.termsAcceptances.filter((row) => row.userId !== userId);
+      // A member's own reports carry their id; they go with the account (the report stays anonymous-less).
+      data.reports = data.reports.filter((row) => row.reporterId !== userId);
       // Restrictions stay as the audit record, but end with the account (security review, ADR 0015).
       const endedAt = this.timestamp();
       data.reviewRestrictions = data.reviewRestrictions.map((row) => {
@@ -1965,6 +1971,143 @@ export class PlannerRepository {
         updatedAt: at,
       };
       return status;
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Reports (batch 10.5)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Files a reader's report of a public community trip (named by its share
+   * token, resolved here and never stored) or of a live review. An unknown, not
+   * public or already-removed target is one `not_found`, so a caller cannot tell
+   * "never existed" from "not public". A second open report by the same
+   * reporter on the same target is dropped silently: the caller still sees
+   * success. `who.userId` is the member, else the guest's `clientKey` (hashed).
+   */
+  createReport(input: CreateReportInput, who: { userId: string | null; clientKey: string }): Promise<void> {
+    return this.transaction((data) => {
+      const at = this.timestamp();
+      let targetId: string | null = null;
+      if (input.targetKind === 'trip') {
+        const digest = shareTokenDigest(input.shareToken ?? '');
+        const trip = data.trips.find(
+          (candidate) => candidate.shareToken !== null && shareTokenDigest(candidate.shareToken) === digest,
+        );
+        if (trip && isCommunityVisible(trip)) targetId = trip.id;
+      } else {
+        const review = data.communityReviews.find((candidate) => candidate.id === input.targetId);
+        if (review && review.status === 'approved' && !restrictionFor(data, at, review)) targetId = review.id;
+      }
+      if (targetId === null) throw notFound('target', input.targetKind);
+
+      const clientKey = who.userId ? null : guestKeyOf(who.clientKey);
+      const duplicate = data.reports.some(
+        (row) =>
+          row.status === 'open' &&
+          row.targetKind === input.targetKind &&
+          row.targetId === targetId &&
+          (who.userId ? row.reporterId === who.userId : row.clientKey === clientKey),
+      );
+      if (duplicate) return;
+      data.reports.push({
+        id: this.newId('rpt'),
+        reporterId: who.userId,
+        clientKey,
+        targetKind: input.targetKind,
+        targetId,
+        reason: input.reason,
+        note: input.note ? input.note : null,
+        status: 'open',
+        createdAt: at,
+        handledAt: null,
+        handledBy: null,
+        handlerReason: null,
+      });
+    });
+  }
+
+  /** The staff queue: open first (oldest first), then the rest newest first. No reporter id or client key. */
+  async listReports(status?: ReportStatus): Promise<ReportListItem[]> {
+    const data = await this.snapshot();
+    const at = this.timestamp();
+    const rank: Record<ReportStatus, number> = { open: 0, actioned: 1, dismissed: 2 };
+    return data.reports
+      .filter((row) => !status || row.status === status)
+      .sort(
+        (a, b) =>
+          rank[a.status] - rank[b.status] ||
+          (a.status === 'open' ? a.createdAt.localeCompare(b.createdAt) : b.createdAt.localeCompare(a.createdAt)),
+      )
+      .slice(0, 200)
+      .map((row) => {
+        let label: string | null = null;
+        let live = false;
+        if (row.targetKind === 'trip') {
+          const trip = data.trips.find((candidate) => candidate.id === row.targetId);
+          if (trip) {
+            label = trip.title;
+            live = isCommunityVisible(trip);
+          }
+        } else {
+          const review = data.communityReviews.find((candidate) => candidate.id === row.targetId);
+          if (review) {
+            label = review.body.slice(0, 120);
+            live = review.status === 'approved' && !restrictionFor(data, at, review);
+          }
+        }
+        return {
+          id: row.id,
+          targetKind: row.targetKind,
+          targetId: row.targetId,
+          targetLabel: label,
+          targetLive: live,
+          reason: row.reason,
+          note: row.note,
+          status: row.status,
+          signedIn: row.reporterId !== null,
+          createdAt: row.createdAt,
+          handledAt: row.handledAt,
+          handledBy: row.handledBy,
+          handlerReason: row.handlerReason,
+        };
+      });
+  }
+
+  /**
+   * Staff closes a report. `actioned` only marks it: removing the content stays
+   * with the existing remove actions. Idempotent for the same outcome (no second
+   * event); a different outcome on a closed report is `invalid_state`. One audit
+   * event on the reported trip or review.
+   */
+  resolveReport(reportId: string, input: ResolveReportInput, actor: string): Promise<ReportStatus> {
+    return this.transaction((data) => {
+      const index = data.reports.findIndex((row) => row.id === reportId);
+      const row = data.reports[index];
+      if (!row) throw notFound('report', reportId);
+      if (row.status !== 'open') {
+        if (row.status === input.outcome) return row.status;
+        throw invalidState(`the report is already ${row.status}`);
+      }
+      const at = this.timestamp();
+      this.record(data, {
+        targetKind: row.targetKind,
+        targetId: row.targetId,
+        actorId: actor,
+        action: input.outcome === 'dismissed' ? 'report_dismissed' : 'report_actioned',
+        fromStatus: 'open',
+        toStatus: input.outcome,
+        reason: input.reason,
+      });
+      data.reports[index] = {
+        ...row,
+        status: input.outcome,
+        handledAt: at,
+        handledBy: actor.slice(0, 80),
+        handlerReason: input.reason,
+      };
+      return input.outcome;
     });
   }
 
@@ -3050,6 +3193,13 @@ function isShareable(
   return trip.status === 'active' && trip.visibility !== 'private' && trip.shareToken !== null;
 }
 
+/** A trip the public gallery shows: active, public, listing approved. Only these can be reported. */
+function isCommunityVisible(trip: Trip): boolean {
+  return (
+    isShareable(trip) && trip.visibility === 'public' && trip.listing?.status === 'approved' && trip.listing.decidedAt !== null
+  );
+}
+
 /** A guest can post at most this many reviews of one place per day, across all clients. */
 const GUEST_REVIEWS_PER_PLACE_PER_DAY = 20;
 
@@ -3098,6 +3248,7 @@ function ownReviewOf(review: CommunityReview): OwnReview {
 /** The public projection of a review. Named field by field: no spread. */
 function publicReviewOf(review: CommunityReview): PublicCommunityReview {
   return {
+    id: review.id,
     placeSlug: review.placeSlug,
     rating: review.rating,
     body: review.body,
@@ -3157,6 +3308,7 @@ function newShareToken(): string {
 function withTripDefaults(data: PlannerData): PlannerData {
   data.auditEvents ??= [];
   data.termsAcceptances ??= [];
+  data.reports ??= [];
   for (const trip of data.trips) {
     trip.planningStatus ??= 'draft';
     trip.visibility ??= 'private';

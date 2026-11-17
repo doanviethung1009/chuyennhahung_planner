@@ -59,7 +59,7 @@ describe('Postgres rate limiter (fake pool)', () => {
     const sweeps = calls.filter((c) => c.text.startsWith('DELETE'));
     expect(sweeps).toHaveLength(1);
     expect(sweeps[0]!.values).toEqual([10_000 - COUNTER_RETENTION_MS]);
-    expect(COUNTER_RETENTION_MS).toBeLessThanOrEqual(2 * 60 * 60_000);
+    expect(COUNTER_RETENTION_MS).toBeLessThanOrEqual(48 * 60 * 60_000);
   });
 
   it('refuses a window longer than half the retention', () => {

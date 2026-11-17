@@ -314,7 +314,7 @@ describe('staff can switch off a review author (ADR 0015)', () => {
     expect(JSON.stringify(queue)).not.toMatch(/authorId|guestKey/);
     const [item] = (await planner.listApprovedReviews()).items;
     expect(Object.keys(item!).sort()).toEqual(
-      ['author', 'body', 'createdAt', 'lang', 'placeSlug', 'rating', 'visitedOn'].sort(),
+      ['author', 'body', 'createdAt', 'id', 'lang', 'placeSlug', 'rating', 'visitedOn'].sort(),
     );
   });
 
@@ -383,7 +383,7 @@ describe('public projection and summary', () => {
     );
     const [item] = (await planner.listApprovedReviews()).items;
     expect(Object.keys(item ?? {}).sort()).toEqual(
-      ['author', 'body', 'createdAt', 'lang', 'placeSlug', 'rating', 'visitedOn'].sort(),
+      ['author', 'body', 'createdAt', 'id', 'lang', 'placeSlug', 'rating', 'visitedOn'].sort(),
     );
   });
 

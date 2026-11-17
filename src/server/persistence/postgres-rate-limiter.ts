@@ -48,9 +48,10 @@ export interface PostgresRateLimiterOptions {
  * Rows older than this are deleted by the sweep, whatever limiter wrote them,
  * so no limiter's window may be longer than half of it (checked on creation).
  * Short on purpose: a client rotating forged keys leaves one row per key per
- * window, so rows can only pile up for about this long.
+ * window, so rows can only pile up for about this long. 48 h so the daily
+ * report limit (batch 10.5) fits; it was 2 h while every limiter was hourly.
  */
-export const COUNTER_RETENTION_MS = 2 * 60 * 60_000;
+export const COUNTER_RETENTION_MS = 48 * 60 * 60_000;
 export const MAX_WINDOW_MS = COUNTER_RETENTION_MS / 2;
 /** Rows deleted per statement, and statements per sweep, so one sweep stays light. */
 const SWEEP_BATCH = 1000;

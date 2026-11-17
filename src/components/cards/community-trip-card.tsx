@@ -5,6 +5,7 @@ import { getDestination } from '@/content/destinations';
 import type { CommunityTripCard as Card } from '@/server/planner/schemas';
 import { CoverImage } from '@/components/ui/cover-image';
 import { Badge } from '@/components/ui/badge';
+import { ReportButton } from '@/components/reports/report-button';
 
 /**
  * A community trip. The title and author are traveller-written text: they are
@@ -16,10 +17,10 @@ export async function CommunityTripCard({ trip, locale }: { trip: Card; locale: 
   const destination = getDestination(trip.destinationSlug);
 
   return (
-    <article className="group h-full">
+    <article className="group flex h-full flex-col gap-1">
       <Link
         href={{ pathname: '/shared/[token]', params: { token: trip.shareToken } }}
-        className="flex h-full flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface shadow-soft transition-shadow duration-300 ease-gentle hover:shadow-lift"
+        className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface shadow-soft transition-shadow duration-300 ease-gentle hover:shadow-lift"
       >
         <div className="relative h-40 overflow-hidden bg-surface-muted">
           {destination ? (
@@ -45,6 +46,8 @@ export async function CommunityTripCard({ trip, locale }: { trip: Card; locale: 
           </p>
         </div>
       </Link>
+      {/* A sibling of the link, never inside it: no nested interactive controls. */}
+      <ReportButton target={{ kind: 'trip', shareToken: trip.shareToken }} />
     </article>
   );
 }

@@ -926,10 +926,12 @@ export type GuestReviewInput = z.infer<typeof guestReviewInputSchema>;
 export type ReviewStatus = z.infer<typeof reviewStatusSchema>;
 
 /**
- * The public review. An allow-list built field by field: no id, author id,
+ * The public review. An allow-list built field by field: only the opaque review id, no author id,
  * guest key, moderation field or source. Always self-reported, never "verified".
  */
 export interface PublicCommunityReview {
+  /** Opaque random id (`rev_…`), non-personal; only so a reader can report this review (batch 10.5). */
+  id: string;
   placeSlug: string;
   rating: number;
   body: string;
@@ -974,4 +976,81 @@ export interface OwnReview {
   status: ReviewStatus;
   rejectReason: string | null;
   updatedAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Reports (batch 10.5, ADR 0019)
+// ---------------------------------------------------------------------------
+
+export const REPORT_REASONS = ['spam', 'harassment', 'personal_data', 'copyright', 'misleading', 'other'] as const;
+export const reportReasonSchema = z.enum(REPORT_REASONS);
+export const reportStatusSchema = z.enum(['open', 'actioned', 'dismissed']);
+export type ReportReason = z.infer<typeof reportReasonSchema>;
+export type ReportStatus = z.infer<typeof reportStatusSchema>;
+
+/**
+ * One reader's report of a community trip or review. `clientKey` is the hashed
+ * guest key (null for a member, who is `reporterId`); neither is ever returned
+ * by an API. `targetId` is the trip id or review id; the public share token of
+ * a trip is resolved server-side and never stored.
+ */
+export const reportSchema = z.object({
+  id: plannerIdSchema,
+  reporterId: plannerIdSchema.nullable().default(null),
+  clientKey: z.string().max(64).nullable().default(null),
+  targetKind: z.enum(['trip', 'review']),
+  targetId: plannerIdSchema,
+  reason: reportReasonSchema,
+  note: z.string().max(500).nullable().default(null),
+  status: reportStatusSchema.default('open'),
+  createdAt: timestampSchema,
+  handledAt: timestampSchema.nullable().default(null),
+  handledBy: z.string().max(80).nullable().default(null),
+  handlerReason: z.string().max(500).nullable().default(null),
+});
+export type Report = z.infer<typeof reportSchema>;
+
+/**
+ * `POST /api/community/reports` body. Strict. A trip is named by its public
+ * `shareToken`, a review by its public `id` (`targetId`). `website` is the honeypot.
+ */
+export const createReportSchema = z
+  .object({
+    targetKind: z.enum(['trip', 'review']),
+    targetId: plannerIdSchema.optional(),
+    shareToken: z.string().regex(SHARE_TOKEN_PATTERN).optional(),
+    reason: reportReasonSchema,
+    note: z.string().trim().max(500).optional(),
+    website: z.string().max(200).optional(),
+  })
+  .strict()
+  .refine(
+    (v) => (v.targetKind === 'trip' ? v.shareToken !== undefined && v.targetId === undefined : v.targetId !== undefined && v.shareToken === undefined),
+    { message: 'a trip report needs shareToken, a review report needs targetId', path: ['targetId'] },
+  );
+export type CreateReportInput = z.infer<typeof createReportSchema>;
+
+/** `POST /api/admin/community/reports/[id]/resolve` body. Strict. */
+export const resolveReportSchema = z
+  .object({ outcome: z.enum(['dismissed', 'actioned']), reason: z.string().trim().min(3).max(500) })
+  .strict();
+export type ResolveReportInput = z.infer<typeof resolveReportSchema>;
+
+/** A staff row: no reporter id and no client key, only whether the reporter was signed in. */
+export interface ReportListItem {
+  id: string;
+  targetKind: 'trip' | 'review';
+  targetId: string;
+  /** Trip title or the start of the review text; `null` once the target is gone. */
+  targetLabel: string | null;
+  /** Still public and removable; false = already removed/withdrawn, nothing to act on. */
+  targetLive: boolean;
+  reason: ReportReason;
+  note: string | null;
+  status: ReportStatus;
+  signedIn: boolean;
+  createdAt: string;
+  handledAt: string | null;
+  handledBy: string | null;
+  handlerReason: string | null;
 }
