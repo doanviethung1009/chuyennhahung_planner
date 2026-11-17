@@ -1,5 +1,5 @@
 # Task Contract: P07-11 Admin dashboard
-- Class: M · Branch: `feat/admin-dashboard` · Depends on: P07-10; soft on batch 10.2 (activity card) · Index: [admin-workspace-index.md](admin-workspace-index.md)
+- Class: M · Branch: `feat/admin-dashboard` · Depends on: P07-10, **P07-19 (merged first)**; soft on batch 10.2 (activity card) · Index: [admin-workspace-index.md](admin-workspace-index.md)
 - Desired outcome: `/admin` shows what is waiting, per role, each card linking to its screen.
 - Scope IN: `src/server/admin/overview.ts` (composes counts from existing repositories: pending trip listings and reviews via the existing queue methods, content drafts, users per role and disabled/soft-deleted, integrity finding count, runtime summary for super admin); `GET /api/admin/overview` (`adminContentRoute`-style session or service, `no-store`, cards filtered by `can`); dashboard cards in `/admin`; activity card only if the 10.2 events route exists on `main`, else omitted (no placeholder).
 - Scope OUT: new tables, writes, charts, analytics (Phase 08), polling/auto-refresh, repository changes.
@@ -11,4 +11,4 @@
 - Security: no secret or email in payload; `no-store`; same helpers as other admin routes; `/sec-check` not required, recommended only if the payload grows.
 - Rollback: revert PR; `/admin` falls back to the P07-10 overview.
 - Docs: backend role writes the feature doc and runbook row; frontend adds UI section.
-- Budget: sub-agents 0. State: READY (owner approved 2026-11-17)
+- Budget: sub-agents 0. State: READY (owner approved 2026-11-17) — **start only after P07-19 is merged**: `/admin` then lives at `src/app/(admin)/[locale]/admin/page.tsx` and uses `AdminPageHeader` (index path mapping).
