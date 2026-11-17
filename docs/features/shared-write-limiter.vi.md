@@ -17,7 +17,7 @@ Phản hồi giữ nguyên: `429 rate_limited` kèm `Retry-After` là số nguy�
 
 ## Data
 
-Bảng `rate_limit_counters` (migration `0011_rate_limit_counters.sql`, rollback thủ công `db/rollback/0011_rate_limit_counters.sql`): `key` text (SHA-256 hex của tên limiter + khóa người gọi, nên không có địa chỉ hay id người dùng ở dạng rõ), `window_start` bigint (epoch ms), `count` integer; khóa chính `(key, window_start)`; không có khóa ngoại (ADR 0013). Không nằm trong export/import JSON: bộ đếm bỏ đi được. Chỉ là bộ đếm, không bao giờ là nội dung đánh giá.
+Bảng `rate_limit_counters` (migration `0011_rate_limit_counters.sql`, rollback thủ công `db/rollback/0011_rate_limit_counters.sql`): `key` text (HMAC-SHA256 hex, khóa bởi `GUEST_KEY_SECRET`, của tên limiter + khóa người gọi — ADR 0024; không địa chỉ hay id nào ở dạng rõ và không suy lại được nếu thiếu secret. Thiếu secret thì mọi lần kiểm là `503` và không đếm gì; nên không có địa chỉ hay id người dùng ở dạng rõ), `window_start` bigint (epoch ms), `count` integer; khóa chính `(key, window_start)`; không có khóa ngoại (ADR 0013). Không nằm trong export/import JSON: bộ đếm bỏ đi được. Chỉ là bộ đếm, không bao giờ là nội dung đánh giá.
 
 ## How it works
 

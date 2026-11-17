@@ -6,7 +6,7 @@ Trạng thái: **Đề xuất**. Nhãn **[C] [P] [A]**: xem
 [specs-community-overview.vi.md](specs-community-overview.vi.md). Đây là mô hình đe dọa lúc
 thiết kế, không phải một lần review. Một lần review `security` cho bề mặt cộng đồng **hiện có** đã chạy ngày 2026-11-16 (PASS_WITH_WARNINGS; các phát hiện là mục backlog P10-11 đến P10-16); nó không phủ thiết kế này. Với các phase mới, reviewer **CHƯA CHẠY**; khuyến nghị chạy trước Phase 13 và Phase 14 và chỉ chạy khi chủ dự án yêu cầu (`/sec-check`).
 
-Trạng thái phát hiện (batch 10.6a): P10-15 đã đóng (cổng phía server `contribution_closed`), P10-16 đã đóng (lọc tên dành riêng), P10-12 đóng ở mức code/test, còn kiểm tra proxy thật trên VM thuộc chủ dự án (D10); trần theo giờ toàn cục đã đánh giá và không thêm. P10-11 (HMAC `guestKey`) vẫn mở, bị chặn bởi D4 (batch 10.6b).
+Trạng thái phát hiện (batch 10.6a): P10-15 đã đóng (cổng phía server `contribution_closed`), P10-16 đã đóng (lọc tên dành riêng), P10-12 đóng ở mức code/test, còn kiểm tra proxy thật trên VM thuộc chủ dự án (D10); trần theo giờ toàn cục đã đánh giá và không thêm. P10-11 đã đóng ở mức code/test (batch 10.6b, ADR 0024: khóa khách HMAC, xóa sau 30 ngày, migration `0014`); cần `GUEST_KEY_SECRET` ở mọi môi trường trước khi deploy.
 
 ## Mục tiêu và phạm vi
 

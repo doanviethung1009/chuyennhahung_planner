@@ -1,4 +1,6 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
+import { readGuestKeySecret } from '../src/server/community/guest-key';
 import { ContentError } from '../src/server/content/errors';
 import {
   COUNTER_RETENTION_MS,
@@ -6,6 +8,8 @@ import {
   createPostgresRateLimiter,
   type PgQueryable,
 } from '../src/server/persistence/postgres-rate-limiter';
+
+const SECRET = 'limiter-test-secret-0123456789abcdefghij';
 
 /** No database needed: a fake pool that records statements and can fail. */
 function fakePool(count = 1) {
@@ -28,7 +32,23 @@ describe('Postgres rate limiter (fake pool)', () => {
     const stored = calls[0]!.values[0] as string;
     expect(stored).toMatch(/^[0-9a-f]{64}$/);
     expect(JSON.stringify(calls)).not.toContain('203.0.113.9');
-    expect(counterKey('a', 'k')).not.toBe(counterKey('b', 'k'));
+    expect(counterKey(SECRET, 'a', 'k')).not.toBe(counterKey(SECRET, 'b', 'k'));
+  });
+
+  it('keys the counter with the HMAC secret: no unsalted hash of the address, and a missing secret is a 503 with no statement', async () => {
+    const { pool, calls } = fakePool();
+    const secret = () => SECRET;
+    await createPostgresRateLimiter({ pool, name: 'a', limit: 3, windowMs: 1000, secret }).check('203.0.113.9');
+    expect(calls[0]!.values[0]).toBe(counterKey(SECRET, 'a', '203.0.113.9'));
+    const unsalted = createHash('sha256').update('a\u0000203.0.113.9').digest('hex');
+    expect(calls[0]!.values[0]).not.toBe(unsalted);
+    expect(counterKey(SECRET, 'a', 'k')).not.toBe(counterKey('other-secret-0123456789abcdefghijkl', 'a', 'k'));
+
+    const none = fakePool();
+    const bare = createPostgresRateLimiter({ pool: none.pool, name: 'a', limit: 3, windowMs: 1000, secret: () => readGuestKeySecret({}) });
+    const error = await bare.check('k').catch((e: unknown) => e);
+    expect((error as ContentError).code).toBe('service_unavailable');
+    expect(none.calls).toHaveLength(0);
   });
 
   it('fails closed: a database error is service_unavailable with no driver detail', async () => {

@@ -17,7 +17,7 @@ Responses are unchanged: `429 rate_limited` with an integer `Retry-After` when o
 
 ## Data
 
-Table `rate_limit_counters` (migration `0011_rate_limit_counters.sql`, manual rollback `db/rollback/0011_rate_limit_counters.sql`): `key` text (SHA-256 hex of limiter name + caller key, so no address or user id in the clear), `window_start` bigint (epoch ms), `count` integer; primary key `(key, window_start)`; no foreign keys (ADR 0013). Not part of the JSON export/import: counters are disposable. Only counters, never review content.
+Table `rate_limit_counters` (migration `0011_rate_limit_counters.sql`, manual rollback `db/rollback/0011_rate_limit_counters.sql`): `key` text (HMAC-SHA256 hex, keyed by `GUEST_KEY_SECRET`, of limiter name + caller key — ADR 0024; no address or user id in the clear and none re-derivable without the secret. Without the secret every check is `503` and nothing is counted), `window_start` bigint (epoch ms), `count` integer; primary key `(key, window_start)`; no foreign keys (ADR 0013). Not part of the JSON export/import: counters are disposable. Only counters, never review content.
 
 ## How it works
 

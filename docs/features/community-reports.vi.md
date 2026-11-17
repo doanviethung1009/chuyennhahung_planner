@@ -28,7 +28,7 @@ Chưa làm: tự ẩn theo số báo cáo, báo lại cho người báo cáo, kh
 
 ## Data
 
-`Report` — `id` (`rpt_…`), `reporterId` (thành viên) hoặc `null`, `clientKey` (khách: `sha256(client key)` cắt 32 hex, còn lại `null`), `targetKind`, `targetId` (id chuyến hoặc id đánh giá; share token được giải mã ở server và không bao giờ lưu), `reason`, `note`, `status`, `createdAt`, `handledAt`, `handledBy`, `handlerReason`. Bảng `reports` (migration `0013_reports.sql`, rollback thủ công `db/rollback/0013_reports.sql`), khóa JSON `reports`, chỉ mục `(status, created_at)`, không khóa ngoại (ADR 0013). Dữ liệu cá nhân: id thành viên hoặc khóa đã băm, và ghi chú tự do (không bao giờ ghi log). Xóa vĩnh viễn tài khoản sẽ xóa báo cáo của thành viên đó. Code cũ từ chối file JSON export có `reports` (`.strict()`).
+`Report` — `id` (`rpt_…`), `reporterId` (thành viên) hoặc `null`, `clientKey` (khách: `HMAC-SHA256(GUEST_KEY_SECRET, client key)` cắt 32 hex, ADR 0024; `null` với thành viên và bị xóa về `null` sau 30 ngày kể từ lúc báo cáo, bản báo cáo vẫn giữ), `targetKind`, `targetId` (id chuyến hoặc id đánh giá; share token được giải mã ở server và không bao giờ lưu), `reason`, `note`, `status`, `createdAt`, `handledAt`, `handledBy`, `handlerReason`. Bảng `reports` (migration `0013_reports.sql`, rollback thủ công `db/rollback/0013_reports.sql`), khóa JSON `reports`, chỉ mục `(status, created_at)`, không khóa ngoại (ADR 0013). Dữ liệu cá nhân: id thành viên hoặc khóa đã băm, và ghi chú tự do (không bao giờ ghi log). Xóa vĩnh viễn tài khoản sẽ xóa báo cáo của thành viên đó. Code cũ từ chối file JSON export có `reports` (`.strict()`).
 
 `PublicCommunityReview` có thêm `id` (id ngẫu nhiên `rev_…` của đánh giá, không cá nhân) để người đọc chỉ đúng đánh giá. Đây là thay đổi duy nhất của một bản chiếu công khai; `tests/community-reviews.test.ts` ("keeps the public projection") nay liệt kê `id` trong các khóa.
 
@@ -57,6 +57,7 @@ Giao diện: `src/components/reports/report-button.tsx` — nút thật (≥44px
 
 ## Limits and open questions
 
+- **Quyền riêng tư của khóa khách (ADR 0024, batch 10.6b).** `clientKey` của khách là băm có khóa, bị xóa sau 30 ngày bởi lượt dọn trong các giao dịch ghi sau đó. Thiếu `GUEST_KEY_SECRET` thì báo cáo của khách trả `503` và không lưu. Địa chỉ thô trong log nginx nằm ngoài ứng dụng.
 - Giới hạn của khách dựa trên `x-forwarded-for`, client có thể giả mạo (batch 10.6a đã ghim hành vi sau nginx của repo, nơi nó không giả được; cấu hình thật trên VM là việc chủ dự án kiểm, D10); quy tắc chống trùng theo người báo cáo cũng dùng cùng khóa.
 - Không có ngưỡng, không báo lại người báo cáo, không kháng nghị. Báo cáo về mục đã gỡ vẫn nằm trong danh sách và được đánh dấu không còn xử lý được.
 - Rollback: gỡ nút và các route; chạy SQL rollback bằng tay; các dòng đã lưu vô hại, và `id` của đánh giá để lại cũng không sao.

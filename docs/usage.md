@@ -29,6 +29,7 @@ closed.
 | Variable | Default | What it does |
 |---|---|---|
 | `NEXT_PUBLIC_SITE_URL` | `https://chuyennhahung.vn` | Canonicals, `hreflang`, sitemap. Must be set at **build** time |
+| `GUEST_KEY_SECRET` | *unset* | Server-only HMAC secret (≥ 32 chars, like `ADMIN_API_TOKEN`; generate with `openssl rand -base64 36`) for guest review/report keys and, on PostgreSQL, the write limiters' counter keys ([ADR 0024](adr/0024-guest-identity-privacy.md)). **Unset or shorter, guest reviews and reports (and, on PostgreSQL, every review/report write that passes a limiter) answer `503 service_unavailable` and store nothing — there is no unsalted fallback.** Never log, echo or commit it. Rotating it resets guest bans and the 24 h de-duplication at once |
 | `ADMIN_API_TOKEN` | *unset* | Guards every admin route. Unset, or shorter than 32 chars, and they all answer `503` — never an open default |
 | `TRAVEL_CONTENT_STORE` | `.data/travel-content.json` | Where the content store lives. Ignored when `CONTENT_DATABASE_URL` is set |
 | `CONTENT_DATABASE_URL` | *unset* | PostgreSQL connection string for Travel Content. Set: the content store uses PostgreSQL and never falls back to the file ([ADR 0013](adr/0013-content-on-postgres-tables.md)). May be the Planner's database or its own. A secret — environment only. See *Run Travel Content on PostgreSQL* |

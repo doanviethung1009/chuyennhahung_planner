@@ -15,6 +15,7 @@
 #   NEXT_PUBLIC_SITE_URL   public origin, e.g. http://192.168.100.140 — build-time
 #   PLANNER_DATABASE_URL   depends on the overlay — see its header
 #   ADMIN_API_TOKEN        ≥ 32 characters (openssl rand -base64 36)
+#   GUEST_KEY_SECRET       ≥ 32 characters (openssl rand -base64 36), ADR 0024
 #   TRUST_PROXY_HEADERS    true — nginx overwrites X-Forwarded-Proto/-For
 #   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET   optional (Google sign-in)
 #   APP_SRC                path of the repository checkout (default ./app)
@@ -42,6 +43,8 @@ services:
       # Optional: Travel Content on PostgreSQL (ADR 0013). Empty = JSON file on the volume.
       CONTENT_DATABASE_URL: ${CONTENT_DATABASE_URL:-}
       ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:-}
+      # ADR 0024: unset or < 32 chars, guest reviews/reports answer 503 (fail closed).
+      GUEST_KEY_SECRET: ${GUEST_KEY_SECRET:-}
       TRUST_PROXY_HEADERS: ${TRUST_PROXY_HEADERS:-true}
       DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-5}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
