@@ -1,17 +1,31 @@
-# Phase hiện tại — Phase 05: Story → Planner, My Trips & Sharing (ĐÃ ĐÓNG 2026-11-16)
+# Phase hiện tại — Phase 10: Community Foundations (GẦN ĐÓNG, CHƯA ĐÓNG — cập nhật 2026-11-17)
 
 Roadmap đầy đủ: [`PHASES.md`](PHASES.md) · Tồn đọng: [`backlog.md`](backlog.md) ·
 Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
 
-- **Trạng thái:** **Done** — đóng 2026-11-16 (sec PASS_WITH_WARNINGS, qc PASS với gaps; không BLOCKED). Cảnh báo ở backlog P05-7..P05-11. Việc kế tiếp: mở Phase 07 (phần còn lại) / Phase 10 — cần ADR trước khi code.
-- **Cập nhật:** 2026-11-16, kiểm trên `main` @ `e362aea`; chủ dự án chốt khuyến nghị Q1–Q12 của `.claude/contracts/community-platform-audit.md`.
-- **Deploy:** chỉ dev VM (192.168.100.140, đến commit `0216f46` theo báo cáo 2026-11-15); chưa có production — xem `DEPLOY-STATUS.md`.
-- **Phase kế tiếp:** **Phase 10 — Community Foundations** (P1), cùng phần còn thiếu của Phase 07
-  (audit log). Điều kiện: Phase 05 đóng — chạy `/sec-check` + `/qc-check` (khuyến nghị Q4),
-  hoặc chủ nhà chấp nhận rủi ro bằng văn bản. Phase 07 phần lớn đã có code (xem `PHASES.md`).
-  Phase 10 cần ADR riêng trước khi code.
+- **Trạng thái:** **Gần đóng — chưa đóng.** `main` @ `5b755d1`. Không đánh dấu Done cho tới khi đủ điều kiện đóng bên dưới.
+- **Đã merge:** PR #112, #115, #117, #122, #126, #129, #132, #136 (batch 10.1–10.7); migration `0010`–`0014`; [ADR 0019](../../docs/adr/0019-community-foundation.md) và [ADR 0024](../../docs/adr/0024-guest-identity-privacy.md) Accepted. Ngoài contract: #137 (giới hạn review khách 10/giờ + sự kiện `guest_limit`), #138 (tên địa điểm + nhãn `guest_limit` trong admin), #139 (staff ẩn danh hóa review khách theo yêu cầu xóa dữ liệu).
+- **Review độc lập 2026-11-17:** `/sec-check` PASS_WITH_WARNINGS, `/qc-check` PASS_WITH_WARNINGS, không BLOCKED. Cổng đóng góp đã mở nên W1/W2 mức Medium đang có hiệu lực — chi tiết ở `backlog.md` (mục Phase 10).
+- **Phase kế tiếp:** **Phase 11 — Member Profiles & Creator Terms**; ADR 0025 đang **Proposed** ở PR #141 (chưa merge, chưa có trên `main`).
+- **Deploy:** chỉ dev VM (192.168.100.140); chưa có production — xem `DEPLOY-STATUS.md`.
 
-## Đã ship (có bằng chứng)
+## Điều kiện đóng Phase 10 (chưa đủ)
+
+1. Đồng bộ tài liệu với thực tế — chính PR `docs/phase10-roadmap-sync`.
+2. Chủ dự án quyết định W1 (đường 429 review khách chạy transaction toàn store) và W2 (khóa limiter chưa gom IPv6 về /64): sửa, hoặc chấp nhận rủi ro bằng văn bản.
+3. Smoke có đăng nhập (cổng Terms, hàng đợi admin, audit trail, bộ đếm qua restart, UI 375/768/1280) — hoặc chủ dự án chấp nhận NOT RUN.
+4. Việc của chủ dự án: P10-7 (sao lưu, `metadataBase`, HSTS), D5 (text Terms), D10; thêm `GUEST_KEY_SECRET=` vào `deploy/.env.example`.
+5. Hai câu hỏi mở về #139: đánh giá đặt về 1 hay giữ số gốc; có xóa `reports.note` của báo cáo trỏ review đã ẩn danh hóa hay không.
+
+---
+
+# Phase 05: Story → Planner, My Trips & Sharing (ĐÃ ĐÓNG 2026-11-16 — lịch sử)
+
+- **Trạng thái:** **Done** — đóng 2026-11-16 (sec PASS_WITH_WARNINGS, qc PASS với gaps; không BLOCKED). Cảnh báo ở backlog P05-7..P05-11.
+- **Cập nhật (lúc đóng):** 2026-11-16, kiểm trên `main` @ `e362aea`; chủ dự án chốt khuyến nghị Q1–Q12 của `.claude/contracts/community-platform-audit.md`.
+- Ghi chú lúc đóng: "Phase kế tiếp: Phase 10 + phần còn lại của 07" — nay Phase 10 đã gần đóng (xem trên).
+
+## Đã ship (có bằng chứng) — Phase 05
 
 | Hạng mục | Bằng chứng |
 |---|---|
