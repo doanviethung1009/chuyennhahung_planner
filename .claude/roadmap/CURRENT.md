@@ -1,4 +1,4 @@
-# Phase hiện tại — Phase 10: Community Foundations (GẦN ĐÓNG, CHƯA ĐÓNG — cập nhật 2026-11-17)
+# Phase hiện tại — Phase 10: Community Foundations (GẦN ĐÓNG, CHƯA ĐÓNG — cập nhật 2026-11-18)
 
 Roadmap đầy đủ: [`PHASES.md`](PHASES.md) · Tồn đọng: [`backlog.md`](backlog.md) ·
 Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
@@ -9,13 +9,23 @@ Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
 - **Phase kế tiếp:** **Phase 11 — Member Profiles & Creator Terms**; ADR 0025 đang **Proposed** ở PR #141 (chưa merge, chưa có trên `main`).
 - **Deploy:** chỉ dev VM (192.168.100.140); chưa có production — xem `DEPLOY-STATUS.md`.
 
-## Điều kiện đóng Phase 10 (chưa đủ)
+## Điều kiện đóng Phase 10 (chưa đủ — rà closeout cuối 2026-11-18)
 
-1. Đồng bộ tài liệu với thực tế — chính PR `docs/phase10-roadmap-sync`.
-2. W1 và W2: đã sửa và merge ở PR #143 (`9f27432`); chạy lại `/sec-check` cho phần này là khuyến nghị, hiện NOT RUN.
-3. Smoke có đăng nhập — **gần đủ** (2026-11-18, admin1): hàng đợi admin, UI 375/768/1280, báo cáo lập→resolve→gỡ, cổng Terms chặn rồi cho phép + UI Terms 3 độ rộng, chuyến request→approve→remove (audit đủ) đều PASS. NOT RUN: bộ đếm limiter qua restart (cần restart app trên VM), view restrictions chi tiết. Chờ chủ dự án restart-test hoặc chấp nhận NOT RUN.
-4. Việc của chủ dự án: P10-7 (sao lưu, `metadataBase`, HSTS), D5 (text Terms), D10; thêm `GUEST_KEY_SECRET=` vào `deploy/.env.example` (kiểm 2026-11-17: chưa có trên `main`).
-5. Về #139: chủ dự án đã chốt "xóa hết" (2026-11-17); còn phải làm task code xóa `reports.note` và bỏ số sao gốc khi ẩn danh hóa review khách (chưa làm).
+Quyết định chủ dự án 2026-11-18: **P10-7 chuyển sang Phase 09** (P09-6). **DEV Risk Accepted:** dev chấp nhận mất dữ liệu thử nghiệm, không bắt buộc sao lưu tự động, không cần `metadataBase` production, không cần HSTS trên HTTP/IP nội bộ. Yêu cầu Production vẫn bắt buộc trước go-live. Lịch sử P10-7 giữ nguyên ở `backlog.md`.
+
+Trạng thái PR (kiểm `gh`, 2026-11-18): #143 MERGED; #139 MERGED (staff ẩn danh hóa review khách); #144 MERGED; **#140 OPEN** (siết cấu hình deploy: nginx log, compose, env preflight; CI xanh, chưa merge); **#145 OPEN** (docs smoke Terms/chuyến + `GUEST_KEY_SECRET=` trong `.env.example`; CI xanh, chưa merge); #141 OPEN (ADR 0025, Phase 11). **Chưa có PR nào** cho D5 (text Terms) hay cho task xóa `reports.note`/số sao gốc.
+
+Đã xong: W1/W2 sửa ở #143; `/sec-check` + `/qc-check` PASS_WITH_WARNINGS (không BLOCKED); smoke có đăng nhập (admin, báo cáo, cổng Terms, chuyến request→approve→remove) PASS.
+
+### Blocker còn lại (vì vậy Phase 10 KHÔNG đánh dấu Done)
+
+1. **Task code "xóa hết" (#139)** — chủ dự án đã chốt xóa `reports.note` và bỏ số sao gốc khi ẩn danh hóa review khách; **chưa làm, chưa có PR**. Cần làm, hoặc chủ dự án chấp nhận hoãn bằng văn bản (ghi cụ thể).
+2. **D5 — text Terms** khớp ảnh/video + tăng `termsVersion` (việc chủ dự án): chưa có; chưa được chấp nhận hoãn.
+3. **Smoke NOT RUN:** bộ đếm limiter qua restart app (cần restart VM), view restrictions chi tiết, `build`, `/sec-check` chạy lại cho phần #143. Cần chạy, hoặc chủ dự án chấp nhận từng mục.
+4. **Cảnh báo chưa được chấp nhận cụ thể:** Sec W3–W7 [Low], QC F2–F4 [Low], thiếu test `guest_limit` ở tầng route.
+5. **Phụ thuộc:** D10 (proxy/log nginx thật; #140 chưa merge); #145 chưa merge nên `GUEST_KEY_SECRET=` chưa có trên `main`; trang Chính sách riêng tư (P11-D1) thuộc Phase 11.
+
+Phase 10 chỉ chuyển Done khi 1–4 xong hoặc được chủ dự án chấp nhận từng mục, và 5 được ghi nhận đầy đủ.
 
 ---
 
