@@ -845,6 +845,12 @@ export const reviewEraseSchema = z.object({ reason: z.string().trim().min(3).max
 export const ERASED_REVIEW_BODY =
   'Nội dung đã được gỡ theo yêu cầu xóa dữ liệu. / Content removed on a data-erasure request.';
 
+/**
+ * What an erased review's guest restriction keeps as its reason (the column is
+ * NOT NULL, 3+ characters): the staff text may have quoted the erased review.
+ */
+export const ERASED_REASON = 'Lý do đã được xóa theo yêu cầu xóa dữ liệu. / Reason removed on a data-erasure request.';
+
 /** A guest restriction lasts 30 days unless staff say otherwise, and never more than 30 (ADR 0015, cap lowered from 90 by ADR 0024). */
 export const GUEST_RESTRICTION_DEFAULT_DAYS = 30;
 /** ADR 0024: 30, so the key a restriction holds never outlives the guest-key retention. */
@@ -877,8 +883,9 @@ export const reviewRestrictionSchema = z.object({
 
 /**
  * One append-only record of a community action (ADR 0019 §2). Written in the
- * same transaction as the change; never updated or deleted by the app (only the
- * one-year retention sweep removes rows). `targetId` of a restriction on a guest
+ * same transaction as the change; never updated or deleted by the app, except the
+ * `reason` text blanked on a guest review erasure (`redactEventReasons`, ADR 0024 §8)
+ * and the one-year retention sweep. `targetId` of a restriction on a guest
  * is the restriction id, never the guest key.
  */
 export const auditEventSchema = z.object({

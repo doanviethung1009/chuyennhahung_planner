@@ -53,6 +53,7 @@ surface, and no inert schema).
 
 ### 2. `AuditEvent`: an append-only log inside the same transaction
 
+- One named exception (ADR 0024 §8, guest review erasure): `redactEventReasons` blanks the staff-typed `reason` of the events on an erased review and its guest restriction, never action, actor, statuses or time.
 - Fields: `id`, `targetKind` (`trip`, `review`, `user`), `targetId`, `actorId`, `actorKind`
   (`user` or `service`), `action`, `fromStatus`, `toStatus`, `reason` (≤500), `createdAt`.
 - Written **in the same Planner-store transaction** as the change it describes, so a
