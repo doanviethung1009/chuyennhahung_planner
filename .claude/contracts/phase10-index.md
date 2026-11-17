@@ -1,6 +1,6 @@
 # Phase 10 — Community Foundations: Task Contract Index
 - Role: system-architect (main session, Single-Agent First). Subagents: 0. Nothing implemented, committed, pushed or deployed by this document.
-- Created: 2026-11-16. State of all batches: **READY** — owner approved D1–D12 as recommended on 2026-11-16. Still owner-side, not code: D4 (privacy policy, gates 10.6b only), D5 (exact Terms text, gates 10.4), D10 (real VM proxy/backups facts, gates 10.6a and 10.7). ADR 0019 status flips to Accepted at the start of 10.2 (docs change in that PR).
+- Created: 2026-11-16. State of all batches: **DONE 10.1–10.7 (2026-11-17); see "Batch status" below** (was READY) — owner approved D1–D12 as recommended on 2026-11-16. Still owner-side, not code: D4 (privacy policy, gates 10.6b only), D5 (exact Terms text, gates 10.4), D10 (real VM proxy/backups facts, gates 10.6a and 10.7). ADR 0019 status flips to Accepted at the start of 10.2 (docs change in that PR).
 - Sources (referenced, not restated): `docs/adr/0019-community-foundation.md` (Proposed), `.claude/roadmap/PHASES.md` §Phase 10, `.claude/roadmap/backlog.md` §Phase 10, `docs/specs-community-roadmap.md`, `docs/specs-community-moderation.md`, `…-database.md`, `…-api.md`, `…-security.md`, `…-qc.md`.
 - Parent design notes, kept as the evidence base for 10.1–10.3 (file:line citations, legacy behaviours): [community-foundation.md](community-foundation.md). Batches 10.1–10.3 cite it instead of repeating it.
 - Task IDs: the backlog IDs P10-1..P10-16 are **unchanged**. Batch numbers 10.1–10.7 are execution groupings only. Batch 10.1 has no backlog row (it is ADR 0019 §1, the enabler of P10-1); no new backlog ID is invented (decision D8).
@@ -71,3 +71,16 @@ Why this order: state machine first (pure, no data, wraps what exists); the audi
 | D12 | New short ADR (proposed 0020) for the Terms/Report/limiter-usage details, or fold them into the batch feature docs | Feature docs only, except 10.6b which needs an ADR/addendum (touches ADR 0015's key) | 10.4–10.6 |
 
 Approved. Start with 10.1 in its own session; one batch per session.
+
+## Batch status (synced 2026-11-17, `main` @ `104278b`)
+| Batch | State | PR |
+|---|---|---|
+| 10.1 | DONE | #112 |
+| 10.2 | DONE | #115 |
+| 10.3 | DONE | #117 |
+| 10.4 | DONE | #122 |
+| 10.5 | DONE | #126 |
+| 10.6a / 10.6b | DONE | #129 / #132 |
+| 10.7 | DONE (evidence; owner items open) | #136 |
+| 10.8 | **Not defined.** No contract exists. Unscheduled follow-ups are tracked as `P10-17..P10-21` in `backlog.md`. Create a contract only if the owner schedules them as one batch. | — |
+Out-of-batch merges after 10.7: #137 (guest review limit 10/hour, `guest_limit` event), #138 (place names + badge in review queue).

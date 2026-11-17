@@ -1,6 +1,6 @@
 # Task Contract 10.7 — QC, Security, DEV Smoke Test
 - Task IDs: P10-4 (smoke); P10-7 (owner infra, tracked here); reviews on demand
-- Class: S (evidence only; no source change) · State: READY (owner approved D1-D12 as recommended, 2026-11-16) · Subagents: 0
+- Class: S (evidence only; no source change) · State: DONE (evidence PR #136, 2026-11-17; owner-side items still open, see handoff phase10-10.7) · Subagents: 0
 - Objective: prove Phase 10 works on the dev VM and record independent review verdicts, then close the phase.
 - Scope:
   - **Smoke (P10-4)** on the deployed dev app (VM 192.168.100.140, ADR 0016 auto deploy): `/community-trips`, `/reviews`, admin community (queue, reviews, restrictions, events, reports); a listing request → approve → remove path produces audit events; a report is filed and resolved; the Terms gate blocks then allows; a review is rate-limited (429) and survives an app restart (shared limiter). Evidence (statuses, screenshots or response excerpts without personal data) in the handoff note.

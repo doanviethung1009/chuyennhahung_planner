@@ -36,7 +36,7 @@ không sửa ý.
 | ~~P07-1~~ | ~~Role model: `role` trên user (thiếu = `member`), `can()` thuần, map quyền tĩnh~~ — xong (`permissions.ts`, ADR 0006/0017) | backend-engineer | P07-D2 |
 | ~~P07-2~~ | ~~`ADMIN_API_TOKEN` → service principal, bị từ chối `trip:*`~~ — xong (ADR 0006 bước 1–2) | backend-engineer | P07-1 |
 | ~~P07-3~~ | ~~Session admin: thời hạn ngắn theo role; `requireSameOrigin` bắt buộc cho mutation admin~~ — xong (ADR 0010) | backend-engineer | P07-1 |
-| P07-4 | Audit log (`auditEvents`): đổi template/role, mọi support read — **chưa làm; chuyển làm cùng P10-1 (Q6)** | backend-engineer | P07-1 |
+| ~~P07-4~~ | ~~Audit log (`auditEvents`)~~ — **trùng P10-1, xong ở batch 10.2 (PR #115)**; còn mở: sự kiện đổi template/role/support read → xem P07-13 | backend-engineer | P07-1 |
 | P07-5 | Test còn thiếu: ma trận `can`; service principal bị từ chối `trip:*`; admin nhận `not_found` trên trip người khác; thiếu role = `member`; member không vào route admin | backend-engineer | P07-1..3 |
 | ~~P07-6~~ | ~~CMS sửa template/story qua content store; quyết định có lưu lịch sử bản template hay không ~~ — story/place/review xong (ADR 0011); **create/delete/template còn token-only, versioning template chưa quyết** | system-architect → BE/FE | P07-1 |
 | ~~P07-7~~ | ~~UI Admin Portal (chỉ qua session + role, token không tới client)~~ — xong (ADR 0010/0011) | frontend-engineer | P07-3, P07-5 |
@@ -108,7 +108,17 @@ Nguồn: `.claude/contracts/community-platform-audit.md`. Mỗi mục cần ADR 
 | ~~P10-15~~ | (xong ở 10.6a, bắt buộc ở server) **Quyết định chủ dự án:** có bắt buộc `contributionOpen` ở server (API từ chối ghi khi cổng đóng) hay chỉ ở UI (`/qc-check` #2) | owner → BE | — |
 | ~~P10-16~~ | (xong ở 10.6a) `authorName` của khách: lọc/chặn giả danh nhân viên (`/sec-check` #5) | BE | — |
 
-**Việc còn mở khi đóng Phase 10 (2026-11-17, batch 10.7)** — chưa có ID backlog riêng, chờ chủ dự án xếp:
+**Việc còn mở khi đóng Phase 10 (2026-11-17, batch 10.7)** — đã gán ID (2026-11-17); chủ dự án quyết gom thành batch 10.8 (chưa có contract) hay chuyển Phase 11:
+
+| ID | Việc | Chủ |
+|---|---|---|
+| P10-17 | Trang Chính sách riêng tư + staff xóa review khách theo yêu cầu (= P11-D1) | owner → BE/FE |
+| P10-18 | Trạng thái `changes_requested`/`unpublished` hiện ra API/UI + bộ lọc thư viện (ADR 0019) | BE + FE |
+| P10-19 | Owner: P10-7, D10, D5 (xem dưới) | owner |
+| P10-20 | `/sec-check` đường ghi ẩn danh + `/qc-check` toàn phase: NOT RUN | user gọi |
+| P10-21 | Ghi nhận PR #137 (giới hạn review khách 10/giờ, bỏ dedupe ngày, event `guest_limit`) và #138 vào feature doc/handoff; chưa có handoff riêng | main session |
+
+Chi tiết gốc:
 - Trang Chính sách riêng tư (P11-D1) và thao tác staff xóa review của khách theo yêu cầu.
 - Trạng thái đăng chuyến `changes_requested`/`unpublished` và bộ lọc thư viện (ADR 0019): batch 10.1 chỉ dựng máy trạng thái, chưa hiển thị ra API/UI.
 - Owner: P10-7 (sao lưu dev, `metadataBase`, HSTS), D10 (cấu hình proxy thật, log nginx còn IP thô), D5 (text Terms). `GUEST_KEY_SECRET` đã có trên VM dev (xác minh 2026-11-17); `deploy.sh --init-env` (#133) tự sinh, chủ dự án đang thêm dòng `GUEST_KEY_SECRET=` vào `deploy/.env.example`.
