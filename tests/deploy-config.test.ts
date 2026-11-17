@@ -459,3 +459,22 @@ describe('compose hardening', () => {
     expect(ignore).toMatch(/^deploy\/\.env$/m);
   });
 });
+
+describe('deploy/.env.example', () => {
+  const example = read('deploy/.env.example');
+  const keys = [...example.matchAll(/^#?\s*([A-Z][A-Z0-9_]+)=/gm)].map((m) => m[1]);
+
+  it('lists every variable the compose files read', () => {
+    const compose = ['deploy/compose.yml', 'deploy/compose.app.yml', 'deploy/compose.postgres-lan.yml']
+      .map(read)
+      .join('\n')
+      .replace(/^\s*#.*$/gm, '');
+    const used = new Set([...compose.matchAll(/\$\{([A-Z][A-Z0-9_]+)[:}?-]/g)].map((m) => m[1]));
+    for (const k of used) expect(keys, k).toContain(k);
+  });
+
+  it('lists the secrets the app needs and holds no real secret value', () => {
+    for (const k of ['ADMIN_API_TOKEN', 'GUEST_KEY_SECRET']) expect(example).toMatch(new RegExp(`^${k}=$`, 'm'));
+    expect(example).not.toMatch(/^(ADMIN_API_TOKEN|GUEST_KEY_SECRET|GOOGLE_CLIENT_SECRET)=\S/m);
+  });
+});

@@ -4,7 +4,7 @@
 - Scope IN: `.gitignore`; `deploy/.env.example`; `deploy/nginx/default.conf`, `deploy/nginx-app.conf`; `deploy/logrotate/chuyennhahung`; `deploy/scripts/setup-host.sh`; `deploy/compose*.yml`; `deploy/deploy.sh` (`--check`, TLS rule in `--init-env`); `tests/deploy-config.test.ts`; `docs/deploy-*.md`, `docs/features/docker-deploy.md` (+ `.vi.md`).
 - Scope OUT: TLS / trusted proxy (needs its own ADR), backup cron, touching any server, deploying, passing PLANNER_STORE / TRAVEL_CONTENT_STORE / TRAVEL_CONTENT_AUTOSEED / PUBLIC_CONTENT_SOURCE into the container (owner decision pending; documented as unsupported in Docker).
 - Evidence: audit in the session of 2026-11-17 (table of findings).
-- Constraints / dependencies: `deploy/.env.example` is unreadable to the agent (deny rule) → edits to it are NOT DONE, listed in the handoff for the owner to apply.
+- Constraints / dependencies: `deploy/.env.example` was unreadable until the owner relaxed the deny rule; now updated.
 - Architecture decision / ADR: none (no route, contract or schema change).
 - Interface contract: new env vars `DB_BIND_ADDR` (required only with compose.postgres-lan.yml), `APP_MEM_LIMIT`, `POSTGRES_MEM_LIMIT`, (no `GOOGLE_REDIRECT_URI` passthrough: docs/usage.md says the callback is derived from the site URL on purpose; the audit finding was wrong). `GOOGLE_SIGNUP_ENABLED` compose default becomes `false`.
 - Tasks by owner: Architect (this file) → BE/ops (deploy files, script) → docs.
