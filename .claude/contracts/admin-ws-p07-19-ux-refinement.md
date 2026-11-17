@@ -17,7 +17,8 @@
   3. `src/components/admin/admin-console.tsx`: remove the duplicate signed-in/sign-out row now owned by the top bar; nothing else in the console changes.
   4. `tests/admin-portal.test.ts`, `tests/runbook.test.ts`, `tests/design-tokens.test.ts`: they read the old admin path and the fonts-in-layout path.
   5. `docs/adr/0023-*` (status → Accepted), `docs/adr/README.*`, `docs/architecture.*`, `docs/features/{admin-shell,admin-portal,admin-content-cms,admin-runbook,community-trips}.*` and `.claude/context/project-context.md`: path mentions and one new paragraph.
-  6. Later contracts P07-11…17 are **not** edited; the index carries the path mapping.
+  6. `src/app/(admin)/[locale]/admin/[...rest]/page.tsx` and `src/app/(admin)/[locale]/quan-tri/[...rest]/page.tsx` (new, owner-approved 2026-11-17 after the build spike): each only calls `notFound()` (no session read, no data). Reason: the middleware rewrites an unknown `/quan-tri/xyz` to `/vi/quan-tri/xyz`, which matches nothing in the admin tree, so without them an unknown admin URL gets Next's default 404 instead of the admin 404.
+  7. Later contracts P07-11…17 are **not** edited; the index carries the path mapping.
 - Acceptance:
   - Spike first: `npm run build` accepts `app/(admin)/[locale]` beside `app/[locale]`; unknown admin URLs and forbidden roles both render the admin 404. If not, stop and ask (fallback in ADR 0023 needs the owner's yes).
   - Every URL returns the same status per role as on `main` (anonymous → sign-in with `returnTo`, member/editor 404 as before, `returnTo` allow-list unchanged); temporary-password redirect works.
@@ -34,4 +35,4 @@
 - Docs: frontend role writes `docs/features/admin-shell.*` updates; architect role flips ADR 0023 to Accepted and edits `docs/architecture.*`, the index and roadmap in the same PR.
 - Budget: sub-agents 0; one PR (the move, root layout, header and sidebar depend on each other); stop and ask if a file outside the lists above is needed or if the spike fails.
 - Order: after P07-10, **before P07-11** (P07-11 fills `/admin` inside this frame and builds on `AdminPageHeader`); P07-14 and Phase 10.5 edit `community/page.tsx` at the new path.
-- State: READY (owner approved ADR 0023 and the extra-files list 2026-11-17; the feature session starts with the build spike)
+- State: DONE (PR #124 merged 2026-11-17, merge commit 8747870; owner approved ADR 0023 and the extra-files list 2026-11-17). Open acceptance line: public-HTML byte diff of `/`, `/stories`, `/sign-in` not run.

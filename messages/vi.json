@@ -667,7 +667,9 @@
       "openMenu": "Menu",
       "closeMenu": "Đóng menu",
       "breadcrumb": "Đường dẫn",
-      "home": "Quản trị"
+      "home": "Quản trị",
+      "brand": "Chuyện Nhà Hưng · Quản trị",
+      "viewSite": "Xem trang chính"
     },
     "overview": {
       "heading": "Chào mừng đến khu quản trị",
@@ -676,7 +678,27 @@
       "goStories": "Mở danh sách chuyến đi",
       "title": "Quản trị",
       "metaTitle": "Quản trị",
-      "description": "Mọi thứ bạn quản lý được trên trang, gom về một chỗ."
+      "description": "Mọi thứ bạn quản lý được trên trang, gom về một chỗ.",
+      "cardsHeading": "Việc đang chờ",
+      "cardsLabel": {
+        "listingsPending": "Chuyến đi chờ duyệt",
+        "reviewsPending": "Đánh giá chờ duyệt",
+        "contentDrafts": "Bản nháp (chuyến đi và đánh giá)",
+        "usersActive": "Tài khoản đang hoạt động",
+        "usersDisabled": "Tài khoản bị khóa hoặc đã xóa mềm",
+        "runtime": "Nơi lưu dữ liệu"
+      },
+      "open": "Mở",
+      "unavailable": "Chưa đọc được số liệu",
+      "unavailableHint": "Nguồn dữ liệu đang lỗi; thử tải lại trang sau.",
+      "empty": "Không có gì đang chờ bạn.",
+      "attention": "Cần xử lý",
+      "runtimeValue": {
+        "postgres": "PostgreSQL",
+        "file": "Tệp JSON",
+        "mixed": "PostgreSQL và tệp JSON"
+      },
+      "atLeast": "Từ 200 trở lên: danh sách chỉ đọc tối đa 200 mục."
     },
     "notice": {
       "title": "Lưu ý: bản đã xuất bản hiện ngay trên trang công khai",
@@ -859,6 +881,11 @@
         "destination": "Điểm đến",
         "itinerary": "Lịch trình"
       }
+    },
+    "notFound": {
+      "title": "Không tìm thấy trang",
+      "description": "Trang này không tồn tại hoặc bạn không có quyền xem.",
+      "cta": "Về trang chủ"
     }
   },
   "storyPage": {

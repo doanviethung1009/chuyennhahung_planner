@@ -329,6 +329,8 @@ flowchart LR
 
 [ADR 0010](adr/0010-admin-portal-session-authorization.vi.md) (Accepted). `/quan-tri` (`/en/admin`) là server component có `noindex`, không nằm trong sitemap và bị disallow trong `robots.ts`. Vai trò được thực thi: `can()` được gọi trong đường xử lý request, ở trang và ở API admin.
 
+Trang `/admin` là bảng điều khiển (P07-11, [feature](features/admin-dashboard.vi.md)): `src/server/admin/overview.ts` gom số đếm chỉ đọc từ phương thức repository sẵn có, lọc theo `can()`, và `GET /api/admin/overview` trả cùng payload. Nguồn lỗi chỉ làm hỏng thẻ của nó.
+
 `adminPlannerRoute` trong `src/server/planner/http.ts` xác định một trong **hai principal**:
 
 | Principal | Credential | Tới được |
@@ -338,7 +340,7 @@ flowchart LR
 
 `adminPlannerRoute(request, handler)` không kèm options vẫn chỉ nhận token. Session admin sống idle 2 giờ / tuyệt đối 12 giờ theo role hiện tại. Guard chống tự khoá (session không tự đổi role hay tự reset; không bao giờ còn 0 admin; admin thao tác được kiểm tra lại trong transaction của repository) trả 409 `invalid_state`. Trang dùng `readAdminPageAccess()` -> `{ status: 'anonymous' | 'must-change-password' | 'not-admin' | 'admin', principal }`: chuyển sang đăng nhập, chuyển sang đổi mật khẩu, `notFound()`, render. Mutation bị giới hạn tốc độ theo user (trong bộ nhớ, theo process).
 
-**Khung admin ([ADR 0020](adr/0020-admin-workspace-shell.vi.md), [ADR 0023](adr/0023-admin-root-layout.vi.md), Đã chấp nhận).** Các trang admin nằm trong một khung (`admin/layout.tsx`: sidebar, breadcrumb, skip link). P07-19 cho chúng root layout riêng (route group `src/app/(admin)/[locale]/`), nên admin không render header hay footer công khai, kèm thanh trên gọn và `AdminPageHeader` dùng chung; layout và trang công khai không đổi, URL giữ nguyên. Cho đến khi P07-19 xong, khung vẫn nằm trong layout công khai.
+**Khung admin ([ADR 0020](adr/0020-admin-workspace-shell.vi.md), [ADR 0023](adr/0023-admin-root-layout.vi.md), Đã chấp nhận).** Các trang admin nằm trong một khung (`admin/layout.tsx`: sidebar, breadcrumb, skip link). P07-19 cho chúng root layout riêng (route group `src/app/(admin)/[locale]/`), nên admin không render header hay footer công khai, kèm thanh trên gọn và `AdminPageHeader` dùng chung; layout và trang công khai không đổi, URL giữ nguyên. Đã ship ở P07-19: root layout admin, `src/app/(admin)/[locale]/not-found.tsx` (một trang 404 admin duy nhất, dùng cho cả vai trò bị cấm lẫn URL admin không tồn tại) và hai catch-all `[...rest]` (`admin/` và `quan-tri/`, vì middleware viết lại `/quan-tri/xyz` không tồn tại thành `/vi/quan-tri/xyz`, không khớp gì trong cây chuẩn) chỉ gọi `notFound()`. Cả hai root layout import font từ `src/app/fonts.ts`.
 
 **Guard nội dung (lát cắt 2, [ADR 0011](adr/0011-admin-content-cms.vi.md)).** Các route admin của Travel Content bật session qua `adminContentRoute(request, { action, session: true }, handler)` trong `src/server/admin/content-route.ts`. Nó dùng lại `resolveAdminPrincipal` của module planner (chiều phụ thuộc admin -> planner -> content; `content/http.ts` không import cái nào), chạy handler, ánh xạ lỗi bằng `toErrorResponse` và luôn trả `Cache-Control: no-store`. Action mới `content:write` thuộc `editor`, `admin` và `service`; `story:publish` giữ nguyên. Trang dùng `readStaffPageAccess()` (`anonymous` / `must-change-password` / `forbidden` / `staff`); `forbidden` là vai trò không có cả `user:provision` lẫn `content:write`. Năm trang nội dung có `noindex`, không nằm trong sitemap, và được các prefix robots `/quan-tri` và `/en/admin` bao phủ.
 

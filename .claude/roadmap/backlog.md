@@ -42,7 +42,7 @@ không sửa ý.
 | ~~P07-7~~ | ~~UI Admin Portal (chỉ qua session + role, token không tới client)~~ — xong (ADR 0010/0011) | frontend-engineer | P07-3, P07-5 |
 | P07-8 | Rate-limit store chung cho đăng nhập admin khi > 1 process | backend-engineer | liên quan P09-1 |
 | P07-9 | Gỡ dùng token trong trình duyệt; token chỉ còn cho CI | backend-engineer | P07-7 |
-| P07-19 | Admin UX refinement: root layout riêng cho admin (route group `(admin)`), thanh trên, `AdminPageHeader`, sidebar sticky/active state — contract `.claude/contracts/admin-ws-p07-19-ux-refinement.md`, ADR 0023 (Đề xuất); **làm trước P07-11**; state READY (chủ dự án đã duyệt 2026-11-17) | system-architect → frontend | P07-10 |
+| P07-19 | Admin UX refinement: root layout riêng cho admin (route group `(admin)`), thanh trên, `AdminPageHeader`, sidebar sticky/active state — contract `.claude/contracts/admin-ws-p07-19-ux-refinement.md`, ADR 0023 (Đề xuất); **làm trước P07-11**; state DONE (PR #124 merged 2026-11-17) | system-architect → frontend | P07-10 |
 
 Rủi ro: admin portal tạo người ghi thứ hai vào store JSON một-process — SQL (P09-1) phải
 có trước khi chạy nhiều instance.

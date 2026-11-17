@@ -29,7 +29,7 @@ The route is the architect's table entry; the frontend added it to `src/i18n/rou
 
 ## How it works
 
-1. `src/app/[locale]/admin/page.tsx` is a dynamic server component. `readAdminPageAccess()` decides: anonymous redirects to the localized sign-in with `returnTo` set to the admin page; an admin on a temporary password redirects to the change-password page; any other signed-in user gets `notFound()`; an admin renders the page. Metadata is `noindex, nofollow`.
+1. `src/app/(admin)/[locale]/admin/page.tsx` is a dynamic server component. `readAdminPageAccess()` decides: anonymous redirects to the localized sign-in with `returnTo` set to the admin page; an admin on a temporary password redirects to the change-password page; any other signed-in user gets `notFound()`; an admin renders the page. Metadata is `noindex, nofollow`.
 2. One client island, `AdminConsole`, sits below the heading. It is a client component because it holds form state, calls same-origin `fetch` with the session cookie, and keeps secrets in memory. It never holds `ADMIN_API_TOKEN`.
 3. The table has a row per user: a role `<select>` with Save, and Reset password with an inline confirm step. The signed-in admin's own row has both disabled (the server refuses too).
 4. After create or reset, a clearly marked panel shows the secret once, with a Copy button (and a selectable read-only field when the clipboard is unavailable, as on plain HTTP) and an "I have saved it" dismiss.
@@ -41,7 +41,7 @@ The route is the architect's table entry; the frontend added it to `src/i18n/rou
 
 | Path | Role |
 |---|---|
-| `src/app/[locale]/admin/page.tsx` | Server gate, metadata, one `<h1>` |
+| `src/app/(admin)/[locale]/admin/page.tsx` | Server gate, metadata, one `<h1>` |
 | `src/components/admin/admin-console.tsx` | Client island: fetching, status region, error mapping, sign-out |
 | `src/components/admin/user-table.tsx` | Users table, role change, reset with confirm |
 | `src/components/admin/create-user-form.tsx` | Create-user form |

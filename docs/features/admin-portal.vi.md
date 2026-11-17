@@ -30,7 +30,7 @@ Route do kiến trúc sư định nghĩa; frontend thêm vào `src/i18n/routing.
 
 ## Cách hoạt động
 
-1. `src/app/[locale]/admin/page.tsx` là server component động. `readAdminPageAccess()` quyết định: chưa đăng nhập thì chuyển tới trang đăng nhập theo ngôn ngữ, kèm `returnTo` về trang quản trị; admin đang dùng mật khẩu tạm thì chuyển tới trang đổi mật khẩu; người đã đăng nhập nhưng không phải admin nhận `notFound()`; admin thì hiển thị trang. Metadata là `noindex, nofollow`.
+1. `src/app/(admin)/[locale]/admin/page.tsx` là server component động. `readAdminPageAccess()` quyết định: chưa đăng nhập thì chuyển tới trang đăng nhập theo ngôn ngữ, kèm `returnTo` về trang quản trị; admin đang dùng mật khẩu tạm thì chuyển tới trang đổi mật khẩu; người đã đăng nhập nhưng không phải admin nhận `notFound()`; admin thì hiển thị trang. Metadata là `noindex, nofollow`.
 2. Một client island duy nhất, `AdminConsole`, nằm dưới tiêu đề. Nó là client component vì giữ state form, gọi `fetch` cùng origin kèm cookie phiên và giữ bí mật trong bộ nhớ. Nó không bao giờ chứa `ADMIN_API_TOKEN`.
 3. Bảng có một dòng cho mỗi người dùng: `<select>` vai trò kèm nút Lưu, và nút Cấp lại mật khẩu có bước xác nhận ngay tại chỗ. Dòng của chính admin đang đăng nhập bị vô hiệu cả hai (server cũng từ chối).
 4. Sau khi tạo hoặc cấp lại, một khung nổi bật hiện bí mật đúng một lần, có nút Sao chép (và ô chỉ đọc có thể bôi chọn khi không dùng được clipboard, như trên HTTP thường) cùng nút "Tôi đã lưu lại" để đóng.
@@ -42,7 +42,7 @@ Route do kiến trúc sư định nghĩa; frontend thêm vào `src/i18n/routing.
 
 | Đường dẫn | Vai trò |
 |---|---|
-| `src/app/[locale]/admin/page.tsx` | Cổng ở server, metadata, một `<h1>` |
+| `src/app/(admin)/[locale]/admin/page.tsx` | Cổng ở server, metadata, một `<h1>` |
 | `src/components/admin/admin-console.tsx` | Client island: gọi API, vùng trạng thái, ánh xạ lỗi, đăng xuất |
 | `src/components/admin/user-table.tsx` | Bảng người dùng, đổi vai trò, cấp lại có xác nhận |
 | `src/components/admin/create-user-form.tsx` | Form tạo người dùng |
