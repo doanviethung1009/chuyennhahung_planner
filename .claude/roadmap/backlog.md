@@ -111,7 +111,7 @@ Nguồn: `.claude/contracts/community-platform-audit.md`. Mỗi mục cần ADR 
 **Việc còn mở khi đóng Phase 10 (2026-11-17, batch 10.7)** — chưa có ID backlog riêng, chờ chủ dự án xếp:
 - Trang Chính sách riêng tư (P11-D1) và thao tác staff xóa review của khách theo yêu cầu.
 - Trạng thái đăng chuyến `changes_requested`/`unpublished` và bộ lọc thư viện (ADR 0019): batch 10.1 chỉ dựng máy trạng thái, chưa hiển thị ra API/UI.
-- Owner: P10-7 (sao lưu dev, `metadataBase`, HSTS), D10 (cấu hình proxy thật, log nginx còn IP thô), D5 (text Terms), thêm `GUEST_KEY_SECRET=` vào `deploy/.env.example`.
+- Owner: P10-7 (sao lưu dev, `metadataBase`, HSTS), D10 (cấu hình proxy thật, log nginx còn IP thô), D5 (text Terms). `GUEST_KEY_SECRET` đã có trên VM dev (xác minh 2026-11-17); `deploy.sh --init-env` (#133) tự sinh, chủ dự án đang thêm dòng `GUEST_KEY_SECRET=` vào `deploy/.env.example`.
 - Review độc lập `/sec-check` (đường ghi ẩn danh của report/limiter) và `/qc-check` toàn phase: NOT RUN.
 
 ## Phase 11 — Member Profiles & Creator Terms (P1, đề xuất)

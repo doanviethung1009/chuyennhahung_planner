@@ -3,7 +3,7 @@ Branch `docs/phase10-close` (worktree `claude/phase10-close-6c517b`; nothing com
 
 ## Preflight
 - PASS CI on main for #132 (success). PASS "Deploy dev" for #132 (run 44019228529, success).
-- PASS `GUEST_KEY_SECRET` present on VM: PG limiter answered 422/429, not 503 (the limiter hashes with the secret). Value never read.
+- PASS `GUEST_KEY_SECRET` set on VM app container (checked by owner-authorised SSH: set, 64 chars; value never printed). Also seen as 422/429, not 503.
 
 ## Smoke (no personal data, no accounts created)
 - PASS `/chuyen-di-cong-dong` (`/community-trips`) and `/goc-review` (`/reviews`): 200, one `<h1>`; VI paths 307-redirect from EN slugs as routed.
@@ -20,7 +20,7 @@ Branch `docs/phase10-close` (worktree `claude/phase10-close-6c517b`; nothing com
 - Side effect: my LAN IP is now rate-limited for reports on dev for ~19 h (dev only).
 
 ## Owner items (status only)
-- P10-7 OPEN: backup, `metadataBase` not checkable here; HSTS header present on the HTTP response (HTTPS not verified). D10 OPEN (nginx real logs/tunnel). D5 OPEN (Terms text). `deploy/.env.example` still needs `GUEST_KEY_SECRET=`.
+- P10-7 OPEN: backup, `metadataBase` not checkable here; HSTS header present on the HTTP response (HTTPS not verified). D10 OPEN (nginx real logs/tunnel). D5 OPEN (Terms text). `GUEST_KEY_SECRET=` in `deploy/.env.example` is being added by the owner (`deploy.sh --init-env`, #133 on main, already generates it).
 - Open tasks: Privacy Policy page, staff removal of a guest review, publication states + gallery filters.
 
 ## Reviews: `/qc-check` NOT RUN (recommend whole phase) · `/sec-check` NOT RUN (recommend anonymous write path: reports, limiter, guest key).
