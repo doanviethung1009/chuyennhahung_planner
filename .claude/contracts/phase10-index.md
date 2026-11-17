@@ -31,7 +31,7 @@ Rows depend on columns (● hard, ○ soft/recommended).
 | 10.6b | | | ● | | | owner D4 (P11-D1) |
 | 10.7 | ● | ● | ● | ● | ● | ● (6a) |
 
-External gates: owner accepts ADR 0019 before 10.2/10.3 (10.1 changes no stored data); owner confirms Terms text and version for 10.4 (P10-2 says "owner xác nhận text"); P11-D1 (privacy policy, owner) gates 10.6b; a deployed dev VM gates 10.7.
+External gates: owner accepts ADR 0019 before 10.2/10.3 (10.1 changes no stored data); owner confirms Terms text and version for 10.4 (P10-2 says "owner xác nhận text"); ADR 0024 acceptance (D4) gates 10.6b; a deployed dev VM gates 10.7.
 
 ## File-conflict map (rule: no two batches edit one file at once)
 | File | Batches that edit it | Order |
@@ -60,7 +60,7 @@ Why this order: state machine first (pure, no data, wraps what exists); the audi
 | D1 | Accept ADR 0019 (currently Proposed) as written | Accept | 10.2, 10.3 |
 | D2 | Migration numbering: ADR 0019 line 105 and `specs-community-database` say "`0010` audit events **and** counters"; splitting 10.2/10.3 gives `0010` audit, `0011` counters, `0012` terms, `0013` reports (spec says `0011` = reports + terms + listing states). Update spec numbering in each batch's doc change; leave the ADR text as is (or amend its one sentence on acceptance) | Split as above (no inert schema) | 10.2 |
 | D3 | Audit log retention 1 year + sweep | Accept | 10.2 |
-| D4 | Privacy policy / `guestKey` retention (P11-D1) is the owner's | Owner supplies; until then 10.6b stays unstarted | 10.6b |
+| D4 | Guest identity and privacy: owner direction received 2026-11-17 (HMAC-SHA256, no raw IP in business tables, 30-day retention, no ad tracking, policy + deletion). Normalised in [ADR 0024](../../docs/adr/0024-guest-identity-privacy.md) (**Accepted** 2026-11-17, owner confirmed points (a)–(e)). 10.6b is unblocked once ADR 0024 is on `main`; the Privacy Policy text and guest deletion are separate tasks | Done | — |
 | D5 | Creator Terms: exact text edits (images/video mention, Q8), and the version identifier scheme (explicit `termsVersion` string in `src/content/site.ts`, bumped by the owner) | Explicit version string + a test that fails if text changes without a bump | 10.4 |
 | D6 | Which writes require accepted Terms: listing request + signed-in Planner review (guest reviews have no account, so cannot) | Both | 10.4 |
 | D7 | Reports: cover trips **and** reviews. Reviews have no public id today (`PublicCommunityReview`, `src/server/planner/schemas.ts:894`); reporting one needs an opaque non-personal id added to the public projection (a pinned projection test changes) | Both, add the opaque id | 10.5 |
