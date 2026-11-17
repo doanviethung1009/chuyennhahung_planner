@@ -24,7 +24,24 @@
 # DB_OVERLAY=external-db also set PLANNER_DATABASE_URL (and optionally
 # CONTENT_DATABASE_URL); nothing is generated for the database then. Do not put
 # a database password on a command line you keep in shell history.
+# external-db URLs must carry sslmode=verify-full (ADR 0009 §5).
+#
+# `deploy.sh --check` is the preflight for a new VM: it validates the file
+# (secret lengths, TLS rule, CA file, mode) and prints key names and ok/FAIL only.
 set -euo pipefail
+
+# True when the URL's query carries EXACTLY these TLS parameters: whole-parameter
+# matches, so `sslmode=verify-fullx` or `x=sslmode=verify-full` do not pass.
+# Each key must appear once (libpq takes the LAST duplicate, so `verify-full`
+# followed by `sslmode=disable` would downgrade) and no `#` may hide them in a
+# fragment.
+tls_ok() {
+  local u="$1" t
+  [[ "$u" != *"#"* ]] || return 1
+  [[ "$u" =~ [\?\&]sslmode=verify-full(\&|$) && "$u" =~ [\?\&]sslrootcert=/run/secrets/pg-ca\.crt(\&|$) ]] || return 1
+  t="${u//sslmode=/}";     ((${#u} - ${#t} == 8)) || return 1
+  t="${u//sslrootcert=/}"; ((${#u} - ${#t} == 12)) || return 1
+}
 
 init_env() {
   local stack="${STACK_DIR:-/opt/chuyennhahung}" file site overlay
@@ -34,7 +51,7 @@ init_env() {
   case "$overlay" in external-db | local-db) ;; *) echo "DB_OVERLAY must be external-db or local-db" >&2; exit 2 ;; esac
   # A value lands on one line of a Compose env file: no whitespace or control
   # characters (a newline would inject keys) and no `$` (Compose interpolates it).
-  local safe='^[^[:space:][:cntrl:]$]+$'
+  local safe='^[^[:space:][:cntrl:]$#]+$'
   [[ "$site" =~ ^https?:// && "$site" =~ $safe ]] || { echo "SITE_URL must be an http(s) URL without spaces or \$" >&2; exit 2; }
   [[ -d "$stack" ]] || { echo "$stack does not exist (create it first, see docs/deploy-runbook.md)" >&2; exit 2; }
   [[ ! -e "$file" ]] || { echo "$file already exists; not overwriting (rotate secrets by hand)" >&2; exit 1; }
@@ -42,9 +59,12 @@ init_env() {
   if [[ "$overlay" == external-db ]]; then
     local url
     [[ -n "${PLANNER_DATABASE_URL:-}" ]] || { echo "set PLANNER_DATABASE_URL for external-db" >&2; exit 2; }
-    for url in "$PLANNER_DATABASE_URL" "${CONTENT_DATABASE_URL:-postgres://-}"; do
+    for url in "$PLANNER_DATABASE_URL" "${CONTENT_DATABASE_URL:-postgres://-?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt}"; do
       [[ "$url" =~ ^postgres(ql)?:// && "$url" =~ $safe ]] \
         || { echo "database URLs must start with postgres:// and contain no spaces or \$" >&2; exit 2; }
+      # The link crosses the LAN: TLS with full verification is not optional.
+      tls_ok "$url" \
+        || { echo "database URLs must carry sslmode=verify-full and sslrootcert=/run/secrets/pg-ca.crt" >&2; exit 2; }
     done
   fi
 
@@ -90,12 +110,57 @@ CONTENT_DATABASE_URL=postgres://cnh_app:$pw@postgres:5432/cnh_content
   echo "wrote $file (secrets not shown)"
 }
 
+# Preflight for a new VM: reads $STACK_DIR/.env to validate it, prints only
+# key names and PASS/FAIL, never a value. Run by hand before the first deploy;
+# `DB_OVERLAY` selects the layout (default external-db, like a deploy).
+check_env() {
+  local stack="${STACK_DIR:-/opt/chuyennhahung}" root="${DEPLOY_ROOT:-${STACK_DIR:-/opt/chuyennhahung}}"
+  local file="$stack/.env" overlay="${DB_OVERLAY:-external-db}" fail=0
+  case "$overlay" in external-db | local-db) ;; *) echo "DB_OVERLAY must be external-db or local-db" >&2; exit 2 ;; esac
+  [[ -f "$file" && -r "$file" ]] || { echo "FAIL $file missing or unreadable" >&2; exit 1; }
+  val() { sed -n "s/^$1=//p" "$file" | tail -n1; }
+  bad() { echo "FAIL $1" >&2; fail=1; }
+  local mode
+  mode="$(stat -c %a "$file" 2>/dev/null || stat -f %Lp "$file")"
+  [[ "$mode" =~ ^[0-7]*[0-7]0$ ]] && echo "ok   .env not world-accessible" || bad ".env is world-accessible (mode $mode)"
+  [[ "$(val NEXT_PUBLIC_SITE_URL)" =~ ^https?://[^[:space:]]+$ ]] && echo "ok   NEXT_PUBLIC_SITE_URL" || bad "NEXT_PUBLIC_SITE_URL missing or not an http(s) URL"
+  local k v
+  for k in ADMIN_API_TOKEN GUEST_KEY_SECRET; do
+    v="$(val "$k")"
+    ((${#v} >= 32)) && echo "ok   $k (>= 32 chars)" || bad "$k missing or shorter than 32 characters (the feature answers 503)"
+  done
+  v="$(val PLANNER_DATABASE_URL)"
+  [[ "$v" =~ ^postgres(ql)?:// ]] && echo "ok   PLANNER_DATABASE_URL" || bad "PLANNER_DATABASE_URL missing or not postgres://"
+  local bind
+  bind="$(val DB_BIND_ADDR)"
+  [[ -z "$bind" || ( "$bind" =~ ^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$ && "$bind" != 0.0.0.0 ) ]] \
+    || bad "DB_BIND_ADDR must be one IPv4 address of the VM (its LAN IP), never 0.0.0.0 or ::"
+  if [[ "$overlay" == local-db ]]; then
+    for k in POSTGRES_ADMIN_PASSWORD CNH_APP_PASSWORD; do
+      [[ -n "$(val "$k")" ]] && echo "ok   $k" || bad "$k missing"
+    done
+  else
+    tls_ok "$v" \
+      && echo "ok   PLANNER_DATABASE_URL TLS" || bad "external-db needs sslmode=verify-full and sslrootcert=/run/secrets/pg-ca.crt in PLANNER_DATABASE_URL"
+    v="$(val CONTENT_DATABASE_URL)"
+    if [[ -n "$v" ]]; then
+      [[ "$v" =~ ^postgres(ql)?:// ]] && tls_ok "$v" \
+        && echo "ok   CONTENT_DATABASE_URL TLS" || bad "CONTENT_DATABASE_URL must be postgres:// with sslmode=verify-full and sslrootcert=/run/secrets/pg-ca.crt"
+    fi
+    [[ -f "$root/secrets/pg-ca.crt" ]] && echo "ok   $root/secrets/pg-ca.crt is a file" || bad "$root/secrets/pg-ca.crt is missing or not a file"
+  fi
+  exit "$fail"
+}
+
 if [[ "${1:-}" == "--init-env" ]]; then
   init_env
   exit 0
 fi
+if [[ "${1:-}" == "--check" ]]; then
+  check_env
+fi
 
-TAG="${1:?usage: deploy.sh <image-tag> | deploy.sh --init-env}"
+TAG="${1:?usage: deploy.sh <image-tag> | deploy.sh --init-env | deploy.sh --check}"
 : "${APP_IMAGE:?set APP_IMAGE, e.g. ghcr.io/<owner>/chuyennhahung-app}"
 STACK_DIR="${STACK_DIR:-/opt/chuyennhahung}"
 DB_OVERLAY="${DB_OVERLAY:-external-db}"

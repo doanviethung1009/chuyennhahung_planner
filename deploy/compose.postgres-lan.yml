@@ -1,9 +1,12 @@
 # Overlay (OPTIONAL, OFF by default): QC/DBA access to the stack's PostgreSQL
 # directly over the LAN — "Option B". Runbook: docs/deploy-db-access.md.
 #
-# Publishes the database on the VM's LAN address ONLY: 192.168.100.140:15432
-# -> 5432. Never 0.0.0.0, never the router, never Cloudflare Tunnel. If the VM's
-# IP changes, edit the address below in a PR. Only for the local-db layout.
+# Publishes the database on the VM's LAN address ONLY: ${DB_BIND_ADDR}:15432
+# -> 5432. Never 0.0.0.0, never the router, never Cloudflare Tunnel. Set
+# DB_BIND_ADDR in the stack's .env to the VM's LAN IP (no address is baked in;
+# unset, Compose refuses to start). Never set it to 0.0.0.0.
+# `deploy.sh --check` refuses a DB_BIND_ADDR that is not a single IPv4 address or is
+# 0.0.0.0: run it before enabling this overlay (deploy.sh itself never uses this file). Only for the local-db layout.
 #
 # SECURITY: Docker publishes ports through iptables chains that bypass `ufw`.
 # Restrict who may connect in the DOCKER-USER chain (and/or the Proxmox
@@ -26,7 +29,7 @@
 services:
   postgres:
     ports:
-      - "192.168.100.140:15432:5432"
+      - "${DB_BIND_ADDR:?set DB_BIND_ADDR in .env to the VM LAN IP}:15432:5432"
     networks:
       - backend
       - dbaccess

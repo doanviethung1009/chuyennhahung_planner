@@ -1,0 +1,10 @@
+# Handoff DEPLOY-HARDEN-01
+- Branch: `chore/deploy-config-hardening` (from origin/main 852c7e8). Not committed, not pushed, no PR.
+- Done: `.gitignore` (+.env); nginx custom `log_format cnh` (no query/cookie/auth/referer, share-token paths masked), `limit_req` 20r/s burst 60, send timeout; `deploy/logrotate/chuyennhahung` (access 14 d, error 30 d) installed by `setup-host.sh`; compose `logging` 10m x3 and `mem_limit` (app 768m, postgres 512m, nginx 128m); LAN overlay uses `DB_BIND_ADDR`; `GOOGLE_SIGNUP_ENABLED` compose default false; `deploy.sh --check`; `--init-env` requires `sslmode=verify-full` for external-db; docs EN/VI.
+- Outside plan: none. Audit correction: `GOOGLE_REDIRECT_URI` is deliberately not passed (docs/usage.md), so no change.
+- Security pass (/sec-check): PASS_WITH_WARNINGS; fixed: error.log comment, DEPLOY_ROOT regex, CONTENT_DATABASE_URL + sslrootcert + DB_BIND_ADDR checks; limit_req behind a proxy documented, not fixed.
+- `deploy/.env.example` updated: GUEST_KEY_SECRET (was missing), DATABASE_POOL_MAX, POSTGRES_ADMIN_USER, APP_IMAGE, APP_MEM_LIMIT, POSTGRES_MEM_LIMIT, DB_BIND_ADDR; a test now checks every compose variable is listed.
+- Checks: typecheck PASS (re-run after last test edit); lint PASS (no output); full `npm run test` PASS 1095 passed/73 skipped (before the type-only test fix); deploy-config + docs tests re-run PASS. `npm run build` NOT RUN (no route/config change). nginx config syntax NOT RUN (no nginx/docker here); `docker compose config` NOT RUN. `/qc-check`, `/sec-check` NOT RUN.
+- Risks: limit_req may throttle users behind one NAT; nginx must be reloaded/recreated (format and mounts); error.log may still hold request lines; mem_limit untested on the 1.9 GB VM; `map` named capture `$area` unverified on real nginx.
+- Open decisions: PLANNER_STORE / TRAVEL_CONTENT_STORE / TRAVEL_CONTENT_AUTOSEED / PUBLIC_CONTENT_SOURCE stay unsupported in Docker; TLS/trusted proxy ADR; backup cron.
+- Next: owner edits `.env.example`, authorizes commit/PR; run `nginx -t` in the nginx image on the dev VM before reload.

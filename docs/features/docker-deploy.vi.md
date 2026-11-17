@@ -149,7 +149,8 @@ còn `--build` tay tạo ra image `chuyennhahung/app` cục bộ.
 | `deploy/nginx-app.conf` | Đoạn header cho stack đã có nginx riêng (đã có) |
 | `deploy/postgres/init/10-roles-and-databases.sh` | Tạo role và database ở lần khởi động đầu |
 | `deploy/.env.example` | Mọi biến, cho cả hai layout |
-| `deploy/scripts/setup-host.sh`, `deploy/scripts/backup.sh` | Chuẩn bị host và sao lưu |
+| `deploy/scripts/setup-host.sh`, `deploy/scripts/backup.sh` | Chuẩn bị host (cài luôn xoay vòng log) và sao lưu |
+| `deploy/logrotate/chuyennhahung` | Giữ log nginx: access 14 ngày, error 30 ngày |
 | `deploy/deploy.sh`, `.github/workflows/deploy-dev.yml` | Đường tự động: kéo tag GHCR, khởi động lại `app`, kiểm health, rollback (ADR 0016) |
 
 ## Test
@@ -167,6 +168,11 @@ deploy thật — máy dev không có Docker và chưa đụng tới VM nào.
 - HTTP thường: cookie không có `Secure`, HSTS bị bỏ qua, đăng nhập Google không chạy
   được trên IP. Bước kế tiếp là TLS (certbot hoặc load balancer phía trước); sau đó đặt
   `NEXT_PUBLIC_SITE_URL` thành origin https và build lại.
+- Siết cấu hình (DEPLOY-HARDEN-01): log nginx không ghi query, cookie, authorization hay
+  referer và che đường dẫn chứa token chia sẻ; mọi service giới hạn log và bộ nhớ;
+  `deploy.sh --check` là bước kiểm tra trước cho VM mới; URL external-db phải dùng
+  `sslmode=verify-full`. `deploy/.env.example` vẫn cần liệt kê `DB_BIND_ADDR`,
+  `APP_MEM_LIMIT`, `POSTGRES_MEM_LIMIT` (việc của chủ nhà: agent không sửa được file này).
 - Chỉ một replica `app`; rate limiter nằm trong bộ nhớ và content JSON store là một file
   (ADR 0013).
 - Role của app sở hữu database và migrate lúc khởi động (rủi ro đã chấp nhận, ADR 0009).

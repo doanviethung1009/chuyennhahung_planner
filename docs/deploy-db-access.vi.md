@@ -78,7 +78,9 @@ docker port chuyennhahung-postgres-1        # kỳ vọng chỉ: 5432/tcp -> 127
 ss -ltn | grep 15432                        # kỳ vọng 127.0.0.1:15432, không phải 0.0.0.0
 ```
 
-Bật phương án B — chỉ sau khi đã có luật firewall ở mục H:
+Bật phương án B — chỉ sau khi đã có luật firewall ở mục H, và đã đặt
+`DB_BIND_ADDR=<IP LAN của VM>` trong `.env` của stack (overlay không còn IP cứng;
+thiếu biến này Compose từ chối khởi động; chạy `./deploy/deploy.sh --check` trước, nó từ chối `0.0.0.0`):
 
 ```bash
 $BASE -f compose.postgres-lan.yml up -d --no-deps postgres

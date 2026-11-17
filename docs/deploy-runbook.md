@@ -193,7 +193,7 @@ to the file only; do not print the file or paste it anywhere.
 
 Shortcut: `sudo SITE_URL=http://<ip-app> DB_OVERLAY=local-db ./deploy/deploy.sh --init-env`
 does the same (`DB_OVERLAY` is required; for `external-db` also pass `PLANNER_DATABASE_URL`,
-without keeping the password in shell history). Values with spaces or `$` are rejected. It writes the file with generated secrets, mode 640 and group `cnh-runner`
+without keeping the password in shell history; its URLs must carry `sslmode=verify-full` and `sslrootcert=/run/secrets/pg-ca.crt`). Values with spaces or `$` are rejected. Afterwards, `./deploy/deploy.sh --check` validates the file (secret lengths, TLS, CA file, mode) and prints key names and ok/FAIL only. It writes the file with generated secrets, mode 640 and group `cnh-runner`
 (`RUNNER_GROUP` to change it), prints no secret, and refuses to overwrite an existing
 `.env`. Run it by hand as root; the runner cannot write the directory, so a normal
 deploy never creates or changes `.env`. Mode 640 lets `cnh-runner` read every secret,

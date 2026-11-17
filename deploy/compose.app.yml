@@ -17,7 +17,11 @@
 #   ADMIN_API_TOKEN        ≥ 32 characters (openssl rand -base64 36)
 #   GUEST_KEY_SECRET       ≥ 32 characters (openssl rand -base64 36), ADR 0024
 #   TRUST_PROXY_HEADERS    true — nginx overwrites X-Forwarded-Proto/-For
-#   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET   optional (Google sign-in)
+#   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET   optional (Google sign-in; the callback is
+#                          derived from NEXT_PUBLIC_SITE_URL, GOOGLE_REDIRECT_URI is not passed)
+#   APP_MEM_LIMIT / POSTGRES_MEM_LIMIT   optional memory caps (defaults 768m / 512m)
+#   Not passed to the container (JSON-store and seeding switches, no Docker use):
+#   PLANNER_STORE, TRAVEL_CONTENT_STORE, TRAVEL_CONTENT_AUTOSEED, PUBLIC_CONTENT_SOURCE
 #   APP_SRC                path of the repository checkout (default ./app)
 
 services:
@@ -37,6 +41,12 @@ services:
     # CONTENT_DATABASE_URL the Travel content store is a JSON file on the volume
     # below. Never `--scale app=2` on that layout.
     restart: unless-stopped
+    mem_limit: ${APP_MEM_LIMIT:-768m}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
       PLANNER_DATABASE_URL: ${PLANNER_DATABASE_URL:?set PLANNER_DATABASE_URL in .env}
@@ -49,7 +59,7 @@ services:
       DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-5}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      GOOGLE_SIGNUP_ENABLED: ${GOOGLE_SIGNUP_ENABLED:-true}
+      GOOGLE_SIGNUP_ENABLED: ${GOOGLE_SIGNUP_ENABLED:-false}
     volumes:
       # Travel content store (.data/travel-content.json), seeded on first use.
       - app-data:/app/.data

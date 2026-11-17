@@ -165,20 +165,15 @@ du -sh /opt/chuyennhahung/data/* /opt/chuyennhahung/logs /opt/chuyennhahung/back
   ```json
   { "log-driver": "json-file", "log-opts": { "max-size": "10m", "max-file": "3" } }
   ```
-- **nginx logs** live on the host and nothing rotates them. A minimal
-  `/etc/logrotate.d/chuyennhahung`:
-  ```
-  /opt/chuyennhahung/logs/nginx/*.log {
-      weekly
-      rotate 8
-      compress
-      missingok
-      notifempty
-      postrotate
-          docker kill -s USR1 chuyennhahung-nginx-1 >/dev/null 2>&1 || true
-      endscript
-  }
-  ```
+- **nginx logs** live on the host (`logs/nginx/access.log`, `error.log`).
+  [`deploy/logrotate/chuyennhahung`](../deploy/logrotate/chuyennhahung) keeps the access
+  log 14 days and the error log 30 days; `deploy/scripts/setup-host.sh` installs it to
+  `/etc/logrotate.d/`. The access log uses a custom format that records the normalised path
+  (no query string), masks share-token paths (`/chia-se/`, `/en/shared/`, `/api/shared/`) and
+  never records `Cookie`, `Authorization` or `Referer`. nginx can still write a raw request
+  line into `error.log`, so treat that file as sensitive. Reload nginx after changing the
+  format. Containers also cap their own logs (10 MB × 3) and memory
+  (`APP_MEM_LIMIT`, `POSTGRES_MEM_LIMIT`) in the compose files. `limit_req` is keyed on the client address: behind another proxy or a tunnel add `set_real_ip_from` first, or every client shares one bucket. Not yet verified on a VM.
 - **Backups** older than 14 days are removed by the script; the copy off the VM is yours to
   prune.
 
