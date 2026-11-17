@@ -11,4 +11,4 @@
 - Security: no secret or email in payload; `no-store`; same helpers as other admin routes; `/sec-check` not required, recommended only if the payload grows.
 - Rollback: revert PR; `/admin` falls back to the P07-10 overview.
 - Docs: backend role writes the feature doc and runbook row; frontend adds UI section.
-- Budget: sub-agents 0. State: READY (owner approved 2026-11-17) — **start only after P07-19 is merged**: `/admin` then lives at `src/app/(admin)/[locale]/admin/page.tsx` and uses `AdminPageHeader` (index path mapping).
+- Budget: sub-agents 0. State: DONE (PR #121 merged 2026-11-17, merge commit cffc3a2; owner approved 2026-11-17) — **start only after P07-19 is merged**: `/admin` then lives at `src/app/(admin)/[locale]/admin/page.tsx` and uses `AdminPageHeader` (index path mapping).
