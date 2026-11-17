@@ -1840,8 +1840,9 @@ export class PlannerRepository {
   /**
    * A visitor's review from the home or a place page: no account, no
    * pre-moderation (the owner's decision), so it is `approved` at once and staff
-   * can only remove it afterwards. Bounded instead: one per place per client
-   * per 24 hours, and at most `GUEST_REVIEWS_PER_PLACE_PER_DAY` per place.
+   * can only remove it afterwards. Bounded instead: the route's per-client hourly
+   * limit, and at most `GUEST_REVIEWS_PER_PLACE_PER_DAY` per place. The old
+   * one-per-place-per-client-per-day rule was dropped (owner, 2026-11-17).
    */
   async createGuestReview(input: GuestReviewInput, clientKey: string): Promise<void> {
     // Fail closed before anything is read or written: no secret, no unsalted fallback.
@@ -1860,9 +1861,6 @@ export class PlannerRepository {
         (review) =>
           review.source === 'homepage' && review.placeSlug === input.placeSlug && review.createdAt > since,
       );
-      if (recent.some((review) => review.guestKey === guestKey)) {
-        throw invalidState('this place was already reviewed from your connection in the last 24 hours');
-      }
       if (recent.length >= GUEST_REVIEWS_PER_PLACE_PER_DAY) {
         throw rateLimited(60 * 60);
       }
@@ -1883,6 +1881,34 @@ export class PlannerRepository {
         rejectReason: null,
         createdAt: at,
         updatedAt: at,
+      });
+    });
+  }
+
+  /**
+   * Called by the route when a guest hits the hourly review limit: tells staff by
+   * an audit event on that guest's latest review (the handle for restricting
+   * them), never by the key or the address. At most one event per review per
+   * hour. Best effort: the caller ignores a failure, the 429 stands.
+   */
+  async recordGuestReviewLimitHit(clientKey: string): Promise<void> {
+    const guestKey = this.guestKeyFor(clientKey);
+    await this.transaction((data) => {
+      const latest = data.communityReviews
+        .filter((review) => review.guestKey === guestKey)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+      if (!latest) return;
+      const at = this.timestamp();
+      const since = new Date(Date.parse(at) - 60 * 60_000).toISOString();
+      if (data.auditEvents.some((e) => e.targetId === latest.id && e.action === 'guest_limit' && e.createdAt > since)) return;
+      this.record(data, {
+        targetKind: 'review',
+        targetId: latest.id,
+        actorId: 'system',
+        action: 'guest_limit',
+        fromStatus: null,
+        toStatus: null,
+        reason: 'guest review limit reached (10 per hour from one connection)',
       });
     });
   }

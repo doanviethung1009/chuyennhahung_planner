@@ -57,13 +57,13 @@ export function registerGuestKeyCases(setup: () => Promise<GuestKeyCtx>): void {
     expect(keys[0]).not.toBe(createHash('sha256').update('203.0.113.5').digest('hex').slice(0, 32));
   });
 
-  it('a rotated secret no longer matches old keys: de-duplication resets', async () => {
+  it('a rotated secret gives the same client a different key', async () => {
     const w = await world();
     await w.planner.createGuestReview(review(), '203.0.113.5');
-    expect(await codeOf(w.planner.createGuestReview(review(), '203.0.113.5'))).toBe('invalid_state');
     const rotated = w.make({ now: w.clock.now, secret: () => 'another-secret-0123456789abcdef0123456789' });
     await rotated.createGuestReview(review(), '203.0.113.5');
-    expect(await reviews(w.store)).toHaveLength(2);
+    const [before, after] = (await reviews(w.store)).map((r) => r.guestKey);
+    expect(after).not.toBe(before);
   });
 
   it('fails closed without a secret: 503 and nothing written, for a review and a guest report', async () => {

@@ -44,7 +44,11 @@ export async function POST(request: Request) {
     const key = clientKey(request.headers);
     // Shared across instances on PostgreSQL; a failing database throws 503 here, before any write.
     const limit = await (await getWriteLimiters()).guestReview.check(key);
-    if (!limit.ok) throw rateLimited(limit.retryAfterSeconds);
+    if (!limit.ok) {
+      // Warn staff once per hour per guest (audit event on their latest review). Best effort.
+      await (await getPlannerRepository()).recordGuestReviewLimitHit(key).catch(() => undefined);
+      throw rateLimited(limit.retryAfterSeconds);
+    }
 
     const input = await parseJsonBody(request, guestReviewInputSchema);
     // A filled honeypot is a bot. Answer exactly like a success and store nothing.

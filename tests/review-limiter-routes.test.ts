@@ -93,16 +93,13 @@ describe('review write limiters over HTTP', () => {
     expect((await plannerRoute.PUT(plannerPut(b.cookie), placeParams('lim-place'))).status).toBe(200);
   });
 
-  it('answers a guest\'s fourth review in an hour with 429 and Retry-After, per client', async () => {
-    // A filled honeypot would short-circuit; these are real submissions, all
-    // for one place, so the one-per-day rule answers 409 after the first.
-    // Either way the limiter sees every attempt, which is what is under test.
+  it('answers a guest\'s eleventh review in an hour with 429 and Retry-After, per client', async () => {
+    // Real submissions, all for one place; the limiter sees every attempt.
     const statuses: number[] = [];
-    for (let i = 0; i < 3; i += 1) {
+    for (let i = 0; i < 10; i += 1) {
       statuses.push((await guestRoute.POST(guestPost('203.0.113.9'))).status);
     }
-    expect(statuses[0]).toBe(201);
-    expect(statuses.every((s) => s !== 429)).toBe(true);
+    expect(statuses.every((s) => s === 201)).toBe(true);
 
     const blocked = await guestRoute.POST(guestPost('203.0.113.9'));
     expect(blocked.status).toBe(429);

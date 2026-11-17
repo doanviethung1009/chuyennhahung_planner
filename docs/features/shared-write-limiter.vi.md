@@ -4,7 +4,7 @@
 
 ## Summary
 
-Hai giới hạn ghi đánh giá — 5 lần mỗi giờ cho mỗi người dùng đã đăng nhập và 3 lần mỗi giờ cho mỗi khách (ADR [0014](../adr/0014-community-trips-and-reviews.vi.md)) — trước đây nằm trong bộ nhớ tiến trình: khởi động lại thì đếm lại từ đầu, hai instance thì gấp đôi giới hạn. Khi Planner chạy trên PostgreSQL, chúng đếm trong một bảng dùng chung: restart vẫn giữ số đếm và mọi instance thấy cùng một số. Nếu không với tới được database thì lần ghi bị từ chối bằng `503`, không bao giờ cho qua (ADR [0019](../adr/0019-community-foundation.vi.md) §3). Khách không thấy gì khác; không có PostgreSQL thì limiter trong tiến trình giữ nguyên.
+Hai giới hạn ghi đánh giá — 5 lần mỗi giờ cho mỗi người dùng đã đăng nhập và 10 lần mỗi giờ cho mỗi khách (ADR [0014](../adr/0014-community-trips-and-reviews.vi.md)) — trước đây nằm trong bộ nhớ tiến trình: khởi động lại thì đếm lại từ đầu, hai instance thì gấp đôi giới hạn. Khi Planner chạy trên PostgreSQL, chúng đếm trong một bảng dùng chung: restart vẫn giữ số đếm và mọi instance thấy cùng một số. Nếu không với tới được database thì lần ghi bị từ chối bằng `503`, không bao giờ cho qua (ADR [0019](../adr/0019-community-foundation.vi.md) §3). Khách không thấy gì khác; không có PostgreSQL thì limiter trong tiến trình giữ nguyên.
 
 ## Routes
 
@@ -43,7 +43,7 @@ Bảng `rate_limit_counters` (migration `0011_rate_limit_counters.sql`, rollback
 
 ## Limits and open questions
 
-- **`x-forwarded-for` vẫn giả mạo được.** Khóa của khách là hop forwarded đầu tiên; xoay giá trị này vượt được giới hạn 3/giờ. Chưa sửa ở đây (batch 10.6: khóa HMAC và tin cậy header proxy). Trần 20 đánh giá mỗi ngày cho mỗi địa điểm của repository vẫn là lớp đỡ.
+- **`x-forwarded-for` vẫn giả mạo được.** Khóa của khách là hop forwarded đầu tiên; xoay giá trị này vượt được giới hạn 10/giờ. Chưa sửa ở đây (batch 10.6: khóa HMAC và tin cậy header proxy). Trần 20 đánh giá mỗi ngày cho mỗi địa điểm của repository vẫn là lớp đỡ.
 - Cửa sổ cố định cho phép tối đa gấp đôi giới hạn quanh ranh giới cửa sổ; limiter in-memory cũ là cửa sổ trượt.
 - Một vòng đi database mỗi lần ghi bị giới hạn; chi phí **chưa đo** (giả định: database trong LAN).
 - Database giờ là phụ thuộc của hai lần ghi này: khi nó sập chúng trả `503`, như phần còn lại của Planner.

@@ -175,14 +175,14 @@ describe('P10-12 clientKey behind the documented proxy', () => {
 
   it('rotating a forged header does not escape the guest limiter behind the proxy', async () => {
     const statuses: number[] = [];
-    for (let i = 0; i < 4; i += 1) {
+    for (let i = 0; i < 11; i += 1) {
       const res = await guestRoute.POST(
         json('/api/community/reviews', 'POST', { placeSlug: PLACE, ...review, authorName: null, rating: 4 }, viaProxyHeaders('198.51.100.30', `9.9.9.${i}`)),
       );
       statuses.push(res.status);
     }
-    expect(statuses.slice(0, 3).every((s) => s === 201 || s === 409)).toBe(true);
-    expect(statuses[3]).toBe(429);
+    expect(statuses.slice(0, 10).every((s) => s === 201)).toBe(true);
+    expect(statuses[10]).toBe(429);
   });
 
   it('WITHOUT the proxy the first hop is the client\'s own claim (why nginx must overwrite)', () => {

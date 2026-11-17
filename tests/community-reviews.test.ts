@@ -350,14 +350,24 @@ describe('guest reviews are published at once and bounded', () => {
     expect((await planner.listApprovedReviews()).items).toEqual([]);
   });
 
-  it('allows one per place per client per 24 hours', async () => {
+  it('allows the same client to review the same place again (the one-per-day rule was dropped)', async () => {
+    const planner = makePlanner();
+    await planner.createGuestReview(guest(), '1.1.1.1');
+    await planner.createGuestReview(guest(), '1.1.1.1');
+    expect((await planner.listApprovedReviews()).items).toHaveLength(2);
+  });
+
+  it('records one guest_limit event per hour on the guest\'s latest review, with no key or address', async () => {
     const clock = makeClock();
     const planner = makePlanner({ now: clock.now });
+    await planner.recordGuestReviewLimitHit('1.1.1.1'); // no review yet: nothing to attach to
     await planner.createGuestReview(guest(), '1.1.1.1');
-    await expectCode(planner.createGuestReview(guest(), '1.1.1.1'), 'invalid_state');
-    await planner.createGuestReview(guest(), '2.2.2.2');
-    clock.advanceDays(2);
-    await planner.createGuestReview(guest(), '1.1.1.1');
+    const reviewId = (await planner.listApprovedReviews()).items[0]!.id;
+    await planner.recordGuestReviewLimitHit('1.1.1.1');
+    await planner.recordGuestReviewLimitHit('1.1.1.1');
+    const events = await planner.listEvents(reviewId);
+    expect(events.map((e) => [e.action, e.actorId])).toEqual([['guest_limit', 'system']]);
+    expect(JSON.stringify(events)).not.toMatch(/1\.1\.1\.1/);
   });
 
   it('caps one place at 20 a day however many clients', async () => {
