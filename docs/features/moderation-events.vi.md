@@ -51,6 +51,7 @@ Dữ liệu cá nhân: id người thực hiện và lý do có thể trích l�
 
 ## Limits and open questions
 
+- Hàng đợi review hiển thị `guest_limit` thành huy hiệu kèm giờ (`guestLimitAt`, gộp vào hàng đợi phía server); các sự kiện khác vẫn chỉ đọc qua route events.
 - Thay đổi vai trò, template và quản trị người dùng chưa được ghi; sự kiện báo cáo và điều khoản đến cùng batch của chúng.
 - Chiếu dành cho tác giả (chuyến của mình, không lộ người duyệt) cố ý chưa làm: chưa có UI dùng.
 - Rollback: gỡ các lời gọi `record` và route, chạy SQL rollback tay. File JSON export có `auditEvents` bị code cũ từ chối (schema `.strict()`): export bằng schema của bản này trước, hoặc xoá khoá đó.

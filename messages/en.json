@@ -1092,6 +1092,7 @@
     "metaTitle": "Community trip review",
     "title": "Community trip review",
     "description": "Approve or remove public trips that want to appear on the home page. Pending trips are listed first.",
+    "newTab": "(opens in a new tab)",
     "loading": "Loading…",
     "empty": "No requests yet.",
     "meta": "{owner} · {destination} · {days} days · {activities} activities · shown as: {author}",
@@ -1129,9 +1130,11 @@
     "reviewsHeading": "Place reviews",
     "reviews": {
       "empty": "No reviews yet.",
-      "meta": "{place} · {rating} stars · {author} · {source}",
+      "meta": "{rating} stars · {author} · {source}",
       "account": "Account: {name}",
       "anonymous": "anonymous",
+      "guestLimitBadge": "Guest limit reached",
+      "guestLimitAt": "This connection hit the hourly review limit on {date}. Posting was refused; review the guest's latest reviews.",
       "sources": {
         "planner": "written in the Planner",
         "homepage": "guest on the home page"

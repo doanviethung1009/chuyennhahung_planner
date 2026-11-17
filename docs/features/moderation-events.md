@@ -51,6 +51,7 @@ Personal data: actor ids and reasons that may quote user text. Never an email, a
 
 ## Limits and open questions
 
+- The review queue surfaces `guest_limit` as a badge with time (`guestLimitAt`, folded into the queue on the server); other events are still read through the events route only.
 - Role, template and user-admin changes are not logged yet; report and terms events arrive with their own batches.
 - The author-facing projection (own trip, no actor identity) is deliberately not built: no UI consumes it.
 - Rollback: remove the `record` calls and the route, run the rollback SQL by hand. A JSON export that contains `auditEvents` is rejected by older code (`.strict()` schema): export with this version's schema first, or delete the key.

@@ -916,6 +916,7 @@ export interface RestrictionListItem {
   id: string;
   subject: 'user' | 'guest';
   placeSlug: string | null;
+  place: PlaceRef | null;
   reason: string;
   author: string | null;
   createdAt: string;
@@ -962,11 +963,20 @@ export interface PlaceReviewSummary {
   average: number | null;
 }
 
+/** A catalogue place as staff see it: both names and the public page that shows it. `null` where the slug is not in the catalogue. */
+export interface PlaceRef {
+  name: { vi: string; en: string };
+  destinationSlug: string;
+}
+
 /** A row of the staff review queue. */
 export interface ReviewQueueItem {
   id: string;
   source: 'planner' | 'homepage';
   placeSlug: string;
+  place: PlaceRef | null;
+  /** Latest `guest_limit` audit event on this review (the guest hit the hourly limit); never a key or address. */
+  guestLimitAt: string | null;
   rating: number;
   body: string;
   lang: 'vi' | 'en';

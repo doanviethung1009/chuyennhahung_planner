@@ -7,7 +7,7 @@ import {
   reviewDecisionSchema,
 } from '../src/server/planner/schemas';
 import { can } from '../src/server/identity/permissions';
-import { makeClock, makeOwner, makePlanner } from './planner-helpers';
+import { fakeCatalog, makeClock, makeOwner, makePlanner } from './planner-helpers';
 
 async function expectCode(promise: Promise<unknown>, code: string): Promise<void> {
   try {
@@ -368,6 +368,30 @@ describe('guest reviews are published at once and bounded', () => {
     const events = await planner.listEvents(reviewId);
     expect(events.map((e) => [e.action, e.actorId])).toEqual([['guest_limit', 'system']]);
     expect(JSON.stringify(events)).not.toMatch(/1\.1\.1\.1/);
+  });
+
+  it('shows staff the place name and a guest_limit time on the queue, with no key or address', async () => {
+    const clock = makeClock();
+    const planner = makePlanner({ now: clock.now });
+    await planner.createGuestReview(guest(), '1.1.1.1');
+    const [before] = await planner.listReviewQueue();
+    expect(before).toMatchObject({ guestLimitAt: null, place: { name: { vi: 'Hồ Xuân Hương' }, destinationSlug: 'da-lat' } });
+    await planner.recordGuestReviewLimitHit('1.1.1.1');
+    const [after] = await planner.listReviewQueue();
+    expect(after!.guestLimitAt).toBe(clock.now().toISOString());
+    expect(JSON.stringify(after)).not.toMatch(/1\.1\.1\.1|guestKey/);
+  });
+
+  it('falls back to the raw slug (place null) when the catalogue no longer knows the place', async () => {
+    const base = fakeCatalog();
+    let known = true;
+    const planner = makePlanner({ catalog: fakeCatalog({ getPlace: async (slug) => (known ? base.getPlace(slug) : null) }) });
+    await planner.createGuestReview(guest(), '3.3.3.3');
+    known = false;
+    const [row] = await planner.listReviewQueue();
+    expect(row).toMatchObject({ placeSlug: PLACE, place: null });
+    known = true;
+    expect((await planner.listReviewQueue())[0]!.place).not.toBeNull();
   });
 
   it('caps one place at 20 a day however many clients', async () => {
