@@ -28,7 +28,7 @@ No new table, write or repository method. Counts come from existing methods: `li
 
 ## How it works
 
-`buildOverview(principal, sources)` in `src/server/admin/overview.ts` keeps the cards the role may see (the same `can()` as the screen each opens) and reads each source independently: a failing source turns only its card into `state: 'unavailable'`, never a 500. The page calls `loadOverview` directly; the route does the same behind `adminContentRoute`. Works on JSON and PostgreSQL stores because it only uses repository methods. `OverviewCards` is a server component. A role with no cards sees an empty state. `listReviewQueue` returns at most 200 rows, so a pending-review count of 200 is shown as "200+" (`atLeast`), never as an exact total.
+`buildOverview(principal, sources)` in `src/server/admin/overview.ts` keeps the cards the role may see (the same `can()` as the screen each opens) and reads each source independently: a failing source turns only its card into `state: 'unavailable'`, never a 500. The page calls `loadOverview` directly; the route does the same behind `adminContentRoute`. Works on JSON and PostgreSQL stores because it only uses repository methods. `OverviewCards` is a server component. The payload depends on the role alone, so `loadOverview` keeps one entry per role for 15 seconds (in-process, shared by the page and the route): the full-list reads run at most once per role per window, and counts can be up to 15 seconds old. A role with no cards sees an empty state. `listReviewQueue` returns at most 200 rows, so a pending-review count of 200 is shown as "200+" (`atLeast`), never as an exact total.
 
 ## Files
 

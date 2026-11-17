@@ -158,6 +158,38 @@ export async function defaultOverviewSources(): Promise<OverviewSources> {
   };
 }
 
-export async function loadOverview(principal: Principal): Promise<Overview> {
-  return buildOverview(principal, await defaultOverviewSources());
+/**
+ * The payload depends on the role alone, so one short-lived entry per role
+ * bounds the cost of the full-list reads to one per role per window, however
+ * often the dashboard or the route is hit (security review of P07-11). Held on
+ * `globalThis` so the page and route bundles share it; the stored promise also
+ * collapses concurrent requests into one read.
+ */
+export const OVERVIEW_CACHE_TTL_MS = 15_000;
+const CACHE_KEY = Symbol.for('chuyennhahung.adminOverviewCache');
+type CacheEntry = { at: number; value: Promise<Overview> };
+type GlobalWithCache = typeof globalThis & { [CACHE_KEY]?: Map<string, CacheEntry> };
+
+function overviewCache(): Map<string, CacheEntry> {
+  const holder = globalThis as GlobalWithCache;
+  return (holder[CACHE_KEY] ??= new Map());
+}
+
+/** For tests: forget cached payloads. */
+export function resetOverviewCache(): void {
+  overviewCache().clear();
+}
+
+export async function loadOverview(principal: Principal, now: number = Date.now()): Promise<Overview> {
+  const cache = overviewCache();
+  const hit = cache.get(principal.role);
+  if (hit && now - hit.at < OVERVIEW_CACHE_TTL_MS) return hit.value;
+  const value = defaultOverviewSources().then((sources) => buildOverview(principal, sources));
+  cache.set(principal.role, { at: now, value });
+  // buildOverview never rejects for a failing source; if loading the sources
+  // itself fails, do not keep the failure for the whole window.
+  value.catch(() => {
+    if (cache.get(principal.role)?.value === value) cache.delete(principal.role);
+  });
+  return value;
 }

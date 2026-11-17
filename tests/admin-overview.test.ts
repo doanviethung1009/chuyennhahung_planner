@@ -1,9 +1,16 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SESSION_COOKIE } from '../src/server/planner/auth';
-import { buildOverview, OVERVIEW_CARD_IDS, REVIEW_QUEUE_CAP, type OverviewSources } from '../src/server/admin/overview';
+import {
+  buildOverview,
+  loadOverview,
+  OVERVIEW_CACHE_TTL_MS,
+  OVERVIEW_CARD_IDS,
+  REVIEW_QUEUE_CAP,
+  resetOverviewCache, type OverviewSources,
+} from '../src/server/admin/overview';
 import { storyFixture } from './travel-content-helpers';
 
 vi.mock('../src/server/planner/password', async (importOriginal) => ({
@@ -56,6 +63,8 @@ beforeAll(async () => {
 afterAll(async () => {
   await rm(workdir, { recursive: true, force: true });
 });
+
+beforeEach(() => resetOverviewCache());
 
 describe('GET /api/admin/overview role matrix', () => {
   it('anonymous 401, member 403, both no-store', async () => {
@@ -190,5 +199,22 @@ describe('buildOverview degraded and empty paths', () => {
       expect((await buildOverview({ role }, ok)).cards.map((c) => c.id)).not.toContain('runtime');
     }
     expect((await buildOverview({ role: 'super_admin' }, ok)).cards.map((c) => c.id)).toContain('runtime');
+  });
+});
+
+describe('overview cache (security review warning: unrate-limited full reads)', () => {
+  it('serves repeats within the window from one read, per role, and refreshes after it', async () => {
+    const repo = await content.getRepository();
+    const draftCount = async () =>
+      ((await loadOverview({ role: 'editor' }, t0 + 1)).cards.find((c) => c.id === 'contentDrafts')?.count) ?? -1;
+    const t0 = 1_000_000;
+    const first = (await loadOverview({ role: 'editor' }, t0)).cards.find((c) => c.id === 'contentDrafts')?.count ?? -1;
+    await repo.createStory(storyFixture({ slug: `ov-cache-${Date.now()}` }));
+    expect(await draftCount()).toBe(first); // still the cached payload
+    const later = await loadOverview({ role: 'editor' }, t0 + OVERVIEW_CACHE_TTL_MS + 1);
+    expect(later.cards.find((c) => c.id === 'contentDrafts')?.count).toBe(first + 1);
+    // another role has its own entry and its own card set
+    const admin = await loadOverview({ role: 'admin' }, t0 + 2);
+    expect(admin.cards.map((c) => c.id)).toContain('usersActive');
   });
 });
