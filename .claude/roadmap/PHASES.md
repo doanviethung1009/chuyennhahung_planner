@@ -170,7 +170,7 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
 - **Trạng thái:** Partial (2026-11-16). Đã có bằng chứng: PostgreSQL (ADR 0008/0009/0013) và
   dev VM chạy Docker + auto-deploy (ADR 0016; báo cáo `.claude/reports/deploy-test-2026-11-15.md`:
   5 run xanh, rollback + redeploy thật, dữ liệu bền qua deploy). **Chưa có:** sao lưu (FAIL),
-  production (G8), store rate-limit chung đã xác minh, `/release-check`.
+  production (G8), store rate-limit chung đã xác minh, `/release-check`. **Nhận P10-7 (2026-11-18) làm P09-6:** sao lưu tự động, `metadataBase` production, HSTS trên HTTPS thật — bắt buộc trước go-live; **DEV Risk Accepted** cho dev VM (HTTP/IP nội bộ, chấp nhận mất dữ liệu thử nghiệm).
 - **Phạm vi:** SQL + nhiều instance (schema đích đã có ở ADR 0002), store chung cho rate
   limiter, nhà cung cấp danh tính thật, xử lý advisory phụ thuộc, dữ liệu thật của chủ
   nhà, checklist phát hành (`/release-check`), `/qc-check` và `/sec-check` toàn hệ thống.
@@ -178,7 +178,7 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
   có hơn một instance.
 
 ## Phase 10 — Community Foundations
-- **Trạng thái:** **Gần đóng (2026-11-17) — chưa đóng.** Batch 10.1–10.7 đã merge (PR #112, #115, #117, #122, #126, #129, #132, #136; migration `0010`–`0014`), cộng việc ngoài contract: #137 (giới hạn review khách 10/giờ + `guest_limit`), #138 (tên địa điểm + nhãn trong admin), #139 (staff ẩn danh hóa review khách; self-review PASS_WITH_WARNINGS). **Review toàn phase 2026-11-17:** `/sec-check` PASS_WITH_WARNINGS và `/qc-check` PASS_WITH_WARNINGS, không BLOCKED (typecheck/lint PASS; test 1156 pass với PostgreSQL cục bộ, 1084 pass + 73 skip khi không có DB; build NOT RUN). Điều kiện đóng và việc còn mở: `CURRENT.md` và `backlog.md`. Phase kế tiếp: 11 (ADR 0025 Proposed, PR #141).
+- **Trạng thái:** **Gần đóng (2026-11-17) — chưa đóng.** Batch 10.1–10.7 đã merge (PR #112, #115, #117, #122, #126, #129, #132, #136; migration `0010`–`0014`), cộng việc ngoài contract: #137 (giới hạn review khách 10/giờ + `guest_limit`), #138 (tên địa điểm + nhãn trong admin), #139 (staff ẩn danh hóa review khách; self-review PASS_WITH_WARNINGS). **Review toàn phase 2026-11-17:** `/sec-check` PASS_WITH_WARNINGS và `/qc-check` PASS_WITH_WARNINGS, không BLOCKED (typecheck/lint PASS; test 1156 pass với PostgreSQL cục bộ, 1084 pass + 73 skip khi không có DB; build NOT RUN). Điều kiện đóng và việc còn mở: `CURRENT.md` và `backlog.md`. P10-7 đã chuyển sang Phase 09 (P09-6, DEV Risk Accepted). Blocker còn lại (xóa `reports.note`/số sao gốc, D5, smoke NOT RUN, cảnh báo Low chưa chấp nhận) ở `CURRENT.md`; #140 và #145 còn mở. Phase kế tiếp: 11 (ADR 0025 Proposed, PR #141).
 - **10-S0 — đã có code, deploy chưa xác minh:** [ADR 0014](../../docs/adr/0014-community-trips-and-reviews.md)
   (Community Trips + Reviews) và [ADR 0015](../../docs/adr/0015-community-review-author-controls.md)
   (hold, restrictions); migration `0005`–`0008`; `tests/community-*.test.ts`,
