@@ -29,6 +29,7 @@ mọi biến dưới đây đều có mặc định dùng được, hoặc tự 
 | Biến | Mặc định | Làm gì |
 |---|---|---|
 | `NEXT_PUBLIC_SITE_URL` | `https://chuyennhahung.vn` | Canonical, `hreflang`, sitemap. Phải đặt lúc **build** |
+| `GUEST_KEY_SECRET` | *chưa đặt* | Secret HMAC chỉ ở phía server (≥ 32 ký tự, như `ADMIN_API_TOKEN`; tạo bằng `openssl rand -base64 36`) cho khóa đánh giá/báo cáo của khách và, trên PostgreSQL, khóa bộ đếm của các limiter ghi ([ADR 0024](adr/0024-guest-identity-privacy.vi.md)). **Chưa đặt hoặc ngắn hơn, đánh giá và báo cáo của khách (và trên PostgreSQL, mọi lượt ghi review/báo cáo đi qua limiter) trả `503 service_unavailable` và không lưu gì — không có đường lùi về băm không salt.** Không log, echo hay commit. Đổi secret thì lệnh cấm khách và chống trùng 24 giờ được đặt lại ngay |
 | `ADMIN_API_TOKEN` | *chưa đặt* | Bảo vệ mọi route admin. Chưa đặt, hoặc ngắn hơn 32 ký tự, thì tất cả trả `503` — không bao giờ mở mặc định |
 | `TRAVEL_CONTENT_STORE` | `.data/travel-content.json` | Nơi content store nằm. Bị bỏ qua khi đặt `CONTENT_DATABASE_URL` |
 | `CONTENT_DATABASE_URL` | *chưa đặt* | Chuỗi kết nối PostgreSQL cho Travel Content. Đã đặt: content store dùng PostgreSQL và không bao giờ lùi về file ([ADR 0013](adr/0013-content-on-postgres-tables.vi.md)). Có thể là database của Planner hoặc database riêng. Là secret — chỉ qua biến môi trường. Xem *Chạy Travel Content trên PostgreSQL* |

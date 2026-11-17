@@ -28,7 +28,7 @@ Not built: hiding content by report count, telling the reporter, appeals, commen
 
 ## Data
 
-`Report` — `id` (`rpt_…`), `reporterId` (member) or `null`, `clientKey` (guest: `sha256(client key)` cut to 32 hex, else `null`), `targetKind`, `targetId` (trip id or review id; the share token is resolved on the server and never stored), `reason`, `note`, `status`, `createdAt`, `handledAt`, `handledBy`, `handlerReason`. Table `reports` (migration `0013_reports.sql`, manual rollback `db/rollback/0013_reports.sql`), JSON key `reports`, index `(status, created_at)`, no foreign keys (ADR 0013). Personal data: a member id or a hashed key, and a free-text note (never logged). A permanent account delete removes that member's reports. Older code rejects a JSON export containing `reports` (`.strict()`).
+`Report` — `id` (`rpt_…`), `reporterId` (member) or `null`, `clientKey` (guest: `HMAC-SHA256(GUEST_KEY_SECRET, client key)` cut to 32 hex, ADR 0024; `null` for a member and cleared to `null` 30 days after the report, the report itself stays), `targetKind`, `targetId` (trip id or review id; the share token is resolved on the server and never stored), `reason`, `note`, `status`, `createdAt`, `handledAt`, `handledBy`, `handlerReason`. Table `reports` (migration `0013_reports.sql`, manual rollback `db/rollback/0013_reports.sql`), JSON key `reports`, index `(status, created_at)`, no foreign keys (ADR 0013). Personal data: a member id or a hashed key, and a free-text note (never logged). A permanent account delete removes that member's reports. Older code rejects a JSON export containing `reports` (`.strict()`).
 
 `PublicCommunityReview` gained `id` (the review's random `rev_…` id, non-personal) so a reader can name the review. It is the only change to a public projection; `tests/community-reviews.test.ts` ("keeps the public projection") now lists `id` among the keys.
 
@@ -57,6 +57,7 @@ UI: `src/components/reports/report-button.tsx` — a real button (≥44px) openi
 
 ## Limits and open questions
 
+- **Guest key privacy (ADR 0024, batch 10.6b).** The guest's `clientKey` is a keyed hash, cleared after 30 days by a sweep inside later write transactions. Without `GUEST_KEY_SECRET` a guest report is `503` and not stored. Raw addresses in nginx logs are outside the application.
 - The guest limit keys on `x-forwarded-for`, which a client can forge (batch 10.6a pinned this behind the repo's nginx, where it cannot be forged; the real VM config is the owner's check, D10); the per-reporter duplicate rule is bounded by the same key.
 - No threshold, no reporter notice, no appeal. Reports of a removed item stay in the list as not actionable.
 - Rollback: remove the control and the routes; run the rollback SQL by hand; stored rows are inert, and the review `id` is harmless to leave.

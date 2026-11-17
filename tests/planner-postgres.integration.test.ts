@@ -25,6 +25,7 @@ import { runScenario, stable } from './planner-pg-fixtures';
 import { registerEventCases } from './moderation-events-cases';
 import { registerTermsCases } from './terms-acceptance-cases';
 import { registerReportCases } from './community-reports-cases';
+import { registerGuestKeyCases } from './guest-key-cases';
 
 /**
  * The Postgres store against a real database (ADR 0009). Runs only when
@@ -489,6 +490,56 @@ describe.skipIf(!url)('Planner on PostgreSQL (TEST_DATABASE_URL)', () => {
       expect(idx.rows.map((r) => r.indexname)).toContain('reports_status_created');
       const fks = await pool.query("SELECT 1 FROM information_schema.table_constraints WHERE table_name = 'reports' AND table_schema = $1 AND constraint_type = 'FOREIGN KEY'", [schema]);
       expect(fks.rows).toHaveLength(0);
+    });
+  });
+
+  describe('guest keys (migration 0014, ADR 0024, batch 10.6b)', () => {
+    registerGuestKeyCases(async () => ({
+      store,
+      make: ({ now, secret }) =>
+        new PlannerRepository({
+          store,
+          catalog: fakeCatalog(),
+          now,
+          scryptCostLog2: 10,
+          guestKeySecret: secret,
+          newId: (prefix) => `${prefix}_${randomUUID().slice(0, 8)}`,
+        }),
+    }));
+
+    it('replaces the 0008 CHECK: a lifted guest restriction may have a null key, a live one may not', async () => {
+      const row = (id: string, key: string | null, lifted: string | null) =>
+        pool.query(
+          `INSERT INTO review_restrictions (id, subject, guest_key, reason, created_at, created_by, lifted_at) VALUES ($1, 'guest', $2, 'x', now(), 's', $3)`,
+          [id, key, lifted],
+        );
+      await row('rst_ok', null, new Date().toISOString());
+      await expect(row('rst_bad', null, null)).rejects.toThrow(/check/i);
+    });
+
+    it('migration 0014 on a database with data clears keys, lifts live guest restrictions and keeps content', async () => {
+      const name = `pgmig_${randomBytes(5).toString('hex')}`;
+      await admin.query(`CREATE SCHEMA ${name}`);
+      const p = createPostgresPool(url!, { options: `-c search_path=${name}`, max: 2 });
+      try {
+        const files = await readMigrationFiles('db/migrations');
+        const before = files.filter((f) => f.name < '0014');
+        await runMigrations(p, before);
+        await p.query(`INSERT INTO community_reviews (id, source, place_slug, rating, body, lang, visited_on, status, guest_key, created_at, updated_at) VALUES ('rev_a','homepage','ho-xuan-huong',5,'Nội dung giữ nguyên','vi','2026-02-20','approved','abc','2026-03-01','2026-03-01')`);
+        await p.query(`INSERT INTO reports (id, client_key, target_kind, target_id, reason, status, created_at) VALUES ('rpt_a','abc','review','rev_a','spam','open','2026-03-01')`);
+        await p.query(`INSERT INTO review_restrictions (id, subject, guest_key, reason, created_at, created_by, expires_at) VALUES ('rst_live','guest','abc','r','2026-03-01','s', now() + interval '10 days'), ('rst_old','guest','abd','r','2026-01-01','s','2026-01-31')`);
+        await runMigrations(p, files);
+        expect((await p.query('SELECT guest_key, body FROM community_reviews')).rows).toEqual([{ guest_key: null, body: 'Nội dung giữ nguyên' }]);
+        expect((await p.query('SELECT client_key, reason FROM reports')).rows).toEqual([{ client_key: null, reason: 'spam' }]);
+        const r = await p.query('SELECT id, guest_key, lifted_by FROM review_restrictions ORDER BY id');
+        expect(r.rows).toEqual([
+          { id: 'rst_live', guest_key: null, lifted_by: 'privacy migration' },
+          { id: 'rst_old', guest_key: null, lifted_by: 'key expired' },
+        ]);
+      } finally {
+        await p.end();
+        await admin.query(`DROP SCHEMA ${name} CASCADE`);
+      }
     });
   });
 

@@ -4,7 +4,7 @@
 
 Trạng thái: **Đề xuất**. Nhãn **[C] [P] [A]**: xem
 [specs-community-overview.vi.md](specs-community-overview.vi.md). Số migration trống kế
-tiếp là `0014` (đã có `db/migrations/0013_reports.sql`; báo cáo đã làm ở batch 10.5). Tài liệu
+tiếp là `0015` (đã có `db/migrations/0014_guest_key_privacy.sql`, ADR 0024; `0014` của Phase 11 nêu bên dưới sẽ được đánh số lại khi viết). Tài liệu
 này không viết hay chạy migration nào.
 
 ## Mục tiêu và phạm vi
@@ -91,7 +91,7 @@ erDiagram
 
 ### Migration (đánh số đề xuất)
 
-Đánh số đề xuất, một migration mỗi lát: `0010` `audit_events` (Phase 10, đã có) · `0011` bộ đếm giới hạn (Phase 10, đã có, [ADR 0019](adr/0019-community-foundation.vi.md)) · `0012` `terms_acceptances` (Phase 10, đã có) · `0013` `reports` (Phase 10, đã có) · `0014` `member_profiles`, `origin` của chuyến, trạng thái đăng (Phase 11) · `0015` `journal_posts` (Phase 12) · `0016` `media_assets` (Phase 13) · `0017` theo dõi, thích, lưu, bình luận (Phase 14) · `0018` cột tìm kiếm, thông báo (Phase 15). Mỗi cái kèm ghi chú rollback, cập nhật import/export, và test trên cả hai kho (tiền lệ ADR 0014).
+Đánh số đề xuất, một migration mỗi lát: `0010` `audit_events` (Phase 10, đã có) · `0011` bộ đếm giới hạn (Phase 10, đã có, [ADR 0019](adr/0019-community-foundation.vi.md)) · `0012` `terms_acceptances` (Phase 10, đã có) · `0013` `reports` (Phase 10, đã có) · `0014` quyền riêng tư khóa khách (Phase 10, đã có, [ADR 0024](adr/0024-guest-identity-privacy.vi.md)) · số trống kế tiếp `member_profiles`, `origin` của chuyến, trạng thái đăng (Phase 11) · `0015` `journal_posts` (Phase 12) · `0016` `media_assets` (Phase 13) · `0017` theo dõi, thích, lưu, bình luận (Phase 14) · `0018` cột tìm kiếm, thông báo (Phase 15). Mỗi cái kèm ghi chú rollback, cập nhật import/export, và test trên cả hai kho (tiền lệ ADR 0014).
 
 ## Luồng xử lý và trạng thái lỗi
 

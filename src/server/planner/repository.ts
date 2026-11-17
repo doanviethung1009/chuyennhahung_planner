@@ -36,6 +36,7 @@ import {
   transition,
 } from '../community/submission';
 import { termsVersion as defaultTermsVersion } from '@/content/site';
+import { guestKeyOf, readGuestKeySecret, type SecretSource } from '../community/guest-key';
 import { appendEvent, eventsForTarget, type NewAuditEvent } from '../community/events';
 import {
   DEFAULT_SCRYPT_COST_LOG2,
@@ -143,6 +144,12 @@ export interface PlannerRepositoryOptions {
   scryptCostLog2?: number;
   /** Current Creator Terms version; defaults to `termsVersion` in `src/content/site.ts`. Injected so tests can bump it. */
   termsVersion?: string;
+  /**
+   * Supplies the HMAC secret for guest keys (ADR 0024); defaults to the
+   * `GUEST_KEY_SECRET` environment variable. Injected so tests control it.
+   * A missing secret makes guest writes fail with `503 service_unavailable`.
+   */
+  guestKeySecret?: SecretSource;
 }
 
 /** A day with its activities attached, in order. */
@@ -224,6 +231,8 @@ export class PlannerRepository {
   /** Store revision the index was built at, when the store reports one. */
   private shareIndexRevision: string | number | null = null;
 
+  private readonly guestKeySecret: SecretSource;
+
   constructor(options: PlannerRepositoryOptions) {
     this.store = options.store;
     this.catalog = options.catalog;
@@ -231,6 +240,12 @@ export class PlannerRepository {
     this.newId = options.newId ?? ((prefix) => `${prefix}_${randomUUID().slice(0, 8)}`);
     this.scryptCostLog2 = options.scryptCostLog2 ?? DEFAULT_SCRYPT_COST_LOG2;
     this.termsVersion = options.termsVersion ?? defaultTermsVersion;
+    this.guestKeySecret = options.guestKeySecret ?? readGuestKeySecret;
+  }
+
+  /** The keyed guest key of a client address; throws 503 when the secret is not configured. */
+  private guestKeyFor(clientKey: string): string {
+    return guestKeyOf(this.guestKeySecret(), clientKey);
   }
 
   // -------------------------------------------------------------------------
@@ -257,6 +272,10 @@ export class PlannerRepository {
   }
 
   /** One audit event, inside the caller's transaction (ADR 0019 §2). */
+  private sweepGuestKeys(data: PlannerData, at: string): void {
+    sweepGuestKeysIn(data, at);
+  }
+
   private record(data: PlannerData, event: NewAuditEvent): void {
     appendEvent(data, event, { id: this.newId('evt'), at: this.timestamp() });
   }
@@ -1825,12 +1844,14 @@ export class PlannerRepository {
    * per 24 hours, and at most `GUEST_REVIEWS_PER_PLACE_PER_DAY` per place.
    */
   async createGuestReview(input: GuestReviewInput, clientKey: string): Promise<void> {
+    // Fail closed before anything is read or written: no secret, no unsalted fallback.
+    const guestKey = this.guestKeyFor(clientKey);
     await this.requireKnownPlace(input.placeSlug);
     await this.transaction((data) => {
       this.requireNotFuture(input.visitedOn);
       const at = this.timestamp();
+      this.sweepGuestKeys(data, at);
       const since = new Date(Date.parse(at) - 24 * 60 * 60_000).toISOString();
-      const guestKey = guestKeyOf(clientKey);
       if (restrictionFor(data, at, { authorId: null, guestKey, placeSlug: input.placeSlug })) {
         throw forbidden('reviews from this connection are paused');
       }
@@ -1987,8 +2008,16 @@ export class PlannerRepository {
    * success. `who.userId` is the member, else the guest's `clientKey` (hashed).
    */
   createReport(input: CreateReportInput, who: { userId: string | null; clientKey: string }): Promise<void> {
+    // A guest report stores a keyed hash: no secret, no write (ADR 0024).
+    let guestKey: string | null;
+    try {
+      guestKey = who.userId ? null : this.guestKeyFor(who.clientKey);
+    } catch (error) {
+      return Promise.reject(error);
+    }
     return this.transaction((data) => {
       const at = this.timestamp();
+      this.sweepGuestKeys(data, at);
       let targetId: string | null = null;
       if (input.targetKind === 'trip') {
         const digest = shareTokenDigest(input.shareToken ?? '');
@@ -2002,7 +2031,7 @@ export class PlannerRepository {
       }
       if (targetId === null) throw notFound('target', input.targetKind);
 
-      const clientKey = who.userId ? null : guestKeyOf(who.clientKey);
+      const clientKey = guestKey;
       const duplicate = data.reports.some(
         (row) =>
           row.status === 'open' &&
@@ -2126,6 +2155,7 @@ export class PlannerRepository {
       const review = data.communityReviews.find((candidate) => candidate.id === input.reviewId);
       if (!review) throw notFound('review', input.reviewId);
       const at = this.timestamp();
+      this.sweepGuestKeys(data, at);
       const placeSlug = input.scope === 'place' ? review.placeSlug : null;
       const subject: ReviewRestriction['subject'] = review.authorId ? 'user' : 'guest';
       let expiresAt: string | null = input.expiresAt ?? null;
@@ -2141,9 +2171,9 @@ export class PlannerRepository {
           throw forbidden('staff accounts cannot be switched off');
         }
       } else {
-        if (!review.guestKey) throw invalidState('this review has no guest key to restrict');
+        if (!review.guestKey) throw invalidState('this review has no guest key to restrict (guest keys are cleared after 30 days)');
         // Blocking the shared key would silence every guest without a trusted proxy.
-        if (review.guestKey === guestKeyOf('unknown')) {
+        if (review.guestKey === this.guestKeyFor('unknown')) {
           throw invalidState('this review has no usable connection key: restricting it would silence every guest');
         }
         const day = 24 * 60 * 60_000;
@@ -2202,6 +2232,8 @@ export class PlannerRepository {
       const row = data.reviewRestrictions[index];
       if (!row) throw notFound('restriction', restrictionId);
       if (row.liftedAt) return;
+      const liftedAt = this.timestamp();
+      this.sweepGuestKeys(data, liftedAt);
       this.record(data, {
         targetKind: 'user',
         targetId: row.subject === 'user' && row.authorId ? row.authorId : row.id,
@@ -2210,7 +2242,13 @@ export class PlannerRepository {
         fromStatus: 'active',
         toStatus: 'lifted',
       });
-      data.reviewRestrictions[index] = { ...row, liftedAt: this.timestamp(), liftedBy: actor.slice(0, 80) };
+      // A guest restriction's key is cleared when it ends (ADR 0024); the row stays as the record.
+      data.reviewRestrictions[index] = {
+        ...row,
+        guestKey: row.subject === 'guest' ? null : row.guestKey,
+        liftedAt,
+        liftedBy: actor.slice(0, 80),
+      };
     });
   }
 
@@ -3203,9 +3241,38 @@ function isCommunityVisible(trip: Trip): boolean {
 /** A guest can post at most this many reviews of one place per day, across all clients. */
 const GUEST_REVIEWS_PER_PLACE_PER_DAY = 20;
 
-/** The hashed client key stored on a guest review and on a guest restriction. */
-function guestKeyOf(clientKey: string): string {
-  return createHash('sha256').update(clientKey).digest('hex').slice(0, 32);
+/**
+ * Clears guest identifiers that have reached the end of their life (ADR 0024),
+ * inside the caller's write transaction, like the audit-log sweep, so no
+ * scheduler is needed. Reviews and reports keep their content; only the key goes.
+ * Bounded per call (`GUEST_KEY_SWEEP_BATCH` per collection): a backlog is cleared
+ * over the next writes instead of in one long transaction.
+ */
+const GUEST_KEY_RETENTION_DAYS = 30;
+const GUEST_KEY_SWEEP_BATCH = 500;
+export const GUEST_KEY_EXPIRED_BY = 'key expired';
+
+function sweepGuestKeysIn(data: PlannerData, at: string): void {
+  const cutoff = new Date(Date.parse(at) - GUEST_KEY_RETENTION_DAYS * 24 * 60 * 60_000).toISOString();
+  let budget = GUEST_KEY_SWEEP_BATCH;
+  data.communityReviews = data.communityReviews.map((row) =>
+    budget > 0 && row.guestKey !== null && row.createdAt <= cutoff ? (budget--, { ...row, guestKey: null }) : row,
+  );
+  budget = GUEST_KEY_SWEEP_BATCH;
+  data.reports = data.reports.map((row) =>
+    budget > 0 && row.clientKey !== null && row.createdAt <= cutoff ? (budget--, { ...row, clientKey: null }) : row,
+  );
+  budget = GUEST_KEY_SWEEP_BATCH;
+  // A guest restriction that ended (lifted, or past its expiry) no longer needs its key.
+  data.reviewRestrictions = data.reviewRestrictions.map((row) => {
+    if (budget <= 0 || row.subject !== 'guest' || row.guestKey === null) return row;
+    const ended = row.liftedAt !== null || (row.expiresAt !== null && row.expiresAt <= at);
+    if (!ended) return row;
+    budget -= 1;
+    return row.liftedAt !== null
+      ? { ...row, guestKey: null }
+      : { ...row, guestKey: null, liftedAt: at, liftedBy: GUEST_KEY_EXPIRED_BY };
+  });
 }
 
 function activeRestrictionsOf(data: PlannerData, at: string): ReviewRestriction[] {

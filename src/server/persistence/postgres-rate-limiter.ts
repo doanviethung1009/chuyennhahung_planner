@@ -1,5 +1,5 @@
-import { createHash } from 'node:crypto';
 import { ContentError } from '@/server/content/errors';
+import { limiterKeyOf, readGuestKeySecret, type SecretSource } from '@/server/community/guest-key';
 import type { AsyncRateLimiter, RateLimitResult } from '@/server/rate-limit';
 
 /**
@@ -42,6 +42,11 @@ export interface PostgresRateLimiterOptions {
   now?: () => number;
   /** How often this instance sweeps old windows; defaults to `SWEEP_INTERVAL_MS`. */
   sweepIntervalMs?: number;
+  /**
+   * Supplies the HMAC secret for the stored key (ADR 0024); defaults to the
+   * `GUEST_KEY_SECRET` environment variable. A missing secret fails closed.
+   */
+  secret?: SecretSource;
 }
 
 /**
@@ -68,9 +73,12 @@ const SWEEP_SQL = `DELETE FROM rate_limit_counters WHERE ctid IN (
   SELECT ctid FROM rate_limit_counters WHERE window_start < $1 LIMIT ${SWEEP_BATCH})
 RETURNING 1`;
 
-/** The stored key: a hash, so no address or user id sits in the table in the clear. */
-export function counterKey(name: string, key: string): string {
-  return createHash('sha256').update(`${name}\0${key}`).digest('hex');
+/**
+ * The stored key: a keyed hash (ADR 0024), so no address or user id sits in the
+ * table in the clear and none can be re-derived without the secret.
+ */
+export function counterKey(secret: string, name: string, key: string): string {
+  return limiterKeyOf(secret, name, key);
 }
 
 export function createPostgresRateLimiter(options: PostgresRateLimiterOptions): AsyncRateLimiter {
@@ -81,6 +89,7 @@ export function createPostgresRateLimiter(options: PostgresRateLimiterOptions): 
   }
   const now = options.now ?? Date.now;
   const sweepIntervalMs = options.sweepIntervalMs ?? SWEEP_INTERVAL_MS;
+  const readSecret = options.secret ?? readGuestKeySecret;
   let lastSweep = now();
   let sweeping = false;
 
@@ -107,9 +116,11 @@ export function createPostgresRateLimiter(options: PostgresRateLimiterOptions): 
     async check(key: string): Promise<RateLimitResult> {
       const at = now();
       const windowStart = Math.floor(at / windowMs) * windowMs;
+      // Before the statement, outside the try: a missing secret is its own 503, not a database error.
+      const stored = counterKey(readSecret(), name, key);
       let count: number;
       try {
-        const result = await pool.query(COUNT_SQL, [counterKey(name, key), windowStart, limit + 1]);
+        const result = await pool.query(COUNT_SQL, [stored, windowStart, limit + 1]);
         count = Number(result.rows[0]?.count);
         if (!Number.isInteger(count)) throw new Error('no count returned');
       } catch {

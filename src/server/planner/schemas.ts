@@ -775,7 +775,7 @@ export const communityReviewSchema = z.object({
   /** Shown name; `null` is anonymous. A snapshot — never an email or id. */
   authorName: z.string().trim().min(2).max(60).nullable(),
   status: reviewStatusSchema,
-  /** SHA-256 prefix of the guest's client key: dedupe only, never an address. */
+  /** HMAC-SHA256 prefix of the guest's client key (ADR 0024): dedupe only, never an address. Cleared to null after 30 days. */
   guestKey: z.string().max(64).nullable().default(null),
   decidedAt: timestampSchema.nullable().default(null),
   decidedBy: z.string().max(80).nullable().default(null),
@@ -830,9 +830,10 @@ export const reviewDecisionSchema = z
     path: ['reason'],
   });
 
-/** A guest restriction lasts 30 days unless staff say otherwise, and never more than 90 (ADR 0015). */
+/** A guest restriction lasts 30 days unless staff say otherwise, and never more than 30 (ADR 0015, cap lowered from 90 by ADR 0024). */
 export const GUEST_RESTRICTION_DEFAULT_DAYS = 30;
-export const GUEST_RESTRICTION_MAX_DAYS = 90;
+/** ADR 0024: 30, so the key a restriction holds never outlives the guest-key retention. */
+export const GUEST_RESTRICTION_MAX_DAYS = 30;
 
 /**
  * Staff switch an author off (ADR 0015). `placeSlug: null` is every place. The
@@ -844,7 +845,7 @@ export const reviewRestrictionSchema = z.object({
   id: plannerIdSchema,
   subject: z.enum(['user', 'guest']),
   authorId: plannerIdSchema.nullable().default(null),
-  /** Same SHA-256 prefix as `CommunityReview.guestKey`: pseudonymous personal data, never returned. */
+  /** Same keyed hash as `CommunityReview.guestKey`: pseudonymous personal data, never returned. Null only once the restriction has ended (`liftedAt` set). */
   guestKey: z.string().max(64).nullable().default(null),
   placeSlug: slugSchema.nullable().default(null),
   reason: z.string().trim().min(3).max(500),
@@ -853,6 +854,10 @@ export const reviewRestrictionSchema = z.object({
   expiresAt: timestampSchema.nullable().default(null),
   liftedAt: timestampSchema.nullable().default(null),
   liftedBy: z.string().max(80).nullable().default(null),
+}).refine((row) => row.subject !== 'guest' || row.guestKey !== null || row.liftedAt !== null, {
+  // Mirrors the CHECK of migration 0014: a live guest restriction needs its key.
+  message: 'an active guest restriction needs a guest key',
+  path: ['guestKey'],
 });
 
 /**
@@ -999,8 +1004,8 @@ export type ReportReason = z.infer<typeof reportReasonSchema>;
 export type ReportStatus = z.infer<typeof reportStatusSchema>;
 
 /**
- * One reader's report of a community trip or review. `clientKey` is the hashed
- * guest key (null for a member, who is `reporterId`); neither is ever returned
+ * One reader's report of a community trip or review. `clientKey` is the keyed-hash
+ * guest key (ADR 0024; null for a member, who is `reporterId`, and null once swept after 30 days); neither is ever returned
  * by an API. `targetId` is the trip id or review id; the public share token of
  * a trip is resolved server-side and never stored.
  */
