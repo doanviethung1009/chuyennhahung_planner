@@ -29,6 +29,7 @@ Mục "Địa điểm" nằm trên `/destinations/[slug]`. Không có trang danh
 | `src/app/[locale]/places/[slug]/page.tsx` | Trang chi tiết địa điểm, metadata, JSON-LD |
 | `src/app/[locale]/destinations/[slug]/page.tsx` | Mục "Địa điểm" |
 | `src/server/content/public-places.ts` | Đọc địa điểm theo danh sách trường cho phép |
+| `src/components/places/place-review-section.tsx` | Khối form review trên trang (PLACES-UI-S2) |
 | `src/components/cards/place-card.tsx` | Thẻ địa điểm |
 | `src/lib/place-format.ts` | Cách viết thời lượng và chi phí |
 | `src/i18n/routing.ts`, `src/app/sitemap.ts` | Route và sitemap |
@@ -40,4 +41,4 @@ Mục "Địa điểm" nằm trên `/destinations/[slug]`. Không có trang danh
 
 ## Limits and open questions
 
-Chưa có trang danh sách địa điểm, tìm kiếm hay lọc, bản đồ, form review (contract sau), nút thêm vào chuyến. Alt còn chung chung cho đến khi schema có alt theo từng ảnh. Chưa hiển thị tọa độ địa điểm. Địa điểm nhập tạm làm placeholder sẽ hiển thị công khai như nó đang có.
+Chưa có trang danh sách địa điểm, tìm kiếm hay lọc, bản đồ, nút thêm vào chuyến. Trang hiện 20 review mới nhất, không phân trang; muốn phân trang phải thêm `limit`/`cursor` vào `GET /api/community/reviews` (quyết định PLACES-UI-S2). Alt còn chung chung cho đến khi schema có alt theo từng ảnh. Chưa hiển thị tọa độ địa điểm. Địa điểm nhập tạm làm placeholder sẽ hiển thị công khai như nó đang có.

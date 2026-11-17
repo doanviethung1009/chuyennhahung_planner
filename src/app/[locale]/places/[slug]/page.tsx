@@ -9,6 +9,7 @@ import { siteConfig } from '@/content/site';
 import { getDestination } from '@/content/destinations';
 import { getPublicPlace } from '@/server/content/public-places';
 import { getApprovedReviews } from '@/server/community/public';
+import { PlaceReviewSection } from '@/components/places/place-review-section';
 import { ReviewList } from '@/components/reviews/review-list';
 import { Container } from '@/components/ui/container';
 import { Prose } from '@/components/ui/prose';
@@ -43,7 +44,7 @@ export default async function PlacePage({ params }: Params) {
 
   const t = await getTranslations('places');
   const destination = getDestination(place.destinationSlug);
-  const reviews = await getApprovedReviews([place.slug], 12);
+  const reviews = await getApprovedReviews([place.slug], 20);
   const duration = placeDurationParts(place.suggestedMinutes);
   const name = place.name[locale];
   const cover = place.images[0];
@@ -160,6 +161,9 @@ export default async function PlacePage({ params }: Params) {
           ) : (
             <p className="text-foreground-muted">{t('reviewsEmpty')}</p>
           )}
+          <div className="mt-10">
+            <PlaceReviewSection place={{ slug: place.slug, name }} />
+          </div>
         </Container>
       </section>
     </article>

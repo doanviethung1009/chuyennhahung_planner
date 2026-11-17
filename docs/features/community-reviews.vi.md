@@ -10,7 +10,7 @@ Người đi có thể đánh giá các địa điểm trong danh mục, khi đ�
 
 | Nội bộ | Tiếng Việt | Tiếng Anh |
 |---|---|---|
-| không có route mới (hiện ở `/`, `/destinations/[slug]`, `/my-trips/[id]`, `/admin/community`) | | |
+| không có route mới (hiện ở `/`, `/places/[slug]`, `/destinations/[slug]`, `/my-trips/[id]`, `/admin/community`) | | |
 
 API: `GET /api/planner/reviews`, `PUT|DELETE /api/planner/reviews/[placeSlug]` (đã đăng nhập), `GET|POST /api/community/reviews` (công khai), `GET /api/admin/community/reviews` và `PATCH /api/admin/community/reviews/[id]` (staff, `community:moderate`), `POST /api/admin/community/reviews/[id]/erase` (từ admin, `community:erase`).
 
@@ -32,6 +32,7 @@ API: `GET /api/planner/reviews`, `PUT|DELETE /api/planner/reviews/[placeSlug]` (
 5. Địa điểm chọn từ danh mục và ngày đến bắt buộc, nên thông tin kiểm tra được; đánh giá hiện là "tự khai", không bao giờ là "đã xác minh".
 6. Văn bản đánh giá được React hiển thị như text: HTML vô hại và link không bấm được.
 7. Xoá tài khoản người dùng thì xoá cả đánh giá của họ.
+9. **Đường từ trang địa điểm (PLACES-UI-S2):** trên `/dia-diem/[slug]` (`/en/places/[slug]`) `PlaceReviewSection` cho viết review với địa điểm đã cố định (không có dropdown). Nó đọc `GET /api/planner/session`: không có phiên (401) hoặc lỗi bất kỳ thì hiện form khách (`POST /api/community/reviews`); có phiên thì hiện form thành viên (`PUT /api/planner/reviews/[placeSlug]` kèm ô đồng ý điều khoản), review của chính tác giả cùng trạng thái, câu hỏi `held` và restriction như ở `/my-trips`, kèm sửa và xóa. Server vẫn quyết định mọi quyền. Không đổi API: thành viên được review địa điểm không nằm trong chuyến nào. `403 contribution_closed` hiện thông báo đóng; 429, 422 và `terms_not_accepted` hiện thông báo riêng; 401 giữa chừng quay về form khách. Sau khi gửi trang báo thành công và gọi `router.refresh()`; trang liệt kê 20 review mới nhất (chưa phân trang). `ReviewForm` thêm hai prop tùy chọn cho khách là `fixedPlace` và `onSubmitted`, và hiện thông báo đóng khi gặp `contribution_closed`.
 8. Trang đọc qua `getApprovedReviews` và `getReviewPlaces` (`src/server/community/public.ts`); lỗi store thì không hiện gì thay vì báo lỗi.
 
 ## Tệp
@@ -44,12 +45,15 @@ API: `GET /api/planner/reviews`, `PUT|DELETE /api/planner/reviews/[placeSlug]` (
 | `src/server/persistence/planner-rows.ts`, `planner-transfer.ts`, `src/server/planner/store.ts`, `db/migrations/0006_community_reviews.sql` | lưu trữ |
 | `src/app/api/planner/reviews/**`, `src/app/api/community/reviews/route.ts`, `src/app/api/admin/community/reviews/**` | route |
 | `src/components/reviews/*` | danh sách, form, khung Planner |
+| `src/components/places/place-review-section.tsx` | khối review trên trang địa điểm |
 | `src/components/sections/community-reviews-section.tsx` | mục trang chủ |
 | `src/components/admin/community/review-queue.tsx` | hàng đợi staff |
 
 ## Kiểm thử
 
 `tests/community-reviews.test.ts`: đánh giá Planner lên ngay và staff gỡ được; mỗi tác giả một đánh giá mỗi địa điểm và sửa là thay thế; chỉ xoá được của mình; từ chối địa điểm lạ và ngày tương lai; xoá cùng tài khoản; đánh giá khách lên ngay và chỉ gỡ được; một đánh giá mỗi client mỗi 24 giờ; 20 mỗi địa điểm mỗi ngày; không lưu địa chỉ; projection công khai có đúng các trường cho phép; ẩn điểm trung bình dưới ba; đánh giá `held` bị ẩn, hiện câu hỏi cho tác giả, được đăng lại khi sửa, gỡ hoặc xoá được, còn đánh giá của khách không `hold` được; restriction chặn và ẩn theo một địa điểm hoặc tất cả, gỡ thì khôi phục, không đụng tác giả khác, có thời hạn và từ chối khoá khách dùng chung, không lộ id hay khoá, biến mất cùng tài khoản (`tests/review-restrictions-routes.test.ts` phủ ai được tắt và gỡ, từ chối cross-site và body strict); schema strict và HTML vô hại. `tests/guest-review-erasure-cases.ts` (bộ nhớ ở `tests/guest-review-erasure.test.ts`, PostgreSQL ở file tích hợp) và test route phủ việc xóa: các trường được ẩn danh, nội dung và khóa không còn trong store lẫn bản export, một event, idempotent, lỗi không ghi gì, review Planner bị từ chối, báo cáo mở vẫn xử lý được, trần theo ngày vẫn tính dòng đó; test route ghim 401/403 (member, editor, cross-site)/422/404/409/200 (admin, service token). `tests/planner-pg-fixtures.ts` nay ghi một đánh giá mỗi loại nên test ánh xạ dòng và test tích hợp PostgreSQL phủ bảng mới.
+
+`tests/place-review-section.test.ts`: form khách có địa điểm cố định không có dropdown, form trang chủ vẫn giữ dropdown, khối bắt đầu ở trạng thái đang tải trung tính và không có form, có đủ khóa VI/EN. Các luồng phía client (gửi, sửa, xóa, 401, 429) kiểm thủ công, không tự động: bộ test không có môi trường DOM.
 
 Chưa chạy ở đây: test tích hợp PostgreSQL (môi trường này không có database).
 

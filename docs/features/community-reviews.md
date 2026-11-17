@@ -10,7 +10,7 @@ Travellers can review catalogue places, signed in inside the Planner or as a vis
 
 | Internal | Vietnamese | English |
 |---|---|---|
-| none new (shown on `/`, `/destinations/[slug]`, `/my-trips/[id]`, `/admin/community`) | | |
+| none new (shown on `/`, `/places/[slug]`, `/destinations/[slug]`, `/my-trips/[id]`, `/admin/community`) | | |
 
 API: `GET /api/planner/reviews`, `PUT|DELETE /api/planner/reviews/[placeSlug]` (signed in), `GET|POST /api/community/reviews` (public), `GET /api/admin/community/reviews` and `PATCH /api/admin/community/reviews/[id]` (staff, `community:moderate`), `POST /api/admin/community/reviews/[id]/erase` (admin and up, `community:erase`).
 
@@ -32,6 +32,7 @@ API: `GET /api/planner/reviews`, `PUT|DELETE /api/planner/reviews/[placeSlug]` (
 5. The place is picked from the catalogue and the visit date is required, so the details are checkable; the review is shown as "self-reported", never "verified".
 6. Review text is rendered as text by React: HTML is inert and links are not clickable.
 7. Deleting a user account deletes their reviews.
+9. **Place page path (PLACES-UI-S2):** on `/dia-diem/[slug]` (`/en/places/[slug]`) `PlaceReviewSection` writes with the place fixed (no dropdown). It reads `GET /api/planner/session`: no session (401) or any failure shows the guest form (`POST /api/community/reviews`); a session shows the member form (`PUT /api/planner/reviews/[placeSlug]` with the terms checkbox), the author's own review with its status, `held` question and restriction as in `/my-trips`, and edit and delete. The server still decides every permission. No API change: a member may review a place that is not in any trip. `403 contribution_closed` shows the closed notice, 429, 422 and `terms_not_accepted` show their messages, and a 401 mid-way falls back to the guest form. After a send the page says so and calls `router.refresh()`; it lists the 20 newest reviews (no pagination yet). `ReviewForm` gained the optional guest props `fixedPlace` and `onSubmitted`, and now shows the closed notice for `contribution_closed`.
 8. Pages read through `getApprovedReviews` and `getReviewPlaces` (`src/server/community/public.ts`); a store failure shows nothing rather than an error.
 
 ## Files
@@ -44,12 +45,15 @@ API: `GET /api/planner/reviews`, `PUT|DELETE /api/planner/reviews/[placeSlug]` (
 | `src/server/persistence/planner-rows.ts`, `planner-transfer.ts`, `src/server/planner/store.ts`, `db/migrations/0006_community_reviews.sql` | storage |
 | `src/app/api/planner/reviews/**`, `src/app/api/community/reviews/route.ts`, `src/app/api/admin/community/reviews/**` | routes |
 | `src/components/reviews/*` | list, form, Planner panel |
+| `src/components/places/place-review-section.tsx` | review block on the place page |
 | `src/components/sections/community-reviews-section.tsx` | home section |
 | `src/components/admin/community/review-queue.tsx` | staff queue |
 
 ## Tests
 
 `tests/community-reviews.test.ts`: Planner reviews are live at once and removable by staff; one per author per place and an edit replaces it; own delete only; unknown place and future date refused; removed with the account; guest reviews are public at once, only removable; one per client per 24 h; 20 per place per day; the address is never stored; the public projection names exactly the allowed fields; the average is hidden below three; a held review is hidden, shows the author its question, is republished by an edit, can be removed or deleted, and a guest review cannot be held; restrictions block and hide for one place or all, lift restores, never touch another author, time-box and refuse the shared guest key, leave out ids and keys, vanish with the account (`tests/review-restrictions-routes.test.ts` covers who may restrict and lift, cross-site refusal and strict bodies); schemas are strict and HTML stays inert. `tests/guest-review-erasure-cases.ts` (memory in `tests/guest-review-erasure.test.ts`, PostgreSQL in the integration file) and the route test cover the erasure: fields anonymised, content and key absent from the store and the export, one event, idempotent, failure writes nothing, Planner review refused, open report still resolves, the daily cap still counts the row; the route test pins 401/403 (member, editor, cross-site)/422/404/409/200 (admin, service token). `tests/planner-pg-fixtures.ts` now writes one review of each kind, so the row-mapping test and the PostgreSQL integration test cover the new table.
+
+`tests/place-review-section.test.ts`: the fixed-place guest form has no dropdown, the home form keeps it, the section starts in a neutral loading state without a form, VI/EN keys exist. The client flows (send, edit, delete, 401, 429) are checked by hand, not automatically: the suite has no DOM environment.
 
 Not run here: the PostgreSQL integration test (no database in this environment).
 
