@@ -1,5 +1,6 @@
 import type { NextResponse } from "next/server";
 import { ContentError } from "@/server/content/errors";
+import { invalidateOverviewCacheAfter } from "@/server/overview-cache";
 import { toErrorResponse } from "@/server/content/http";
 import {
   resolveAdminPrincipal,
@@ -26,6 +27,8 @@ export async function adminContentRoute(
     return noStore(await handler(principal));
   } catch (error) {
     return noStore(toErrorResponse(error));
+  } finally {
+    invalidateOverviewCacheAfter(request);
   }
 }
 

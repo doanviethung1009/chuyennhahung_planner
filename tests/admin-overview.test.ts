@@ -1,3 +1,4 @@
+import { invalidateOverviewCacheAfter } from '@/server/overview-cache';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -216,5 +217,18 @@ describe('overview cache (security review warning: unrate-limited full reads)', 
     // another role has its own entry and its own card set
     const admin = await loadOverview({ role: 'admin' }, t0 + 2);
     expect(admin.cards.map((c) => c.id)).toContain('usersActive');
+  });
+
+  it('is dropped right after a state-changing admin request, not after a read', async () => {
+    const repo = await content.getRepository();
+    const t0 = 2_000_000;
+    const drafts = async (at: number) =>
+      ((await loadOverview({ role: 'editor' }, at)).cards.find((c) => c.id === 'contentDrafts')?.count) ?? -1;
+    const before = await drafts(t0);
+    await repo.createStory(storyFixture({ slug: `ov-inval-${Date.now()}` }));
+    invalidateOverviewCacheAfter(new Request('http://x/api', { method: 'GET' }));
+    expect(await drafts(t0 + 1)).toBe(before); // a read keeps the cache
+    invalidateOverviewCacheAfter(new Request('http://x/api', { method: 'POST' }));
+    expect(await drafts(t0 + 2)).toBe(before + 1); // a write refreshes at once
   });
 });

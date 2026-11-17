@@ -5,6 +5,7 @@ import { ContentError, forbidden } from '@/server/content/errors';
 import { toErrorResponse } from '@/server/content/http';
 import { jsonSafe } from './money';
 import { can, type Action, type Role } from '@/server/identity/permissions';
+import { invalidateOverviewCacheAfter } from '@/server/overview-cache';
 import { createRateLimiter } from '@/server/rate-limit';
 import {
   SESSION_COOKIE,
@@ -328,6 +329,8 @@ export async function adminPlannerRoute(
     return ADMIN_NO_STORE(await handler(repository, principal));
   } catch (error) {
     return ADMIN_NO_STORE(toErrorResponse(error));
+  } finally {
+    invalidateOverviewCacheAfter(request);
   }
 }
 
