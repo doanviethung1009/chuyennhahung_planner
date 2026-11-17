@@ -1,0 +1,35 @@
+# Overlay (OPTIONAL, OFF by default): QC/DBA access to the stack's PostgreSQL
+# directly over the LAN — "Option B". Runbook: docs/deploy-db-access.md.
+#
+# Publishes the database on the VM's LAN address ONLY: 192.168.100.140:15432
+# -> 5432. Never 0.0.0.0, never the router, never Cloudflare Tunnel. If the VM's
+# IP changes, edit the address below in a PR. Only for the local-db layout.
+#
+# SECURITY: Docker publishes ports through iptables chains that bypass `ufw`.
+# Restrict who may connect in the DOCKER-USER chain (and/or the Proxmox
+# firewall) BEFORE enabling this — see the runbook, section H.
+#
+# Use it INSTEAD of compose.postgres-ssh.yml, never together: Compose appends
+# `ports` lists, so both files would publish both bindings.
+#
+#   cd /opt/chuyennhahung/src/deploy
+#   docker compose --project-directory . --env-file /opt/chuyennhahung/.env \
+#     --profile local-db -f compose.yml -f compose.app.yml -f compose.app.bind.yml \
+#     -f compose.app.local-db.yml -f compose.postgres-lan.yml \
+#     up -d --no-deps postgres
+#
+# `backend` is `internal: true` and cannot publish ports, so postgres also joins
+# the non-internal `dbaccess` network. `app` stays on `backend` only.
+# deploy/deploy.sh does not use this file and only ever recreates `app`
+# (--no-deps), so a deploy neither adds nor removes this port mapping.
+
+services:
+  postgres:
+    ports:
+      - "192.168.100.140:15432:5432"
+    networks:
+      - backend
+      - dbaccess
+
+networks:
+  dbaccess: {}
