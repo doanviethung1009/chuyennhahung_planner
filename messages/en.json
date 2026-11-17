@@ -507,9 +507,6 @@
     "limitedBody": "There have been a lot of views from your network in a short time. Wait a moment and reload the page."
   },
   "admin": {
-    "metaTitle": "Admin",
-    "title": "Admin",
-    "signedInAs": "Signed in as {handle}",
     "signOut": "Sign out",
     "signingOut": "Signing out…",
     "roles": {

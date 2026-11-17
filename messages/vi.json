@@ -507,9 +507,6 @@
     "limitedBody": "Có quá nhiều lượt xem từ mạng của bạn trong thời gian ngắn. Hãy đợi một chút rồi tải lại trang."
   },
   "admin": {
-    "metaTitle": "Quản trị",
-    "title": "Quản trị",
-    "signedInAs": "Đang đăng nhập là {handle}",
     "signOut": "Đăng xuất",
     "signingOut": "Đang đăng xuất…",
     "roles": {
