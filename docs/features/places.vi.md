@@ -20,7 +20,7 @@ Mục "Địa điểm" nằm trên `/destinations/[slug]`. Không có trang danh
 
 ## How it works
 
-`getPublicPlaces(destinationSlug?)` và `getPublicPlace(slug)` trong `src/server/content/public-places.ts` chiếu địa điểm về danh sách trường cho phép. Danh sách trả `[]` khi store lỗi nên trang điểm đến ẩn mục. Trang chi tiết trả 404 với slug lạ và để lỗi store nổi lên thành lỗi. Review lấy từ `getApprovedReviews([slug])` và hiển thị bằng `ReviewList`; chưa có review thì hiện một dòng thông báo. Chi phí dưới một triệu đồng viết đủ trong tiếng Việt (`50.000 đ`). Ảnh có alt ghép từ tên địa điểm và số thứ tự ảnh. Trang là `force-dynamic` và sitemap liệt kê mọi địa điểm kèm `hreflang`.
+`getPublicPlaces(destinationSlug?)` và `getPublicPlace(slug)` trong `src/server/content/public-places.ts` chiếu địa điểm về danh sách trường cho phép. Danh sách trả `[]` khi store lỗi nên trang điểm đến ẩn mục. Trang chi tiết trả 404 với slug lạ và để lỗi store nổi lên thành lỗi. Review lấy từ `getApprovedReviews([slug])` và hiển thị bằng `ReviewList`; chưa có review thì hiện một dòng thông báo. Chi phí dưới một triệu đồng viết đủ trong tiếng Việt (`50.000 đ`). Ảnh có alt ghép từ tên địa điểm và số thứ tự ảnh. Trang là `force-dynamic` và sitemap liệt kê mọi địa điểm kèm `hreflang` (và báo lỗi, không lẳng lặng bỏ địa điểm, khi store sập).
 
 ## Files
 

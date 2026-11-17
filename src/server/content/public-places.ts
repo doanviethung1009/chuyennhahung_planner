@@ -40,25 +40,30 @@ function toPublicPlace(place: Place): PublicPlace {
   };
 }
 
+/** Strict read: a store failure rejects. The sitemap uses it so an outage is not read by crawlers as "all places removed". */
+export const loadPublicPlaces = cache(async (destinationSlug?: string): Promise<PublicPlace[]> => {
+  const repository = await getRepository();
+  const all: Place[] = [];
+  for (let offset = 0; ; offset += PAGE) {
+    const page = await repository.listPlaces({ ...(destinationSlug ? { destinationSlug } : {}), limit: PAGE, offset });
+    all.push(...page);
+    if (page.length < PAGE) break;
+  }
+  return all.map(toPublicPlace);
+});
+
 /**
  * Places of one destination (or all). A store failure yields an empty list so
  * the destination page keeps working and simply hides its section.
  */
-export const getPublicPlaces = cache(async (destinationSlug?: string): Promise<PublicPlace[]> => {
+export async function getPublicPlaces(destinationSlug?: string): Promise<PublicPlace[]> {
   try {
-    const repository = await getRepository();
-    const all: Place[] = [];
-    for (let offset = 0; ; offset += PAGE) {
-      const page = await repository.listPlaces({ ...(destinationSlug ? { destinationSlug } : {}), limit: PAGE, offset });
-      all.push(...page);
-      if (page.length < PAGE) break;
-    }
-    return all.map(toPublicPlace);
+    return await loadPublicPlaces(destinationSlug);
   } catch (error) {
     console.error('[places] could not read the catalogue', error instanceof Error ? error.name : 'error');
     return [];
   }
-});
+}
 
 /** Null for an unknown slug. A store failure rejects, so the page errors instead of lying with a 404. */
 export const getPublicPlace = cache(async (slug: string): Promise<PublicPlace | null> => {

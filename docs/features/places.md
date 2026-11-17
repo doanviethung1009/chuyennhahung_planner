@@ -20,7 +20,7 @@ Reads the `Place` collection of the content repository (`placeInputSchema`) and 
 
 ## How it works
 
-`getPublicPlaces(destinationSlug?)` and `getPublicPlace(slug)` in `src/server/content/public-places.ts` project a place to an allow-list. The listing returns `[]` when the store fails, so the destination page hides the section. The detail page returns 404 for an unknown slug and lets a store failure surface as an error. Reviews come from `getApprovedReviews([slug])` and render with `ReviewList`; an empty set shows a short message. Costs under one million đồng are written in full in Vietnamese (`50.000 đ`). Photos get an alt built from the place name and photo number. Pages are `force-dynamic` and the sitemap lists every place with `hreflang` alternates.
+`getPublicPlaces(destinationSlug?)` and `getPublicPlace(slug)` in `src/server/content/public-places.ts` project a place to an allow-list. The listing returns `[]` when the store fails, so the destination page hides the section. The detail page returns 404 for an unknown slug and lets a store failure surface as an error. Reviews come from `getApprovedReviews([slug])` and render with `ReviewList`; an empty set shows a short message. Costs under one million đồng are written in full in Vietnamese (`50.000 đ`). Photos get an alt built from the place name and photo number. Pages are `force-dynamic` and the sitemap lists every place (and fails, rather than omitting places, if the store is down) with `hreflang` alternates.
 
 ## Files
 

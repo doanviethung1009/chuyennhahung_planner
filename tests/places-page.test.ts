@@ -57,6 +57,14 @@ describe('public places read', () => {
   });
 });
 
+describe('sitemap on a store failure', () => {
+  it('fails instead of silently dropping every place', async () => {
+    holder.repo = { listPlaces: () => Promise.reject(new Error('down')), listStories: () => Promise.resolve([]) };
+    const { default: sitemap } = await import('../src/app/sitemap');
+    await expect(sitemap()).rejects.toThrow();
+  });
+});
+
 describe('place card', () => {
   it('links to the place route and shows category, duration and cost', async () => {
     await repo.createPlace(placeFixture({ slug: 'card-place', images: ['/images/x.svg'] }));
