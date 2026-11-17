@@ -98,6 +98,43 @@ tạo lại `app` với `--no-deps`, nên không đụng port mapping, database 
 
 ## E. Cấu hình DBeaver
 
+### Tạo tài khoản SSH chỉ dùng cho tunnel (phương án A)
+
+Cấp cho QC một tài khoản riêng chỉ mở được **đúng tunnel này, không làm gì khác**: không
+mật khẩu, không shell, không sudo, không nhóm `docker`. Dưới đây `<ssh_user>` là `qc_tunnel`.
+
+Trên máy QC, tạo cặp key (private key không rời máy) và chỉ gửi cho owner file **public**
+`qc_tunnel_ed25519.pub`:
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/qc_tunnel_ed25519 -C "qc-<name>"
+```
+
+Trên VM, owner chạy (`<PUBLIC_KEY_LINE>` là nội dung file `.pub`):
+
+```bash
+sudo adduser --disabled-password --gecos "" --shell /usr/sbin/nologin qc_tunnel
+sudo install -d -m 700 -o qc_tunnel -g qc_tunnel /home/qc_tunnel/.ssh
+echo 'restrict,port-forwarding,permitopen="127.0.0.1:15432" <PUBLIC_KEY_LINE>' \
+  | sudo tee /home/qc_tunnel/.ssh/authorized_keys >/dev/null
+sudo chown qc_tunnel:qc_tunnel /home/qc_tunnel/.ssh/authorized_keys
+sudo chmod 600 /home/qc_tunnel/.ssh/authorized_keys
+id qc_tunnel          # kỳ vọng: không sudo, không nhóm docker
+```
+
+`restrict` tắt shell, terminal, agent và X11 forwarding; `port-forwarding` bật lại tunnel;
+`permitopen` giới hạn tunnel ở `127.0.0.1:15432`. Không cần sửa `sshd_config` (nếu có
+`AllowUsers` thì thêm `qc_tunnel`). Kiểm tra từ máy QC:
+
+```bash
+ssh -i ~/.ssh/qc_tunnel_ed25519 -N -L 15432:127.0.0.1:15432 qc_tunnel@192.168.100.140   # giữ mở: OK
+ssh -i ~/.ssh/qc_tunnel_ed25519 qc_tunnel@192.168.100.140                              # KHÔNG được cho shell
+ssh -i ~/.ssh/qc_tunnel_ed25519 -N -L 2222:127.0.0.1:22 qc_tunnel@192.168.100.140      # forward phải bị từ chối
+```
+
+Thu hồi khi xong: `sudo deluser --remove-home qc_tunnel` (hoặc chỉ xóa dòng trong
+`authorized_keys` để tạm dừng).
+
 Phương án A — tunnel từ máy QC (hoặc để DBeaver tự làm ở tab SSH):
 
 ```bash
@@ -212,7 +249,7 @@ Tunnel, và quét port từ bên ngoài vào IP public thấy nó đóng.
 ## J. Rollback
 
 1. Tắt phương án (mục D, lệnh cuối) — không còn port nào được publish.
-2. Phương án B: gỡ luật `DOCKER-USER` và Proxmox.
+2. Phương án B: gỡ luật `DOCKER-USER` và Proxmox. Phương án A: xóa tài khoản SSH (`sudo deluser --remove-home qc_tunnel`).
 3. Xóa role nếu không cần nữa: trong từng database
    `REVOKE ALL ON ALL TABLES IN SCHEMA public FROM qc_readonly; REVOKE USAGE ON SCHEMA public FROM qc_readonly;
    REVOKE CONNECT ON DATABASE <db> FROM qc_readonly;`, rồi `DROP ROLE qc_readonly;`.
@@ -223,7 +260,7 @@ Tunnel, và quét port từ bên ngoài vào IP public thấy nó đóng.
 
 - [ ] Container PostgreSQL healthy (`docker ps` hiện `healthy`).
 - [ ] App vẫn kết nối database (`/api/health` OK, một trang Planner tải được).
-- [ ] SSH tunnel kết nối được từ DBeaver (phương án A).
+- [ ] SSH tunnel kết nối được từ DBeaver (phương án A) và tài khoản SSH không có shell.
 - [ ] LAN trực tiếp kết nối được từ máy được phép (phương án B).
 - [ ] Máy không được phép bị từ chối (phương án B).
 - [ ] `qc_readonly` chỉ SELECT được (mục G).
