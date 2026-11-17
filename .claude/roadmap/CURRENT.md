@@ -12,9 +12,9 @@ Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
 ## Điều kiện đóng Phase 10 (chưa đủ)
 
 1. Đồng bộ tài liệu với thực tế — chính PR `docs/phase10-roadmap-sync`.
-2. W1 và W2: đã sửa ở PR `fix/community-limiter-hardening` — cần merge; chạy lại `/sec-check` cho phần này là khuyến nghị, hiện NOT RUN.
-3. Smoke có đăng nhập (cổng Terms, hàng đợi admin, audit trail, bộ đếm qua restart, UI 375/768/1280) — hoặc chủ dự án chấp nhận NOT RUN.
-4. Việc của chủ dự án: P10-7 (sao lưu, `metadataBase`, HSTS), D5 (text Terms), D10; thêm `GUEST_KEY_SECRET=` vào `deploy/.env.example`.
+2. W1 và W2: đã sửa và merge ở PR #143 (`9f27432`); chạy lại `/sec-check` cho phần này là khuyến nghị, hiện NOT RUN.
+3. Smoke có đăng nhập (cổng Terms, hàng đợi admin, audit trail, bộ đếm qua restart, UI 375/768/1280) — **NOT RUN** (2026-11-17: chưa có tài khoản dev member/admin; không tự tạo) — chờ chủ dự án cấp tài khoản hoặc chấp nhận NOT RUN.
+4. Việc của chủ dự án: P10-7 (sao lưu, `metadataBase`, HSTS), D5 (text Terms), D10; thêm `GUEST_KEY_SECRET=` vào `deploy/.env.example` (kiểm 2026-11-17: chưa có trên `main`).
 5. Về #139: chủ dự án đã chốt "xóa hết" (2026-11-17); còn phải làm task code xóa `reports.note` và bỏ số sao gốc khi ẩn danh hóa review khách (chưa làm).
 
 ---
