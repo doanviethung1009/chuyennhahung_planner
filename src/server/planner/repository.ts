@@ -68,6 +68,7 @@ import {
   type PublicPlannerUser,
   type ShareState,
   type CommunityReview,
+  ERASED_REVIEW_BODY,
   type GuestReviewInput,
   type OwnReview,
   type PlaceReviewSummary,
@@ -1894,6 +1895,22 @@ export class PlannerRepository {
    */
   async recordGuestReviewLimitHit(clientKey: string): Promise<void> {
     const guestKey = this.guestKeyFor(clientKey);
+    // sec-check W1: a rejected request must stay cheaper than an accepted one. Skip the
+    // store-wide transaction when this guest already has an event in the last hour, first
+    // from a bounded in-process memo, then from an unlocked read.
+    const now = Date.parse(this.timestamp());
+    const memo = this.limitHitMemo.get(guestKey);
+    if (memo !== undefined && now - memo < 60 * 60_000) return;
+    const peek = await this.snapshot();
+    const peekLatest = peek.communityReviews
+      .filter((review) => review.guestKey === guestKey)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+    if (!peekLatest) return;
+    const peekSince = new Date(now - 60 * 60_000).toISOString();
+    if (peek.auditEvents.some((e) => e.targetId === peekLatest.id && e.action === 'guest_limit' && e.createdAt > peekSince)) {
+      this.rememberLimitHit(guestKey, now);
+      return;
+    }
     await this.transaction((data) => {
       const latest = data.communityReviews
         .filter((review) => review.guestKey === guestKey)
@@ -1912,6 +1929,15 @@ export class PlannerRepository {
         reason: 'guest review limit reached (10 per hour from one connection)',
       });
     });
+    this.rememberLimitHit(guestKey, now);
+  }
+
+  /** Guest keys whose `guest_limit` event is already recorded this hour. Bounded; reset when full. */
+  private readonly limitHitMemo = new Map<string, number>();
+
+  private rememberLimitHit(guestKey: string, at: number): void {
+    if (this.limitHitMemo.size >= 5000) this.limitHitMemo.clear();
+    this.limitHitMemo.set(guestKey, at);
   }
 
   /** Approved reviews for the given places (all places when omitted), newest first. */
@@ -1982,6 +2008,7 @@ export class PlannerRepository {
         guestLimitAt: limitAt.get(review.id) ?? null,
         rating: review.rating,
         body: review.body,
+        erased: review.body === ERASED_REVIEW_BODY,
         lang: review.lang,
         visitedOn: review.visitedOn,
         author: review.authorName,
@@ -2045,6 +2072,49 @@ export class PlannerRepository {
         updatedAt: at,
       };
       return status;
+    });
+  }
+
+  /**
+   * Erases a guest review's personal content on a data-removal request
+   * (ADR 0024 §8): anonymised in place, status `removed`, no way back. The row
+   * stays so the audit log, open reports and the per-place daily cap keep their
+   * references. Only `homepage` reviews; any status (a plain remove keeps the
+   * text). Idempotent: an already erased review writes nothing. One event, whose
+   * reason is staff text only: never content or a key.
+   */
+  eraseGuestReview(reviewId: string, actor: string, reason: string): Promise<void> {
+    return this.transaction((data) => {
+      const index = data.communityReviews.findIndex((review) => review.id === reviewId);
+      const review = data.communityReviews[index];
+      if (!review) throw notFound('review', reviewId);
+      if (review.source !== 'homepage') {
+        throw invalidState('only a guest review can be erased here; account reviews follow the account or the author');
+      }
+      if (review.body === ERASED_REVIEW_BODY && review.guestKey === null && review.authorName === null) return;
+      const at = this.timestamp();
+      this.record(data, {
+        targetKind: 'review',
+        targetId: reviewId,
+        actorId: actor,
+        action: 'erase',
+        fromStatus: review.status,
+        toStatus: 'removed',
+        reason,
+      });
+      data.communityReviews[index] = {
+        ...review,
+        rating: 1,
+        body: ERASED_REVIEW_BODY,
+        visitedOn: review.createdAt.slice(0, 10),
+        authorName: null,
+        status: 'removed',
+        guestKey: null,
+        decidedAt: at,
+        decidedBy: actor.slice(0, 80),
+        rejectReason: null,
+        updatedAt: at,
+      };
     });
   }
 

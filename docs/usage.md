@@ -397,7 +397,7 @@ JSON file in development, the memory store in tests. When it is set the app
 **never falls back** to the JSON file: if the database is down the Planner
 routes answer `503 service_unavailable`.
 
-The review write limits (5 an hour per signed-in traveller, 3 an hour per guest client) then count in the table `rate_limit_counters` (migration `0011`), so a restart keeps the count and several instances share it ([features/shared-write-limiter.md](features/shared-write-limiter.md)). While the database is down, posting a review answers `503 service_unavailable` and nothing is stored. Without `PLANNER_DATABASE_URL` the limits stay per process. They are keyed on the client address header, which a client can forge.
+The review write limits (5 an hour per signed-in traveller, 10 an hour per guest client) then count in the table `rate_limit_counters` (migration `0011`), so a restart keeps the count and several instances share it ([features/shared-write-limiter.md](features/shared-write-limiter.md)). While the database is down, posting a review answers `503 service_unavailable` and nothing is stored. Without `PLANNER_DATABASE_URL` the limits stay per process. They are keyed on the client address header, which a client can forge.
 
 **One-time setup, by the owner, on the database host.** Create a dedicated role
 and database; no superuser, no `CREATEDB`. Use a real password from a secret

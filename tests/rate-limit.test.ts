@@ -71,6 +71,25 @@ describe('createRateLimiter', () => {
   });
 });
 
+describe('clientKey IPv6 grouping (sec-check W2)', () => {
+  const h = (init: Record<string, string>) => new Headers(init);
+  it('maps every address in one /64 to one key', () => {
+    const a = clientKey(h({ 'x-forwarded-for': '2001:db8:1:2:aaaa:bbbb:cccc:dddd' }));
+    const b = clientKey(h({ 'x-forwarded-for': '2001:0DB8:0001:0002::1' }));
+    expect(a).toBe('2001:db8:1:2::/64');
+    expect(b).toBe(a);
+  });
+  it('keeps different /64 blocks apart', () => {
+    expect(clientKey(h({ 'x-forwarded-for': '2001:db8:1:3::1' }))).not.toBe(clientKey(h({ 'x-forwarded-for': '2001:db8:1:2::1' })));
+  });
+  it('turns IPv4-mapped IPv6 into the IPv4 and leaves IPv4 and junk alone', () => {
+    expect(clientKey(h({ 'x-forwarded-for': '::ffff:1.2.3.4' }))).toBe('1.2.3.4');
+    expect(clientKey(h({ 'x-forwarded-for': '1.2.3.4' }))).toBe('1.2.3.4');
+    expect(clientKey(h({ 'x-forwarded-for': 'not-an-ip' }))).toBe('not-an-ip');
+    expect(clientKey(h({ 'x-forwarded-for': '[2001:db8::5]' }))).toBe('2001:db8:0:0::/64');
+  });
+});
+
 describe('clientKey', () => {
   const h = (init: Record<string, string>) => new Headers(init);
 

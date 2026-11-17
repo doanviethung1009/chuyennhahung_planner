@@ -109,6 +109,7 @@ adding or removing a route means editing this table in both languages.
 | PATCH | `/api/admin/community/trips/[id]` | Admin token or admin session | Approve or reject a listing (`community:moderate`) |
 | GET | `/api/admin/community/reviews` | Admin token or admin session | Review moderation queue (`community:moderate`) |
 | PATCH | `/api/admin/community/reviews/[id]` | Admin token or admin session | Approve, reject, hold or remove a review (`community:moderate`) |
+| POST | `/api/admin/community/reviews/[id]/erase` | Admin token or admin session | Erase a guest review's content for good on a data-removal request (`community:erase`, admin and up) |
 | GET | `/api/planner/terms` | Traveller (session cookie or access token) | Current Creator Terms status |
 | POST | `/api/planner/terms` | Traveller (session cookie or access token) | Accept the current Creator Terms version (idempotent) |
 | GET | `/api/admin/community/reports` | Admin token or admin session | Report queue, `?status=open\|actioned\|dismissed` (`community:moderate`) |

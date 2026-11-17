@@ -101,28 +101,25 @@ Nguồn: `.claude/contracts/community-platform-audit.md`. Mỗi mục cần ADR 
 | ~~P10-8~~ | ~~Đổi nhãn "Stage 8/9" trong `docs/specs-roadmap.*` (cả hai ngôn ngữ) (Q11)~~ — xong ở PR #107 | system-architect | — |
 | ~~P10-9~~ | ~~Cập nhật ADR 0016 Status và ADR 0015 (đóng 7 câu hỏi theo khuyến nghị, Q5) — cả hai ngôn ngữ~~ — xong ở PR #107 | system-architect | — |
 | ~~P10-10~~ | ~~Sửa comment cũ "luôn `pending`" ở `src/app/api/planner/reviews/[placeSlug]/route.ts`~~ — xong ở PR #107 (từ `/sec-check` #4, `/qc-check` #1) | main session | — |
-| ~~P10-11~~ | ~~`guestKey` HMAC-SHA256 (secret `GUEST_KEY_SECRET`), xóa khóa khách sau 30 ngày, restriction khách tối đa 30 ngày, migration `0014`~~ — xong ở batch 10.6b ([ADR 0024](../../docs/adr/0024-guest-identity-privacy.md)); **chủ dự án phải cấp `GUEST_KEY_SECRET` trên VM trước khi deploy**; Chính sách riêng tư và xóa review khách theo yêu cầu vẫn là task riêng (P11-D1) | backend-engineer | — |
+| ~~P10-11~~ | ~~`guestKey` HMAC-SHA256 (secret `GUEST_KEY_SECRET`), xóa khóa khách sau 30 ngày, restriction khách tối đa 30 ngày, migration `0014`~~ — xong ở batch 10.6b ([ADR 0024](../../docs/adr/0024-guest-identity-privacy.md)); **chủ dự án phải cấp `GUEST_KEY_SECRET` trên VM trước khi deploy**; xóa review khách theo yêu cầu đã làm ở PR #139 (staff ẩn danh hóa); trang Chính sách riêng tư vẫn là việc của chủ dự án (P11-D1) | backend-engineer | — |
 | P10-12 | (10.6a: test + quyết định không thêm trần toàn cục xong; còn mở: kiểm cấu hình thật trên VM, owner D10) Chống giả `x-forwarded-for` cho limiter khách: nginx ghi đè (đã có `deploy-config.test.ts`), xác nhận cấu hình thật trên VM; cân nhắc trần theo giờ toàn cục (`/sec-check` #2, #3; liên quan P10-6) | BE + owner | P10-6 |
-| ~~P10-13~~ | ~~Test HTTP 429 cho limiter review Planner (5/giờ) và khách (3/giờ); test hạn 30 ngày~~ — xong ở batch 10.3 (`tests/review-limiter-routes.test.ts`) | BE | — |
+| ~~P10-13~~ | ~~Test HTTP 429 cho limiter review Planner (5/giờ) và khách (10/giờ); test hạn 30 ngày~~ — xong ở batch 10.3 (`tests/review-limiter-routes.test.ts`) | BE | — |
 | ~~P10-14~~ | ~~Ca integration Postgres cho `community_reviews` và `review_restrictions`~~ — xong ở batch 10.2 | BE | DB test |
 | ~~P10-15~~ | (xong ở 10.6a, bắt buộc ở server) **Quyết định chủ dự án:** có bắt buộc `contributionOpen` ở server (API từ chối ghi khi cổng đóng) hay chỉ ở UI (`/qc-check` #2) | owner → BE | — |
 | ~~P10-16~~ | (xong ở 10.6a) `authorName` của khách: lọc/chặn giả danh nhân viên (`/sec-check` #5) | BE | — |
 
-**Việc còn mở khi đóng Phase 10 (2026-11-17, batch 10.7)** — đã gán ID (2026-11-17); chủ dự án quyết gom thành batch 10.8 (chưa có contract) hay chuyển Phase 11:
+> **Batch 10.8 chưa được định nghĩa** (không có contract). Các mục "việc còn mở" dưới đây chưa có ID; chủ dự án quyết gom thành 10.8 hay chuyển Phase 11. Mục P07-4 trùng P10-1 (xong).
 
-| ID | Việc | Chủ |
-|---|---|---|
-| P10-17 | Trang Chính sách riêng tư + staff xóa review khách theo yêu cầu (= P11-D1) | owner → BE/FE |
-| P10-18 | Trạng thái `changes_requested`/`unpublished` hiện ra API/UI + bộ lọc thư viện (ADR 0019) | BE + FE |
-| P10-19 | Owner: P10-7, D10, D5 (xem dưới) | owner |
-| P10-20 | `/sec-check` đường ghi ẩn danh + `/qc-check` toàn phase: NOT RUN | user gọi |
-| P10-21 | Ghi nhận PR #137 (giới hạn review khách 10/giờ, bỏ dedupe ngày, event `guest_limit`) và #138 vào feature doc/handoff; chưa có handoff riêng | main session |
+**Phase 10 chưa đóng (cập nhật 2026-11-17).** Review độc lập toàn phase: `/sec-check` PASS_WITH_WARNINGS, `/qc-check` PASS_WITH_WARNINGS, không BLOCKED (typecheck/lint PASS; test 1156 pass với PostgreSQL cục bộ, 1084 pass + 73 skip khi không có DB; build NOT RUN). Việc ngoài contract đã merge: #137 (giới hạn review khách 10/giờ + sự kiện `guest_limit`), #138 (tên địa điểm + nhãn `guest_limit` trong admin), #139 (staff ẩn danh hóa review khách; self-review PASS_WITH_WARNINGS). Điều kiện đóng: `CURRENT.md`.
 
-Chi tiết gốc:
-- Trang Chính sách riêng tư (P11-D1) và thao tác staff xóa review của khách theo yêu cầu.
-- Trạng thái đăng chuyến `changes_requested`/`unpublished` và bộ lọc thư viện (ADR 0019): batch 10.1 chỉ dựng máy trạng thái, chưa hiển thị ra API/UI.
-- Owner: P10-7 (sao lưu dev, `metadataBase`, HSTS), D10 (cấu hình proxy thật, log nginx còn IP thô), D5 (text Terms). `GUEST_KEY_SECRET` đã có trên VM dev (xác minh 2026-11-17); `deploy.sh --init-env` (#133) tự sinh, chủ dự án đang thêm dòng `GUEST_KEY_SECRET=` vào `deploy/.env.example`.
-- Review độc lập `/sec-check` (đường ghi ẩn danh của report/limiter) và `/qc-check` toàn phase: NOT RUN.
+Việc còn mở — chưa có ID backlog riêng, chờ chủ dự án xếp:
+- **Sec W1/W2 [Medium] — đã sửa và merge ở PR #143 (`2f08057`):** W1 đường 429 review khách không còn mở transaction toàn store cho mỗi request (đọc không khóa + bộ nhớ có giới hạn); W2 `clientKey` gom IPv6 về /64 và IPv4-mapped về IPv4. Test mới ở `tests/rate-limit.test.ts`, `tests/community-reviews.test.ts`; chưa đo tải thật, chưa chạy lại `/sec-check` — NOT RUN.
+- Sec W3–W7 [Low]: lọc tên giả danh dễ lách (Cyrillic/fullwidth/leet); dọn khóa 30 ngày chỉ chạy khi có ghi; `createReport` quét mọi chuyến dưới khóa toàn cục; audit log chỉ append-only ở tầng ứng dụng; độ mạnh `GUEST_KEY_SECRET` chỉ kiểm độ dài.
+- QC F2–F4 [Low]: rollback theo hành động chỉ có test cho `decideListing`; chưa có test UI cho `report-button`/`terms-accept`/`report-queue`; tên test limiter còn ghi "2 h" (thực tế 48 h). Khoảng trống: chưa có test `guest_limit` ở tầng route.
+- Về #139 — **chủ dự án quyết định 2026-11-17: đã xóa thì xóa hết.** Cần một task code riêng (chưa có ID, chưa làm): khi ẩn danh hóa review khách thì cũng xóa `reports.note` của báo cáo trỏ review đó, và không giữ số sao gốc (hiện code đặt về 1, review ở trạng thái `removed`; cần kiểm điểm trung bình không còn tính review này). Nguyên tắc: **xóa là xóa hết, ẩn là chỉ ẩn** — ẩn (`removed` qua kiểm duyệt thường) không cần task này; chỉ xóa theo yêu cầu dữ liệu cần. Cho tới khi task đó merge, `reports.note` vẫn có thể còn trích nội dung đã xóa (chưa gấp nếu chưa có yêu cầu xóa nào).
+- Smoke dev VM 2026-11-17 (phiên đăng nhập `admin1` do chủ dự án tự đăng nhập trong pane; không nhập mật khẩu): **PASS** `/quan-tri` mở được; `/quan-tri/cong-dong` tải hàng đợi chuyến đi (2), đánh giá (1) và báo cáo (0 mở); UI ở 375/768/1280: một `<h1>`, không tràn ngang, không nút/liên kết <44px (kiểm bằng script). **NOT RUN:** thao tác ghi (request→approve→remove, lập/resolve báo cáo — tránh đổi dữ liệu dev có sẵn), view events/restrictions chi tiết, cổng Terms + UI Terms (cần member chưa đồng ý), bộ đếm limiter qua restart (cần restart app trên VM).
+- Owner: P10-7 (sao lưu dev, `metadataBase`, HSTS), D10 (cấu hình proxy thật, log nginx còn IP thô), D5 (text Terms), trang Chính sách riêng tư (P11-D1), dòng `GUEST_KEY_SECRET=` trong `deploy/.env.example` (kiểm trên `main` 2026-11-17: **chưa có**; session closeout bị quy tắc quyền chặn sửa `deploy/` nên không thêm được; VM dev đã có secret, xác minh 2026-11-17).
+- Trạng thái đăng chuyến `changes_requested`/`unpublished` và bộ lọc thư viện (ADR 0019): chưa hiển thị ra API/UI.
 
 ## Phase 11 — Member Profiles & Creator Terms (P1, đề xuất)
 

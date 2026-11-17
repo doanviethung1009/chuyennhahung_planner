@@ -111,14 +111,41 @@ export function createRateLimiter(options: RateLimiterOptions): RateLimiter {
 const MAX_KEY_LENGTH = 64;
 
 /**
+ * Collapse an address to the unit a limiter should count (sec-check W2): an
+ * IPv4-mapped IPv6 address becomes its IPv4, any other IPv6 address its /64
+ * prefix (one customer-owned block, so rotating the low 64 bits buys nothing),
+ * and anything that is not a recognisable IP is returned unchanged.
+ */
+export function normalizeClientAddress(raw: string): string {
+  let value = raw.trim();
+  if (value.startsWith('[')) value = value.slice(1, value.indexOf(']') === -1 ? undefined : value.indexOf(']'));
+  const zone = value.indexOf('%');
+  if (zone !== -1) value = value.slice(0, zone);
+  if (!value.includes(':')) return value;
+  const lower = value.toLowerCase();
+  const mapped = /^(?:0{0,4}:){2,5}ffff:(\d{1,3}(?:\.\d{1,3}){3})$/.exec(lower) ?? /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/.exec(lower);
+  if (mapped?.[1]) return mapped[1];
+  const halves = lower.split('::');
+  if (halves.length > 2) return value;
+  const head = halves[0] ? halves[0].split(':') : [];
+  const tail = halves.length === 2 && halves[1] ? halves[1].split(':') : [];
+  const missing = 8 - head.length - tail.length;
+  if (halves.length === 1 ? head.length !== 8 : missing < 1) return value;
+  const groups = [...head, ...Array<string>(halves.length === 2 ? missing : 0).fill('0'), ...tail];
+  if (groups.length !== 8 || !groups.every((g) => /^[0-9a-f]{1,4}$/.test(g))) return value;
+  return `${groups.slice(0, 4).map((g) => g.replace(/^0+(?=.)/, '')).join(':')}::/64`;
+}
+
+/**
  * The caller's address as far as headers tell us: first hop of
- * `x-forwarded-for`, else `x-real-ip`, else `'unknown'`. Spoofable — see above.
+ * `x-forwarded-for`, else `x-real-ip`, else `'unknown'`, with IPv6 collapsed to
+ * its /64. Spoofable — see above.
  */
 export function clientKey(headers: Pick<Headers, 'get'>): string {
   const forwarded = headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-  if (forwarded) return forwarded.slice(0, MAX_KEY_LENGTH);
+  if (forwarded) return normalizeClientAddress(forwarded).slice(0, MAX_KEY_LENGTH);
   const real = headers.get('x-real-ip')?.trim();
-  if (real) return real.slice(0, MAX_KEY_LENGTH);
+  if (real) return normalizeClientAddress(real).slice(0, MAX_KEY_LENGTH);
   return 'unknown';
 }
 
