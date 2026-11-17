@@ -42,7 +42,7 @@ Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
 2. W1 và W2: đã sửa và merge ở PR #143 (`9f27432`); chạy lại `/sec-check` cho phần này là khuyến nghị, hiện NOT RUN.
 3. Smoke có đăng nhập — **gần đủ** (2026-11-18, admin1): hàng đợi admin, UI 375/768/1280, báo cáo lập→resolve→gỡ, cổng Terms chặn rồi cho phép + UI Terms 3 độ rộng, chuyến request→approve→remove (audit đủ) đều PASS. NOT RUN: bộ đếm limiter qua restart (cần restart app trên VM), view restrictions chi tiết. Chờ chủ dự án restart-test hoặc chấp nhận NOT RUN.
 4. Việc của chủ dự án: P10-7 (sao lưu, `metadataBase`, HSTS), D10; D5 (text Terms) **DEFERRED → Phase 09 P09-6** (chủ dự án 2026-11-18; DEV dùng Terms `2026-11-16`, chưa phải bản pháp lý cuối; không phải Done); rủi ro lời hứa xóa khóa khách 30 ngày chưa đúng hoàn toàn với code ghi ở P09-7; thêm `GUEST_KEY_SECRET=` vào `deploy/.env.example` (kiểm 2026-11-17: chưa có trên `main`).
-5. Về #139: chủ dự án đã chốt "xóa hết" (2026-11-17); còn phải làm task code xóa `reports.note` và bỏ số sao gốc khi ẩn danh hóa review khách (chưa làm).
+5. Về #139: chủ dự án đã chốt "xóa hết" (2026-11-17); task xóa `reports.note`/số sao gốc **xong ở PR #150** (+ test bổ sung #149).
 
 ---
 
