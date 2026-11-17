@@ -1123,6 +1123,7 @@
       "reject": "Đã từ chối.",
       "remove": "Đã gỡ khỏi trang chủ.",
       "hold": "Đã ẩn đánh giá và gửi câu hỏi cho tác giả.",
+      "erase": "Đã xóa vĩnh viễn nội dung đánh giá.",
       "mute": "Đã tắt tác giả. Đánh giá của họ bị ẩn cho tới khi bạn gỡ."
     },
     "tripsHeading": "Chuyến đi",
@@ -1163,7 +1164,14 @@
       "muteConfirm": "Tắt",
       "reasonLabelHold": "Câu hỏi của bạn (tác giả sẽ thấy; đánh giá bị ẩn cho tới khi họ sửa lại)",
       "reasonLabel": "Lý do (tác giả sẽ thấy)",
-      "reasonLabelGuest": "Lý do gỡ (chỉ lưu nội bộ)"
+      "reasonLabelGuest": "Lý do gỡ (chỉ lưu nội bộ)",
+      "erase": "Xóa nội dung",
+      "eraseTitle": "Xóa nội dung đánh giá của khách",
+      "eraseWarning": "Không thể hoàn tác. Lời đánh giá, tên hiển thị, khoá kết nối và ngày ghé thăm bị xóa hẳn khỏi hệ thống; chỉ còn dòng nhật ký ghi ai xóa và lý do. Đánh giá bị gỡ khỏi trang. Chỉ dùng khi có yêu cầu xóa dữ liệu qua hộp thư gỡ bài.",
+      "eraseReasonLabel": "Lý do xóa (lưu nội bộ, tối đa 500 ký tự)",
+      "eraseReasonHelp": "Ghi mã phiếu hoặc ngày nhận thư. Không ghi tên, email hay thông tin cá nhân của người yêu cầu.",
+      "eraseConfirm": "Xóa vĩnh viễn nội dung",
+      "erased": "Nội dung đã được xóa theo yêu cầu xóa dữ liệu."
     },
     "restrictions": {
       "empty": "Chưa tắt tác giả nào.",
