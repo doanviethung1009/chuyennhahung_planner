@@ -1,0 +1,31 @@
+# nginx log retention for the self-hosted stack. Installed by
+# deploy/scripts/setup-host.sh to /etc/logrotate.d/chuyennhahung, with
+# /opt/chuyennhahung replaced by $DEPLOY_ROOT. Policy: access log 14 days,
+# error log 30 days. Neither log holds Authorization, Cookie or query strings
+# (see deploy/nginx/default.conf).
+
+/opt/chuyennhahung/logs/nginx/access.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    sharedscripts
+    postrotate
+        docker ps -q --filter label=com.docker.compose.project=chuyennhahung --filter label=com.docker.compose.service=nginx | xargs -r docker kill -s USR1 >/dev/null 2>&1 || true
+    endscript
+}
+
+/opt/chuyennhahung/logs/nginx/error.log {
+    daily
+    rotate 30
+    compress
+    delaycompress
+    missingok
+    notifempty
+    sharedscripts
+    postrotate
+        docker ps -q --filter label=com.docker.compose.project=chuyennhahung --filter label=com.docker.compose.service=nginx | xargs -r docker kill -s USR1 >/dev/null 2>&1 || true
+    endscript
+}

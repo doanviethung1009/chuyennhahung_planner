@@ -187,7 +187,7 @@ file ra hay dán nó ở đâu cả.
 
 Cách tắt: `sudo SITE_URL=http://<ip-app> DB_OVERLAY=local-db ./deploy/deploy.sh --init-env`
 làm việc tương tự (bắt buộc có `DB_OVERLAY`; với `external-db` truyền thêm
-`PLANNER_DATABASE_URL`, đừng để mật khẩu trong lịch sử shell). Giá trị có khoảng trắng hoặc
+`PLANNER_DATABASE_URL`, đừng để mật khẩu trong lịch sử shell; URL phải có `sslmode=verify-full`). Sau đó `./deploy/deploy.sh --check` kiểm tra file (độ dài secret, TLS, file CA, quyền) và chỉ in tên khoá cùng ok/FAIL. Giá trị có khoảng trắng hoặc
 `$` bị từ chối. Lệnh ghi file với secret tự sinh, mode 640, group `cnh-runner` (đổi bằng
 `RUNNER_GROUP`), không in secret, và từ chối ghi đè `.env` đã có. Chạy tay bằng root; runner
 không ghi được vào thư mục, nên một lần deploy thường không bao giờ tạo hay sửa `.env`. Mode 640 cho

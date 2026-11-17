@@ -1,0 +1,18 @@
+# Task Contract: DEPLOY-HARDEN-01 Deploy configuration hardening
+- Class: L
+- Desired outcome / user impact: a new VM deploys with complete, validated config; nginx logs never hold share tokens, query strings, cookies or Authorization; logs rotate (access 14 d, error 30 d); containers have log and memory caps.
+- Scope IN: `.gitignore`; `deploy/.env.example`; `deploy/nginx/default.conf`, `deploy/nginx-app.conf`; `deploy/logrotate/chuyennhahung`; `deploy/scripts/setup-host.sh`; `deploy/compose*.yml`; `deploy/deploy.sh` (`--check`, TLS rule in `--init-env`); `tests/deploy-config.test.ts`; `docs/deploy-*.md`, `docs/features/docker-deploy.md` (+ `.vi.md`).
+- Scope OUT: TLS / trusted proxy (needs its own ADR), backup cron, touching any server, deploying, passing PLANNER_STORE / TRAVEL_CONTENT_STORE / TRAVEL_CONTENT_AUTOSEED / PUBLIC_CONTENT_SOURCE into the container (owner decision pending; documented as unsupported in Docker).
+- Evidence: audit in the session of 2026-11-17 (table of findings).
+- Constraints / dependencies: `deploy/.env.example` is unreadable to the agent (deny rule) → edits to it are NOT DONE, listed in the handoff for the owner to apply.
+- Architecture decision / ADR: none (no route, contract or schema change).
+- Interface contract: new env vars `DB_BIND_ADDR` (required only with compose.postgres-lan.yml), `APP_MEM_LIMIT`, `POSTGRES_MEM_LIMIT`, (no `GOOGLE_REDIRECT_URI` passthrough: docs/usage.md says the callback is derived from the site URL on purpose; the audit finding was wrong). `GOOGLE_SIGNUP_ENABLED` compose default becomes `false`.
+- Tasks by owner: Architect (this file) → BE/ops (deploy files, script) → docs.
+- File ownership: single agent, sequential.
+- Acceptance criteria / tests: `deploy-config.test.ts` covers log_format (no `$request`, `$http_cookie`, `$http_authorization`, token paths masked), logrotate 14/30, `--check` (no secret printed), external-db TLS rule, compose logging and mem_limit, no LAN IP hard-coded; `typecheck`, `lint`, `test` stated.
+- Security and migration risks: `limit_req` may throttle users behind one NAT; log_format change needs an nginx reload; nginx error log can still carry the request line (documented). No DB migration.
+- Rollback approach: revert the PR; recreate nginx.
+- Budget: 0 agent invocations; stop at an open PR, no merge, no deploy.
+- State: IN_PROGRESS
+- Feature document owner: `docs/features/docker-deploy.md` + `.vi.md`
+- Architecture/usage doc updates needed: `docs/usage.*` Deploy section if it names changed defaults.

@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -315,5 +315,132 @@ describe('compose.app.yml', () => {
     const c = read('deploy/compose.app.yml');
     expect(c).toContain('${APP_IMAGE:-chuyennhahung/app}:${APP_IMAGE_TAG:-latest}');
     expect(c).toMatch(/target: runner/);
+  });
+});
+
+describe('external-db TLS rule', () => {
+  it('--init-env refuses an external-db URL without sslmode=verify-full, writing nothing', () => {
+    const stack = mkdtempSync(join(tmpdir(), 'cnh-stack-'));
+    const clean = { ...process.env };
+    for (const k of ['PLANNER_DATABASE_URL', 'CONTENT_DATABASE_URL', 'RUNNER_GROUP']) delete clean[k];
+    const run = (extra: Record<string, string>) =>
+      spawnSync('bash', [join(root, 'deploy/deploy.sh'), '--init-env'], {
+        env: { ...clean, STACK_DIR: stack, SITE_URL: 'http://10.0.0.1', DB_OVERLAY: 'external-db', ...extra },
+        encoding: 'utf8',
+      });
+    const tls = '?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt';
+    const cases: Record<string, string>[] = [
+      { PLANNER_DATABASE_URL: 'postgres://u:p@db/cnh_planner' },
+      { PLANNER_DATABASE_URL: `postgres://u:p@db/cnh_planner${tls}`, CONTENT_DATABASE_URL: 'postgres://u:p@db/cnh_content' },
+    ];
+    for (const extra of cases) {
+      const r = run(extra);
+      expect(r.status).toBe(2);
+      expect(r.stderr).toContain('sslmode=verify-full');
+    }
+    expect(existsSync(join(stack, '.env'))).toBe(false);
+  });
+});
+
+describe('deploy.sh --check', () => {
+  const script = join(root, 'deploy/deploy.sh');
+  const long = 'x'.repeat(40);
+  const stackWith = (env: string, mode = 0o600, ca = true) => {
+    const stack = mkdtempSync(join(tmpdir(), 'cnh-check-'));
+    writeFileSync(join(stack, '.env'), env);
+    chmodSync(join(stack, '.env'), mode);
+    if (ca) {
+      mkdirSync(join(stack, 'secrets'));
+      writeFileSync(join(stack, 'secrets/pg-ca.crt'), 'x');
+    }
+    return stack;
+  };
+  const check = (stack: string, overlay = 'external-db') =>
+    spawnSync('bash', [script, '--check'], {
+      env: { ...process.env, STACK_DIR: stack, DEPLOY_ROOT: stack, DB_OVERLAY: overlay },
+      encoding: 'utf8',
+    });
+  const good = `NEXT_PUBLIC_SITE_URL=http://10.0.0.1
+ADMIN_API_TOKEN=${long}
+GUEST_KEY_SECRET=${long}
+PLANNER_DATABASE_URL=postgres://u:p@db/cnh_planner?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt
+`;
+
+  it('passes a complete external-db file', () => {
+    expect(check(stackWith(good)).status).toBe(0);
+  });
+
+  it('fails on short secrets, missing TLS, missing CA file and a world-readable file', () => {
+    const weak = good.replace(long, 'short').replace('?sslmode=verify-full', '?x=1');
+    const r = check(stackWith(weak, 0o644, false));
+    expect(r.status).toBe(1);
+    for (const m of ['ADMIN_API_TOKEN', 'sslmode=verify-full', 'pg-ca.crt', 'world-accessible']) expect(r.stderr).toContain(m);
+  });
+
+  it('never prints a secret value', () => {
+    const r = check(stackWith(good.replace('db/cnh_planner', 'db/uniqueDbName123')));
+    expect(r.stdout + r.stderr).not.toContain(long);
+    expect(r.stdout + r.stderr).not.toContain('uniqueDbName123');
+  });
+
+  it('local-db needs the Postgres passwords instead of TLS', () => {
+    const local = good.replace(/\?sslmode.*/, '');
+    expect(check(stackWith(local, 0o600, false), 'local-db').status).toBe(1);
+    expect(check(stackWith(`${local}POSTGRES_ADMIN_PASSWORD=a\nCNH_APP_PASSWORD=b\n`, 0o600, false), 'local-db').status).toBe(0);
+  });
+});
+
+describe('nginx logging policy', () => {
+  const strip = (s: string) => s.replace(/#.*$/gm, '');
+  const conf = strip(read('deploy/nginx/default.conf'));
+  const fmt = conf.match(/log_format\s+cnh\s+([^;]+);/)?.[1] ?? '';
+
+  it('uses a custom format that carries no query, cookie, authorization or referer', () => {
+    expect(fmt).not.toBe('');
+    for (const v of ['$request ', '$request"', '$request_uri', '$args', '$query_string', '$http_cookie', '$http_authorization', '$http_referer', '$http_x_']) {
+      expect(fmt).not.toContain(v);
+    }
+    expect(fmt).toContain('$log_uri');
+    expect(conf).toMatch(/access_log\s+\/var\/log\/nginx\/access\.log\s+cnh\s*;/);
+    expect(conf).toMatch(/error_log\s+\/var\/log\/nginx\/error\.log\s+warn\s*;/);
+  });
+
+  it('masks every share-token path', () => {
+    for (const area of ['chia-se', 'en/shared', 'api/shared']) expect(conf).toContain(area);
+    expect(conf).toContain('[redacted]');
+  });
+
+  it('rotates access 14 days and error 30 days, and setup-host installs it', () => {
+    const lr = read('deploy/logrotate/chuyennhahung');
+    const block = (name: string) => lr.match(new RegExp(`${name}\\.log \\{([^}]*)\\}`))?.[1] ?? '';
+    expect(block('access')).toMatch(/daily/);
+    expect(block('access')).toMatch(/rotate 14\b/);
+    expect(block('error')).toMatch(/rotate 30\b/);
+    expect(read('deploy/scripts/setup-host.sh')).toContain('/etc/logrotate.d/chuyennhahung');
+  });
+});
+
+describe('compose hardening', () => {
+  it('caps container logs and memory for every long-running service', () => {
+    for (const f of ['deploy/compose.yml', 'deploy/compose.app.yml']) {
+      const c = read(f);
+      const services = c.match(/^ {2}(nginx|postgres|app):$/gm) ?? [];
+      expect(c.match(/max-size: "10m"/g)?.length, f).toBe(services.length);
+      expect(c.match(/mem_limit:/g)?.length, f).toBe(services.length);
+    }
+  });
+
+  it('bakes no LAN address into the database overlay and defaults Google sign-up off', () => {
+    expect(read('deploy/compose.postgres-lan.yml')).toContain('${DB_BIND_ADDR:?');
+    expect(read('deploy/compose.postgres-lan.yml').replace(/#.*$/gm, '')).not.toMatch(/\d+\.\d+\.\d+\.\d+/);
+    const app = read('deploy/compose.app.yml');
+    expect(app).toContain('GOOGLE_SIGNUP_ENABLED: ${GOOGLE_SIGNUP_ENABLED:-false}');
+    expect(app).not.toContain('GOOGLE_REDIRECT_URI:');
+  });
+
+  it('keeps a real .env out of git', () => {
+    const ignore = read('.gitignore');
+    expect(ignore).toMatch(/^\.env$/m);
+    expect(ignore).toMatch(/^deploy\/\.env$/m);
   });
 });

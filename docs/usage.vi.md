@@ -40,7 +40,7 @@ mọi biến dưới đây đều có mặc định dùng được, hoặc tự 
 | `DATABASE_POOL_MAX` | `5` | Kích thước connection pool của mỗi tiến trình |
 | `TEST_DATABASE_URL` | *chưa đặt* | Database nháp cho `tests/planner-postgres.integration.test.ts`. Chưa đặt thì các test đó bị bỏ qua |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | *chưa đặt* | Đăng nhập Google ([ADR 0007](adr/0007-password-and-google-sign-in.vi.md)). Cần cả hai; thiếu thì các route Google trả 404 và nút bị ẩn. Chỉ phía server — không bao giờ là `NEXT_PUBLIC_*` |
-| `GOOGLE_SIGNUP_ENABLED` | `true` | `false` thì lần đăng nhập Google đầu tiên không tạo tài khoản; tài khoản đã có vẫn đăng nhập được |
+| `GOOGLE_SIGNUP_ENABLED` | `true` (stack Compose mặc định `false`) | `false` thì lần đăng nhập Google đầu tiên không tạo tài khoản; tài khoản đã có vẫn đăng nhập được |
 | `GOOGLE_REDIRECT_URI` | *suy ra* | Ghi đè URL callback; nếu không thì là `NEXT_PUBLIC_SITE_URL` (hoặc origin của request) + `/api/planner/oauth/google/callback`. Phải khớp đúng từng ký tự với Google Cloud Console |
 | `TRUST_PROXY_HEADERS` | *chưa đặt* | Chỉ đặt `true` khi đứng sau reverse proxy **ghi đè** `X-Forwarded-Proto` và `X-Forwarded-For` (xem *Deploy*). Cho cookie phiên và cookie OAuth lấy cờ `Secure` từ `X-Forwarded-Proto`, đồng thời để kiểm tra same-origin khi đăng nhập chấp nhận cả host trong `X-Forwarded-Host`, nên site có cả IP lẫn tên miền đều đăng nhập được |
 

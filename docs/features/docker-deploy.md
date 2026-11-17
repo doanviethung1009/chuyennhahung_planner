@@ -151,7 +151,8 @@ produces a local `chuyennhahung/app` one.
 | `deploy/nginx-app.conf` | Header snippet for a stack that already runs its own nginx (existing) |
 | `deploy/postgres/init/10-roles-and-databases.sh` | First-start role and database creation |
 | `deploy/.env.example` | Every variable, both layouts |
-| `deploy/scripts/setup-host.sh`, `deploy/scripts/backup.sh` | Host preparation and backups |
+| `deploy/scripts/setup-host.sh`, `deploy/scripts/backup.sh` | Host preparation (also installs the log rotation) and backups |
+| `deploy/logrotate/chuyennhahung` | nginx log retention: access 14 days, error 30 days |
 | `deploy/deploy.sh`, `.github/workflows/deploy-dev.yml` | Automatic path: pull a GHCR tag, restart `app`, health check, rollback (ADR 0016) |
 
 ## Tests
@@ -170,6 +171,11 @@ machine and no VM was touched.
 - Plain HTTP: cookies are not `Secure`, HSTS is ignored, Google sign-in cannot work
   on an IP. TLS (certbot or an upstream load balancer) is the next step; then set
   `NEXT_PUBLIC_SITE_URL` to the https origin and rebuild.
+- Hardening (DEPLOY-HARDEN-01): nginx logs record no query, cookie, authorization or
+  referer and mask share-token paths; every service caps its logs and memory;
+  `deploy.sh --check` is the preflight for a new VM; external-db URLs must use
+  `sslmode=verify-full`. `deploy/.env.example` still has to list `DB_BIND_ADDR`,
+  `APP_MEM_LIMIT`, `POSTGRES_MEM_LIMIT` (owner action: the agent cannot edit it).
 - One `app` replica only; the rate limiter is in memory and the content JSON store is a
   single file (ADR 0013).
 - The app role owns the databases and migrates at startup (accepted risk, ADR 0009).

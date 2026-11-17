@@ -15,6 +15,14 @@ install -d -m 750 -o 1000 -g 1000 "$ROOT/import"          # planner:import input
 install -d -m 750 "$ROOT/backups"
 install -d -m 755 "$ROOT/secrets"                          # pg-ca.crt (public cert)
 
+# Log retention: access 14 days, error 30 days. Needs logrotate (Debian/Ubuntu: present).
+if [ -d /etc/logrotate.d ]; then
+  sed "s#/opt/chuyennhahung#$ROOT#g" "$(dirname "$0")/../logrotate/chuyennhahung" > /etc/logrotate.d/chuyennhahung
+  chmod 644 /etc/logrotate.d/chuyennhahung
+else
+  echo "logrotate not found: install it and copy deploy/logrotate/chuyennhahung to /etc/logrotate.d/." >&2
+fi
+
 if [ "$LAYOUT" = "local-db" ]; then
   install -d -m 700 -o 70 -g 70 "$ROOT/data/postgres"      # postgres (alpine image)
 else
