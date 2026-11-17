@@ -24,6 +24,7 @@ vi.mock('../src/i18n/navigation', () => ({
 const access = vi.hoisted(() => ({ read: vi.fn() }));
 vi.mock('../src/server/planner/admin-page', () => ({ readStaffPageAccess: access.read }));
 
+import { pathnames } from '../src/i18n/routing';
 import { adminSidebarGroups, requireStaff } from '../src/lib/admin-gate';
 import { AdminSidebar } from '../src/components/admin/admin-sidebar';
 import { AdminPageHeader } from '../src/components/admin/admin-page-header';
@@ -101,6 +102,15 @@ describe('one admin 404, no oracle (ADR 0023 §5)', () => {
     expect(forbidden).toBe(NOT_FOUND);
     expect(thrown(() => AdminUnknownAdmin())).toBe(NOT_FOUND);
     expect(thrown(() => AdminUnknownVi())).toBe(NOT_FOUND);
+  });
+
+  it('names the Vietnamese catch-all folder after the localized admin path', () => {
+    // The middleware rewrites an unknown /quan-tri/xyz to /vi/quan-tri/xyz, so
+    // the folder must follow `pathnames['/admin'].vi` or the 404 silently regresses.
+    const segment = pathnames['/admin'].vi.replace(/^\//, '');
+    expect(segment).toBe('quan-tri');
+    expect(existsSync(join(root, `${adminRoot}/${segment}/[...rest]/page.tsx`))).toBe(true);
+    expect(pathnames['/admin'].en).toBe('/admin');
   });
 
   it('keeps the catch-alls free of session reads and data', () => {
