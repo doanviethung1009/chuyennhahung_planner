@@ -178,7 +178,7 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
   có hơn một instance.
 
 ## Phase 10 — Community Foundations
-- **Trạng thái:** Designed (đề xuất 2026-11-16, chủ dự án chốt khuyến nghị; cần ADR riêng trước khi code).
+- **Trạng thái:** **Gần đóng (2026-11-17)** — batch 10.1–10.6b đã merge (PR #112, #115, #117, #122, #126, #129, #132; migration `0010`–`0014`); smoke dev 10.7 xem `.claude/contracts/handoff/phase10-10.7.md`. Còn mở: P10-4 phần cần đăng nhập, P10-7 và D10/D5 (owner), trạng thái đăng chuyến mở rộng + bộ lọc, Chính sách riêng tư, `/sec-check` + `/qc-check` (NOT RUN). Chi tiết ở `backlog.md`.
 - **10-S0 — đã có code, deploy chưa xác minh:** [ADR 0014](../../docs/adr/0014-community-trips-and-reviews.md)
   (Community Trips + Reviews) và [ADR 0015](../../docs/adr/0015-community-review-author-controls.md)
   (hold, restrictions); migration `0005`–`0008`; `tests/community-*.test.ts`,
@@ -187,7 +187,7 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
   `/community-trips` và `/reviews` trên dev, `/sec-check` + `/qc-check` cho community.
 - **Quyết định đã chốt:** giữ review hiện ngay theo ADR 0014 (Q1), thêm Report + audit log
   trước khi cân nhắc siết.
-- **ADR thiết kế:** [ADR 0019](../../docs/adr/0019-community-foundation.md) (Proposed, PR #106) — máy trạng thái kiểm duyệt, `audit_events` (P10-1) và limiter ghi dùng chung (P10-6).
+- **ADR thiết kế:** [ADR 0019](../../docs/adr/0019-community-foundation.md) (Accepted), [ADR 0024](../../docs/adr/0024-guest-identity-privacy.md) (Accepted, danh tính khách) — máy trạng thái kiểm duyệt, `audit_events` (P10-1) và limiter ghi dùng chung (P10-6).
 - **Phụ thuộc:** 07; ADR 0014/0015.
 
 ## Phase 11 — Member Profiles & Creator Terms

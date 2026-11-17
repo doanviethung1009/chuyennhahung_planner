@@ -183,11 +183,11 @@ editor library, storage choice, quotas, MFA for staff, first-decision target, pe
 
 | Phase | Feature | Priority | Dependencies | Owner | Spec file | Acceptance criteria | Status |
 |---|---|---|---|---|---|---|---|
-| 10 | Audit log and state machine | P1 | 07 | Backend | [moderation](specs-community-moderation.md), [ADR 0019](adr/0019-community-foundation.md) | Transition and mapping tests | Proposed |
-| 10 | Shared write limiter | P1 | 07 | Backend | [ADR 0019](adr/0019-community-foundation.md) | Two-instance test, fail closed | Proposed |
-| 10 | Reports, Report control, queue | P1 | audit log | Backend, Frontend | [moderation](specs-community-moderation.md) | Dedupe, queue visible | Proposed |
-| 10 | Terms acceptance | P1 | audit log | Backend, Frontend | [security](specs-community-security.md) | Writes blocked without version | Proposed |
-| 10 | Trip publication states, gallery filters | P1 | audit log | Backend, Frontend | [api](specs-community-api.md) | Every edge tested | Proposed |
+| 10 | Audit log and state machine | P1 | 07 | Backend | [moderation](specs-community-moderation.md), [ADR 0019](adr/0019-community-foundation.md) | Transition and mapping tests | Implemented (dev smoke partial, 2026-11-17) |
+| 10 | Shared write limiter | P1 | 07 | Backend | [ADR 0019](adr/0019-community-foundation.md) | Two-instance test, fail closed | Implemented (dev smoke partial, 2026-11-17) |
+| 10 | Reports, Report control, queue | P1 | audit log | Backend, Frontend | [moderation](specs-community-moderation.md) | Dedupe, queue visible | Implemented (dev smoke partial, 2026-11-17) |
+| 10 | Terms acceptance | P1 | audit log | Backend, Frontend | [security](specs-community-security.md) | Writes blocked without version | Implemented (dev smoke partial, 2026-11-17) |
+| 10 | Trip publication states, gallery filters | P1 | audit log | Backend, Frontend | [api](specs-community-api.md) | Every edge tested | Open: only the state machine shipped (batch 10.1); `changes_requested`/`unpublished` and gallery filters not built |
 | 11 | Member profile, public opt-in page | P1 | 10, privacy policy | Backend, Frontend | [database](specs-community-database.md) | Opt-in default off | Proposed |
 | 11 | Use this trip with attribution | P1 | 10, copy switch (Terms Art. 3) | Backend, Frontend | [api](specs-community-api.md) | Source unchanged, anonymity holds | Proposed |
 | 12 | Journal and blog | P2 | 10, 11 | Backend, Frontend | [fe](specs-community-fe.md) | XSS inert, review flow | Proposed |
