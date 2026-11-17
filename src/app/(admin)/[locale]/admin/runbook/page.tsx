@@ -5,7 +5,7 @@ import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
 import { noIndex, requireStaff } from '@/lib/admin-gate';
 import { Container } from '@/components/ui/container';
-import { PageHeader } from '@/components/layout/page-header';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { Markdown } from '@/components/runbook/markdown';
 import {
   DEFAULT_RUNBOOK_DOC,
@@ -72,7 +72,7 @@ export default async function AdminRunbookPage({ params, searchParams }: Params)
 
   return (
     <>
-      <PageHeader title={t('title')} description={t('description')} />
+      <AdminPageHeader title={t('title')} description={t('description')} />
       <Container width="wide">
         <div className="grid gap-8 py-10 md:py-14">
           <nav aria-label={t('docsLabel')} className="flex flex-wrap items-center gap-2">

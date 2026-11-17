@@ -659,7 +659,9 @@
       "openMenu": "Menu",
       "closeMenu": "Đóng menu",
       "breadcrumb": "Đường dẫn",
-      "home": "Quản trị"
+      "home": "Quản trị",
+      "brand": "Chuyện Nhà Hưng · Quản trị",
+      "viewSite": "Xem trang chính"
     },
     "overview": {
       "heading": "Chào mừng đến khu quản trị",
@@ -851,6 +853,11 @@
         "destination": "Điểm đến",
         "itinerary": "Lịch trình"
       }
+    },
+    "notFound": {
+      "title": "Không tìm thấy trang",
+      "description": "Trang này không tồn tại hoặc bạn không có quyền xem.",
+      "cta": "Về trang chủ"
     }
   },
   "storyPage": {

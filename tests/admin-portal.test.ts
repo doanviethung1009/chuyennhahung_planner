@@ -82,7 +82,7 @@ describe('admin portal (frontend, ADR 0010)', () => {
   });
 
   it('gives every admin page one frame: a layout, and no page draws its own nav', () => {
-    const base = resolve(import.meta.dirname, '../src/app/[locale]/admin');
+    const base = resolve(import.meta.dirname, '../src/app/(admin)/[locale]/admin');
     expect(readFileSync(join(base, 'layout.tsx'), 'utf8')).toMatch(/AdminSidebar/);
     expect(readFileSync(join(base, 'users/page.tsx'), 'utf8')).toMatch(/requireStaff\([\s\S]*?'users'\)/);
     expect(readFileSync(join(base, 'page.tsx'), 'utf8')).not.toMatch(/AdminConsole|AdminNav/);
@@ -91,9 +91,11 @@ describe('admin portal (frontend, ADR 0010)', () => {
 
 describe('admin page gates (ADR 0020)', () => {
   it('has every admin page call requireStaff itself, whatever the layout draws', () => {
-    const base = resolve(import.meta.dirname, '../src/app/[locale]/admin');
+    const base = resolve(import.meta.dirname, '../src/app/(admin)/[locale]/admin');
     const pages = (readdirSync(base, { recursive: true, withFileTypes: true }) as Dirent[])
       .filter((entry) => entry.isFile() && entry.name === 'page.tsx')
+      // The `[...rest]` catch-all only calls notFound(); it reads no session.
+      .filter((entry) => !entry.parentPath.includes('[...rest]'))
       .map((entry) => join(entry.parentPath, entry.name));
     expect(pages.length).toBeGreaterThanOrEqual(9);
     for (const file of pages) {

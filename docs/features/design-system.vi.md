@@ -43,7 +43,8 @@ mà không cần file config. Component chỉ dùng các utility đó và không
 
 Lớp base đặt `color-scheme: light`, chiều cao header dính `--header-h` (4rem, từ
 `64rem` trở lên là 4.75rem — drawer trên mobile tự trừ theo nó),
-`text-wrap: balance` cho tiêu đề và `pretty` cho đoạn văn, và font tiếng Việt cho
+chiều cao thanh trên của admin `--admin-bar-h` (3.5rem; thanh bên admin dính
+dưới nó — ADR 0023), `text-wrap: balance` cho tiêu đề và `pretty` cho đoạn văn, và font tiếng Việt cho
 `body`.
 
 Các primitive trong `src/components/ui/` là nửa còn lại của hệ thống: `Button`

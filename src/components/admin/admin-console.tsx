@@ -13,7 +13,6 @@ import type { AccountAction, AccountImpact, AdminRole, AdminUser, OneTimeSecret 
 interface Props {
   currentUserId: string;
   actorRole: AdminRole;
-  currentHandle: string;
 }
 
 type Status = { kind: 'ok' | 'error'; text: string; expired?: boolean } | null;
@@ -45,13 +44,12 @@ const FIELD_NAMES = ['handle', 'displayName', 'email', 'role'] as const;
  * heading, metadata) stays on the server. It never sees a service token: the
  * browser authenticates with the session cookie alone.
  */
-export function AdminConsole({ currentUserId, currentHandle, actorRole }: Props) {
+export function AdminConsole({ currentUserId, actorRole }: Props) {
   const t = useTranslations('admin');
   const locale = useLocale() as Locale;
   const [users, setUsers] = useState<AdminUser[] | null>(null);
   const [status, setStatus] = useState<Status>(null);
   const [secrets, setSecrets] = useState<OneTimeSecret[]>([]);
-  const [signingOut, setSigningOut] = useState(false);
 
   const fail = useCallback(
     (failure: unknown) => {
@@ -183,32 +181,8 @@ export function AdminConsole({ currentUserId, currentHandle, actorRole }: Props)
     }
   }
 
-  async function signOut() {
-    setSigningOut(true);
-    try {
-      await api('/api/planner/session', { method: 'DELETE' });
-      setSecrets([]);
-      window.location.assign(signInUrl(locale));
-    } catch {
-      setSigningOut(false);
-      setStatus({ kind: 'error', text: t('status.signedOutFailed') });
-    }
-  }
-
   return (
     <div className="grid gap-12">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-base text-foreground-muted">{t('signedInAs', { handle: currentHandle })}</p>
-        <button
-          type="button"
-          onClick={signOut}
-          disabled={signingOut}
-          className={buttonClass({ variant: 'secondary', size: 'sm' })}
-        >
-          {signingOut ? t('signingOut') : t('signOut')}
-        </button>
-      </div>
-
       <div role="status" aria-live="polite" className="min-h-6">
         {status ? (
           <p

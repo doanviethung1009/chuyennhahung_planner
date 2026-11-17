@@ -44,7 +44,7 @@ API: `PUT|DELETE /api/planner/[id]/listing` (owner), `GET /api/community/trips` 
 | `src/components/cards/community-trip-card.tsx`, `src/components/sections/community-trips-section.tsx` | public UI |
 | `src/app/[locale]/community-trips/page.tsx` | gallery |
 | `src/components/planner/share-panel.tsx` | owner control |
-| `src/app/[locale]/admin/community/page.tsx`, `src/components/admin/community/listing-queue.tsx` | staff queue |
+| `src/app/(admin)/[locale]/admin/community/page.tsx`, `src/components/admin/community/listing-queue.tsx` | staff queue |
 | `src/content/site.ts` | `contribution` (owner data) |
 
 ## Tests

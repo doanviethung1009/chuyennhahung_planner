@@ -3,16 +3,18 @@ import { getTranslations } from 'next-intl/server';
 import { adminSidebarGroups } from '@/lib/admin-gate';
 import { readStaffPageAccess } from '@/server/planner/admin-page';
 import { AdminBreadcrumb, AdminSidebar } from '@/components/admin/admin-sidebar';
+import { AdminTopBar } from '@/components/admin/admin-top-bar';
 
 // Reads the session cookie: never prerendered or cached.
 export const dynamic = 'force-dynamic';
 
 /**
- * One frame for every admin page (ADR 0020): skip link, grouped sidebar,
- * breadcrumb. The layout never redirects or 404s — each page keeps its own
- * `requireStaff` gate with its own `returnTo`; when the visitor is not staff
- * the page redirects or 404s and the frame is simply not drawn. The access
- * read is `cache()`d, so it runs once per request.
+ * One frame for every admin page (ADR 0020, ADR 0023): skip link, slim top
+ * bar, sticky sidebar, breadcrumb and the single `<main>`. The layout never
+ * redirects or 404s — each page keeps its own `requireStaff` gate with its own
+ * `returnTo`; when the visitor is not staff the page redirects or 404s and the
+ * frame is simply not drawn. The access read is `cache()`d, so it runs once
+ * per request.
  */
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const access = await readStaffPageAccess();
@@ -22,17 +24,20 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const groups = adminSidebarGroups(access.principal);
 
   return (
-    <div className="relative flex flex-col lg:flex-row">
+    <div className="relative min-h-dvh bg-background">
       <a
         href="#admin-content"
         className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-lg focus:bg-surface focus:px-4 focus:py-3 focus:text-foreground"
       >
         {t('skip')}
       </a>
-      <AdminSidebar groups={groups} />
-      <div id="admin-content" tabIndex={-1} className="min-w-0 flex-1 focus:outline-none">
-        <AdminBreadcrumb groups={groups} />
-        {children}
+      <AdminTopBar groups={groups} handle={access.principal.handle} role={access.principal.role} />
+      <div className="flex min-h-[calc(100dvh-var(--admin-bar-h))]">
+        <AdminSidebar groups={groups} />
+        <main id="admin-content" tabIndex={-1} className="min-w-0 flex-1 pb-12 focus:outline-none">
+          <AdminBreadcrumb groups={groups} />
+          {children}
+        </main>
       </div>
     </div>
   );
