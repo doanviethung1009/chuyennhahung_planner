@@ -109,6 +109,7 @@ hay bỏ một route nghĩa là sửa bảng này ở cả hai ngôn ngữ.
 | PATCH | `/api/admin/community/trips/[id]` | Admin token hoặc phiên admin | Duyệt hoặc từ chối chuyến (`community:moderate`) |
 | GET | `/api/admin/community/reviews` | Admin token hoặc phiên admin | Hàng đợi kiểm duyệt đánh giá (`community:moderate`) |
 | PATCH | `/api/admin/community/reviews/[id]` | Admin token hoặc phiên admin | Duyệt, từ chối, giữ hoặc gỡ đánh giá (`community:moderate`) |
+| POST | `/api/admin/community/reviews/[id]/erase` | Admin token hoặc phiên admin | Xóa vĩnh viễn nội dung review của khách theo yêu cầu xóa dữ liệu (`community:erase`, từ admin) |
 | GET | `/api/planner/terms` | Du khách (cookie phiên hoặc access token) | Trạng thái Điều khoản Người tạo hiện hành |
 | POST | `/api/planner/terms` | Du khách (cookie phiên hoặc access token) | Chấp nhận phiên bản Điều khoản Người tạo hiện hành (idempotent) |
 | GET | `/api/admin/community/reports` | Token admin hoặc phiên admin | Hàng đợi báo cáo, `?status=open\|actioned\|dismissed` (`community:moderate`) |

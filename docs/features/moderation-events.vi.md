@@ -23,6 +23,7 @@ Chỉ staff (`community:moderate`: editor, admin, service token), `Cache-Control
 | trip | `request` mọi trạng thái → `pending`; `withdraw` → `draft`; `approve` `pending` → `published`; `reject` `pending` → `rejected`; `remove` `published` → `removed`; `requeue` `published` → `pending` (do sửa) | chủ chuyến / staff / `service` |
 | trip | `withdraw` → `draft`, lý do `implicit_end` (rời `public`, lưu trữ, thu hồi link) | `system` (`service`) |
 | review | `approve`, `reject`, `hold`, `remove`; `republish` `held` → `approved` (tác giả sửa) | staff / tác giả |
+| review | `erase` (ADR 0024 §8) mọi trạng thái → `removed`; lý do chỉ là chữ của staff, không bao giờ là nội dung đã xóa hay khóa | admin / `service` |
 | review | `guest_limit` (không đổi trạng thái; actor `system`; tối đa một lần mỗi giờ) khi khách chạm giới hạn đánh giá theo giờ | route |
 | user | `restrict` → `active`; `lift` `active` → `lifted` (cả khi xoá tài khoản, actor `account deleted`) | staff / `service` |
 
@@ -51,6 +52,7 @@ Dữ liệu cá nhân: id người thực hiện và lý do có thể trích l�
 
 ## Limits and open questions
 
+- Hàng đợi review hiển thị `guest_limit` thành huy hiệu kèm giờ (`guestLimitAt`, gộp vào hàng đợi phía server); các sự kiện khác vẫn chỉ đọc qua route events.
 - Thay đổi vai trò, template và quản trị người dùng chưa được ghi; sự kiện báo cáo và điều khoản đến cùng batch của chúng.
 - Chiếu dành cho tác giả (chuyến của mình, không lộ người duyệt) cố ý chưa làm: chưa có UI dùng.
 - Rollback: gỡ các lời gọi `record` và route, chạy SQL rollback tay. File JSON export có `auditEvents` bị code cũ từ chối (schema `.strict()`): export bằng schema của bản này trước, hoặc xoá khoá đó.

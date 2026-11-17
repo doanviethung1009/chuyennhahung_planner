@@ -111,15 +111,15 @@ describe('role resolution', () => {
 });
 
 describe('can', () => {
-  const actions: Action[] = ['user:provision', 'user:promote', 'template:write', 'story:publish', 'content:write', 'community:moderate', 'community:restrict', 'runbook:read', 'trip:support-read'];
+  const actions: Action[] = ['user:provision', 'user:promote', 'template:write', 'story:publish', 'content:write', 'community:moderate', 'community:restrict', 'community:erase', 'runbook:read', 'trip:support-read'];
 
   it('matches the declared matrix for every role and action', () => {
     const expected: Record<string, Action[]> = {
       member: [],
       editor: ['template:write', 'story:publish', 'content:write', 'community:moderate'],
-      admin: ['template:write', 'story:publish', 'content:write', 'community:moderate', 'community:restrict', 'user:provision', 'user:promote'],
-      super_admin: ['template:write', 'story:publish', 'content:write', 'community:moderate', 'community:restrict', 'user:provision', 'user:promote', 'runbook:read'],
-      service: ['template:write', 'story:publish', 'content:write', 'community:moderate', 'community:restrict', 'user:provision', 'user:promote'],
+      admin: ['template:write', 'story:publish', 'content:write', 'community:moderate', 'community:restrict', 'community:erase', 'user:provision', 'user:promote'],
+      super_admin: ['template:write', 'story:publish', 'content:write', 'community:moderate', 'community:restrict', 'community:erase', 'user:provision', 'user:promote', 'runbook:read'],
+      service: ['template:write', 'story:publish', 'content:write', 'community:moderate', 'community:restrict', 'community:erase', 'user:provision', 'user:promote'],
     };
     for (const [role, allowed] of Object.entries(expected)) {
       for (const action of actions) {

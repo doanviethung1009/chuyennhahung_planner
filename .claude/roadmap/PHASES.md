@@ -7,7 +7,7 @@ Trạng thái phase hiện tại: [`CURRENT.md`](CURRENT.md). Việc tồn đọ
 [`backlog.md`](backlog.md). Trạng thái deploy từng phase:
 [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md).
 
-Cập nhật lần cuối: 2026-11-16 — đối chiếu lại theo `main` @ `e362aea` (báo cáo
+Cập nhật lần cuối: 2026-11-17 — đồng bộ theo `main` @ `104278b` (chuẩn hóa roadmap: một dòng trạng thái mỗi phase, sơ đồ có Phase 10–15). Lần trước: 2026-11-16 — `main` @ `e362aea` (báo cáo
 `.claude/contracts/community-platform-audit.md`; chủ dự án chốt khuyến nghị Q1–Q12 cùng ngày).
 Lần trước: 2026-11-09 (`main` @ `124868e`). Tạo lần đầu từ `main` @ `3d42707`.
 
@@ -37,10 +37,10 @@ Trạng thái: `Done` · `Partial` · `In progress` · `Designed` (có ADR/contr
 | 04 | Interactive Planner UI | Partial (editor Done; còn Planner map, `/plan-your-trip`) | P2 | 03 |
 | 05 | Story → Planner, My Trips & Sharing | **Done** (2026-11-16; đóng với cảnh báo, xem `CURRENT.md`) | — | 02, 03 |
 | 06 | AI Planner, Affiliate & Optimization | Not started | P2 | 05, 04 (editor), 07 (phần affiliate) |
-| 07 | Admin Portal, CMS & RBAC | In progress — phần lớn Done (code); còn audit log, MFA, CMS create/delete/template | **P1** | 05 |
+| 07 | Admin Portal, CMS & RBAC | In progress — Done: RBAC, CMS story/place/review, shell P07-10, dashboard P07-11, create/archive P07-16, UX P07-19, audit log (qua P10-1). Còn: P07-12/13/14/15/17, MFA (hoãn), template CMS; P07-18 chặn bởi Phase 08 | **P1** | 05 |
 | 08 | Media Library & Analytics | Not started | P3 | 07 |
 | 09 | Production Readiness & Launch | Partial — dev VM + Postgres đã chạy; production Not started | P4 | 07, 08 (hoặc loại trừ có ghi lại) |
-| 10 | Community Foundations | Designed (đề xuất, chờ ADR); 10-S0 đã code | **P1** | 07 |
+| 10 | Community Foundations | **Gần đóng** — batch 10.1–10.7 DONE (2026-11-17); `/sec-check` và `/qc-check` PASS_WITH_WARNINGS; việc còn mở chuyển sang Phase 11/backlog (10.8 bị bỏ, 2026-11-18) | **P1** | 07 |
 | 11 | Member Profiles & Creator Terms | Designed (đề xuất) | P1 | 10 |
 | 12 | Travel Journal & Blog (curated) | Designed (đề xuất) | P2 | 10, 11 |
 | 13 | Media Hybrid & Vlog | Designed (đề xuất) | P2 | 08, 12 |
@@ -56,8 +56,14 @@ flowchart LR
   P02 --> P03[03 Planner Core]
   P03 --> P04[04 Planner UI - Partial]
   P02 --> P05
-  P03 --> P05[05 Story→Planner - HIỆN TẠI]
+  P03 --> P05[05 Story→Planner - Done]
   P05 --> P07[07 Admin/CMS/RBAC - P1]
+  P07 --> P10[10 Community - gần đóng]
+  P10 --> P11[11 Profiles]
+  P11 --> P12[12 Journal/Blog]
+  P12 --> P13[13 Media/Vlog]
+  P12 --> P14[14 Engagement]
+  P14 --> P15[15 Gallery]
   P05 --> P06[06 AI/Affiliate/Optim - P2]
   P04 -. editor .-> P06
   P07 -. affiliate CMS .-> P06
@@ -66,8 +72,7 @@ flowchart LR
   P08 --> P09
 ```
 
-Thứ tự đề xuất (cập nhật 2026-11-16): **05 → 07 → 10 → 11 → 12 → 06 → 08 → 13 → 14 → 09 → 15**; 07 phần còn thiếu (audit log) làm cùng Phase 10. Thứ tự trước đó: 05 → 07 → 06 → 08 → 09, với 04 (editor) chạy xen khi có slot
-frontend và bắt buộc xong trước phần AI của 06.
+Thứ tự hiện hành (chốt 2026-11-16): **05 → 07 → 10 → 11 → 12 → 06 → 08 → 13 → 14 → 09 → 15**; audit log của 07 đã làm trong Phase 10 (P10-1). Thứ tự cũ (05 → 07 → 06 → 08 → 09) chỉ còn là lịch sử; 04 (editor) xen khi có slot frontend và phải xong trước phần AI của 06.
 
 **Quy tắc 07 trước 06** (quyết định của chủ dự án, 2026-11-09): sau khi Phase 05 đạt
 tiêu chí đóng, Phase 07 được mở trước Phase 06 **nếu** các điều kiện mở của 07 (mục
@@ -146,7 +151,7 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
   Phần Optimization không phụ thuộc 07.
 
 ## Phase 07 — Admin Portal, CMS & RBAC
-- **Trạng thái:** In progress — phần lớn Done về code (cập nhật 2026-11-16): ADR 0006 *Accepted* 2026-11-11, ADR 0010 (portal user), 0011 (CMS story/place/review), 0012 (public đọc từ content repo), 0017 (`super_admin`). **Còn thiếu:** audit log (`audit_events`), MFA, CMS create/delete/template (vẫn token-only), store rate-limit dùng chung (chưa xác minh). Admin trên trình duyệt chưa có bằng chứng chạy trên dev VM. Thiết kế gốc ở `docs/adr/0006-unified-identity-and-roles.md`
+- **Trạng thái:** In progress — phần lớn Done về code (cập nhật 2026-11-17; thêm P07-10, 11, 16, 19 merged; contract `admin-workspace-index.md`): ADR 0006 *Accepted* 2026-11-11, ADR 0010 (portal user), 0011 (CMS story/place/review), 0012 (public đọc từ content repo), 0017 (`super_admin`). **Còn thiếu:** MFA (hoãn; audit log đã có từ P10-1), CMS create/delete/template (vẫn token-only), store rate-limit dùng chung (chưa xác minh). Admin trên trình duyệt chưa có bằng chứng chạy trên dev VM. Thiết kế gốc ở `docs/adr/0006-unified-identity-and-roles.md`
   (+ `.vi.md`). Nhãn cũ "Phase 06 (Admin Portal & CMS)" đã
   đổi thành Phase 07 (P07-R0). Còn chờ chủ nhà quyết định P07-D1.
 - **Phạm vi:** một user model với `role: member|editor|admin`; `can(identity, action)`
@@ -178,12 +183,12 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
   có hơn một instance.
 
 ## Phase 10 — Community Foundations
-- **Trạng thái:** **Gần đóng (2026-11-17)** — batch 10.1–10.6b đã merge (PR #112, #115, #117, #122, #126, #129, #132; migration `0010`–`0014`); smoke dev 10.7 xem `.claude/contracts/handoff/phase10-10.7.md`. Còn mở: P10-4 phần cần đăng nhập, P10-7 và D10/D5 (owner), trạng thái đăng chuyến mở rộng + bộ lọc, Chính sách riêng tư, `/sec-check` + `/qc-check` (NOT RUN). Chi tiết ở `backlog.md`.
+- **Trạng thái:** **Gần đóng (2026-11-17) — chưa đóng.** Batch 10.1–10.7 đã merge (PR #112, #115, #117, #122, #126, #129, #132, #136; migration `0010`–`0014`), cộng việc ngoài contract: #137 (giới hạn review khách 10/giờ + `guest_limit`), #138 (tên địa điểm + nhãn trong admin), #139 (staff ẩn danh hóa review khách; self-review PASS_WITH_WARNINGS). **Review toàn phase 2026-11-17:** `/sec-check` PASS_WITH_WARNINGS và `/qc-check` PASS_WITH_WARNINGS, không BLOCKED (typecheck/lint PASS; test 1156 pass với PostgreSQL cục bộ, 1084 pass + 73 skip khi không có DB; build NOT RUN). Điều kiện đóng và việc còn mở: `CURRENT.md` và `backlog.md`. Phase kế tiếp: 11 (ADR 0025 Proposed, PR #141). **Batch 10.8 bị bỏ (chủ dự án chốt 2026-11-18):** việc còn mở của Phase 10 chuyển sang Phase 11 và backlog; không tạo contract 10.8. Phase 11 là phase kế tiếp.
 - **10-S0 — đã có code, deploy chưa xác minh:** [ADR 0014](../../docs/adr/0014-community-trips-and-reviews.md)
   (Community Trips + Reviews) và [ADR 0015](../../docs/adr/0015-community-review-author-controls.md)
   (hold, restrictions); migration `0005`–`0008`; `tests/community-*.test.ts`,
   `tests/review-restrictions-routes.test.ts`. Ghi nhận hồi tố ở đây, **không** đổi ID Phase 05–09.
-- **Phạm vi mới:** `audit_events` (P07-4), `terms_acceptances`, `reports` + hàng đợi, smoke
+- **Phạm vi (đã code, trừ mục NOT RUN):** `audit_events` (P07-4 = P10-1), `terms_acceptances`, `reports` + hàng đợi, smoke
   `/community-trips` và `/reviews` trên dev, `/sec-check` + `/qc-check` cho community.
 - **Quyết định đã chốt:** giữ review hiện ngay theo ADR 0014 (Q1), thêm Report + audit log
   trước khi cân nhắc siết.

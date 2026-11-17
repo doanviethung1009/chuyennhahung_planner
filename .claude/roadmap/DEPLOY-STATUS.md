@@ -3,7 +3,7 @@
 Roadmap: [`PHASES.md`](PHASES.md) · Phase hiện tại: [`CURRENT.md`](CURRENT.md) ·
 Tồn đọng: [`backlog.md`](backlog.md)
 
-Cập nhật: 2026-11-16, kiểm trên `main` @ `e362aea`; bằng chứng deploy lấy từ `.claude/reports/deploy-test-2026-11-15.md` (dev VM, commit `0216f46`, **trước** PR #93–#105).
+Cập nhật: 2026-11-17, đồng bộ trên `main` @ `104278b` (CI `success`, Deploy dev `success` @ `104278b`; chạy `gh run list`). Bằng chứng gốc 2026-11-16 trên `e362aea`; bằng chứng deploy lấy từ `.claude/reports/deploy-test-2026-11-15.md` (dev VM, commit `0216f46`, **trước** PR #93–#105).
 
 Một phase chỉ được ghi **Deployed** khi mọi cổng bắt buộc của nó có bằng chứng. Ô nào
 không có bằng chứng trong repo, GitHub hoặc lời xác nhận của chủ nhà thì ghi
@@ -34,10 +34,12 @@ Ký hiệu: ✅ có bằng chứng · ❌ chưa đạt · ⏳ NOT RUN · — kh�
 | 03 Travel Planner Core | ✅ #11, #13, #20 | ✅ | ✅ ADR 0002, 0004 | — | ⏳ | ⏳ | ⏳ | ⏳ | **Chưa deploy** |
 | 04 Interactive Planner UI | ❌ Partial | — | — | ⏳ | ⏳ | — | ⏳ | ⏳ | Chưa xong code |
 | 05 Story → Planner (hiện tại) | ✅ #23, #27 | ✅ | ✅ ADR 0005 | ✅ 2026-11-10 (local) | ⏳ | ⏳ | ⏳ | ⏳ | **Chưa deploy** |
-| 07 Admin Portal, CMS & RBAC | ❌ chỉ có ADR 0006 (#25) | — | ⏳ ADR Proposed | — | — | — | — | — | Chưa bắt đầu |
+| 07 Admin Portal, CMS & RBAC | ✅ một phần (#116, #121, #124, #131…) | ✅ | ✅ ADR 0006/0010/0011/0017/0023 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | Code có trên dev VM theo auto-deploy; đăng nhập admin trên trình duyệt NOT RUN |
 | 06 AI, Affiliate & Optimization | ❌ | — | — | — | — | — | — | — | Chưa bắt đầu |
 | 08 Media & Analytics | ❌ | — | — | — | — | — | — | — | Chưa bắt đầu |
-| 09 Production Readiness & Launch | ❌ | — | — | — | — | — | — | — | Chưa bắt đầu |
+| 09 Production Readiness & Launch | ❌ Partial | — | — | — | — | — | ✅ dev VM (một phần) | ❌ | Dev VM chạy; production chưa |
+| 10 Community Foundations | ✅ #112–#136 | ✅ | ✅ ADR 0019/0024 | ✅ một phần (smoke dev 2026-11-17, trang công khai + Report 375/768/1280) | ⏳ | ⏳ | ✅ dev (xem handoff 10.7; phần cần đăng nhập NOT RUN) | ❌ | **Deploy dev tự động**; chưa production |
+| 11–15 | ❌ | — | — | — | — | — | — | — | Designed, chưa có code |
 
 Ghi chú G2: lần chạy `CI` gần nhất trên `main` đều `success` (#27, #25, #26, #24, #23,
 …); lần merge #12 và #13 bị `cancelled` vì #13 merge chồng lên, commit sau đó xanh.

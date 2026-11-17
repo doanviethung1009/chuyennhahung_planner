@@ -1,6 +1,6 @@
 # Task Contract 10.2 — Audit Events + database migration
 - Task ID: P10-1 (= P07-4); precondition P10-14
-- Class: L · State: READY (owner approved D1-D12 as recommended, 2026-11-16) · Subagents: 0
+- Class: L · State: DONE (PR #115, merged 2026-11-16) · Subagents: 0
 - Objective: every existing community action writes one append-only `AuditEvent` in the same Planner-store transaction as the change it describes.
 - Scope:
   - **Step 0 (precondition, P10-14):** PostgreSQL integration cases for `community_reviews` and `review_restrictions` (migrations 0007/0008, `planner-rows`) so the refactor below has a net. Pure tests; no source change.

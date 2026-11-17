@@ -1,6 +1,6 @@
 # Task Contract 10.1 — Moderation State Machine
 - Task ID: 10.1 (no backlog row; ADR 0019 §1; enabler of P10-1)
-- Class: M · State: READY (owner approved D1-D12 as recommended, 2026-11-16) · Subagents: 0
+- Class: M · State: DONE (PR #112, merged 2026-11-16) · Subagents: 0
 - Objective: one pure module owns the submission/listing rules, and the trip-listing repository methods call it, with zero change to stored data, HTTP responses or error codes.
 - Scope:
   - New `src/server/community/submission.ts` (+ test): `SubmissionState`, `SubmissionAction`, `transition(state, action): SubmissionState | null`, `listingToState` / `stateToListing` (none ↔ `null`, `pending`, `approved` ↔ `published`, `rejected`).

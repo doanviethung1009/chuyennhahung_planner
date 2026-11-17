@@ -26,6 +26,7 @@ import { registerEventCases } from './moderation-events-cases';
 import { registerTermsCases } from './terms-acceptance-cases';
 import { registerReportCases } from './community-reports-cases';
 import { registerGuestKeyCases } from './guest-key-cases';
+import { registerErasureCases } from './guest-review-erasure-cases';
 
 /**
  * The Postgres store against a real database (ADR 0009). Runs only when
@@ -541,6 +542,10 @@ describe.skipIf(!url)('Planner on PostgreSQL (TEST_DATABASE_URL)', () => {
         await admin.query(`DROP SCHEMA ${name} CASCADE`);
       }
     });
+  });
+
+  describe('guest review erasure (ADR 0024 §8, no migration)', () => {
+    registerErasureCases(async () => ({ planner: repository(), store }));
   });
 
   describe('moderation events (migration 0010, ADR 0019)', () => {

@@ -1,6 +1,6 @@
 # Task Contract 10.4 — Creator Terms Acceptance
 - Task ID: P10-2
-- Class: L (new gate on live writes, new personal-data table) · State: READY (owner approved D1-D12 as recommended, 2026-11-16) · Subagents: 0
+- Class: L (new gate on live writes, new personal-data table) · State: DONE (PR #122, merged 2026-11-17) · Subagents: 0
 - Objective: a signed-in member must have accepted the **current version** of the Creator Terms before their community writes are accepted; acceptance is recorded and logged.
 - Scope:
   - Version identifier for `contribution.terms` (`src/content/site.ts:47-100`; no version exists today). Recommended (D5): explicit `termsVersion` string in `site.ts`, bumped by the owner, plus a test that fails when the text changes without a bump.

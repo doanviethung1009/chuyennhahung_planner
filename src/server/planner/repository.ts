@@ -68,11 +68,13 @@ import {
   type PublicPlannerUser,
   type ShareState,
   type CommunityReview,
+  ERASED_REVIEW_BODY,
   type GuestReviewInput,
   type OwnReview,
   type PlaceReviewSummary,
   type PlannerReviewInput,
   type PublicCommunityReview,
+  type PlaceRef,
   type ReviewQueueItem,
   type CreateReportInput,
   type ReportListItem,
@@ -1893,6 +1895,22 @@ export class PlannerRepository {
    */
   async recordGuestReviewLimitHit(clientKey: string): Promise<void> {
     const guestKey = this.guestKeyFor(clientKey);
+    // sec-check W1: a rejected request must stay cheaper than an accepted one. Skip the
+    // store-wide transaction when this guest already has an event in the last hour, first
+    // from a bounded in-process memo, then from an unlocked read.
+    const now = Date.parse(this.timestamp());
+    const memo = this.limitHitMemo.get(guestKey);
+    if (memo !== undefined && now - memo < 60 * 60_000) return;
+    const peek = await this.snapshot();
+    const peekLatest = peek.communityReviews
+      .filter((review) => review.guestKey === guestKey)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+    if (!peekLatest) return;
+    const peekSince = new Date(now - 60 * 60_000).toISOString();
+    if (peek.auditEvents.some((e) => e.targetId === peekLatest.id && e.action === 'guest_limit' && e.createdAt > peekSince)) {
+      this.rememberLimitHit(guestKey, now);
+      return;
+    }
     await this.transaction((data) => {
       const latest = data.communityReviews
         .filter((review) => review.guestKey === guestKey)
@@ -1911,6 +1929,15 @@ export class PlannerRepository {
         reason: 'guest review limit reached (10 per hour from one connection)',
       });
     });
+    this.rememberLimitHit(guestKey, now);
+  }
+
+  /** Guest keys whose `guest_limit` event is already recorded this hour. Bounded; reset when full. */
+  private readonly limitHitMemo = new Map<string, number>();
+
+  private rememberLimitHit(guestKey: string, at: number): void {
+    if (this.limitHitMemo.size >= 5000) this.limitHitMemo.clear();
+    this.limitHitMemo.set(guestKey, at);
   }
 
   /** Approved reviews for the given places (all places when omitted), newest first. */
@@ -1940,21 +1967,48 @@ export class PlannerRepository {
     };
   }
 
+  /** Catalogue lookup for staff lists: one read per distinct slug; an unknown slug (or a failed read) is `null`. */
+  private async placeRefs(slugs: Iterable<string | null>): Promise<Map<string, PlaceRef>> {
+    const refs = new Map<string, PlaceRef>();
+    await Promise.all(
+      [...new Set([...slugs].filter((slug): slug is string => slug !== null))].map(async (slug) => {
+        try {
+          const place = await this.catalog.getPlace(slug);
+          if (place) refs.set(slug, { name: { vi: place.name.vi, en: place.name.en }, destinationSlug: place.destinationSlug });
+        } catch {
+          // Falls back to the raw slug.
+        }
+      }),
+    );
+    return refs;
+  }
+
   /** The staff queue: pending first, then the rest, newest first. */
   async listReviewQueue(status?: ReviewStatus): Promise<ReviewQueueItem[]> {
     const data = await this.snapshot();
     const rank: Record<ReviewStatus, number> = { pending: 0, held: 1, approved: 2, rejected: 3, removed: 4 };
     const at = this.timestamp();
-    return data.communityReviews
+    const rows = data.communityReviews
       .filter((review) => !status || review.status === status)
       .sort((a, b) => rank[a.status] - rank[b.status] || b.createdAt.localeCompare(a.createdAt))
-      .slice(0, 200)
+      .slice(0, 200);
+    const places = await this.placeRefs(rows.map((review) => review.placeSlug));
+    const limitAt = new Map<string, string>();
+    for (const event of data.auditEvents) {
+      if (event.action === 'guest_limit' && event.createdAt > (limitAt.get(event.targetId) ?? '')) {
+        limitAt.set(event.targetId, event.createdAt);
+      }
+    }
+    return rows
       .map((review) => ({
         id: review.id,
         source: review.source,
         placeSlug: review.placeSlug,
+        place: places.get(review.placeSlug) ?? null,
+        guestLimitAt: limitAt.get(review.id) ?? null,
         rating: review.rating,
         body: review.body,
+        erased: review.body === ERASED_REVIEW_BODY,
         lang: review.lang,
         visitedOn: review.visitedOn,
         author: review.authorName,
@@ -2018,6 +2072,49 @@ export class PlannerRepository {
         updatedAt: at,
       };
       return status;
+    });
+  }
+
+  /**
+   * Erases a guest review's personal content on a data-removal request
+   * (ADR 0024 §8): anonymised in place, status `removed`, no way back. The row
+   * stays so the audit log, open reports and the per-place daily cap keep their
+   * references. Only `homepage` reviews; any status (a plain remove keeps the
+   * text). Idempotent: an already erased review writes nothing. One event, whose
+   * reason is staff text only: never content or a key.
+   */
+  eraseGuestReview(reviewId: string, actor: string, reason: string): Promise<void> {
+    return this.transaction((data) => {
+      const index = data.communityReviews.findIndex((review) => review.id === reviewId);
+      const review = data.communityReviews[index];
+      if (!review) throw notFound('review', reviewId);
+      if (review.source !== 'homepage') {
+        throw invalidState('only a guest review can be erased here; account reviews follow the account or the author');
+      }
+      if (review.body === ERASED_REVIEW_BODY && review.guestKey === null && review.authorName === null) return;
+      const at = this.timestamp();
+      this.record(data, {
+        targetKind: 'review',
+        targetId: reviewId,
+        actorId: actor,
+        action: 'erase',
+        fromStatus: review.status,
+        toStatus: 'removed',
+        reason,
+      });
+      data.communityReviews[index] = {
+        ...review,
+        rating: 1,
+        body: ERASED_REVIEW_BODY,
+        visitedOn: review.createdAt.slice(0, 10),
+        authorName: null,
+        status: 'removed',
+        guestKey: null,
+        decidedAt: at,
+        decidedBy: actor.slice(0, 80),
+        rejectReason: null,
+        updatedAt: at,
+      };
     });
   }
 
@@ -2283,14 +2380,17 @@ export class PlannerRepository {
     const data = await this.snapshot();
     const at = this.timestamp();
     const live = new Set(this.activeRestrictions(data, at).map((row) => row.id));
-    return data.reviewRestrictions
+    const rows = data.reviewRestrictions
       .filter((row) => !activeOnly || live.has(row.id))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .slice(0, 200)
+      .slice(0, 200);
+    const places = await this.placeRefs(rows.map((row) => row.placeSlug));
+    return rows
       .map((row) => ({
         id: row.id,
         subject: row.subject,
         placeSlug: row.placeSlug,
+        place: row.placeSlug ? (places.get(row.placeSlug) ?? null) : null,
         reason: row.reason,
         author: data.users.find((user) => user.id === row.authorId)?.displayName ?? null,
         createdAt: row.createdAt,
