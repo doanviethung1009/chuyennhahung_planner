@@ -185,12 +185,14 @@ với đúng chủ sở hữu mà container cần. Làm bước này **trước*
 Tạo `/opt/chuyennhahung/.env` một lần. Khối lệnh này sinh secret và chỉ ghi vào file; đừng in
 file ra hay dán nó ở đâu cả.
 
-Cách tắt: `SITE_URL=http://<ip-app> sudo -E ./deploy/deploy.sh --init-env` làm việc tương tự
-cho `local-db` (thêm `DB_OVERLAY=external-db PLANNER_DATABASE_URL=...` nếu dùng database
-ngoài). Lệnh ghi file với secret tự sinh, mode 640, group `cnh-runner` (đổi bằng
+Cách tắt: `sudo SITE_URL=http://<ip-app> DB_OVERLAY=local-db ./deploy/deploy.sh --init-env`
+làm việc tương tự (bắt buộc có `DB_OVERLAY`; với `external-db` truyền thêm
+`PLANNER_DATABASE_URL`, đừng để mật khẩu trong lịch sử shell). Giá trị có khoảng trắng hoặc
+`$` bị từ chối. Lệnh ghi file với secret tự sinh, mode 640, group `cnh-runner` (đổi bằng
 `RUNNER_GROUP`), không in secret, và từ chối ghi đè `.env` đã có. Chạy tay bằng root; runner
-không ghi được vào thư mục, nên một lần deploy thường không bao giờ tạo hay sửa `.env`. Khối
-lệnh bên dưới là cách làm tay tương đương.
+không ghi được vào thư mục, nên một lần deploy thường không bao giờ tạo hay sửa `.env`. Mode 640 cho
+`cnh-runner` đọc được mọi secret, gồm `POSTGRES_ADMIN_PASSWORD` và `ADMIN_API_TOKEN`: runner
+bị chiếm thì lộ luôn các secret này. Khối lệnh bên dưới là cách làm tay tương đương.
 
 ```bash
 umask 077

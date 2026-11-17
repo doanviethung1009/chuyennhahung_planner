@@ -6,7 +6,7 @@
 #
 # The stack's compose.yml must define the `postgres` service and the `backend`
 # network. The link stays on that private Docker network and 5432 is not
-# published, so no TLS and no CA mount. In the stack's .env (mode 600):
+# published, so no TLS and no CA mount. In the stack's .env (mode 600 or 640):
 #   PLANNER_DATABASE_URL=postgres://cnh_app:<password>@postgres:5432/cnh_planner
 
 services:
