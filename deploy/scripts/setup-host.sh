@@ -7,6 +7,9 @@ set -euo pipefail
 ROOT="${DEPLOY_ROOT:-/opt/chuyennhahung}"
 LAYOUT="${1:-external-db}"
 
+# $ROOT goes into a sed expression and a logrotate file: keep it to plain path characters.
+[[ "$ROOT" =~ ^/[A-Za-z0-9._/-]+$ ]] || { echo "DEPLOY_ROOT must be an absolute path of letters, digits, . _ - /" >&2; exit 2; }
+
 # A bind mount of a missing path makes Docker create it as root; create each
 # directory first with the owner its container user needs.
 install -d -m 750 -o 1000 -g 1000 "$ROOT/data/app"       # node (app image)

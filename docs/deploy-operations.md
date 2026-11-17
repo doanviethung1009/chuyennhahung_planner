@@ -173,7 +173,7 @@ du -sh /opt/chuyennhahung/data/* /opt/chuyennhahung/logs /opt/chuyennhahung/back
   never records `Cookie`, `Authorization` or `Referer`. nginx can still write a raw request
   line into `error.log`, so treat that file as sensitive. Reload nginx after changing the
   format. Containers also cap their own logs (10 MB × 3) and memory
-  (`APP_MEM_LIMIT`, `POSTGRES_MEM_LIMIT`) in the compose files. Not yet verified on a VM.
+  (`APP_MEM_LIMIT`, `POSTGRES_MEM_LIMIT`) in the compose files. `limit_req` is keyed on the client address: behind another proxy or a tunnel add `set_real_ip_from` first, or every client shares one bucket. Not yet verified on a VM.
 - **Backups** older than 14 days are removed by the script; the copy off the VM is yours to
   prune.
 

@@ -122,11 +122,11 @@ describe('deploy/deploy.sh', () => {
       const stack = newStack();
       const r = run(stack, {
         DB_OVERLAY: 'external-db',
-        PLANNER_DATABASE_URL: 'postgres://cnh_app:pw@db.example:5432/cnh_planner?sslmode=verify-full',
+        PLANNER_DATABASE_URL: 'postgres://cnh_app:pw@db.example:5432/cnh_planner?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt',
       });
       expect(r.status).toBe(0);
       const env = readFileSync(envOf(stack), 'utf8');
-      expect(env).toContain('PLANNER_DATABASE_URL=postgres://cnh_app:pw@db.example:5432/cnh_planner?sslmode=verify-full');
+      expect(env).toContain('PLANNER_DATABASE_URL=postgres://cnh_app:pw@db.example:5432/cnh_planner?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt');
       expect(env).not.toMatch(/^(POSTGRES_ADMIN_PASSWORD|CNH_APP_PASSWORD|CONTENT_DATABASE_URL)=/m);
       expect(r.stdout + r.stderr).not.toContain('pw@');
     });
@@ -331,6 +331,7 @@ describe('external-db TLS rule', () => {
     const tls = '?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt';
     const cases: Record<string, string>[] = [
       { PLANNER_DATABASE_URL: 'postgres://u:p@db/cnh_planner' },
+      { PLANNER_DATABASE_URL: 'postgres://u:p@db/cnh_planner?sslmode=verify-full' },
       { PLANNER_DATABASE_URL: `postgres://u:p@db/cnh_planner${tls}`, CONTENT_DATABASE_URL: 'postgres://u:p@db/cnh_content' },
     ];
     for (const extra of cases) {
@@ -383,6 +384,18 @@ PLANNER_DATABASE_URL=postgres://u:p@db/cnh_planner?sslmode=verify-full&sslrootce
     expect(r.stdout + r.stderr).not.toContain('uniqueDbName123');
   });
 
+  it('checks CONTENT_DATABASE_URL TLS and refuses DB_BIND_ADDR=0.0.0.0', () => {
+    const noTls = check(stackWith(`${good}CONTENT_DATABASE_URL=postgres://u:p@db/cnh_content\n`));
+    expect(noTls.status).toBe(1);
+    expect(noTls.stderr).toContain('CONTENT_DATABASE_URL');
+    const tls = '?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt';
+    expect(check(stackWith(`${good}CONTENT_DATABASE_URL=postgres://u:p@db/cnh_content${tls}\n`)).status).toBe(0);
+    const open = check(stackWith(`${good}DB_BIND_ADDR=0.0.0.0\n`));
+    expect(open.status).toBe(1);
+    expect(open.stderr).toContain('DB_BIND_ADDR');
+    expect(check(stackWith(`${good}DB_BIND_ADDR=10.0.0.5\n`)).status).toBe(0);
+  });
+
   it('local-db needs the Postgres passwords instead of TLS', () => {
     const local = good.replace(/\?sslmode.*/, '');
     expect(check(stackWith(local, 0o600, false), 'local-db').status).toBe(1);
@@ -417,6 +430,8 @@ describe('nginx logging policy', () => {
     expect(block('access')).toMatch(/rotate 14\b/);
     expect(block('error')).toMatch(/rotate 30\b/);
     expect(read('deploy/scripts/setup-host.sh')).toContain('/etc/logrotate.d/chuyennhahung');
+    expect(read('deploy/scripts/setup-host.sh')).toContain('DEPLOY_ROOT must be an absolute path');
+    expect(lr).toMatch(/error\.log CAN/);
   });
 });
 
