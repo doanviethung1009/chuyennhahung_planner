@@ -102,11 +102,11 @@ Nguồn: `.claude/contracts/community-platform-audit.md`. Mỗi mục cần ADR 
 | ~~P10-9~~ | ~~Cập nhật ADR 0016 Status và ADR 0015 (đóng 7 câu hỏi theo khuyến nghị, Q5) — cả hai ngôn ngữ~~ — xong ở PR #107 | system-architect | — |
 | ~~P10-10~~ | ~~Sửa comment cũ "luôn `pending`" ở `src/app/api/planner/reviews/[placeSlug]/route.ts`~~ — xong ở PR #107 (từ `/sec-check` #4, `/qc-check` #1) | main session | — |
 | P10-11 | `guestKey`: đổi sang HMAC với secret phía server; xóa key khách sau 24h (review) và sau khi restriction hết hạn + ân hạn (`/sec-check` #1; cần ADR/ghi chú ADR 0015 + migration) | system-architect → BE | P11-D1 |
-| P10-12 | Chống giả `x-forwarded-for` cho limiter khách: nginx ghi đè (đã có `deploy-config.test.ts`), xác nhận cấu hình thật trên VM; cân nhắc trần theo giờ toàn cục (`/sec-check` #2, #3; liên quan P10-6) | BE + owner | P10-6 |
+| P10-12 | (10.6a: test + quyết định không thêm trần toàn cục xong; còn mở: kiểm cấu hình thật trên VM, owner D10) Chống giả `x-forwarded-for` cho limiter khách: nginx ghi đè (đã có `deploy-config.test.ts`), xác nhận cấu hình thật trên VM; cân nhắc trần theo giờ toàn cục (`/sec-check` #2, #3; liên quan P10-6) | BE + owner | P10-6 |
 | P10-13 | Test HTTP 429 cho limiter review Planner (5/giờ) và khách (3/giờ); test hạn 30 ngày mặc định của restriction khách (`/qc-check`) | BE | — |
 | P10-14 | Ca integration Postgres cho `community_reviews` và `review_restrictions` (migration 0007, 0008, `planner-rows`) (`/qc-check`) | BE | DB test |
-| P10-15 | **Quyết định chủ dự án:** có bắt buộc `contributionOpen` ở server (API từ chối ghi khi cổng đóng) hay chỉ ở UI (`/qc-check` #2) | owner → BE | — |
-| P10-16 | `authorName` của khách: lọc/chặn giả danh nhân viên (`/sec-check` #5) | BE | — |
+| ~~P10-15~~ | (xong ở 10.6a, bắt buộc ở server) **Quyết định chủ dự án:** có bắt buộc `contributionOpen` ở server (API từ chối ghi khi cổng đóng) hay chỉ ở UI (`/qc-check` #2) | owner → BE | — |
+| ~~P10-16~~ | (xong ở 10.6a) `authorName` của khách: lọc/chặn giả danh nhân viên (`/sec-check` #5) | BE | — |
 
 ## Phase 11 — Member Profiles & Creator Terms (P1, đề xuất)
 

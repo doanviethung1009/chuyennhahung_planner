@@ -57,7 +57,7 @@ UI: `src/components/reports/report-button.tsx` — a real button (≥44px) openi
 
 ## Limits and open questions
 
-- The guest limit keys on `x-forwarded-for`, which a client can forge (hardening is batch 10.6); the per-reporter duplicate rule is bounded by the same key.
+- The guest limit keys on `x-forwarded-for`, which a client can forge (batch 10.6a pinned this behind the repo's nginx, where it cannot be forged; the real VM config is the owner's check, D10); the per-reporter duplicate rule is bounded by the same key.
 - No threshold, no reporter notice, no appeal. Reports of a removed item stay in the list as not actionable.
 - Rollback: remove the control and the routes; run the rollback SQL by hand; stored rows are inert, and the review `id` is harmless to leave.
 - `/sec-check` (anonymous write path, personal data in notes) is recommended and has not been run.

@@ -4,6 +4,7 @@ import { parseJsonBody, toErrorResponse } from '@/server/content/http';
 import { getPlannerRepository, getWriteLimiters } from '@/server/planner/instance';
 import { guestReviewInputSchema } from '@/server/planner/schemas';
 import { slugSchema } from '@/server/content/schemas';
+import { requireContributionOpen } from '@/server/community/contribution-gate';
 import { checkShareRead, clientKey } from '@/server/rate-limit';
 
 export const dynamic = 'force-dynamic';
@@ -38,6 +39,8 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   try {
+    // Closed gate: refuse before the limiter counts or the body is read (P10-15).
+    requireContributionOpen();
     const key = clientKey(request.headers);
     // Shared across instances on PostgreSQL; a failing database throws 503 here, before any write.
     const limit = await (await getWriteLimiters()).guestReview.check(key);

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { impersonatesStaff } from '@/server/community/reserved-names';
 import { roleSchema } from '@/server/identity/permissions';
 import {
   costCategorySchema,
@@ -803,7 +804,16 @@ export const guestReviewInputSchema = z
   .object({
     placeSlug: slugSchema,
     ...reviewFields,
-    authorName: z.string().trim().min(2).max(60).nullable().default(null),
+    authorName: z
+      .string()
+      .trim()
+      .min(2)
+      .max(60)
+      .refine((name) => !impersonatesStaff(name), {
+        message: 'this name reads as the site or its staff; choose another',
+      })
+      .nullable()
+      .default(null),
     website: z.string().max(200).optional(),
   })
   .strict();

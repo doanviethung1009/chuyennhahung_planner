@@ -1,3 +1,4 @@
+import { requireContributionOpen } from '@/server/community/contribution-gate';
 import { parseJsonBody } from '@/server/content/http';
 import { plannerJson, plannerRoute } from '@/server/planner/http';
 import { listingRequestSchema } from '@/server/planner/schemas';
@@ -12,6 +13,7 @@ type Context = { params: Promise<{ id: string }> };
  */
 export function PUT(request: Request, context: Context) {
   return plannerRoute(request, async ({ userId }, repository) => {
+    requireContributionOpen();
     const { id } = await context.params;
     const { authorDisplay } = await parseJsonBody(request, listingRequestSchema);
     await repository.requireTermsAccepted(userId);
