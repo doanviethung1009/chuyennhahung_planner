@@ -336,11 +336,15 @@ describe('external-db TLS rule', () => {
       { PLANNER_DATABASE_URL: `postgres://u:p@db/cnh_planner?sslmode=verify-fullx&sslrootcert=/run/secrets/pg-ca.crt` },
       { PLANNER_DATABASE_URL: `postgres://u:p@db/cnh_planner?x=sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt` },
       { PLANNER_DATABASE_URL: `postgres://u:p@db/cnh_planner?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crtx` },
+      { PLANNER_DATABASE_URL: `postgres://u:p@db/cnh_planner?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt&sslmode=disable` },
+      { PLANNER_DATABASE_URL: `postgres://u:p@db/cnh_planner?sslmode=disable&sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt` },
+      { PLANNER_DATABASE_URL: `postgres://u:p@db/cnh_planner#?sslmode=verify-full&sslrootcert=/run/secrets/pg-ca.crt` },
     ];
     for (const extra of cases) {
       const r = run(extra);
       expect(r.status).toBe(2);
-      expect(r.stderr).toContain('sslmode=verify-full');
+      // A `#` is refused by the character rule, the rest by the TLS rule.
+      expect(r.stderr).toMatch(/database URLs must/);
     }
     expect(existsSync(join(stack, '.env'))).toBe(false);
   });
@@ -397,7 +401,7 @@ PLANNER_DATABASE_URL=postgres://u:p@db/cnh_planner?sslmode=verify-full&sslrootce
     expect(open.status).toBe(1);
     expect(open.stderr).toContain('DB_BIND_ADDR');
     expect(check(stackWith(`${good}DB_BIND_ADDR=10.0.0.5\n`)).status).toBe(0);
-    for (const bad of ['::', '10.0.0.5,0.0.0.0', 'db.example', '0.0.0.0']) {
+    for (const bad of ['::', '10.0.0.5,0.0.0.0', 'db.example', '0.0.0.0', '00.0.0.0', '999.999.999.999', '10.0.0.256', '010.001.1.1']) {
       expect(check(stackWith(`${good}DB_BIND_ADDR=${bad}\n`)).status, bad).toBe(1);
     }
     const fake = check(stackWith(good.replace('?sslmode=verify-full&', '?x=sslmode=verify-full&')));

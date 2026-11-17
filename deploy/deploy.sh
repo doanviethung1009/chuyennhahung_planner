@@ -32,8 +32,15 @@ set -euo pipefail
 
 # True when the URL's query carries EXACTLY these TLS parameters: whole-parameter
 # matches, so `sslmode=verify-fullx` or `x=sslmode=verify-full` do not pass.
+# Each key must appear once (libpq takes the LAST duplicate, so `verify-full`
+# followed by `sslmode=disable` would downgrade) and no `#` may hide them in a
+# fragment.
 tls_ok() {
-  [[ "$1" =~ [\?\&]sslmode=verify-full(\&|$) && "$1" =~ [\?\&]sslrootcert=/run/secrets/pg-ca\.crt(\&|$) ]]
+  local u="$1" t
+  [[ "$u" != *"#"* ]] || return 1
+  [[ "$u" =~ [\?\&]sslmode=verify-full(\&|$) && "$u" =~ [\?\&]sslrootcert=/run/secrets/pg-ca\.crt(\&|$) ]] || return 1
+  t="${u//sslmode=/}";     ((${#u} - ${#t} == 8)) || return 1
+  t="${u//sslrootcert=/}"; ((${#u} - ${#t} == 12)) || return 1
 }
 
 init_env() {
@@ -44,7 +51,7 @@ init_env() {
   case "$overlay" in external-db | local-db) ;; *) echo "DB_OVERLAY must be external-db or local-db" >&2; exit 2 ;; esac
   # A value lands on one line of a Compose env file: no whitespace or control
   # characters (a newline would inject keys) and no `$` (Compose interpolates it).
-  local safe='^[^[:space:][:cntrl:]$]+$'
+  local safe='^[^[:space:][:cntrl:]$#]+$'
   [[ "$site" =~ ^https?:// && "$site" =~ $safe ]] || { echo "SITE_URL must be an http(s) URL without spaces or \$" >&2; exit 2; }
   [[ -d "$stack" ]] || { echo "$stack does not exist (create it first, see docs/deploy-runbook.md)" >&2; exit 2; }
   [[ ! -e "$file" ]] || { echo "$file already exists; not overwriting (rotate secrets by hand)" >&2; exit 1; }
@@ -126,7 +133,7 @@ check_env() {
   [[ "$v" =~ ^postgres(ql)?:// ]] && echo "ok   PLANNER_DATABASE_URL" || bad "PLANNER_DATABASE_URL missing or not postgres://"
   local bind
   bind="$(val DB_BIND_ADDR)"
-  [[ -z "$bind" || ( "$bind" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ && "$bind" != 0.0.0.0 ) ]] \
+  [[ -z "$bind" || ( "$bind" =~ ^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$ && "$bind" != 0.0.0.0 ) ]] \
     || bad "DB_BIND_ADDR must be one IPv4 address of the VM (its LAN IP), never 0.0.0.0 or ::"
   if [[ "$overlay" == local-db ]]; then
     for k in POSTGRES_ADMIN_PASSWORD CNH_APP_PASSWORD; do
