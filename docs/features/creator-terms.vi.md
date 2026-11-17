@@ -6,7 +6,7 @@
 
 Thành viên đã đăng nhập phải chấp nhận **phiên bản hiện hành** của Điều khoản Người tạo trước khi máy chủ nhận yêu cầu đăng chuyến lên trang chủ hoặc đánh giá Planner của họ. Việc chấp nhận được ghi theo người dùng và phiên bản, và ghi thành sự kiện kiểm toán. Đọc, rút listing và xoá đánh giá của chính mình không bao giờ bị chặn; đánh giá của khách không bị ảnh hưởng (không có tài khoản). ADR [0019](../adr/0019-community-foundation.vi.md) §4, batch 10.4.
 
-**Việc còn mở của chủ dự án (D5, Q8):** nội dung `contribution.terms` **chưa** được sửa. Văn bản vẫn nhắc ảnh và video dù chưa có chức năng tải lên, và chủ dự án chưa cung cấp lời văn thay thế. Chỉ thêm mã phiên bản. Điều 3 giữ nguyên.
+Văn bản điều khoản (`contribution.terms`, VI + EN) nay gồm tám điều: phạm vi, quyền sở hữu, quyền sử dụng của Chuyện Nhà Hưng, sao chép Planner, đánh giá địa điểm, nội dung không được phép và quyền kiểm duyệt, dữ liệu, gỡ nội dung và thay đổi điều khoản. Khách đồng ý bằng việc gửi đánh giá (Điều 1.2). Phiên bản hiện hành: `2026-11-18` (D5). Văn bản không nhắc ảnh hay video (chưa có tải lên), không dẫn tới Chính sách riêng tư (chưa có), và chưa có luật áp dụng, độ tuổi tối thiểu hay giới hạn trách nhiệm (quyết định của chủ dự án, chỉ thêm sau khi có tư vấn pháp lý).
 
 ## Routes
 
@@ -21,7 +21,7 @@ Cổng chặn: `PUT /api/planner/[id]/listing` và `PUT /api/planner/reviews/[pl
 
 ## Data
 
-`TermsAcceptance` — `id` (`trm_…`), `userId`, `version`, `acceptedAt`, `lang` (`vi` | `en`). Bảng `terms_acceptances` (migration `0012_terms_acceptances.sql`, rollback thủ công `db/rollback/0012_terms_acceptances.sql`), khoá JSON `termsAcceptances`; `UNIQUE (user_id, version)` (engine của store khoá hàng theo `id` nên khoá tự nhiên là ràng buộc duy nhất, không phải khoá chính); không khoá ngoại (ADR 0013). Dữ liệu cá nhân: id người dùng và thời điểm; không lưu IP, không lưu user agent. Xoá vĩnh viễn tài khoản xoá luôn các hàng của thành viên. Phiên bản là `termsVersion` trong `src/content/site.ts` (một ngày `YYYY-MM-DD`, ban đầu `2026-11-16`).
+`TermsAcceptance` — `id` (`trm_…`), `userId`, `version`, `acceptedAt`, `lang` (`vi` | `en`). Bảng `terms_acceptances` (migration `0012_terms_acceptances.sql`, rollback thủ công `db/rollback/0012_terms_acceptances.sql`), khoá JSON `termsAcceptances`; `UNIQUE (user_id, version)` (engine của store khoá hàng theo `id` nên khoá tự nhiên là ràng buộc duy nhất, không phải khoá chính); không khoá ngoại (ADR 0013). Dữ liệu cá nhân: id người dùng và thời điểm; không lưu IP, không lưu user agent. Xoá vĩnh viễn tài khoản xoá luôn các hàng của thành viên. Phiên bản là `termsVersion` trong `src/content/site.ts` (một ngày `YYYY-MM-DD`, đầu tiên `2026-11-16`, hiện hành `2026-11-18`; xem bảng changelog bên dưới).
 
 Sự kiện: `terms_accepted`, `targetKind: 'user'`, `targetId` và `actorId` = thành viên, `toStatus` = phiên bản; chỉ ghi ở lần chấp nhận đầu (lặp lại không ghi gì).
 
@@ -32,6 +32,15 @@ Chủ dự án nâng `termsVersion` mỗi khi đổi văn bản. `tests/terms-ve
 `PlannerRepository.requireTermsAccepted(userId)` là helper cổng; hai route ghi gọi nó ngay sau khi đọc body và **trước** bộ giới hạn tần suất, nên một lần bị từ chối không tốn hạn mức. Batch 10.5/10.6 dùng lại cho mọi thao tác ghi cộng đồng mới. Hai phương thức `requestListing` và `upsertPlannerReview` của repository không tự chặn; cổng nằm ở route. `acceptTerms` chạy trong một transaction của store cùng sự kiện.
 
 Giao diện: `src/components/planner/terms-accept.tsx` (ô chọn, nhãn gắn với input, hàng 44px, dòng trạng thái) trong share panel (xin đăng) và trong form đánh giá Planner; nút gửi bị tắt cho tới khi chấp nhận, và `403 terms_not_accepted` hiện thông báo theo ngôn ngữ. Chuỗi: `creatorTerms` trong `messages/vi.json` và `messages/en.json`.
+
+### Changelog
+
+Cơ sở dữ liệu chỉ lưu chuỗi phiên bản, không lưu văn bản; bảng này cùng lịch sử git là bằng chứng về nội dung thành viên đã chấp nhận. Hash văn bản là SHA-256 của `vi + "\n---\n" + en`, như ghim trong `tests/terms-version.test.ts`.
+
+| Phiên bản | Ngày | SHA-256 | Thay đổi |
+|---|---|---|---|
+| `2026-11-16` | 2026-11-16 | `3b8eed26e41196cec2ea4f4ca08e435f58671876ef770da9b07913f6c2513bca` | Văn bản đầu tiên: chỉ cho người tạo, ba điều (tag git `terms-2026-11-16` đánh dấu, việc của chủ dự án) |
+| `2026-11-18` | 2026-11-18 | `d552c7cff9fd66d504bf1ea301a5a190034600769e446b761ff8d8e2534bb7f2` | Điều khoản v2: thêm đánh giá địa điểm, kiểm duyệt, báo cáo, dữ liệu, gỡ nội dung và thay đổi; viết lại phần sao chép (theo ADR 0025); bỏ nhắc ảnh/video |
 
 ## Files
 
@@ -51,7 +60,9 @@ Giao diện: `src/components/planner/terms-accept.tsx` (ô chọn, nhãn gắn v
 
 ## Limits and open questions
 
-- Chủ dự án: cung cấp văn bản đã sửa (ảnh và video, Q8) rồi nâng `termsVersion` và hash ghim trong test (D5).
+- Chủ dự án: luật sư nên đọc Điều 3 câu cuối, 4.4, 4.6 và 5.3 và xác nhận việc khách đồng ý bằng cách gửi đánh giá (1.2) có hiệu lực; mọi thay đổi là một lần nâng phiên bản nữa.
+- Điều 4 mô tả sao chép theo ADR 0025 (Proposed); nếu Q2–Q4 hoặc Q6 đổi thì phải viết lại Điều 4 và nâng phiên bản lần nữa.
+- Việc nâng phiên bản chặn mọi thành viên gửi yêu cầu đăng và đánh giá Planner (`403 terms_not_accepted`) cho tới khi họ chấp nhận `2026-11-18`; không có thông báo.
 - Chỉ route bị chặn, repository thì không; route ghi mới phải gọi `requireTermsAccepted`.
 - Không có email hay thông báo yêu cầu chấp nhận lại; thành viên biết ở lần ghi kế tiếp.
 - Code cũ từ chối file JSON export có `termsAcceptances` (`.strict()`).

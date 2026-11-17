@@ -6,7 +6,7 @@
 
 A signed-in member must accept the **current version** of the Creator Terms before the server accepts a listing request or a Planner review from them. Acceptance is recorded per user and version and logged as an audit event. Reading, withdrawing a listing and deleting one's own review are never blocked, and guest reviews are not affected (no account). ADR [0019](../adr/0019-community-foundation.md) §4, batch 10.4.
 
-**Open owner item (D5, Q8):** the text of `contribution.terms` was **not** changed. It still mentions images and video although no upload exists, and the owner has not supplied replacement wording. Only the version identifier was added. Article 3 is untouched.
+The terms text (`contribution.terms`, VI + EN) now covers eight articles: scope, ownership, Chuyện Nhà Hưng's licence, copying a Planner, place reviews, prohibited content and moderation powers, data, and removal / changes. A guest agrees by submitting a review (Article 1.2). Current version: `2026-11-18` (D5). It does not mention images or video (no upload exists), links to no Privacy Policy (none exists), and has no governing-law, minimum-age or liability text (owner decision, to be added only after legal advice).
 
 ## Routes
 
@@ -21,7 +21,7 @@ The gate: `PUT /api/planner/[id]/listing` and `PUT /api/planner/reviews/[placeSl
 
 ## Data
 
-`TermsAcceptance` — `id` (`trm_…`), `userId`, `version`, `acceptedAt`, `lang` (`vi` | `en`). Table `terms_acceptances` (migration `0012_terms_acceptances.sql`, manual rollback `db/rollback/0012_terms_acceptances.sql`), JSON key `termsAcceptances`; `UNIQUE (user_id, version)` (the store engine keys rows by `id`, so the natural key is a unique constraint rather than the primary key); no foreign keys (ADR 0013). Personal data: a user id and a time; no IP address, no user agent. A permanent account delete removes the member's rows. The version is `termsVersion` in `src/content/site.ts` (a date, `YYYY-MM-DD`, initial `2026-11-16`).
+`TermsAcceptance` — `id` (`trm_…`), `userId`, `version`, `acceptedAt`, `lang` (`vi` | `en`). Table `terms_acceptances` (migration `0012_terms_acceptances.sql`, manual rollback `db/rollback/0012_terms_acceptances.sql`), JSON key `termsAcceptances`; `UNIQUE (user_id, version)` (the store engine keys rows by `id`, so the natural key is a unique constraint rather than the primary key); no foreign keys (ADR 0013). Personal data: a user id and a time; no IP address, no user agent. A permanent account delete removes the member's rows. The version is `termsVersion` in `src/content/site.ts` (a date, `YYYY-MM-DD`, first `2026-11-16`, current `2026-11-18`; see the changelog below).
 
 Event: `terms_accepted`, `targetKind: 'user'`, `targetId` and `actorId` = the member, `toStatus` = the version; written only on the first acceptance (a repeat writes nothing).
 
@@ -32,6 +32,15 @@ The owner bumps `termsVersion` whenever the text changes. `tests/terms-version.t
 `PlannerRepository.requireTermsAccepted(userId)` is the gate helper; the two write routes call it right after parsing the body and **before** the rate limiter, so a refused attempt uses no quota. Batches 10.5/10.6 reuse it for any new community write. The repository methods `requestListing` and `upsertPlannerReview` are not gated themselves; the gate is in the routes. `acceptTerms` runs in one store transaction with its event.
 
 UI: `src/components/planner/terms-accept.tsx` (checkbox, label tied to the input, 44px row, status text) in the share panel (listing request) and in the Planner review form; the submit button stays disabled until accepted, and a `403 terms_not_accepted` shows a localized message. Strings: `creatorTerms` in `messages/vi.json` and `messages/en.json`.
+
+### Changelog
+
+The database stores only the version string, never the text; this table plus git history is the evidence of what a member accepted. The text hash is SHA-256 of `vi + "\n---\n" + en`, as pinned in `tests/terms-version.test.ts`.
+
+| Version | Date | SHA-256 | Change |
+|---|---|---|---|
+| `2026-11-16` | 2026-11-16 | `3b8eed26e41196cec2ea4f4ca08e435f58671876ef770da9b07913f6c2513bca` | First text: creator-only, three articles (git tag `terms-2026-11-16` marks it, owner action) |
+| `2026-11-18` | 2026-11-18 | `d552c7cff9fd66d504bf1ea301a5a190034600769e446b761ff8d8e2534bb7f2` | Terms v2: adds place reviews, moderation, reports, data, removal and changes; rewrites copying (ADR 0025 wording); drops image/video mention |
 
 ## Files
 
@@ -51,7 +60,9 @@ UI: `src/components/planner/terms-accept.tsx` (checkbox, label tied to the input
 
 ## Limits and open questions
 
-- Owner: supply the corrected text (images and video, Q8) and bump `termsVersion` + the pin in the test (D5).
+- Owner: a lawyer should read Article 3 last sentence, 4.4, 4.6 and 5.3 and confirm that guest consent by submitting (1.2) is valid; any change is another version bump.
+- Article 4 describes copying per ADR 0025 (Proposed); if Q2–Q4 or Q6 change, Article 4 must be reworded and the version bumped again.
+- Bumping closes every member out of listing requests and Planner reviews (`403 terms_not_accepted`) until they accept `2026-11-18`; there is no notification.
 - The repository methods are not gated, only the routes; a new write route must call `requireTermsAccepted`.
 - No re-acceptance email or notification; members find out at the next write.
 - Older code rejects a JSON export containing `termsAcceptances` (`.strict()`).

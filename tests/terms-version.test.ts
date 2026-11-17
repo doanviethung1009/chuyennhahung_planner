@@ -8,7 +8,7 @@ import { contribution, termsVersion } from '../src/content/site';
  * `src/content/site.ts`, then paste the new pair below (the failure message
  * prints the hash). Bumping the version asks every member to accept again.
  */
-const PINNED = { version: '2026-11-16', sha256: '3b8eed26e41196cec2ea4f4ca08e435f58671876ef770da9b07913f6c2513bca' };
+const PINNED = { version: '2026-11-18', sha256: 'd552c7cff9fd66d504bf1ea301a5a190034600769e446b761ff8d8e2534bb7f2' };
 
 const fingerprint = () =>
   createHash('sha256').update(`${contribution.terms?.vi ?? ''}\n---\n${contribution.terms?.en ?? ''}`).digest('hex');
