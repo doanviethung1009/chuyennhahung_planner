@@ -82,5 +82,5 @@ Approved. Start with 10.1 in its own session; one batch per session.
 | 10.5 | DONE | #126 |
 | 10.6a / 10.6b | DONE | #129 / #132 |
 | 10.7 | DONE (evidence; owner items open) | #136 |
-| 10.8 | **Not defined.** No contract exists. Unscheduled follow-ups are tracked as `P10-17..P10-21` in `backlog.md`. Create a contract only if the owner schedules them as one batch. | — |
+| 10.8 | **Dropped (owner decision 2026-11-18).** No contract. Open Phase 10 items move to Phase 11 and `backlog.md`. | — |
 Out-of-batch merges after 10.7: #137 (guest review limit 10/hour, `guest_limit` event), #138 (place names + badge in review queue).

@@ -40,7 +40,7 @@ Trạng thái: `Done` · `Partial` · `In progress` · `Designed` (có ADR/contr
 | 07 | Admin Portal, CMS & RBAC | In progress — Done: RBAC, CMS story/place/review, shell P07-10, dashboard P07-11, create/archive P07-16, UX P07-19, audit log (qua P10-1). Còn: P07-12/13/14/15/17, MFA (hoãn), template CMS; P07-18 chặn bởi Phase 08 | **P1** | 05 |
 | 08 | Media Library & Analytics | Not started | P3 | 07 |
 | 09 | Production Readiness & Launch | Partial — dev VM + Postgres đã chạy; production Not started | P4 | 07, 08 (hoặc loại trừ có ghi lại) |
-| 10 | Community Foundations | **Gần đóng** — batch 10.1–10.7 DONE (2026-11-17); còn việc owner + `/sec-check`, `/qc-check` NOT RUN; 10.8 chưa định nghĩa | **P1** | 07 |
+| 10 | Community Foundations | **Gần đóng** — batch 10.1–10.7 DONE (2026-11-17); `/sec-check` và `/qc-check` PASS_WITH_WARNINGS; việc còn mở chuyển sang Phase 11/backlog (10.8 bị bỏ, 2026-11-18) | **P1** | 07 |
 | 11 | Member Profiles & Creator Terms | Designed (đề xuất) | P1 | 10 |
 | 12 | Travel Journal & Blog (curated) | Designed (đề xuất) | P2 | 10, 11 |
 | 13 | Media Hybrid & Vlog | Designed (đề xuất) | P2 | 08, 12 |
@@ -183,7 +183,7 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
   có hơn một instance.
 
 ## Phase 10 — Community Foundations
-- **Trạng thái:** **Gần đóng (2026-11-17) — chưa đóng.** Batch 10.1–10.7 đã merge (PR #112, #115, #117, #122, #126, #129, #132, #136; migration `0010`–`0014`), cộng việc ngoài contract: #137 (giới hạn review khách 10/giờ + `guest_limit`), #138 (tên địa điểm + nhãn trong admin), #139 (staff ẩn danh hóa review khách; self-review PASS_WITH_WARNINGS). **Review toàn phase 2026-11-17:** `/sec-check` PASS_WITH_WARNINGS và `/qc-check` PASS_WITH_WARNINGS, không BLOCKED (typecheck/lint PASS; test 1156 pass với PostgreSQL cục bộ, 1084 pass + 73 skip khi không có DB; build NOT RUN). Điều kiện đóng và việc còn mở: `CURRENT.md` và `backlog.md`. Phase kế tiếp: 11 (ADR 0025 Proposed, PR #141). **Batch 10.8 chưa được định nghĩa** (không có contract; xem `.claude/contracts/phase10-index.md`).
+- **Trạng thái:** **Gần đóng (2026-11-17) — chưa đóng.** Batch 10.1–10.7 đã merge (PR #112, #115, #117, #122, #126, #129, #132, #136; migration `0010`–`0014`), cộng việc ngoài contract: #137 (giới hạn review khách 10/giờ + `guest_limit`), #138 (tên địa điểm + nhãn trong admin), #139 (staff ẩn danh hóa review khách; self-review PASS_WITH_WARNINGS). **Review toàn phase 2026-11-17:** `/sec-check` PASS_WITH_WARNINGS và `/qc-check` PASS_WITH_WARNINGS, không BLOCKED (typecheck/lint PASS; test 1156 pass với PostgreSQL cục bộ, 1084 pass + 73 skip khi không có DB; build NOT RUN). Điều kiện đóng và việc còn mở: `CURRENT.md` và `backlog.md`. Phase kế tiếp: 11 (ADR 0025 Proposed, PR #141). **Batch 10.8 bị bỏ (chủ dự án chốt 2026-11-18):** việc còn mở của Phase 10 chuyển sang Phase 11 và backlog; không tạo contract 10.8. Phase 11 là phase kế tiếp.
 - **10-S0 — đã có code, deploy chưa xác minh:** [ADR 0014](../../docs/adr/0014-community-trips-and-reviews.md)
   (Community Trips + Reviews) và [ADR 0015](../../docs/adr/0015-community-review-author-controls.md)
   (hold, restrictions); migration `0005`–`0008`; `tests/community-*.test.ts`,

@@ -108,7 +108,7 @@ Nguồn: `.claude/contracts/community-platform-audit.md`. Mỗi mục cần ADR 
 | ~~P10-15~~ | (xong ở 10.6a, bắt buộc ở server) **Quyết định chủ dự án:** có bắt buộc `contributionOpen` ở server (API từ chối ghi khi cổng đóng) hay chỉ ở UI (`/qc-check` #2) | owner → BE | — |
 | ~~P10-16~~ | (xong ở 10.6a) `authorName` của khách: lọc/chặn giả danh nhân viên (`/sec-check` #5) | BE | — |
 
-> **Batch 10.8 chưa được định nghĩa** (không có contract). Các mục "việc còn mở" dưới đây chưa có ID; chủ dự án quyết gom thành 10.8 hay chuyển Phase 11. Mục P07-4 trùng P10-1 (xong).
+> **Batch 10.8 bị bỏ (chủ dự án chốt 2026-11-18):** không có contract 10.8. Các mục "việc còn mở" dưới đây chuyển sang Phase 11 và backlog; chủ dự án/architect gán ID `P11-*` khi lập contract Phase 11. Mục P07-4 trùng P10-1 (xong).
 
 **Phase 10 chưa đóng (cập nhật 2026-11-17).** Review độc lập toàn phase: `/sec-check` PASS_WITH_WARNINGS, `/qc-check` PASS_WITH_WARNINGS, không BLOCKED (typecheck/lint PASS; test 1156 pass với PostgreSQL cục bộ, 1084 pass + 73 skip khi không có DB; build NOT RUN). Việc ngoài contract đã merge: #137 (giới hạn review khách 10/giờ + sự kiện `guest_limit`), #138 (tên địa điểm + nhãn `guest_limit` trong admin), #139 (staff ẩn danh hóa review khách; self-review PASS_WITH_WARNINGS). Điều kiện đóng: `CURRENT.md`.
 

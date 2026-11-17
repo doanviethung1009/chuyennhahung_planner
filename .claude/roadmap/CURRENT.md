@@ -17,8 +17,8 @@ Cập nhật: 2026-11-18, gộp với `main` sau PR #139–#144.
 ## Hiện tại
 - **Phase đang làm:** Phase 10 — Community Foundations (gần đóng, chưa đóng) + phần còn lại của Phase 07 (Admin workspace).
 - **Batch hiện tại (Phase 10):** không có batch code nào đang chạy; 10.1–10.7 DONE (`.claude/contracts/phase10-index.md`).
-- **Batch kế tiếp:** chưa có. **Batch 10.8 chưa được định nghĩa** (không có contract). Chủ dự án quyết gom việc còn mở của Phase 10 thành 10.8 hay chuyển sang Phase 11.
-- **Việc kế tiếp:** (1) chốt 10.8; (2) Phase 07: P07-12, P07-13 (chặn), P07-14/15/17; (3) Phase 11 khi ADR 0025 được duyệt và có chính sách riêng tư.
+- **Batch kế tiếp:** không có. **Batch 10.8 bị bỏ** (chủ dự án chốt 2026-11-18); việc còn mở của Phase 10 chuyển sang Phase 11/backlog.
+- **Việc kế tiếp:** (1) **Phase 11** — duyệt ADR 0025 (PR #141) rồi lập contract; chặn bởi P11-D1 (chính sách riêng tư) và P11-D2 (công tắc sao chép); (2) Phase 07 còn lại: P07-12, P07-13 (chặn), P07-14/15/17.
 
 Chi tiết Phase 10, điều kiện đóng và lịch sử Phase 05 ở bên dưới.
 
