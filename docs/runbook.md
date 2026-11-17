@@ -103,6 +103,7 @@ adding or removing a route means editing this table in both languages.
 | POST | `/api/admin/planner/users/[userId]/rotate-token` | Admin token only | Rotate the access token |
 | DELETE | `/api/admin/planner/users/[userId]/google` | Admin token only | Unlink Google from the user |
 | GET | `/api/admin/planner/integrity` | Admin token only | Planner store integrity report |
+| GET | `/api/admin/overview` | Admin token or staff session | Dashboard card counts, filtered by role (`content:write`) |
 | GET | `/api/admin/community/queue` | Admin token or admin session | Listing queue, pending first (`community:moderate`) |
 | PATCH | `/api/admin/community/trips/[id]` | Admin token or admin session | Approve or reject a listing (`community:moderate`) |
 | GET | `/api/admin/community/reviews` | Admin token or admin session | Review moderation queue (`community:moderate`) |
