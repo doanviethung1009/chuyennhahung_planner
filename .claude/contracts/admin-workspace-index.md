@@ -15,7 +15,7 @@
 | P07-13 | Audit viewer + admin event kinds | [admin-ws-p07-13-audit-viewer.md](admin-ws-p07-13-audit-viewer.md) | `feat/admin-audit-viewer` | L (new action) | ≤1 index | Missing (storage Planned: 10.2) |
 | P07-14 | Moderation workspace | [admin-ws-p07-14-moderation-workspace.md](admin-ws-p07-14-moderation-workspace.md) | `feat/admin-moderation-workspace` | M | none | Improvement (reports Planned: 10.5) |
 | P07-15 | Collections + Integrity screens | [admin-ws-p07-15-collections-integrity.md](admin-ws-p07-15-collections-integrity.md) | `feat/admin-collections-integrity` | M (L if handlers move) | none | Missing (APIs exist but token-only → BLOCKED on handler amendment, owner W11) |
-| P07-16 | Create + archive story/place in browser | [admin-ws-p07-16-content-create-archive.md](admin-ws-p07-16-content-create-archive.md) | `feat/admin-content-create` | L (new write routes) | none | Missing |
+| P07-16 | Create + archive story/place in browser | [admin-ws-p07-16-content-create-archive.md](admin-ws-p07-16-content-create-archive.md) | `feat/admin-content-create` | L (new write routes) | none | Missing — **Done** (PR #131) |
 | P07-17 | System status page | [admin-ws-p07-17-system-status.md](admin-ws-p07-17-system-status.md) | `feat/admin-system-status` | M | none | Missing |
 | P07-18 | Media slot (reservation only) | [admin-ws-p07-18-media-slot.md](admin-ws-p07-18-media-slot.md) | none | S | none | Planned: Phase 08 |
 

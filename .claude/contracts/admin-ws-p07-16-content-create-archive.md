@@ -9,4 +9,4 @@
 - Tests: route matrix for both POSTs, draft-only invariant, duplicate slug, token path regression, public pages never show drafts (existing public-content tests green), both stores.
 - Security: new write routes → `requireSameOrigin`, zod body, no HTML trust in fields (existing renderer), rate-limit via existing helper if the content routes have one; `/sec-check` **recommended** — NOT RUN until called.
 - Rollback: restore `adminRoute` on the two handlers; hide the buttons; created drafts remain harmless.
-- Docs: backend writes the API part, frontend the UI part, one feature doc. Budget: sub-agents 0. State: READY (owner approved 2026-11-17)
+- Docs: backend writes the API part, frontend the UI part, one feature doc. Budget: sub-agents 0. State: DONE (merged via PR #131, 2026-11-17)
