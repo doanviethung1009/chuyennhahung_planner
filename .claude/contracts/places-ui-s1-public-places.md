@@ -1,0 +1,25 @@
+# Task Contract: Places UI — S1 Public Places UI
+- ID: **PLACES-UI-S1** (chủ dự án ủy quyền chọn ID, 2026-11-18; không gắn số Phase, không trùng `P<phase>-<n>`). Phải thêm dòng vào `.claude/roadmap/backlog.md` trong PR của S1. Không thuộc Phase 07/10/11; không mở rộng phạm vi Phase 10 (10.8 đã bỏ).
+- Class: L (route công khai mới) · Branch: `feat/public-places-ui` · One contract = one session = one branch = one PR, single agent.
+- Desired outcome: người dùng duyệt địa điểm theo điểm đến và xem chi tiết từng địa điểm, VI mặc định, EN là bản dịch.
+- Scope IN:
+  - Mục "Địa điểm" trên `/destinations/[slug]` (từ content repository).
+  - Trang chi tiết địa điểm (metadata, canonical theo locale, sitemap): tên, vị trí, danh mục, mô tả, ảnh có `alt` song ngữ, thời lượng gợi ý, chi phí ước tính, điểm và ghi chú của chủ nhà.
+  - Khối review chỉ đọc, dùng lại `ReviewList` + `getApprovedReviews`.
+- Scope OUT: form review (S2); nút thêm vào chuyến (S3); audit log UI (S4); admin polish (S5); bản đồ, AI, affiliate; mọi thay đổi DB/API/migration; mọi thay đổi Phase 10; route tour (rule 2).
+- Evidence: `src/app/[locale]/destinations/[slug]/page.tsx` (chỉ story/itinerary/6 review); `src/app/api/travel/places/**` (place không có trạng thái publish); `src/server/content/schemas.ts:171` (`placeInputSchema`); `src/server/community/public.ts` (`getReviewPlaces`, `getApprovedReviews`); `src/components/reviews/review-list.tsx`.
+- Constraints / dependencies:
+  - **URL đã chốt (owner, 2026-11-18):** VI `/dia-diem/[slug]`, EN `/places/[slug]`. Cần ADR nhẹ: số **0026** (trống trên `origin/main` và các nhánh, kiểm lại khi viết), cả hai ngôn ngữ, đăng ký `docs/adr/README.*`.
+  - Đã kiểm: place **không có trạng thái publish/archive** (`publishStatusSchema` chỉ áp cho story/collection); mọi place trong catalogue đều công khai. P07-16 archive chỉ áp cho story.
+- Interface contract: không API/DB mới; đọc qua `getPublicContent()` / repository. Lỗi store → ẩn mục, không vỡ trang.
+- Tái sử dụng: `Container`, `PageHeader`, `CoverImage`, `Badge`, `ReviewList`, `buildPageMetadata`.
+- Files dự kiến (xác nhận khi vào code): `src/app/[locale]/<places-route>/[slug]/page.tsx`, `src/app/[locale]/destinations/[slug]/page.tsx`, `src/i18n/routing.ts`, `src/app/sitemap.ts`, `src/components/cards/place-card.tsx`, `messages/vi.json`, `messages/en.json`, `tests/places-page.test.ts`, `docs/features/places.md` + `.vi.md`, `docs/features/README.*`, `docs/architecture.*`, `docs/usage.*`, ADR mới (+ `.vi.md`).
+- Acceptance criteria: một `<h1>`, heading đúng thứ tự, focus nhìn thấy, mục tiêu ≥44px, không `href="#"`; slug lạ → 404; không lộ trường nội bộ; đủ chuỗi VI+EN; canonical/metadata đúng locale; lỗi store không vỡ trang; `typecheck`, `lint`, `test` pass và ghi rõ output.
+- Test cases: render danh sách + chi tiết; 404; parity VI/EN; sitemap có route mới; review rỗng/có dữ liệu; `docs.test.ts` và `client-boundary` xanh; thủ công 375/768/1280.
+- Rủi ro conflict: cao ở `messages/*.json`, `routing.ts`, `sitemap.ts` (S2/S3/S4) → S1→S2→S3 tuần tự; thấp ở trang destination.
+- Security / migration: không migration; chỉ đọc nội dung công khai. `/sec-check` + `/qc-check` sau session **chỉ chạy khi chủ dự án xác nhận mở subagent**; đến lúc đó ghi NOT RUN.
+- Rollback: revert PR; không đổi dữ liệu.
+- Budget: sub-agents 0. Không merge khi chưa được duyệt.
+- State: READY (owner duyệt 2026-11-18; chạy trong session mới theo `.claude/templates/UNIVERSAL_TASK_EXECUTION.md`)
+- Feature document owner: main session — `docs/features/places.md` + `.vi.md`.
+- Architecture/usage doc updates: `docs/architecture.*` (route), `docs/usage.*`.

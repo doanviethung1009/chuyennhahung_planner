@@ -18,6 +18,7 @@ export const pathnames = {
   '/stories/[slug]': { vi: '/chuyen-di-choi/[slug]', en: '/stories/[slug]' },
   '/destinations': { vi: '/kham-pha', en: '/destinations' },
   '/destinations/[slug]': { vi: '/kham-pha/[slug]', en: '/destinations/[slug]' },
+  '/places/[slug]': { vi: '/dia-diem/[slug]', en: '/places/[slug]' },
   '/map': { vi: '/ban-do', en: '/map' },
   '/itineraries': { vi: '/len-lich-trinh', en: '/itineraries' },
   '/itineraries/[slug]': { vi: '/len-lich-trinh/[slug]', en: '/itineraries/[slug]' },

@@ -367,6 +367,10 @@ Super admin còn có tab **Runbook** tại `/quan-tri/runbook` (`/en/admin/runbo
 
 Bản sửa đã publish hiện trên site công khai ngay ở request kế tiếp: trang bài viết, trang chủ, trang điểm đến và sitemap được render theo từng request từ content store ([ADR 0012](adr/0012-public-travel-from-content-repository.vi.md)). Bản nháp và bài đã lưu trữ không công khai (404). Trình duyệt gửi `If-Match` kèm `updatedAt` của bản ghi; nếu người khác lưu trước, thao tác bị từ chối với **412** `version_conflict` — tải lại rồi áp dụng lại thay đổi. Việc sửa chưa được ghi vào audit log.
 
+### Địa điểm công khai
+
+Mọi địa điểm trong catalogue nội dung đều công khai: trang của nó là `/dia-diem/<slug>` (`/en/places/<slug>`) và nó nằm trong mục "Địa điểm" của trang điểm đến (khớp theo `destinationSlug`). Thêm hay bỏ một địa điểm qua `/quan-tri/noi-dung/dia-diem` hoặc token API; không có trạng thái nháp nên địa điểm vừa lưu hiện ngay. Ảnh lấy từ `images` của địa điểm (ảnh đầu là ảnh bìa). Review đã duyệt của địa điểm hiện trên trang. Chi tiết: [features/places.vi.md](features/places.vi.md), [ADR 0026](adr/0026-public-places-routes.vi.md).
+
 ### Nạp các bài viết tĩnh vào content store
 
 Content store mới tinh đã có sẵn các bài viết từ `src/content/stories.ts` ngay lần seed đầu tiên. Store **đã tồn tại** thì bỏ qua bước đó (vì đã có nội dung), nên hãy nạp thủ công:

@@ -361,6 +361,10 @@ Open `/quan-tri/cong-dong` (`/en/admin/community`). Pending requests come first:
 
 Super admins also get a **Runbook** tab at `/quan-tri/runbook` (`/en/admin/runbook`): the API list and the operations guides, read from `docs/`. Editors and admins do not see it ([ADR 0017](adr/0017-super-admin-role.md)). In Docker the image carries a copy of `docs/`, so the tab matches the deployed version ([features/admin-runbook.md](features/admin-runbook.md)).
 
+### Public places
+
+Every place in the content catalogue is public: its page is `/dia-diem/<slug>` (`/en/places/<slug>`) and it is listed in the "Places" section of its destination page (matched by `destinationSlug`). To add or remove one, use `/quan-tri/noi-dung/dia-diem` or the token API; there is no draft state, so a saved place is visible at once. Photos come from the place's `images` (the first is the cover). Approved reviews of the place appear on its page. Details: [features/places.md](features/places.md), [ADR 0026](adr/0026-public-places-routes.md).
+
 ### Edit content in the browser (editor, admin or super admin)
 
 Sign in as in the section above (an `editor` account has the role `editor`; an admin can set it from `/quan-tri`) and open `/quan-tri/noi-dung/chuyen-di` (`/en/admin/content/stories`). The five pages are stories, a story, places, a place and reviews (`/quan-tri/noi-dung/dia-diem`, `/quan-tri/noi-dung/danh-gia`). Edit a record and save; publishing or archiving a story or review is a separate action. Create, delete, templates and collections are not in the browser yet — use the token API ([travel-content-api.md](travel-content-api.md)).

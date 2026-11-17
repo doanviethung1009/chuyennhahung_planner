@@ -13,7 +13,7 @@ activity, chi phí và ngân sách — còn *giao diện* Planner vẫn thuộc 
 | Hạng mục | Lựa chọn | Ở đâu |
 |---|---|---|
 | Framework | Next.js 16, App Router, React 19 | [`src/app/`](../src/app) |
-| Render | Server component. Trang đọc nội dung Travel (`/`, `/stories`, `/stories/[slug]`, `/destinations/[slug]`, sitemap) là `force-dynamic`; phần còn lại prerender khi build ([ADR 0012](adr/0012-public-travel-from-content-repository.vi.md)) | mọi `page.tsx` |
+| Render | Server component. Trang đọc nội dung Travel (`/`, `/stories`, `/stories/[slug]`, `/destinations/[slug]`, `/places/[slug]`, sitemap) là `force-dynamic`; phần còn lại prerender khi build ([ADR 0012](adr/0012-public-travel-from-content-repository.vi.md)) | mọi `page.tsx` |
 | Ngôn ngữ | TypeScript `strict` + `noUncheckedIndexedAccess` | [`tsconfig.json`](../tsconfig.json) |
 | i18n | `next-intl` 4, VI không prefix, EN ở `/en` | [`src/i18n/`](../src/i18n) |
 | Styling | Tailwind v4, token `@theme` theo hướng CSS-first | [`src/app/globals.css`](../src/app/globals.css) |
@@ -72,6 +72,7 @@ trong [`src/i18n/routing.ts`](../src/i18n/routing.ts):
 | `/stories/[slug]` | `/chuyen-di-choi/[slug]` | `/en/stories/[slug]` |
 | `/destinations` | `/kham-pha` | `/en/destinations` |
 | `/destinations/[slug]` | `/kham-pha/[slug]` | `/en/destinations/[slug]` |
+| `/places/[slug]` | `/dia-diem/[slug]` | `/en/places/[slug]` |
 | `/map` | `/ban-do` | `/en/map` |
 | `/itineraries` | `/len-lich-trinh` | `/en/itineraries` |
 | `/itineraries/[slug]` | `/len-lich-trinh/[slug]` | `/en/itineraries/[slug]` |
