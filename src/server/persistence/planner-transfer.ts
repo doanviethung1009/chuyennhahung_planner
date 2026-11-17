@@ -5,6 +5,7 @@ import {
   communityReviewSchema,
   reviewRestrictionSchema,
   auditEventSchema,
+  termsAcceptanceSchema,
   oauthAttemptSchema,
   plannerSessionSchema,
   plannerUserSchema,
@@ -40,6 +41,7 @@ const documentSchema = z
     communityReviews: z.array(communityReviewSchema).default([]),
     reviewRestrictions: z.array(reviewRestrictionSchema).default([]),
     auditEvents: z.array(auditEventSchema).default([]),
+    termsAcceptances: z.array(termsAcceptanceSchema).default([]),
   })
   .strict();
 
@@ -146,6 +148,7 @@ export async function importPlannerDocument(
       communityReviews: incoming.communityReviews.length,
       reviewRestrictions: incoming.reviewRestrictions.length,
       auditEvents: incoming.auditEvents.length,
+      termsAcceptances: incoming.termsAcceptances.length,
     },
   };
 }

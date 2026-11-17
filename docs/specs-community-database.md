@@ -4,7 +4,7 @@
 
 Status: **Proposed**. Labels **[C] [P] [A]**: see
 [specs-community-overview.md](specs-community-overview.md). Next free migration number is
-`0012` (`db/migrations/0011_rate_limit_counters.sql` exists). No migration is
+`0013` (`db/migrations/0012_terms_acceptances.sql` exists; Terms acceptance shipped in batch 10.4). No migration is
 written or run by this document.
 
 ## Goals and scope
@@ -91,7 +91,7 @@ erDiagram
 
 ### Migrations (proposed numbering)
 
-Proposed numbering, one migration per slice: `0010` `audit_events` (Phase 10, shipped) · `0011` rate-limit counters (Phase 10, shipped, [ADR 0019](adr/0019-community-foundation.md)) · `0012` reports, `terms_acceptances`, listing states (Phase 10) · `0013` `member_profiles`, trip `origin` (Phase 11) · `0014` `journal_posts` (Phase 12) · `0015` `media_assets` (Phase 13) · `0016` follows, likes, saves, comments (Phase 14) · `0017` search columns, notifications (Phase 15). Each with rollback note, import/export update, and a test through both stores (ADR 0014 precedent).
+Proposed numbering, one migration per slice: `0010` `audit_events` (Phase 10, shipped) · `0011` rate-limit counters (Phase 10, shipped, [ADR 0019](adr/0019-community-foundation.md)) · `0012` `terms_acceptances` (Phase 10, shipped) · `0013` reports, listing states (Phase 10) · `0014` `member_profiles`, trip `origin` (Phase 11) · `0015` `journal_posts` (Phase 12) · `0016` `media_assets` (Phase 13) · `0017` follows, likes, saves, comments (Phase 14) · `0018` search columns, notifications (Phase 15). Each with rollback note, import/export update, and a test through both stores (ADR 0014 precedent).
 
 ## Flows and failure states
 

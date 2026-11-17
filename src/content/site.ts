@@ -99,4 +99,17 @@ When a creator turns on copying:
   takedownContact: 'homecenter1009@gmail.com',
 };
 
+/**
+ * Version of `contribution.terms` (ADR 0019 §4, batch 10.4). A member's
+ * acceptance is recorded against this string, and community writes are refused
+ * until the current version is accepted.
+ *
+ * ⚠️ OWNER ACTION: whenever the text above changes, bump this value (a date,
+ * `YYYY-MM-DD`) AND update the pinned fingerprint in `tests/terms-version.test.ts`
+ * (the test says how). Bumping it asks every member to accept again.
+ * The text still mentions images and video while no upload exists (Q8); fixing
+ * that wording is the owner's open item (D5), not done here.
+ */
+export const termsVersion = '2026-11-16';
+
 export const contributionOpen = contribution.terms !== null && contribution.takedownContact !== null;

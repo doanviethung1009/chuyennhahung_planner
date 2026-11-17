@@ -35,6 +35,7 @@ import {
   stateToListing,
   transition,
 } from '../community/submission';
+import { termsVersion as defaultTermsVersion } from '@/content/site';
 import { appendEvent, eventsForTarget, type NewAuditEvent } from '../community/events';
 import {
   DEFAULT_SCRYPT_COST_LOG2,
@@ -136,6 +137,8 @@ export interface PlannerRepositoryOptions {
    * baseline; tests pass a small value so a suite does not take minutes.
    */
   scryptCostLog2?: number;
+  /** Current Creator Terms version; defaults to `termsVersion` in `src/content/site.ts`. Injected so tests can bump it. */
+  termsVersion?: string;
 }
 
 /** A day with its activities attached, in order. */
@@ -204,6 +207,7 @@ export class PlannerRepository {
   private readonly now: () => Date;
   private readonly newId: (prefix: string) => string;
   private readonly scryptCostLog2: number;
+  private readonly termsVersion: string;
   /**
    * SHA-256 (hex) of every live share token → trip id, so resolving a share
    * link is one map lookup instead of re-hashing every trip on every
@@ -222,6 +226,7 @@ export class PlannerRepository {
     this.now = options.now ?? (() => new Date());
     this.newId = options.newId ?? ((prefix) => `${prefix}_${randomUUID().slice(0, 8)}`);
     this.scryptCostLog2 = options.scryptCostLog2 ?? DEFAULT_SCRYPT_COST_LOG2;
+    this.termsVersion = options.termsVersion ?? defaultTermsVersion;
   }
 
   // -------------------------------------------------------------------------
@@ -925,6 +930,7 @@ export class PlannerRepository {
       data.sessions = data.sessions.filter((session) => session.userId !== userId);
       // Personal data on public pages goes with the account (ADR 0014).
       data.communityReviews = data.communityReviews.filter((review) => review.authorId !== userId);
+      data.termsAcceptances = data.termsAcceptances.filter((row) => row.userId !== userId);
       // Restrictions stay as the audit record, but end with the account (security review, ADR 0015).
       const endedAt = this.timestamp();
       data.reviewRestrictions = data.reviewRestrictions.map((row) => {
@@ -1495,6 +1501,60 @@ export class PlannerRepository {
       };
       return { visibility: 'private', shareToken: null, shareTokenCreatedAt: null, listing: null };
     });
+  }
+
+  // -------------------------------------------------------------------------
+  // Creator Terms (ADR 0019 §4, batch 10.4)
+  // -------------------------------------------------------------------------
+
+  /** Where the member stands against the current version. */
+  async termsStatus(userId: string): Promise<{ version: string; accepted: boolean; acceptedAt: string | null }> {
+    const data = await this.snapshot();
+    const row = data.termsAcceptances.find((r) => r.userId === userId && r.version === this.termsVersion);
+    return { version: this.termsVersion, accepted: Boolean(row), acceptedAt: row?.acceptedAt ?? null };
+  }
+
+  /**
+   * Records that `userId` accepted `version`, which must be the current one.
+   * Idempotent: a repeat changes nothing and logs nothing. The user is always
+   * the session's, never taken from a request body.
+   */
+  async acceptTerms(userId: string, version: string, lang: 'vi' | 'en'): Promise<{ version: string; accepted: true; acceptedAt: string }> {
+    if (version !== this.termsVersion) {
+      throw new ContentError('bad_request', 'that is not the current version of the Creator Terms', [
+        { path: 'version', message: 'must equal the current terms version' },
+      ]);
+    }
+    return this.transaction((data) => {
+      const user = data.users.find((candidate) => candidate.id === userId);
+      if (!user) throw notFound('planner user', userId);
+      const existing = data.termsAcceptances.find((r) => r.userId === userId && r.version === version);
+      if (existing) return { version, accepted: true as const, acceptedAt: existing.acceptedAt };
+      const acceptedAt = this.timestamp();
+      data.termsAcceptances.push({ id: this.newId('trm'), userId, version, acceptedAt, lang });
+      this.record(data, {
+        targetKind: 'user',
+        targetId: userId,
+        actorId: userId,
+        action: 'terms_accepted',
+        fromStatus: null,
+        toStatus: version,
+      });
+      return { version, accepted: true as const, acceptedAt };
+    });
+  }
+
+  /**
+   * The community-write gate (D6): refuses with `403 forbidden`, reason
+   * `terms_not_accepted`, until `userId` has accepted the current version.
+   * Call it before `requestListing` and `upsertPlannerReview` only — reads,
+   * withdrawing a listing and deleting one's own review are never gated.
+   */
+  async requireTermsAccepted(userId: string): Promise<void> {
+    const { accepted } = await this.termsStatus(userId);
+    if (!accepted) {
+      throw new ContentError('forbidden', 'accept the current Creator Terms first', [], null, 'terms_not_accepted');
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -3096,6 +3156,7 @@ function newShareToken(): string {
  */
 function withTripDefaults(data: PlannerData): PlannerData {
   data.auditEvents ??= [];
+  data.termsAcceptances ??= [];
   for (const trip of data.trips) {
     trip.planningStatus ??= 'draft';
     trip.visibility ??= 'private';

@@ -14,6 +14,7 @@ import type {
   CommunityReview,
   ReviewRestriction,
   AuditEvent,
+  TermsAcceptance,
 } from './schemas';
 
 /**
@@ -47,6 +48,8 @@ export interface PlannerData {
   reviewRestrictions: ReviewRestriction[];
   /** ADR 0019. Append-only community log; absent in older files, reads as empty. */
   auditEvents: AuditEvent[];
+  /** ADR 0019 §4. Absent in older files; reads as empty. */
+  termsAcceptances: TermsAcceptance[];
 }
 
 export type PlannerStore = DocumentStore<PlannerData>;
@@ -63,6 +66,7 @@ export function emptyPlannerData(): PlannerData {
     communityReviews: [],
     reviewRestrictions: [],
     auditEvents: [],
+    termsAcceptances: [],
   };
 }
 
@@ -79,6 +83,7 @@ function normalize(partial: Partial<PlannerData>): PlannerData {
     communityReviews: partial.communityReviews ?? [],
     reviewRestrictions: partial.reviewRestrictions ?? [],
     auditEvents: partial.auditEvents ?? [],
+    termsAcceptances: partial.termsAcceptances ?? [],
   };
 }
 

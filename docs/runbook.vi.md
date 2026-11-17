@@ -107,6 +107,8 @@ hay bỏ một route nghĩa là sửa bảng này ở cả hai ngôn ngữ.
 | PATCH | `/api/admin/community/trips/[id]` | Admin token hoặc phiên admin | Duyệt hoặc từ chối chuyến (`community:moderate`) |
 | GET | `/api/admin/community/reviews` | Admin token hoặc phiên admin | Hàng đợi kiểm duyệt đánh giá (`community:moderate`) |
 | PATCH | `/api/admin/community/reviews/[id]` | Admin token hoặc phiên admin | Duyệt, từ chối, giữ hoặc gỡ đánh giá (`community:moderate`) |
+| GET | `/api/planner/terms` | Du khách (cookie phiên hoặc access token) | Trạng thái Điều khoản Người tạo hiện hành |
+| POST | `/api/planner/terms` | Du khách (cookie phiên hoặc access token) | Chấp nhận phiên bản Điều khoản Người tạo hiện hành (idempotent) |
 | GET | `/api/admin/community/events` | Admin token hoặc phiên admin | Log kiểm toán cho một `?targetId=` (`community:moderate`) |
 | GET | `/api/admin/community/restrictions` | Admin token hoặc phiên admin | Danh sách hạn chế đánh giá (`community:restrict`) |
 | POST | `/api/admin/community/restrictions` | Admin token hoặc phiên admin | Hạn chế một người (`community:restrict`) |

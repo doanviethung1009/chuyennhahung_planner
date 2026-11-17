@@ -14,6 +14,7 @@ export function PUT(request: Request, context: Context) {
   return plannerRoute(request, async ({ userId }, repository) => {
     const { id } = await context.params;
     const { authorDisplay } = await parseJsonBody(request, listingRequestSchema);
+    await repository.requireTermsAccepted(userId);
     return plannerJson(await repository.requestListing(userId, id, authorDisplay));
   });
 }

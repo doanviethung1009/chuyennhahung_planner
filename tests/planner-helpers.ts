@@ -26,6 +26,8 @@ export function makePlanner(
     now?: () => Date;
     /** scrypt cost; tests default to a cheap 2^10 so the suite stays fast. */
     scryptCostLog2?: number;
+    /** Current Creator Terms version; defaults to the one in `site.ts`. */
+    termsVersion?: string;
   } = {},
 ): PlannerRepository {
   const counters = new Map<string, number>();
@@ -34,6 +36,7 @@ export function makePlanner(
     catalog: options.catalog ?? fakeCatalog(),
     now: options.now ?? (() => new Date(FROZEN_NOW)),
     scryptCostLog2: options.scryptCostLog2 ?? 10,
+    ...(options.termsVersion ? { termsVersion: options.termsVersion } : {}),
     newId: (prefix) => {
       const next = (counters.get(prefix) ?? 0) + 1;
       counters.set(prefix, next);

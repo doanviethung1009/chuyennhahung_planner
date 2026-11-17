@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { ContentError } from '../src/server/content/errors';
+import { termsVersion } from '../src/content/site';
 import { SESSION_COOKIE } from '../src/server/planner/auth';
 import { placeFixture } from './travel-content-helpers';
 
@@ -52,6 +53,7 @@ describe('review routes fail closed when the limiter database is down', () => {
     const repo = await planner.getPlannerRepository();
     const issued = await repo.createUser({ handle: 'fc-user', displayName: 'Người dùng', role: 'member' });
     const session = await repo.signIn(issued.accessToken);
+    await repo.acceptTerms(issued.user.id, termsVersion, 'vi'); // the write gate (batch 10.4)
     const route = await import('../src/app/api/planner/reviews/[placeSlug]/route');
     const response = await route.PUT(
       new Request(`${ORIGIN}/api/planner/reviews/fc-place`, {

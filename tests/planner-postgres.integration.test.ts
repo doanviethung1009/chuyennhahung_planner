@@ -23,6 +23,7 @@ import {
 } from './planner-helpers';
 import { runScenario, stable } from './planner-pg-fixtures';
 import { registerEventCases } from './moderation-events-cases';
+import { registerTermsCases } from './terms-acceptance-cases';
 
 /**
  * The Postgres store against a real database (ADR 0009). Runs only when
@@ -67,7 +68,7 @@ describe.skipIf(!url)('Planner on PostgreSQL (TEST_DATABASE_URL)', () => {
     // what tells every cached store so, exactly as a real commit would.
     await pool.query('UPDATE planner_revision SET revision = revision + 1');
     await pool.query(
-      'TRUNCATE audit_events, review_restrictions, community_reviews, trip_expenses, trip_activities, trip_days, trips, planner_oauth_attempts, planner_sessions, planner_users RESTART IDENTITY CASCADE',
+      'TRUNCATE terms_acceptances, audit_events, review_restrictions, community_reviews, trip_expenses, trip_activities, trip_days, trips, planner_oauth_attempts, planner_sessions, planner_users RESTART IDENTITY CASCADE',
     );
   });
 
@@ -448,6 +449,25 @@ describe.skipIf(!url)('Planner on PostgreSQL (TEST_DATABASE_URL)', () => {
       await drive(planner);
       expect(JSON.stringify(await planner.listRestrictions())).not.toContain('pg-guest');
       expect(JSON.stringify(await planner.listReviewQueue())).not.toContain('guestKey');
+    });
+  });
+
+  describe('creator terms (migration 0012, ADR 0019 §4)', () => {
+    // Random ids: the "bumped" repository shares the store with the first one, so counted ids would collide.
+    registerTermsCases(async (termsVersion) => ({
+      planner: new PlannerRepository({
+        store,
+        catalog: fakeCatalog(),
+        scryptCostLog2: 10,
+        termsVersion,
+        newId: (prefix) => `${prefix}_${randomUUID().slice(0, 8)}`,
+      }),
+      store,
+    }));
+
+    it('migration 0012 created the table with a unique (user_id, version)', async () => {
+      const idx = await pool.query("SELECT indexdef FROM pg_indexes WHERE tablename = 'terms_acceptances' AND schemaname = $1", [schema]);
+      expect(idx.rows.some((r) => /UNIQUE.*\(user_id, version\)/.test(r.indexdef))).toBe(true);
     });
   });
 

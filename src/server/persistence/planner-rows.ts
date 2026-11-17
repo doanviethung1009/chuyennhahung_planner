@@ -7,6 +7,7 @@ import {
   plannerUserSchema,
   reviewRestrictionSchema,
   auditEventSchema,
+  termsAcceptanceSchema,
   tripActivitySchema,
   tripDaySchema,
   tripExpenseSchema,
@@ -300,6 +301,19 @@ export const TABLES: readonly TableSpec<PlannerCollection>[] = [
       col('toStatus', 'to_status', 'text', 'nullable'),
       col('reason', 'reason', 'text', 'nullable'),
       col('createdAt', 'created_at', 'timestamptz'),
+    ],
+  },
+  {
+    // ADR 0019 §4. Personal data; no foreign keys (ADR 0013). Unique (user_id, version).
+    collection: 'termsAcceptances',
+    table: 'terms_acceptances',
+    parse: (r) => termsAcceptanceSchema.parse(r),
+    columns: [
+      col('id', 'id', 'text'),
+      col('userId', 'user_id', 'text'),
+      col('version', 'version', 'text'),
+      col('acceptedAt', 'accepted_at', 'timestamptz'),
+      col('lang', 'lang', 'text'),
     ],
   },
 ];

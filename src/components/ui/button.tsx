@@ -31,6 +31,7 @@ export function buttonClass({
   return [
     'inline-flex items-center justify-center gap-2 rounded-pill font-medium',
     'transition-colors duration-200 ease-gentle',
+    'disabled:cursor-not-allowed disabled:opacity-50',
     variants[variant],
     sizes[size],
     className,
