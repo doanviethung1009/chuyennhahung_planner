@@ -1,3 +1,4 @@
+import { OVERVIEW_CACHE_TTL_MS, invalidateOverviewCache, overviewCache as sharedCache } from '@/server/overview-cache';
 import { can, type Action, type Principal } from '@/server/identity/permissions';
 
 /**
@@ -165,19 +166,14 @@ export async function defaultOverviewSources(): Promise<OverviewSources> {
  * `globalThis` so the page and route bundles share it; the stored promise also
  * collapses concurrent requests into one read.
  */
-export const OVERVIEW_CACHE_TTL_MS = 15_000;
-const CACHE_KEY = Symbol.for('chuyennhahung.adminOverviewCache');
-type CacheEntry = { at: number; value: Promise<Overview> };
-type GlobalWithCache = typeof globalThis & { [CACHE_KEY]?: Map<string, CacheEntry> };
+export { OVERVIEW_CACHE_TTL_MS };
 
-function overviewCache(): Map<string, CacheEntry> {
-  const holder = globalThis as GlobalWithCache;
-  return (holder[CACHE_KEY] ??= new Map());
-}
+type CacheEntry = { at: number; value: Promise<Overview> };
+const overviewCache = (): Map<string, CacheEntry> => sharedCache() as Map<string, CacheEntry>;
 
 /** For tests: forget cached payloads. */
 export function resetOverviewCache(): void {
-  overviewCache().clear();
+  invalidateOverviewCache();
 }
 
 export async function loadOverview(principal: Principal, now: number = Date.now()): Promise<Overview> {

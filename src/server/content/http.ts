@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authorizeAdmin } from './auth';
+import { invalidateOverviewCacheAfter } from '@/server/overview-cache';
 import { ContentError, payloadTooLarge, type FieldIssue } from './errors';
 import { listQuerySchema } from './schemas';
 
@@ -221,5 +222,7 @@ export async function adminRoute(
     return await handler();
   } catch (error) {
     return toErrorResponse(error);
+  } finally {
+    invalidateOverviewCacheAfter(request);
   }
 }
