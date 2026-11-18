@@ -64,13 +64,13 @@ What we do not know: real copy volume; whether counsel reads Article 3 as coveri
 
 ### 4. Migrations
 
-The next free number is `0015` (`db/migrations` ends at `0014_guest_key_privacy.sql`). **`0015` `member_profiles`** (profile PRs) and **`0016` trips `origin` JSONB null** (copy PR); `allowCopy` needs no DDL because `listing` is already a JSONB column (`0005`). Both additive, each with a rollback note, import/export update and a test through both stores (ADR 0014 precedent; rollback drops the table/column and loses the data). This pushes the numbers the database spec reserved for Phase 12+ up by two (`journal_posts` → `0017` and so on); [specs-community-database.md](../specs-community-database.md) is updated with this ADR.
+The next free number is `0016` (`db/migrations` ends at `0015_audit_admin_events.sql`, taken by P07-13; numbers follow merge order). **`0016` `member_profiles`** (profile PRs) and **`0017` trips `origin` JSONB null** (copy PR); `allowCopy` needs no DDL because `listing` is already a JSONB column (`0005`). Both additive, each with a rollback note, import/export update and a test through both stores (ADR 0014 precedent; rollback drops the table/column and loses the data). This pushes the numbers the database spec reserved for Phase 12+ up by two (`journal_posts` → `0018` and so on); [specs-community-database.md](../specs-community-database.md) is updated with this ADR.
 
 ### 5. Recommended PR order
 
-1. **11.1** profile store + `GET/PATCH /api/planner/profile` + `deleteUser` cascade (migration `0015`).
+1. **11.1** profile store + `GET/PATCH /api/planner/profile` + `deleteUser` cascade (migration `0016`).
 2. **11.2** public profile read + page (behind `profilePublicOpen`), author links on cards, `profile` report target, staff force-private.
-3. **11.3** `allowCopy` in the listing request + creator toggle, `origin` column (migration `0016`) and its display; no copy endpoint yet.
+3. **11.3** `allowCopy` in the listing request + creator toggle, `origin` column (migration `0017`) and its display; no copy endpoint yet.
 4. **11.4** `POST …/use`, limiter, audit, republish block, `deleteUser` origin cascade; then the **button** (can merge with 11.4 if small).
 
 Profile first because it is independent, lower legal risk and unblocks author links; copy depends on the owner's Q2–Q4 answers, which can arrive meanwhile.
@@ -116,7 +116,7 @@ Harder, and not free:
 ## Follow-up
 
 - Implementation: PRs 11.1–11.4 above; each ships its feature document from `docs/features/_template.md` in both languages and its register row (profiles; use this trip), and updates [architecture.md](../architecture.md) (routes, data, phases), [usage.md](../usage.md) if the config gate is set by environment, and the Phase 11 section of the roadmap.
-- Tests: profile defaults private; allow-list enumeration (profile and `origin`); anonymous author absent from profile, list, card link and `origin`; slug uniqueness, reserved words, independence from `handle`; `404` identity for unknown/private/banned; account deletion removes the profile and nulls `origin` author on copies; copy gate matrix (not signed in, terms not accepted, not approved, not public, `allowCopy` off, own trip, restricted user); the copy contains none of the excluded fields (notes, expenses, budget, dates, token, listing); source rows byte-identical before and after; copy becomes a private draft with new ids; copy refused for `public` and for listing; turning `allowCopy` off blocks new copies and keeps existing ones; limiter `429` (hour/day); audit rows and their author projection; migration `0015`/`0016` up/down on both stores and import/export round trip.
+- Tests: profile defaults private; allow-list enumeration (profile and `origin`); anonymous author absent from profile, list, card link and `origin`; slug uniqueness, reserved words, independence from `handle`; `404` identity for unknown/private/banned; account deletion removes the profile and nulls `origin` author on copies; copy gate matrix (not signed in, terms not accepted, not approved, not public, `allowCopy` off, own trip, restricted user); the copy contains none of the excluded fields (notes, expenses, budget, dates, token, listing); source rows byte-identical before and after; copy becomes a private draft with new ids; copy refused for `public` and for listing; turning `allowCopy` off blocks new copies and keeps existing ones; limiter `429` (hour/day); audit rows and their author projection; migration `0016`/`0017` up/down on both stores and import/export round trip.
 - Documents: [specs-community-database.md](../specs-community-database.md) and `.vi.md` (migration numbers, `origin` shape) updated with this ADR; `.claude/roadmap/backlog.md` (P11-1 points here; P11-D2 restated) and `PHASES.md`; no Accepted ADR is edited. Independent `/sec-check` on the allow-list, anonymity and enumeration before 11.4 merges: NOT RUN (recommended).
 - Owner decisions needed (recommendation first):
   1. **Public profile page in Phase 11, or only the author name?** Recommended: ship the page behind `profilePublicOpen` (11.2). Fallback: only the name on cards; skip 11.2 and the slug.
