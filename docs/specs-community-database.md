@@ -39,7 +39,7 @@ nullable columns, JSON-file parity for local development.
 | Entity (table) | Key fields | Notes |
 |---|---|---|
 | `Trip` (existing) | + `origin` JSONB null: `{ sourceTripId, sourceTitle, sourceAuthor, copiedAt }` (refined by ADR 0025; `sourceTripId` internal); `listing` gains `changes_requested`, `unpublished` and `allowCopy` (creator's per-trip copy switch, Terms Article 3) | `origin` holds no author when the source was anonymous |
-| `Profile` (`member_profiles`) | `userId` pk, `publicSlug` uq null, `bio` ≤280, `avatarAssetId` null (added in Phase 13, not in `0015`, ADR 0025), `visibility` `private`/`public`, `updatedAt` | Off by default; slug is not `handle` |
+| `Profile` (`member_profiles`) | `userId` pk, `publicSlug` uq null, `bio` ≤280, `avatarAssetId` null (added in Phase 13, not in `0016`, ADR 0025), `visibility` `private`/`public`, `updatedAt` | Off by default; slug is not `handle` |
 | `Journal` (`journal_posts`) | `id` pk, `authorId` ix, `kind` `journal`/`blog`/`vlog`, `slug` uq, `title`, `summary`, `coverAssetId`, `body` JSONB blocks, `bodyVersion`, `lang`, `placeSlugs[]`, `tags[]`, `status`, moderation fields, `publishedAt`, `revision`, timestamps | `revision` for `If-Match` |
 | `MediaAsset` (`media_assets`) | `id` pk, `ownerId` ix, `kind` `image`, `status`, `mime`, `bytes`, `width`, `height`, `storageKey`, `variants` JSONB, `attachedTo` `{kind,id}` null, `createdAt`, `deletedAt` | Video is never a row here; it is an embed inside `body` |
 | `Follow` (`follows`) | `followerId`, `followeeId`; pk pair | Self-follow refused |
@@ -91,7 +91,7 @@ erDiagram
 
 ### Migrations (proposed numbering)
 
-Proposed numbering, one migration per slice: `0010` `audit_events` (Phase 10, shipped) · `0011` rate-limit counters (Phase 10, shipped, [ADR 0019](adr/0019-community-foundation.md)) · `0012` `terms_acceptances` (Phase 10, shipped) · `0013` `reports` (Phase 10, shipped) · `0014` guest-key privacy (Phase 10, shipped, [ADR 0024](adr/0024-guest-identity-privacy.md)) · `0015` admin audit kinds and indexes (P07-13, shipped, taken ahead of Phase 11) · `member_profiles` and trip `origin` (Phase 11, proposed, numbers by merge order from `0016`, [ADR 0025](adr/0025-member-profiles-and-use-this-trip.md); listing states are added with their own slice) · `0017` `journal_posts` (Phase 12) · `0018` `media_assets` (Phase 13) · `0019` follows, likes, saves, comments (Phase 14) · `0020` search columns, notifications (Phase 15). Each with rollback note, import/export update, and a test through both stores (ADR 0014 precedent).
+Proposed numbering, one migration per slice: `0010` `audit_events` (Phase 10, shipped) · `0011` rate-limit counters (Phase 10, shipped, [ADR 0019](adr/0019-community-foundation.md)) · `0012` `terms_acceptances` (Phase 10, shipped) · `0013` `reports` (Phase 10, shipped) · `0014` guest-key privacy (Phase 10, shipped, [ADR 0024](adr/0024-guest-identity-privacy.md)) · `0015` admin audit kinds and indexes (P07-13, shipped, taken ahead of Phase 11) · `0016` `member_profiles`, `0017` trip `origin` (Phase 11, proposed, numbers follow merge order, [ADR 0025](adr/0025-member-profiles-and-use-this-trip.md); listing states are added with their own slice) · `0018` `journal_posts` (Phase 12) · `0019` `media_assets` (Phase 13) · `0020` follows, likes, saves, comments (Phase 14) · `0021` search columns, notifications (Phase 15). Each with rollback note, import/export update, and a test through both stores (ADR 0014 precedent).
 
 ## Flows and failure states
 

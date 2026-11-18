@@ -5,7 +5,7 @@
 - **Trạng thái:** Đề xuất
 - **Ngày:** 2026-11-17
 - **Chủ trì:** system-architect
-- **Ảnh hưởng:** mới `src/server/community/profiles.ts` và một method sao chép trong `src/server/planner/repository.ts` (cạnh `duplicateTrip`), `src/server/planner/schemas.ts` (`tripListingSchema`, `tripSchema`, schema hồ sơ, schema `origin`), `src/server/community/events.ts` (action mới), `src/server/persistence/planner-rows.ts` và `planner-transfer.ts`, migration `0015` và `0016`, route mới dưới `src/app/api/planner/profile` và `src/app/api/community/**`, `deleteUser`. `src/server/identity/permissions.ts` và `src/server/community/submission.ts` **không** đổi. Làm rõ thêm, không sửa, [ADR 0014](0014-community-trips-and-reviews.vi.md), [ADR 0015](0015-community-review-author-controls.vi.md), [ADR 0019](0019-community-foundation.vi.md) và [ADR 0024](0024-guest-identity-privacy.vi.md).
+- **Ảnh hưởng:** mới `src/server/community/profiles.ts` và một method sao chép trong `src/server/planner/repository.ts` (cạnh `duplicateTrip`), `src/server/planner/schemas.ts` (`tripListingSchema`, `tripSchema`, schema hồ sơ, schema `origin`), `src/server/community/events.ts` (action mới), `src/server/persistence/planner-rows.ts` và `planner-transfer.ts`, migration `0016` và `0017`, route mới dưới `src/app/api/planner/profile` và `src/app/api/community/**`, `deleteUser`. `src/server/identity/permissions.ts` và `src/server/community/submission.ts` **không** đổi. Làm rõ thêm, không sửa, [ADR 0014](0014-community-trips-and-reviews.vi.md), [ADR 0015](0015-community-review-author-controls.vi.md), [ADR 0019](0019-community-foundation.vi.md) và [ADR 0024](0024-guest-identity-privacy.vi.md).
 - **Thuộc:** Phase 11 (backlog P11-1 và P11-3; P11-2 và P11-4 là phần thực thi); quyết định chủ dự án P11-D1 và P11-D2; rủi ro RK16 trong [specs-community-roadmap.vi.md](../specs-community-roadmap.vi.md).
 
 ## Bối cảnh
@@ -64,13 +64,13 @@ Chưa biết: lượng sao chép thật; luật sư có coi Điều 3 bao gồm 
 
 ### 4. Migration
 
-Số trống kế tiếp là `0015` (`db/migrations` dừng ở `0014_guest_key_privacy.sql`). **`0015` `member_profiles`** (PR hồ sơ) và **`0016` cột `origin` JSONB null trên trips** (PR sao chép); `allowCopy` không cần DDL vì `listing` đã là cột JSONB (`0005`). Cả hai chỉ thêm, kèm ghi chú rollback, cập nhật import/export và test qua cả hai store (tiền lệ ADR 0014; rollback xóa bảng/cột và mất dữ liệu). Việc này đẩy các số spec database dành cho Phase 12+ lên hai (`journal_posts` → `0017`, v.v.); [specs-community-database.vi.md](../specs-community-database.vi.md) được cập nhật cùng ADR này.
+Số trống kế tiếp là `0016` (`db/migrations` dừng ở `0015_audit_admin_events.sql`, do P07-13 lấy; số theo thứ tự merge). **`0016` `member_profiles`** (PR hồ sơ) và **`0017` cột `origin` JSONB null trên trips** (PR sao chép); `allowCopy` không cần DDL vì `listing` đã là cột JSONB (`0005`). Cả hai chỉ thêm, kèm ghi chú rollback, cập nhật import/export và test qua cả hai store (tiền lệ ADR 0014; rollback xóa bảng/cột và mất dữ liệu). Việc này đẩy các số spec database dành cho Phase 12+ lên hai (`journal_posts` → `0018`, v.v.); [specs-community-database.vi.md](../specs-community-database.vi.md) được cập nhật cùng ADR này.
 
 ### 5. Thứ tự PR đề xuất
 
-1. **11.1** kho hồ sơ + `GET/PATCH /api/planner/profile` + `deleteUser` xóa kèm (migration `0015`).
+1. **11.1** kho hồ sơ + `GET/PATCH /api/planner/profile` + `deleteUser` xóa kèm (migration `0016`).
 2. **11.2** đọc hồ sơ công khai + trang (sau `profilePublicOpen`), link tác giả trên thẻ, đối tượng report `profile`, staff ép riêng tư.
-3. **11.3** `allowCopy` trong yêu cầu đăng + công tắc của người tạo, cột `origin` (migration `0016`) và hiển thị; chưa có endpoint sao chép.
+3. **11.3** `allowCopy` trong yêu cầu đăng + công tắc của người tạo, cột `origin` (migration `0017`) và hiển thị; chưa có endpoint sao chép.
 4. **11.4** `POST …/use`, limiter, audit, chặn đăng lại, dọn `origin` ở `deleteUser`; rồi **nút** (có thể gộp vào 11.4 nếu nhỏ).
 
 Hồ sơ trước vì độc lập, rủi ro pháp lý thấp hơn và mở đường cho link tác giả; sao chép phụ thuộc câu trả lời Q2–Q4 của chủ dự án, có thể về trong lúc đó.
@@ -116,7 +116,7 @@ Khó hơn, và không miễn phí:
 ## Việc tiếp theo
 
 - Thực thi: các PR 11.1–11.4 ở trên; mỗi PR kèm tài liệu tính năng từ `docs/features/_template.md` cả hai ngôn ngữ và dòng trong sổ đăng ký (hồ sơ; dùng chuyến này), cập nhật [architecture.vi.md](../architecture.vi.md) (route, dữ liệu, phase), [usage.vi.md](../usage.vi.md) nếu cổng cấu hình đặt bằng biến môi trường, và mục Phase 11 của roadmap.
-- Test: hồ sơ mặc định riêng tư; liệt kê allow-list (hồ sơ và `origin`); tác giả ẩn danh vắng mặt ở hồ sơ, danh sách, link thẻ và `origin`; slug duy nhất, từ dành riêng, độc lập với `handle`; `404` giống hệt cho không có/riêng tư/bị khóa; xóa tài khoản xóa hồ sơ và đặt tác giả `origin` về null trên bản sao; ma trận cổng sao chép (chưa đăng nhập, chưa đồng ý Terms, chưa duyệt, không công khai, `allowCopy` tắt, chuyến của mình, người bị restriction); bản sao không chứa trường bị loại (ghi chú, chi phí, ngân sách, ngày, token, listing); dòng nguồn giống hệt trước và sau; bản sao là nháp riêng tư với id mới; bản sao bị từ chối khi `public` và khi yêu cầu đăng; tắt `allowCopy` chặn bản mới và giữ bản cũ; limiter `429` (giờ/ngày); dòng audit và phép chiếu cho tác giả; migration `0015`/`0016` up/down trên cả hai store và import/export round trip.
+- Test: hồ sơ mặc định riêng tư; liệt kê allow-list (hồ sơ và `origin`); tác giả ẩn danh vắng mặt ở hồ sơ, danh sách, link thẻ và `origin`; slug duy nhất, từ dành riêng, độc lập với `handle`; `404` giống hệt cho không có/riêng tư/bị khóa; xóa tài khoản xóa hồ sơ và đặt tác giả `origin` về null trên bản sao; ma trận cổng sao chép (chưa đăng nhập, chưa đồng ý Terms, chưa duyệt, không công khai, `allowCopy` tắt, chuyến của mình, người bị restriction); bản sao không chứa trường bị loại (ghi chú, chi phí, ngân sách, ngày, token, listing); dòng nguồn giống hệt trước và sau; bản sao là nháp riêng tư với id mới; bản sao bị từ chối khi `public` và khi yêu cầu đăng; tắt `allowCopy` chặn bản mới và giữ bản cũ; limiter `429` (giờ/ngày); dòng audit và phép chiếu cho tác giả; migration `0016`/`0017` up/down trên cả hai store và import/export round trip.
 - Tài liệu: [specs-community-database.vi.md](../specs-community-database.vi.md) và bản EN (số migration, hình dạng `origin`) cập nhật cùng ADR này; `.claude/roadmap/backlog.md` (P11-1 trỏ vào đây; P11-D2 viết lại) và `PHASES.md`; không sửa ADR nào đã Accepted. `/sec-check` độc lập trên allow-list, ẩn danh và liệt kê trước khi 11.4 merge: NOT RUN (khuyến nghị chạy).
 - Quyết định cần chủ dự án (khuyến nghị đứng trước):
   1. **Trang hồ sơ công khai có ở Phase 11 hay chỉ tên tác giả?** Khuyến nghị: ship trang sau `profilePublicOpen` (11.2). Phương án lùi: chỉ tên trên thẻ; bỏ 11.2 và slug.
