@@ -5,7 +5,7 @@
 - Behaviour: super admin 200; admin/editor/member/service token 403; anonymous 401; page 404 for non-super-admin via `requireStaff(...,'runbook')`.
 - Checks: typecheck PASS; lint PASS (no output); test PASS (90 files passed, 3 skipped; 1163 tests passed, 89 skipped); build PASS (routes listed).
 - Tests: `tests/admin-system.test.ts` (role matrix, sentinel no-leak, DB-down, probe throws, sidebar/page gate); `runbook.test.ts` sync passes.
-- UI smoke 375/768/1280 with super admin login: NOT RUN.
+- UI smoke (local dev, file stores, test accounts): PASS. Super admin: page renders, no horizontal scroll at 375/768/1280, one h1, sidebar link, API 200 no-store. Admin: page 404, API 403, no sidebar link. Not covered: PostgreSQL path in browser, editor, EN locale. Dev `buildId` can be stale from an old `.next/BUILD_ID`.
 - `/qc-check`: NOT RUN. `/sec-check`: NOT RUN — recommended (leak risk).
 - Risks: when the Planner DB is down a super admin cannot sign in, so the page is unreachable then (Content DB down shows "unreachable"). `buildId` reads `.next/BUILD_ID`, null in dev.
 - Open: owner backup facts (D10) keep backups "not configured". Contract State not updated to DONE (index/roadmap belong to CORE-0).
