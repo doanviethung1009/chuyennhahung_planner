@@ -49,6 +49,7 @@ New features start from [`_template.md`](_template.md) /
 | Super admin accounts | [super-admin-accounts.md](super-admin-accounts.md) | `super_admin` role (ADR 0017): only it opens the Runbook, admins cannot manage admin accounts |
 | Handle sign-in | [handle-sign-in.md](handle-sign-in.md) | Sign in with an email or account handle; reset password works without an email (ADR 0018) |
 | Admin runbook | [admin-runbook.md](admin-runbook.md) | `/quan-tri/runbook` — super-admin-only tab that shows the API list and the operations guides from `docs/` in the browser |
+| Admin audit viewer | [admin-audit-viewer.md](admin-audit-viewer.md) | `/admin/audit` — filterable, paged read of the audit log; role, account and story-status acts now write events; `GET /api/admin/audit`, action `audit:read` (P07-13) |
 
 ## Phases not yet open
 

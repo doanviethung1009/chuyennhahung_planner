@@ -9,4 +9,4 @@
 - Tests: per-act event assertions on JSON and PostgreSQL stores; transaction rollback case; role matrix; pagination/filter validation; XSS-style reason string rendered inert; `runbook.test.ts`; i18n.
 - Security: `/sec-check` **recommended before merge** (personal data read, new action) — NOT RUN until called; BLOCKED stops the work.
 - Rollback: remove appends, route and page; stored events stay inert; rollback SQL for the index if added.
-- Docs: backend writes the feature doc; frontend adds the UI part. Budget: sub-agents 0. State: READY (owner approved 2026-11-17) but BLOCKED until 10.2 merges.
+- Docs: backend writes the feature doc; frontend adds the UI part. Budget: sub-agents 0. State: IN REVIEW (owner approved 2026-11-17; batch 10.2 merged as PR #115, migration `0010`, `appendEvent` in `src/server/community/events.ts`; executed 2026-11-18, not committed yet). Deviations: migration `0015` also widens the `target_kind` check for `story`; story events are a second write (Content store is separate); no place events (places have no publish state).

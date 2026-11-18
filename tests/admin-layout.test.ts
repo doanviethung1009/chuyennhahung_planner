@@ -69,7 +69,7 @@ describe('admin root layout (ADR 0023)', () => {
 
   it('uses AdminPageHeader, never the public PageHeader, on every admin page', () => {
     const pages = files(`${adminRoot}/admin`, 'page.tsx').filter((f) => !f.includes('[...rest]'));
-    expect(pages.length).toBe(11);
+    expect(pages.length).toBe(12);
     for (const file of pages) {
       const source = readFileSync(file, 'utf8');
       expect(source, file).toContain('<AdminPageHeader');
@@ -87,6 +87,13 @@ describe('one admin 404, no oracle (ADR 0023 §5)', () => {
   it('has a single admin not-found and none deeper in the tree', () => {
     expect(existsSync(join(root, `${adminRoot}/not-found.tsx`))).toBe(true);
     expect(files(adminRoot, 'not-found.tsx')).toHaveLength(1);
+  });
+
+  it('answers an editor on /admin/audit with a 404 (audit:read)', async () => {
+    access.read.mockResolvedValue({ status: 'staff', principal: { role: 'editor', userId: 'u1', handle: 'ed' } });
+    const thrown = await requireStaff('vi', '/quan-tri/nhat-ky', 'audit').catch((e: unknown) => e);
+    expect(thrown).toBeInstanceOf(Error);
+    expect(String((thrown as Error).message)).toMatch(/NEXT_HTTP_ERROR_FALLBACK;404|NEXT_NOT_FOUND/);
   });
 
   it('renders the same not-found for a forbidden role and for an unknown admin URL', async () => {

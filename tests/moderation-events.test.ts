@@ -39,12 +39,12 @@ describe('retention and transfer', () => {
     await planner.setVisibility(userId, view.trip.id, 'public');
     await planner.requestListing(userId, view.trip.id, 'name');
     const exported = JSON.parse(await exportPlannerDocument(source));
-    expect(exported.auditEvents).toHaveLength(1);
+    expect(exported.auditEvents).toHaveLength(2); // owner provisioned (P07-13) + the listing request
 
     const options = { catalog: fakeCatalog(), now: () => new Date(FROZEN_NOW) };
     const target = createMemoryPlannerStore();
     const report = await importPlannerDocument(target, exported, options);
-    expect(report.collections.auditEvents).toBe(1);
+    expect(report.collections.auditEvents).toBe(2);
     expect((await target.read()).auditEvents).toEqual(exported.auditEvents);
 
     const older = { ...exported } as Record<string, unknown>;

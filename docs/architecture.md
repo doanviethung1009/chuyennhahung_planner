@@ -333,6 +333,8 @@ flowchart LR
 
 The `/admin` page is the dashboard (P07-11, [feature](features/admin-dashboard.md)): `src/server/admin/overview.ts` composes read-only counts from existing repository methods, filtered by `can()`, and `GET /api/admin/overview` serves the same payload. A failing source degrades its own card.
 
+The admin audit log (P07-13, [feature](features/admin-audit-viewer.md)): `/admin/audit` and `GET /api/admin/audit` (`audit:read`: admin, super admin, service; not editor) read `audit_events` newest first with filters and an opaque `(createdAt, id)` cursor. Account acts (create, role, password reset, ban/unban, soft delete/restore/purge, Google unlink, token rotation) append through `PlannerRepository.record` inside their own transaction; a story's publish state is in the Content store, so its event is a second write after it succeeds. Migration `0015` adds target kind `story` and the filter indexes.
+
 `adminPlannerRoute` in `src/server/planner/http.ts` resolves one of **two principals**:
 
 | Principal | Credential | Reaches |

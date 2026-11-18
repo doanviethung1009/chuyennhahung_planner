@@ -114,6 +114,7 @@ hay bỏ một route nghĩa là sửa bảng này ở cả hai ngôn ngữ.
 | POST | `/api/planner/terms` | Du khách (cookie phiên hoặc access token) | Chấp nhận phiên bản Điều khoản Người tạo hiện hành (idempotent) |
 | GET | `/api/admin/community/reports` | Token admin hoặc phiên admin | Hàng đợi báo cáo, `?status=open\|actioned\|dismissed` (`community:moderate`) |
 | POST | `/api/admin/community/reports/[id]/resolve` | Token admin hoặc phiên admin | Bỏ qua hoặc đánh dấu đã xử lý báo cáo, idempotent, ghi một sự kiện (`community:moderate`) |
+| GET | `/api/admin/audit` | Admin token hoặc phiên admin | Nhật ký quản trị: lọc `actor`, `targetType`, `action`, `from`, `to`, `limit`, `cursor` (`audit:read`) |
 | GET | `/api/admin/community/events` | Admin token hoặc phiên admin | Log kiểm toán cho một `?targetId=` (`community:moderate`) |
 | GET | `/api/admin/community/restrictions` | Admin token hoặc phiên admin | Danh sách hạn chế đánh giá (`community:restrict`) |
 | POST | `/api/admin/community/restrictions` | Admin token hoặc phiên admin | Hạn chế một người (`community:restrict`) |

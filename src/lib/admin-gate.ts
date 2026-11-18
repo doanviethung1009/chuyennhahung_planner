@@ -11,7 +11,7 @@ import { readStaffPageAccess } from '@/server/planner/admin-page';
  * a role with nothing to do here -> a plain 404. Returns what the shell needs
  * to decide which sections to show. The API stays the authority.
  */
-export async function requireStaff(locale: Locale, returnTo: string, need: 'content' | 'users' | 'runbook' | 'any' = 'any') {
+export async function requireStaff(locale: Locale, returnTo: string, need: 'content' | 'users' | 'runbook' | 'audit' | 'any' = 'any') {
   const access = await readStaffPageAccess();
   if (access.status === 'anonymous') {
     redirect({ href: { pathname: '/sign-in', query: { returnTo } }, locale });
@@ -28,7 +28,8 @@ export async function requireStaff(locale: Locale, returnTo: string, need: 'cont
   if (
     (need === 'content' && !canContent) ||
     (need === 'users' && !canUsers) ||
-    (need === 'runbook' && !canRunbook)
+    (need === 'runbook' && !canRunbook) ||
+    (need === 'audit' && !can(access.principal, 'audit:read'))
   ) {
     notFound();
   }
@@ -41,7 +42,7 @@ export function noIndex(metadata: Metadata): Metadata {
 }
 
 /** One sidebar link: the internal route plus the message key under `adminContent.nav`. */
-export type AdminLinkKey = 'overview' | 'stories' | 'places' | 'reviews' | 'community' | 'users' | 'runbook';
+export type AdminLinkKey = 'overview' | 'stories' | 'places' | 'reviews' | 'community' | 'users' | 'runbook' | 'audit';
 export type AdminGroupId = 'overview' | 'content' | 'community' | 'people' | 'operations';
 export type AdminNavLink = { href: StaticPathname; label: AdminLinkKey };
 export type AdminNavGroup = { id: AdminGroupId; links: AdminNavLink[] };
@@ -77,7 +78,10 @@ export function adminSidebarGroups(principal: Principal): AdminNavGroup[] {
     },
     {
       id: 'operations',
-      links: can(principal, 'runbook:read') ? [{ href: '/admin/runbook', label: 'runbook' }] : [],
+      links: [
+        ...(can(principal, 'audit:read') ? [{ href: '/admin/audit' as const, label: 'audit' as const }] : []),
+        ...(can(principal, 'runbook:read') ? [{ href: '/admin/runbook' as const, label: 'runbook' as const }] : []),
+      ],
     },
   ];
   return groups.filter((group) => group.links.length > 0);

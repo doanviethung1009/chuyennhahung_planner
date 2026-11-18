@@ -226,7 +226,7 @@ configured" until the owner supplies facts (`D10`); it does not invent them.
 |---|---|---|---|
 | No shared frame | Every new screen re-solves layout, nav, mobile | `P07-10` | ADR 0020 |
 | No landing view | Staff open five pages to learn what is waiting | `P07-11` | `P07-10` |
-| No audit trail for staff acts | Any admin can reset another admin's password unrecorded (ADR 0010 limit) | `P07-13` (viewer + events) | Phase 10 batch 10.2 |
+| No audit trail for staff acts | Any admin can reset another admin's password unrecorded (ADR 0010 limit) | `P07-13` (viewer + events) — shipped | Phase 10 batch 10.2 |
 | APIs without screens | Collections, integrity, unlink, rotate-token are `curl`-only | `P07-15`, `P07-12` | — |
 | Create/archive only by token | Editors cannot add a story in the browser | `P07-16` | owner decision `W5` |
 | Moderation screen is a list stack | Slow triage, no counts | `P07-14` | batch 10.5 |

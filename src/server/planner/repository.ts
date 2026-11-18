@@ -283,9 +283,56 @@ export class PlannerRepository {
     appendEvent(data, event, { id: this.newId('evt'), at: this.timestamp() });
   }
 
+  /** `actor.userId`, or `service` for the admin token (ADR 0010). */
+  private static actorId(actor: AdminActor | undefined): string {
+    return actor?.userId ?? 'service';
+  }
+
+  /**
+   * One admin-portal event outside a Planner write (batch P07-13): a story's
+   * publish state lives in the Travel Content store, so this is its own
+   * transaction, run after the content write succeeded. The user-admin events
+   * below are written inside their own transaction instead.
+   */
+  recordAdminEvent(event: NewAuditEvent): Promise<void> {
+    return this.transaction((data) => {
+      this.record(data, event);
+    });
+  }
+
   /** Staff read of the log for one target (trip, review or user id), newest first. */
   async listEvents(targetId: string): Promise<AuditEvent[]> {
     return eventsForTarget(await this.snapshot(), targetId);
+  }
+
+  /**
+   * Staff read of the whole log (P07-13), newest first, filtered and paged by an
+   * opaque cursor over (createdAt, id): the order is total, so pages never
+   * overlap or skip. Reasons are returned as stored (plain text; the page escapes).
+   */
+  async listAuditEvents(query: AuditQuery): Promise<AuditPage> {
+    const data = await this.snapshot();
+    const handles = new Map(data.users.map((user) => [user.id, user.handle]));
+    const rows = data.auditEvents
+      .filter(
+        (e) =>
+          (!query.actor || e.actorId === query.actor) &&
+          (!query.targetType || e.targetKind === query.targetType) &&
+          (!query.action || e.action === query.action) &&
+          (!query.from || e.createdAt >= query.from) &&
+          (!query.to || e.createdAt <= query.to),
+      )
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || (a.id < b.id ? 1 : a.id > b.id ? -1 : 0));
+    const start = query.cursor
+      ? rows.findIndex((e) => e.createdAt < query.cursor!.createdAt || (e.createdAt === query.cursor!.createdAt && e.id < query.cursor!.id))
+      : 0;
+    const page = start < 0 ? [] : rows.slice(start, start + query.limit);
+    const last = page[page.length - 1];
+    const more = start >= 0 && start + query.limit < rows.length;
+    return {
+      items: page.map((e) => ({ ...e, actorHandle: handles.get(e.actorId) ?? null })),
+      nextCursor: more && last ? encodeAuditCursor(last) : null,
+    };
   }
 
   /** A listing that ends without anyone deciding: leaving `public`, archive, share revoke. */
@@ -540,6 +587,14 @@ export class PlannerRepository {
       user.mustChangePassword = true;
       user.updatedAt = this.timestamp();
       data.sessions = data.sessions.filter((session) => session.userId !== userId);
+      this.record(data, {
+        targetKind: 'user',
+        targetId: userId,
+        actorId: PlannerRepository.actorId(actor),
+        action: 'password_reset',
+        fromStatus: null,
+        toStatus: null,
+      });
       return { user: toPublicUser(user), temporaryPassword };
     });
   }
@@ -675,10 +730,20 @@ export class PlannerRepository {
   }
 
   /** Removes the Google link and ends that user's sessions. */
-  unlinkGoogle(userId: string): Promise<PublicPlannerUser> {
+  unlinkGoogle(userId: string, actor?: AdminActor): Promise<PublicPlannerUser> {
     return this.transaction((data) => {
       const user = data.users.find((row) => row.id === userId);
       if (!user || isDisabled(user)) throw notFound('planner user', userId);
+      if (user.googleSub) {
+        this.record(data, {
+          targetKind: 'user',
+          targetId: userId,
+          actorId: PlannerRepository.actorId(actor),
+          action: 'google_unlink',
+          fromStatus: null,
+          toStatus: null,
+        });
+      }
       user.googleSub = null;
       user.updatedAt = this.timestamp();
       data.sessions = data.sessions.filter((session) => session.userId !== userId);
@@ -785,6 +850,14 @@ export class PlannerRepository {
           : {}),
       };
       data.users.push(user);
+      this.record(data, {
+        targetKind: 'user',
+        targetId: user.id,
+        actorId: PlannerRepository.actorId(actor),
+        action: 'user_create',
+        fromStatus: null,
+        toStatus: userRole(user),
+      });
       return temporaryPassword
         ? { user: toPublicUser(user), accessToken, temporaryPassword }
         : { user: toPublicUser(user), accessToken };
@@ -820,12 +893,20 @@ export class PlannerRepository {
       else if (current === 'super_admin') assertAnotherAdminExists(data, userId, 'demote', current);
       const next: PlannerUser = { ...existing, role, updatedAt: this.timestamp() };
       data.users[index] = next;
+      this.record(data, {
+        targetKind: 'user',
+        targetId: userId,
+        actorId: PlannerRepository.actorId(actor),
+        action: 'role_change',
+        fromStatus: current,
+        toStatus: role,
+      });
       return toPublicUser(next);
     });
   }
 
   /** Replaces the token — the previous one stops working immediately. */
-  rotateUserToken(userId: string): Promise<IssuedPlannerUser> {
+  rotateUserToken(userId: string, actor?: AdminActor): Promise<IssuedPlannerUser> {
     return this.transaction((data) => {
       const index = data.users.findIndex((user) => user.id === userId);
       const existing = data.users[index];
@@ -841,6 +922,14 @@ export class PlannerRepository {
       // Rotation is the "sign me out everywhere" control (ADR 0004 §5): the old
       // token is dead, and so is every session that was opened with it.
       data.sessions = data.sessions.filter((session) => session.userId !== userId);
+      this.record(data, {
+        targetKind: 'user',
+        targetId: userId,
+        actorId: PlannerRepository.actorId(actor),
+        action: 'token_rotate',
+        fromStatus: null,
+        toStatus: null,
+      });
       return { user: toPublicUser(next), accessToken };
     });
   }
@@ -877,6 +966,20 @@ export class PlannerRepository {
       next[`${field}By`] = disabling ? (actor?.userId ?? 'service') : null;
       data.users[index] = next;
       if (disabling) data.sessions = data.sessions.filter((session) => session.userId !== userId);
+      const [eventAction, from, to] = ({
+        ban: ['ban', 'active', 'banned'],
+        unban: ['unban', 'banned', 'active'],
+        delete: ['soft_delete', 'active', 'deleted'],
+        restore: ['restore', 'deleted', 'active'],
+      } as const satisfies Record<typeof change, readonly [string, string, string]>)[change];
+      this.record(data, {
+        targetKind: 'user',
+        targetId: userId,
+        actorId: PlannerRepository.actorId(actor),
+        action: eventAction,
+        fromStatus: from,
+        toStatus: to,
+      });
       return toPublicUser(next);
     });
   }
@@ -953,6 +1056,14 @@ export class PlannerRepository {
         data.tripExpenses = data.tripExpenses.filter((row) => !doomed.has(row.tripId));
       }
       data.users.splice(index, 1);
+      this.record(data, {
+        targetKind: 'user',
+        targetId: userId,
+        actorId: PlannerRepository.actorId(actor),
+        action: 'purge',
+        fromStatus: target.deletedAt ? 'deleted' : 'active',
+        toStatus: null,
+      });
       data.sessions = data.sessions.filter((session) => session.userId !== userId);
       // Personal data on public pages goes with the account (ADR 0014).
       data.communityReviews = data.communityReviews.filter((review) => review.authorId !== userId);
@@ -3669,6 +3780,29 @@ function insertionIndex(index: number | undefined, length: number): number {
 /** Day N of a trip starting on `startDate`; null while the dates are open. */
 function dayDate(startDate: string | null, dayNumber: number): string | null {
   return startDate === null ? null : addDays(startDate, dayNumber - 1);
+}
+
+export interface AuditQuery {
+  actor?: string;
+  targetType?: AuditEvent['targetKind'];
+  action?: string;
+  from?: string;
+  to?: string;
+  cursor?: { createdAt: string; id: string } | null;
+  limit: number;
+}
+export type AuditPage = { items: Array<AuditEvent & { actorHandle: string | null }>; nextCursor: string | null };
+
+export function encodeAuditCursor(event: Pick<AuditEvent, 'createdAt' | 'id'>): string {
+  return Buffer.from(`${event.createdAt}|${event.id}`).toString('base64url');
+}
+
+/** Null when the cursor is not one we issued. */
+export function decodeAuditCursor(raw: string): { createdAt: string; id: string } | null {
+  const text = Buffer.from(raw, 'base64url').toString();
+  const at = text.indexOf('|');
+  if (at < 1 || at === text.length - 1 || !/^\d{4}-\d{2}-\d{2}T/.test(text)) return null;
+  return { createdAt: text.slice(0, at), id: text.slice(at + 1) };
 }
 
 /** The session principal behind an admin call; absent for the service token. */
