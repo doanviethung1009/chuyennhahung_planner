@@ -1,0 +1,12 @@
+# Handoff — PLACES-UI-S2
+- Branch: `feat/place-reviews-ui` · PR: https://github.com/doanviethung1009/chuyennhahung_planner/pull/153 (open, not merged).
+- Done: `PlaceReviewSection` on `/dia-diem/[slug]` (guest form with fixed place; member form with terms, own review status/held/restriction, edit, delete); session read from `GET /api/planner/session`; page lists the 20 newest reviews; `router.refresh()` after send. Follow-up commit ff64ee2 closes the form after a member saves.
+- Decisions: 20 newest, no pagination, no API change; success message + refresh.
+- Outside the plan: `ReviewForm` guest got optional `fixedPlace`/`onSubmitted`; it now shows the closed notice for reason `contribution_closed` (was the generic "paused" text) — also affects the home form.
+- Checks: typecheck PASS · lint PASS · test PASS (86 files passed, 3 skipped; 1130 tests) · build PASS.
+- qc: PASS on the third run (first two NOT VERIFIED while the signed-in flow was unchecked). sec: PASS.
+- Hand-checked (local dev, JSON store, test accounts): guest at 375/768/1280; member send, edit, delete; admin hold (question shown as plain text, review hidden); place restriction (edit disabled, PUT 403); logout then delete falls back to guest form; guest API 429 on the 11th post, honeypot not stored, 422 on short body.
+- Not hand-checked: 429 text on screen, member view at 375/768, keyboard focus, `terms_not_accepted` and `contribution_closed` on screen (read from code by qc).
+- Risks: no DOM test env, so client paths are not automated; terms text makes the form long on mobile (existing component behaviour).
+- Open: pagination of place reviews needs `limit`/`cursor` on `GET /api/community/reviews`; optional follow-up test for the three UI error branches.
+- Next: owner reviews and merges PR #153.

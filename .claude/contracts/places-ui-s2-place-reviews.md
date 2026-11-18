@@ -34,6 +34,7 @@
 - Security / migration: không migration; có nhập liệu công khai và ghi dữ liệu thành viên → **khuyến nghị `/sec-check`** (honeypot, rate limit, CSRF qua `requireSameOrigin`, không lộ `guestKey`); `/qc-check` khuyến nghị. Cả hai **chỉ chạy khi chủ dự án xác nhận mở subagent**; đến lúc đó ghi NOT RUN.
 - Rollback: revert PR; không đổi dữ liệu. Review đã gửi vẫn tồn tại và vẫn gỡ được qua admin.
 - Budget: sub-agents 0. Không merge khi chưa được duyệt.
-- State: DESIGNED (chờ S1 merge và chốt quyết định mở 1–2)
+- Quyết định đã chốt (theo khuyến nghị, không đổi API): (1) chỉ hiện 20 review mới nhất, không phân trang (`getApprovedReviews([slug], 20)` trên trang S1); (2) sau khi gửi báo thành công rồi `router.refresh()`. Thêm: `ReviewForm` guest nhận prop tùy chọn `fixedPlace` và `onSubmitted`, và hiện thông báo đóng khi gặp reason `contribution_closed` (trước đó rơi vào thông báo "paused" chung).
+- State: IMPLEMENTED (chờ owner duyệt để commit/PR; qc/sec NOT RUN)
 - Feature document owner: main session — cập nhật `docs/features/places.md` + `.vi.md` và `docs/features/community-reviews.md` + `.vi.md`.
 - Architecture/usage doc updates: `docs/usage.*`; `docs/architecture.*` chỉ khi thêm phân trang ở API.

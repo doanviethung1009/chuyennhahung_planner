@@ -16,7 +16,14 @@ const BODY_MAX = 1_000;
 type Place = { slug: string; name: string };
 
 type Props =
-  | { mode: 'guest'; places: Place[] }
+  | {
+      mode: 'guest';
+      places: Place[];
+      /** Place pages: the place is fixed, so there is no dropdown to pick from. */
+      fixedPlace?: Place;
+      /** Called after a successful post (e.g. to refresh the list). */
+      onSubmitted?: () => void;
+    }
   | {
       mode: 'planner';
       place: Place;
@@ -41,7 +48,7 @@ export function ReviewForm(props: Props) {
   const existing = planner ? props.existing : null;
   const today = new Date().toISOString().slice(0, 10);
 
-  const [placeSlug, setPlaceSlug] = useState(planner ? props.place.slug : '');
+  const [placeSlug, setPlaceSlug] = useState(props.mode === 'planner' ? props.place.slug : (props.fixedPlace?.slug ?? ''));
   const [rating, setRating] = useState(existing?.rating ?? 5);
   const [visitedOn, setVisitedOn] = useState(existing?.visitedOn ?? (planner ? props.defaultVisitedOn : ''));
   const [body, setBody] = useState(existing?.body ?? '');
@@ -86,12 +93,17 @@ export function ReviewForm(props: Props) {
         });
         setBody('');
         setMessage(t('form.posted'));
+        props.onSubmitted?.();
       }
     } catch (error) {
       if (error instanceof ApiError && error.status === 401 && props.mode === 'planner') return props.onUnauthorized();
       setFailed(true);
       if (error instanceof ApiError && error.reason === 'terms_not_accepted') {
         setMessage(tTerms('required'));
+        return;
+      }
+      if (error instanceof ApiError && error.reason === 'contribution_closed') {
+        setMessage(t('form.closed'));
         return;
       }
       const code = error instanceof ApiError ? error.code : 'generic';
@@ -125,7 +137,11 @@ export function ReviewForm(props: Props) {
         </div>
       ) : null}
 
-      {props.mode === 'guest' ? (
+      {props.mode === 'guest' && props.fixedPlace ? (
+        <p className="text-sm">
+          <span className="font-medium">{t('form.place')}:</span> {props.fixedPlace.name}
+        </p>
+      ) : props.mode === 'guest' ? (
         <Field id={`${uid}-place`} label={t('form.place')} hint={t('form.placeHint')}>
           <select
             id={`${uid}-place`}

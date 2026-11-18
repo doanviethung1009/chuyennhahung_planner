@@ -4,7 +4,7 @@
 
 ## Summary
 
-Visitors can browse the places of a destination and open a page for each one: category, location, description, photos, suggested time, estimated cost, Hưng's rating and note, and the approved traveller reviews (read-only). Vietnamese is the default; English is a translation.
+Visitors can browse the places of a destination and open a page for each one: category, location, description, photos, suggested time, estimated cost, Hưng's rating and note, and the approved traveller reviews with a form to write one (see [community-reviews.md](community-reviews.md)). Vietnamese is the default; English is a translation.
 
 ## Routes
 
@@ -30,6 +30,7 @@ Reads the `Place` collection of the content repository (`placeInputSchema`) and 
 | `src/app/[locale]/destinations/[slug]/page.tsx` | "Places" section |
 | `src/server/content/public-places.ts` | Allow-list read of places |
 | `src/components/cards/place-card.tsx` | Place card |
+| `src/components/places/place-review-section.tsx` | Review form block on the page (PLACES-UI-S2) |
 | `src/lib/place-format.ts` | Duration and cost wording |
 | `src/i18n/routing.ts`, `src/app/sitemap.ts` | Route and sitemap |
 | `messages/vi.json`, `messages/en.json` | `places` namespace |
@@ -40,4 +41,4 @@ Reads the `Place` collection of the content repository (`placeInputSchema`) and 
 
 ## Limits and open questions
 
-No places index, search or filter, no map, no review form (next contract), no add-to-trip button. Alt text is generic until the schema has per-image alt. Place coordinates are not shown. Placeholder catalogue places would be public as they are.
+No places index, search or filter, no map, no add-to-trip button. The page shows the 20 newest reviews, with no pagination; paging needs a `limit`/`cursor` on `GET /api/community/reviews` (decision PLACES-UI-S2). Alt text is generic until the schema has per-image alt. Place coordinates are not shown. Placeholder catalogue places would be public as they are.

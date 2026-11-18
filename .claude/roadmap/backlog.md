@@ -168,3 +168,4 @@ Việc còn mở — chưa có ID backlog riêng, chờ chủ dự án xếp:
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
 | PLACES-UI-S1 | Public Places UI: mục "Địa điểm" trên `/destinations/[slug]`, trang `/dia-diem/[slug]` (EN `/places/[slug]`), review chỉ đọc, ADR 0026. Contract: `.claude/contracts/places-ui-s1-public-places.md` | main session (FE+BE) | — |
+| PLACES-UI-S2 | Place reviews UI: khối review và form viết review (khách/thành viên) trên trang địa điểm, 20 review mới nhất, không đổi API. Contract: `.claude/contracts/places-ui-s2-place-reviews.md` | main session (FE) | S1 |

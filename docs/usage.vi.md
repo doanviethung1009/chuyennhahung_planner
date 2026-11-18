@@ -369,7 +369,7 @@ Bản sửa đã publish hiện trên site công khai ngay ở request kế ti�
 
 ### Địa điểm công khai
 
-Mọi địa điểm trong catalogue nội dung đều công khai: trang của nó là `/dia-diem/<slug>` (`/en/places/<slug>`) và nó nằm trong mục "Địa điểm" của trang điểm đến (khớp theo `destinationSlug`). Thêm hay bỏ một địa điểm qua `/quan-tri/noi-dung/dia-diem` hoặc token API; không có trạng thái nháp nên địa điểm vừa lưu hiện ngay. Ảnh lấy từ `images` của địa điểm (ảnh đầu là ảnh bìa). Review đã duyệt của địa điểm hiện trên trang. Chi tiết: [features/places.vi.md](features/places.vi.md), [ADR 0026](adr/0026-public-places-routes.vi.md).
+Mọi địa điểm trong catalogue nội dung đều công khai: trang của nó là `/dia-diem/<slug>` (`/en/places/<slug>`) và nó nằm trong mục "Địa điểm" của trang điểm đến (khớp theo `destinationSlug`). Thêm hay bỏ một địa điểm qua `/quan-tri/noi-dung/dia-diem` hoặc token API; không có trạng thái nháp nên địa điểm vừa lưu hiện ngay. Ảnh lấy từ `images` của địa điểm (ảnh đầu là ảnh bìa). 20 review đã duyệt mới nhất của địa điểm hiện trên trang, kèm form để thêm review: khách viết với tư cách khách, thành viên đã đăng nhập viết (và sửa, xóa) review của mình ngay tại đó, và địa điểm không cần nằm trong chuyến nào. Chi tiết: [features/places.vi.md](features/places.vi.md), [ADR 0026](adr/0026-public-places-routes.vi.md).
 
 ### Nạp các bài viết tĩnh vào content store
 

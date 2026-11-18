@@ -1199,6 +1199,11 @@
     "anonymous": "Anonymous",
     "visited": "visited {date}",
     "selfReported": "Self-reported, not verified.",
+    "placePage": {
+      "writeTitle": "Write a review for this place",
+      "loading": "Checking your sign-in…",
+      "yourReview": "Your review of this place"
+    },
     "planner": {
       "title": "Review the places in this trip",
       "intro": "Write a review for the places you visited. It goes public as soon as you send it; Nhà Hưng may remove content that breaks the terms.",

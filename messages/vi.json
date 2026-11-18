@@ -1199,6 +1199,11 @@
     "anonymous": "Ẩn danh",
     "visited": "đến ngày {date}",
     "selfReported": "Tự khai, chưa được xác minh.",
+    "placePage": {
+      "writeTitle": "Viết đánh giá về địa điểm này",
+      "loading": "Đang kiểm tra phiên đăng nhập…",
+      "yourReview": "Đánh giá của bạn về địa điểm này"
+    },
     "planner": {
       "title": "Đánh giá các địa điểm trong chuyến",
       "intro": "Viết đánh giá cho những địa điểm bạn đã đến. Đánh giá hiện công khai ngay sau khi gửi; Nhà Hưng có thể gỡ nội dung vi phạm.",
