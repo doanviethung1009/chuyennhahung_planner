@@ -38,4 +38,4 @@ Store mode comes from the **presence** of `PLANNER_DATABASE_URL` / `CONTENT_DATA
 
 ## Limits and open questions
 
-When the **Planner** database is down a super admin cannot sign in (the session lives there), so the page is reachable only while the Planner answers; a Content outage shows as `unreachable`. Backups stay "not configured" until the owner supplies facts. A `/sec-check` is recommended before merge (information-leak risk).
+When the **Planner** database is down a super admin cannot sign in (the session lives there). The Planner repository also builds the Content repository (`src/server/planner/instance.ts`), so a Content database that is unreachable when the process starts blocks sign-in too. The page therefore shows `unreachable` only for a database that fails *after* the instances are built (or a probe that stalls); a database already down at startup is seen as a failed sign-in, not on this page. Backups stay "not configured" until the owner supplies facts. A `/sec-check` is recommended before merge (information-leak risk).

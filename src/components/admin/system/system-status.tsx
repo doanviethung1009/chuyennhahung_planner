@@ -7,8 +7,9 @@ const dl = 'mt-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-x-4 gap-y-2 
 type T = Awaited<ReturnType<typeof getTranslations<'adminSystem'>>>;
 
 function Row({ label, children, tone }: { label: string; children: React.ReactNode; tone?: 'bad' | 'good' }) {
-  // The state is always spelled out in words; colour only reinforces it.
-  const colour = tone === 'bad' ? 'text-danger' : tone === 'good' ? 'text-primary-strong' : '';
+  // The state is always spelled out in words; colour (existing tokens only) and an underline reinforce it.
+  const colour =
+    tone === 'bad' ? 'text-primary-strong underline decoration-2 underline-offset-4' : tone === 'good' ? 'text-accent' : '';
   return (
     <>
       <dt className="text-foreground-muted">{label}</dt>

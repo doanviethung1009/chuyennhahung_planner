@@ -38,4 +38,4 @@ Chế độ kho suy ra từ việc **có mặt** của `PLANNER_DATABASE_URL` / 
 
 ## Limits and open questions
 
-Khi cơ sở dữ liệu của **Planner** hỏng, super admin không đăng nhập được (phiên nằm ở đó), nên trang chỉ vào được khi Planner còn trả lời; sự cố Content hiện là `unreachable`. Sao lưu giữ "chưa cấu hình" tới khi chủ dự án cung cấp thông tin. Khuyến nghị `/sec-check` trước khi merge (rủi ro lộ thông tin).
+Khi cơ sở dữ liệu của **Planner** hỏng, super admin không đăng nhập được (phiên nằm ở đó). Repository Planner cũng dựng repository Content (`src/server/planner/instance.ts`), nên cơ sở dữ liệu Content không kết nối được lúc tiến trình khởi động cũng chặn đăng nhập. Vì vậy trang chỉ hiện `unreachable` cho cơ sở dữ liệu hỏng *sau khi* các instance đã dựng xong (hoặc probe bị treo); cơ sở dữ liệu đã hỏng từ lúc khởi động sẽ thể hiện là đăng nhập thất bại, không phải trên trang này. Sao lưu giữ "chưa cấu hình" tới khi chủ dự án cung cấp thông tin. Khuyến nghị `/sec-check` trước khi merge (rủi ro lộ thông tin).
