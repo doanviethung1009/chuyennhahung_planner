@@ -1180,9 +1180,9 @@
       "erase": "Đã xóa vĩnh viễn nội dung đánh giá.",
       "mute": "Đã tắt tác giả. Đánh giá của họ bị ẩn cho tới khi bạn gỡ."
     },
-    "tripsHeading": "Chuyến đi",
+    "tripsHeading": "Chuyến chờ duyệt",
     "restrictionsHeading": "Tác giả bị tắt",
-    "reviewsHeading": "Đánh giá địa điểm",
+    "reviewsHeading": "Đánh giá chờ duyệt",
     "reviews": {
       "empty": "Chưa có đánh giá nào.",
       "meta": "{rating} sao · {author} · {source}",
@@ -1239,6 +1239,33 @@
       "inactive": "Đã kết thúc",
       "lift": "Gỡ",
       "lifted": "Đã gỡ hạn chế."
+    },
+    "workspace": {
+      "navLabel": "Các mục kiểm duyệt",
+      "countLabel": "{count} mục",
+      "nav": {
+        "trips": "Chuyến chờ duyệt",
+        "reviews": "Đánh giá chờ duyệt",
+        "held": "Đánh giá đang giữ",
+        "reports": "Báo cáo",
+        "restrictions": "Tác giả bị tắt"
+      },
+      "decided": "Đã xử lý",
+      "heldHeading": "Đánh giá đang giữ",
+      "otherReviewsHeading": "Các đánh giá khác",
+      "emptyPending": {
+        "trips": "Không có chuyến nào đang chờ duyệt.",
+        "reviews": "Không có đánh giá nào đang chờ duyệt.",
+        "held": "Không có đánh giá nào đang bị giữ."
+      },
+      "history": {
+        "show": "Lịch sử",
+        "hide": "Ẩn lịch sử",
+        "loading": "Đang tải lịch sử…",
+        "empty": "Chưa có thao tác nào được ghi lại.",
+        "failed": "Không tải được lịch sử. Hãy thử lại.",
+        "by": "{by} · {date}"
+      }
     }
   },
   "communityReviews": {

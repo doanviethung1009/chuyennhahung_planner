@@ -9,6 +9,9 @@ import { LiveNotice } from '@/components/admin/content/notices';
 import { useErrorNotice, type Notice } from '@/components/admin/content/use-record';
 import type { RestrictionListItem } from '@/server/planner/schemas';
 import { PlaceLink } from './place-link';
+import { EmptyState, ItemActions, QueueSection, StatusBadge } from './queue-parts';
+import { sectionId } from './workspace-model';
+import { useReportCount } from './workspace';
 
 /**
  * Staff list of switched-off authors (ADR 0015). Shows the reason, who did it
@@ -17,6 +20,7 @@ import { PlaceLink } from './place-link';
  */
 export function RestrictionList() {
   const t = useTranslations('adminCommunity.restrictions');
+  const tc = useTranslations('adminCommunity');
   const locale = useLocale() as Locale;
   const describe = useErrorNotice();
   const [items, setItems] = useState<RestrictionListItem[] | null>(null);
@@ -31,6 +35,8 @@ export function RestrictionList() {
       setNotice(describe(failure));
     }
   }, [describe]);
+
+  useReportCount('restrictions', items ? items.length : null);
 
   useEffect(() => {
     // Fetch once on mount.
@@ -55,14 +61,14 @@ export function RestrictionList() {
   const when = (iso: string) => new Date(iso).toLocaleString(locale);
 
   return (
-    <div className="grid gap-4">
+    <QueueSection id={sectionId('restrictions')} heading={tc('restrictionsHeading')} count={items ? items.length : null}>
       <LiveNotice notice={notice} onReload={() => void load()} />
       {items === null ? null : items.length === 0 ? (
-        <p className="text-base text-foreground-muted">{t('empty')}</p>
+        <EmptyState>{t('empty')}</EmptyState>
       ) : (
-        <ul className="grid gap-3">
+        <ul className="grid gap-4">
           {items.map((item) => (
-            <li key={item.id} className="grid gap-2 rounded-md border border-border-subtle bg-surface p-4">
+            <li key={item.id} className="grid gap-3 rounded-md border border-border-subtle bg-surface p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="grid gap-1">
                   <p className="text-base font-medium">
@@ -77,12 +83,10 @@ export function RestrictionList() {
                     {item.liftedAt ? ` · ${t('liftedBy', { by: item.liftedBy ?? '', date: when(item.liftedAt) })}` : ''}
                   </p>
                 </div>
-                <span className="inline-flex items-center rounded-pill border border-border-strong bg-surface-muted px-3 py-1 text-xs font-medium">
-                  {item.active ? t('active') : t('inactive')}
-                </span>
+                <StatusBadge>{item.active ? t('active') : t('inactive')}</StatusBadge>
               </div>
               {item.active ? (
-                <div>
+                <ItemActions>
                   <button
                     type="button"
                     disabled={busyId === item.id}
@@ -91,12 +95,12 @@ export function RestrictionList() {
                   >
                     {t('lift')}
                   </button>
-                </div>
+                </ItemActions>
               ) : null}
             </li>
           ))}
         </ul>
       )}
-    </div>
+    </QueueSection>
   );
 }

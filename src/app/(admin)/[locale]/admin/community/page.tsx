@@ -10,6 +10,7 @@ import { ListingQueue } from '@/components/admin/community/listing-queue';
 import { CommunityReviewQueue } from '@/components/admin/community/review-queue';
 import { ReportQueue } from '@/components/admin/community/report-queue';
 import { RestrictionList } from '@/components/admin/community/restriction-list';
+import { ModerationWorkspace, WorkspaceNav } from '@/components/admin/community/workspace';
 import { can } from '@/server/identity/permissions';
 
 // Reads the session cookie on every request: never prerendered or cached.
@@ -37,42 +38,21 @@ export default async function AdminCommunityPage({ params }: Params) {
 
   const access = await requireStaff(locale, getPathname({ href: '/admin/community' as const, locale }), 'content');
   const t = await getTranslations('adminCommunity');
-  const tReports = await getTranslations('adminReports');
   const canRestrict = can(access.principal, 'community:restrict');
 
   return (
-    <>
+    <ModerationWorkspace>
       <AdminPageHeader title={t('title')} description={t('description')} />
+      <WorkspaceNav canRestrict={canRestrict} />
       <Container width="wide">
-        <div className="grid gap-8 py-10 md:py-14">
-          <section aria-labelledby="queue-trips-heading" className="grid gap-4">
-            <h2 id="queue-trips-heading" className="font-display text-2xl font-semibold">
-              {t('tripsHeading')}
-            </h2>
-            <ListingQueue />
-          </section>
-          <section aria-labelledby="queue-reviews-heading" className="grid gap-4">
-            <h2 id="queue-reviews-heading" className="font-display text-2xl font-semibold">
-              {t('reviewsHeading')}
-            </h2>
-            <CommunityReviewQueue canRestrict={canRestrict} canErase={can(access.principal, 'community:erase')} />
-          </section>
-          <section aria-labelledby="queue-reports-heading" className="grid gap-4">
-            <h2 id="queue-reports-heading" className="font-display text-2xl font-semibold">
-              {tReports('heading')}
-            </h2>
-            <ReportQueue />
-          </section>
-          {canRestrict ? (
-            <section aria-labelledby="queue-restrictions-heading" className="grid gap-4">
-              <h2 id="queue-restrictions-heading" className="font-display text-2xl font-semibold">
-                {t('restrictionsHeading')}
-              </h2>
-              <RestrictionList />
-            </section>
-          ) : null}
+        {/* Fixed triage order: trips, pending reviews, held reviews, reports, restrictions. */}
+        <div className="grid gap-10 py-10 md:py-14">
+          <ListingQueue />
+          <CommunityReviewQueue canRestrict={canRestrict} canErase={can(access.principal, 'community:erase')} />
+          <ReportQueue />
+          {canRestrict ? <RestrictionList /> : null}
         </div>
       </Container>
-    </>
+    </ModerationWorkspace>
   );
 }

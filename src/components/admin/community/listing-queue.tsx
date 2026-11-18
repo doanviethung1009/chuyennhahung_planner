@@ -11,6 +11,9 @@ import { inputClass } from '@/components/planner/field';
 import { LiveNotice } from '@/components/admin/content/notices';
 import { useErrorNotice, type Notice } from '@/components/admin/content/use-record';
 import type { ListingQueueItem } from '@/server/planner/schemas';
+import { EmptyState, HistoryLink, ItemActions, QueueSection, StatusBadge } from './queue-parts';
+import { sectionId, splitTrips } from './workspace-model';
+import { useReportCount } from './workspace';
 
 type Decision = 'approve' | 'reject' | 'remove';
 
@@ -33,6 +36,9 @@ export function ListingQueue() {
       setNotice(describe(failure));
     }
   }, [describe]);
+
+  const groups = items ? splitTrips(items) : null;
+  useReportCount('trips', groups ? groups.pending.length : null);
 
   useEffect(() => {
     // Fetch once on mount.
@@ -59,132 +65,145 @@ export function ListingQueue() {
     }
   }
 
+  const renderItem = (item: ListingQueueItem) => {
+    const destination = getDestination(item.destinationSlug)?.name[locale] ?? item.destinationSlug;
+    const status = item.listing.status;
+    const isAsking = asking?.id === item.tripId;
+    return (
+      <li key={item.tripId} className="grid gap-3 rounded-md border border-border-subtle bg-surface p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="grid gap-1">
+            {/* Traveller-written: plain text only. */}
+            <h3 className="font-display text-xl text-foreground">{item.title}</h3>
+            <p className="text-sm text-foreground-muted">
+              {t('meta', {
+                owner: item.ownerDisplayName,
+                destination,
+                days: item.durationDays,
+                activities: item.activityCount,
+                author: t(`author.${item.listing.authorDisplay}`),
+              })}
+            </p>
+            <p className="text-sm text-foreground-muted">
+              {t('requested', { date: new Date(item.listing.requestedAt).toLocaleString(locale) })}
+            </p>
+            {item.listing.rejectReason ? (
+              <p className="text-sm text-foreground-muted">{t('reason', { reason: item.listing.rejectReason })}</p>
+            ) : null}
+          </div>
+          <StatusBadge>{t(`statuses.${status}`)}</StatusBadge>
+        </div>
+
+        <ItemActions>
+          {item.shareToken ? (
+            <a
+              href={getPathname({ href: { pathname: '/shared/[token]', params: { token: item.shareToken } }, locale })}
+              target="_blank"
+              rel="noreferrer"
+              className={buttonClass({ variant: 'ghost', size: 'sm' })}
+            >
+              {t('view')}
+            </a>
+          ) : null}
+          {status === 'pending' ? (
+            <>
+              <button
+                type="button"
+                disabled={busyId === item.tripId}
+                className={buttonClass({ size: 'sm' })}
+                onClick={() => void decide(item, 'approve')}
+              >
+                {t('approve')}
+              </button>
+              <button
+                type="button"
+                disabled={busyId === item.tripId}
+                className={buttonClass({ variant: 'secondary', size: 'sm' })}
+                onClick={() => setAsking({ id: item.tripId, decision: 'reject' })}
+              >
+                {t('reject')}
+              </button>
+            </>
+          ) : null}
+          {status === 'approved' ? (
+            <button
+              type="button"
+              disabled={busyId === item.tripId}
+              className={buttonClass({ variant: 'secondary', size: 'sm' })}
+              onClick={() => setAsking({ id: item.tripId, decision: 'remove' })}
+            >
+              {t('remove')}
+            </button>
+          ) : null}
+          <HistoryLink targetId={item.tripId} />
+        </ItemActions>
+
+        {isAsking && asking ? (
+          <form
+            className="grid gap-3 border-t border-border-subtle pt-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void decide(item, asking.decision, reason.trim());
+            }}
+          >
+            <label htmlFor={`reason-${item.tripId}`} className="text-sm font-medium">
+              {t('reasonLabel')}
+            </label>
+            <textarea
+              id={`reason-${item.tripId}`}
+              className={inputClass}
+              rows={3}
+              required
+              minLength={3}
+              maxLength={500}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+            <div className="flex flex-wrap gap-3">
+              <button type="submit" disabled={busyId === item.tripId} className={buttonClass({ size: 'sm' })}>
+                {t(`confirm.${asking.decision}`)}
+              </button>
+              <button
+                type="button"
+                className={buttonClass({ variant: 'ghost', size: 'sm' })}
+                onClick={() => {
+                  setAsking(null);
+                  setReason('');
+                }}
+              >
+                {t('cancel')}
+              </button>
+            </div>
+          </form>
+        ) : null}
+      </li>
+    );
+  };
+
+  const pending = groups?.pending ?? [];
+  const decided = groups?.decided ?? [];
+
   return (
-    <div className="grid gap-6">
+    <QueueSection id={sectionId('trips')} heading={t('tripsHeading')} count={groups ? pending.length : null}>
       <LiveNotice notice={notice} onReload={() => void load()} />
       {items === null ? (
         notice ? null : <p className="text-base text-foreground-muted">{t('loading')}</p>
       ) : items.length === 0 ? (
-        <p className="text-base text-foreground-muted">{t('empty')}</p>
+        <EmptyState>{t('empty')}</EmptyState>
       ) : (
-        <ul className="grid gap-4">
-          {items.map((item) => {
-            const destination = getDestination(item.destinationSlug)?.name[locale] ?? item.destinationSlug;
-            const status = item.listing.status;
-            const isAsking = asking?.id === item.tripId;
-            return (
-              <li key={item.tripId} className="grid gap-3 rounded-md border border-border-subtle bg-surface p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="grid gap-1">
-                    {/* Traveller-written: plain text only. */}
-                    <h2 className="font-display text-xl text-foreground">{item.title}</h2>
-                    <p className="text-sm text-foreground-muted">
-                      {t('meta', {
-                        owner: item.ownerDisplayName,
-                        destination,
-                        days: item.durationDays,
-                        activities: item.activityCount,
-                        author: t(`author.${item.listing.authorDisplay}`),
-                      })}
-                    </p>
-                    <p className="text-sm text-foreground-muted">
-                      {t('requested', { date: new Date(item.listing.requestedAt).toLocaleString(locale) })}
-                    </p>
-                    {item.listing.rejectReason ? (
-                      <p className="text-sm text-foreground-muted">{t('reason', { reason: item.listing.rejectReason })}</p>
-                    ) : null}
-                  </div>
-                  <span className="inline-flex items-center rounded-pill border border-border-strong bg-surface-muted px-3 py-1 text-xs font-medium">
-                    {t(`statuses.${status}`)}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-3">
-                  {item.shareToken ? (
-                    <a
-                      href={getPathname({ href: { pathname: '/shared/[token]', params: { token: item.shareToken } }, locale })}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={buttonClass({ variant: 'ghost', size: 'sm' })}
-                    >
-                      {t('view')}
-                    </a>
-                  ) : null}
-                  {status === 'pending' ? (
-                    <>
-                      <button
-                        type="button"
-                        disabled={busyId === item.tripId}
-                        className={buttonClass({ size: 'sm' })}
-                        onClick={() => void decide(item, 'approve')}
-                      >
-                        {t('approve')}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busyId === item.tripId}
-                        className={buttonClass({ variant: 'secondary', size: 'sm' })}
-                        onClick={() => setAsking({ id: item.tripId, decision: 'reject' })}
-                      >
-                        {t('reject')}
-                      </button>
-                    </>
-                  ) : null}
-                  {status === 'approved' ? (
-                    <button
-                      type="button"
-                      disabled={busyId === item.tripId}
-                      className={buttonClass({ variant: 'secondary', size: 'sm' })}
-                      onClick={() => setAsking({ id: item.tripId, decision: 'remove' })}
-                    >
-                      {t('remove')}
-                    </button>
-                  ) : null}
-                </div>
-
-                {isAsking && asking ? (
-                  <form
-                    className="grid gap-3 border-t border-border-subtle pt-4"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      void decide(item, asking.decision, reason.trim());
-                    }}
-                  >
-                    <label htmlFor={`reason-${item.tripId}`} className="text-sm font-medium">
-                      {t('reasonLabel')}
-                    </label>
-                    <textarea
-                      id={`reason-${item.tripId}`}
-                      className={inputClass}
-                      rows={3}
-                      required
-                      minLength={3}
-                      maxLength={500}
-                      value={reason}
-                      onChange={(e) => setReason(e.target.value)}
-                    />
-                    <div className="flex flex-wrap gap-3">
-                      <button type="submit" disabled={busyId === item.tripId} className={buttonClass({ size: 'sm' })}>
-                        {t(`confirm.${asking.decision}`)}
-                      </button>
-                      <button
-                        type="button"
-                        className={buttonClass({ variant: 'ghost', size: 'sm' })}
-                        onClick={() => {
-                          setAsking(null);
-                          setReason('');
-                        }}
-                      >
-                        {t('cancel')}
-                      </button>
-                    </div>
-                  </form>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
+        <>
+          {pending.length === 0 ? (
+            <EmptyState>{t('workspace.emptyPending.trips')}</EmptyState>
+          ) : (
+            <ul className="grid gap-4">{pending.map(renderItem)}</ul>
+          )}
+          {decided.length > 0 ? (
+            <QueueSection id="trips-decided" heading={t('workspace.decided')} count={decided.length} level={3}>
+              <ul className="grid gap-4">{decided.map(renderItem)}</ul>
+            </QueueSection>
+          ) : null}
+        </>
       )}
-    </div>
+    </QueueSection>
   );
 }
