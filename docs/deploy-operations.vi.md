@@ -165,11 +165,11 @@ du -sh /opt/chuyennhahung/data/* /opt/chuyennhahung/logs /opt/chuyennhahung/back
   [`deploy/logrotate/chuyennhahung`](../deploy/logrotate/chuyennhahung) giữ access log
   14 ngày và error log 30 ngày; `deploy/scripts/setup-host.sh` cài nó vào
   `/etc/logrotate.d/`. Access log dùng định dạng riêng, ghi đường dẫn đã chuẩn hoá (không có
-  query string), che các đường dẫn chứa token chia sẻ (`/chia-se/`, `/en/shared/`,
-  `/api/shared/`) và không bao giờ ghi `Cookie`, `Authorization` hay `Referer`. nginx vẫn có
+  query string), che các đường dẫn chứa token chia sẻ (`/chia-se/`, `/shared/`,
+  `/api/shared/`, có hoặc không có tiền tố `/vi`, `/en`) và không bao giờ ghi `Cookie`, `Authorization` hay `Referer`. nginx vẫn có
   thể ghi nguyên dòng request vào `error.log`, nên coi file đó là nhạy cảm. Reload nginx sau
   khi đổi định dạng. Container cũng tự giới hạn log (10 MB × 3) và bộ nhớ (`APP_MEM_LIMIT`,
-  `POSTGRES_MEM_LIMIT`) trong các file compose. `limit_req` tính theo địa chỉ client: sau proxy hay tunnel khác phải thêm `set_real_ip_from` trước, nếu không mọi client dùng chung một bucket. Chưa kiểm chứng trên VM.
+  `POSTGRES_MEM_LIMIT`) trong các file compose. `limit_req` tính theo địa chỉ client: sau proxy hay tunnel khác phải thêm `set_real_ip_from` trước, nếu không mọi client dùng chung một bucket. Hãy xoay vòng hoặc xoá `access.log` được ghi trước khi áp dụng định dạng này (dòng cũ chứa nguyên dòng request). Stack có nginx riêng (`deploy/nginx-app.conf`) giữ định dạng log của nó: repo này không kiểm soát. Chưa kiểm chứng trên VM.
 - **Bản sao lưu** cũ hơn 14 ngày được script xoá; bản chép ra khỏi VM do bạn tự dọn.
 
 ## Nâng cấp
