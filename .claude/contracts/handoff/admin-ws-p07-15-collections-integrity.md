@@ -7,4 +7,5 @@
 - Checks: typecheck PASS; lint PASS (no output); test PASS (99 files, 1245 passed, 89 skipped); build PASS. Smoke UI 375/768/1280: NOT RUN (no admin login; passwords not entered). /qc-check, /sec-check: NOT RUN.
 - Risks: collections writable by every editor session (same as stories/places); a trust boundary moved token→session, so `/sec-check` is recommended before merge. If-Match stays optional for token callers.
 - Not offered in UI: collection create/delete (API supports; needs confirm pattern).
-- Open: commit per role (backend, then frontend/docs) and PR need owner authorisation.
+- Owner decision 2026-11-19 (data protection): collection DELETE stays token-only (sessions refused); test added. Backlog row added for Archive → Restore → Permanent Delete (`super_admin`), ID to be assigned by the owner.
+- Open: merge is the owner's.

@@ -14,7 +14,7 @@ Editors manage destination collections in the browser — list, search, sort, ed
 | `/admin/content/collections/[slug]` | `/quan-tri/noi-dung/bo-suu-tap/[slug]` | `/en/admin/content/collections/[slug]` |
 | `/admin/content/integrity` | `/quan-tri/noi-dung/toan-ven` | `/en/admin/content/integrity` |
 
-API routes that moved from token-only to `adminContentRoute(request, { action: 'content:write', session: true })`: `GET`/`POST /api/admin/travel/collections`, `GET`/`PATCH`/`DELETE …/collections/[slug]`, `POST …/collections/[slug]/status`, `GET /api/admin/travel/integrity`. `GET /api/admin/planner/integrity` now passes `{ action: 'user:provision', session: true }`. The service token keeps working on all of them. `templates/**` is untouched (CORE-5).
+API routes that moved from token-only to `adminContentRoute(request, { action: 'content:write', session: true })`: `GET`/`POST /api/admin/travel/collections`, `GET`/`PATCH …/collections/[slug]` (`DELETE` stays token-only by owner decision), `POST …/collections/[slug]/status`, `GET /api/admin/travel/integrity`. `GET /api/admin/planner/integrity` now passes `{ action: 'user:provision', session: true }`. The service token keeps working on all of them. `templates/**` is untouched (CORE-5).
 
 ## Data
 

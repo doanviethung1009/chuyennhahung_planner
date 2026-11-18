@@ -14,7 +14,7 @@ Editor quản lý bộ sưu tập điểm đến ngay trên trình duyệt — x
 | `/admin/content/collections/[slug]` | `/quan-tri/noi-dung/bo-suu-tap/[slug]` | `/en/admin/content/collections/[slug]` |
 | `/admin/content/integrity` | `/quan-tri/noi-dung/toan-ven` | `/en/admin/content/integrity` |
 
-Route API chuyển từ chỉ-token sang `adminContentRoute(request, { action: 'content:write', session: true })`: `GET`/`POST /api/admin/travel/collections`, `GET`/`PATCH`/`DELETE …/collections/[slug]`, `POST …/collections/[slug]/status`, `GET /api/admin/travel/integrity`. `GET /api/admin/planner/integrity` nay truyền `{ action: 'user:provision', session: true }`. Service token vẫn dùng được ở tất cả. `templates/**` không đổi (CORE-5).
+Route API chuyển từ chỉ-token sang `adminContentRoute(request, { action: 'content:write', session: true })`: `GET`/`POST /api/admin/travel/collections`, `GET`/`PATCH …/collections/[slug]` (`DELETE` vẫn chỉ token theo quyết định của chủ dự án), `POST …/collections/[slug]/status`, `GET /api/admin/travel/integrity`. `GET /api/admin/planner/integrity` nay truyền `{ action: 'user:provision', session: true }`. Service token vẫn dùng được ở tất cả. `templates/**` không đổi (CORE-5).
 
 ## Data
 
