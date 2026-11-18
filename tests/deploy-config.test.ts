@@ -436,9 +436,23 @@ describe('nginx logging policy', () => {
     expect(conf).toMatch(/error_log\s+\/var\/log\/nginx\/error\.log\s+warn\s*;/);
   });
 
-  it('masks every share-token path', () => {
-    for (const area of ['chia-se', 'en/shared', 'api/shared']) expect(conf).toContain(area);
+  it('masks every share-token path, with and without a locale prefix', () => {
+    // The map's own regex, run against real URIs (PCRE and JS agree on this subset).
+    const rx = conf.match(/~(\^\/[^\s]+)\s+\/\$area\/\[redacted\]/)?.[1];
+    expect(rx).toBeTruthy();
+    const masked = new RegExp(rx!);
+    for (const uri of [
+      '/chia-se/TOKEN', '/vi/chia-se/TOKEN', '/en/chia-se/TOKEN',
+      '/shared/TOKEN', '/vi/shared/TOKEN', '/en/shared/TOKEN', '/api/shared/TOKEN',
+    ]) expect(masked.test(uri), uri).toBe(true);
+    for (const uri of ['/vi/stories', '/en/stories/shared-things', '/api/planner/abc/share/rotate', '/api/health']) {
+      expect(masked.test(uri), uri).toBe(false);
+    }
     expect(conf).toContain('[redacted]');
+  });
+
+  it('never references the image\'s `main` or `combined` access-log formats', () => {
+    expect(conf).not.toMatch(/\b(main|combined)\b/);
   });
 
   it('rotates access 14 days and error 30 days, and setup-host installs it', () => {
