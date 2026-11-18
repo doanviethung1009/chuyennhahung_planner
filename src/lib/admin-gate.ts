@@ -42,7 +42,7 @@ export function noIndex(metadata: Metadata): Metadata {
 }
 
 /** One sidebar link: the internal route plus the message key under `adminContent.nav`. */
-export type AdminLinkKey = 'overview' | 'stories' | 'places' | 'reviews' | 'community' | 'users' | 'runbook' | 'audit';
+export type AdminLinkKey = 'overview' | 'stories' | 'places' | 'reviews' | 'community' | 'users' | 'runbook' | 'system' | 'audit';
 export type AdminGroupId = 'overview' | 'content' | 'community' | 'people' | 'operations';
 export type AdminNavLink = { href: StaticPathname; label: AdminLinkKey };
 export type AdminNavGroup = { id: AdminGroupId; links: AdminNavLink[] };
@@ -81,6 +81,7 @@ export function adminSidebarGroups(principal: Principal): AdminNavGroup[] {
       links: [
         ...(can(principal, 'audit:read') ? [{ href: '/admin/audit' as const, label: 'audit' as const }] : []),
         ...(can(principal, 'runbook:read') ? [{ href: '/admin/runbook' as const, label: 'runbook' as const }] : []),
+        ...(can(principal, 'runbook:read') ? [{ href: '/admin/system' as const, label: 'system' as const }] : []),
       ],
     },
   ];

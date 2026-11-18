@@ -1,0 +1,12 @@
+# Handoff — P07-17 System status page
+- Branch: `claude/admin-system-status-7d6949` (contract names `feat/admin-system-status`; rename before PR). PR: none (not authorized). Nothing committed.
+- Done: `GET /api/admin/system` (`runbook:read`, no-store), `/admin/system` (`/quan-tri/he-thong`), allow-listed `SystemStatus` in `src/server/admin/system.ts`, sidebar link under Operations, VI/EN messages (`adminSystem`), feature doc + VI twin, README rows, `docs/runbook.*` API row.
+- Outside the plan: `tests/admin-layout.test.ts:72` page count 12 → 13 (new admin page).
+- Behaviour: super admin 200; admin/editor/member/service token 403; anonymous 401; page 404 for non-super-admin via `requireStaff(...,'runbook')`.
+- Checks: typecheck PASS; lint PASS (no output); test PASS (90 files passed, 3 skipped; 1163 tests passed, 89 skipped); build PASS (routes listed).
+- Tests: `tests/admin-system.test.ts` (role matrix, sentinel no-leak, DB-down, probe throws, sidebar/page gate); `runbook.test.ts` sync passes.
+- UI smoke 375/768/1280 with super admin login: NOT RUN.
+- `/qc-check`: NOT RUN. `/sec-check`: NOT RUN — recommended (leak risk).
+- Risks: when the Planner DB is down a super admin cannot sign in, so the page is unreachable then (Content DB down shows "unreachable"). `buildId` reads `.next/BUILD_ID`, null in dev.
+- Open: owner backup facts (D10) keep backups "not configured". Contract State not updated to DONE (index/roadmap belong to CORE-0).
+- Next: owner review, authorize commit/PR, then `/sec-check`.
