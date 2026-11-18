@@ -126,6 +126,12 @@ describe('admin sidebar visibility (ADR 0020 §2)', () => {
     expect(hrefs('super_admin')).toEqual(expect.arrayContaining(['/admin/users', '/admin/runbook']));
   });
 
+  it('shows the audit log to admins and super admins, never to an editor', () => {
+    expect(hrefs('editor')).not.toContain('/admin/audit');
+    expect(hrefs('admin')).toContain('/admin/audit');
+    expect(hrefs('super_admin')).toContain('/admin/audit');
+  });
+
   it('drops a group with no visible link and renders no Media group yet', () => {
     expect(adminSidebarGroups({ role: 'member' }).map((group) => group.id)).toEqual(['overview']);
     for (const role of ['editor', 'admin', 'super_admin'] as const) {

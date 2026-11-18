@@ -669,7 +669,8 @@
       "breadcrumb": "Đường dẫn",
       "home": "Quản trị",
       "brand": "Chuyện Nhà Hưng · Quản trị",
-      "viewSite": "Xem trang chính"
+      "viewSite": "Xem trang chính",
+      "audit": "Nhật ký"
     },
     "overview": {
       "heading": "Chào mừng đến khu quản trị",
@@ -1388,6 +1389,55 @@
         "rateLimited": "Bạn thao tác hơi nhanh. Hãy đợi một chút rồi thử lại.",
         "generic": "Không thêm được địa điểm. Hãy thử lại sau."
       }
+    }
+  },
+  "adminAudit": {
+    "metaTitle": "Nhật ký quản trị",
+    "title": "Nhật ký quản trị",
+    "description": "Ai đã làm gì, lúc nào: tài khoản, nội dung và kiểm duyệt. Chỉ đọc; sự kiện được giữ một năm.",
+    "filtersLabel": "Lọc nhật ký",
+    "actor": "Người thực hiện",
+    "actorHint": "Mã tài khoản hoặc service",
+    "targetType": "Loại đối tượng",
+    "anyType": "Tất cả",
+    "action": "Hành động",
+    "anyAction": "Tất cả",
+    "from": "Từ ngày",
+    "to": "Đến ngày",
+    "apply": "Lọc",
+    "reset": "Xóa bộ lọc",
+    "tableLabel": "Nhật ký quản trị, cuộn ngang để xem đủ cột",
+    "colTime": "Thời gian",
+    "colActor": "Người thực hiện",
+    "colAction": "Hành động",
+    "colTarget": "Đối tượng",
+    "colChange": "Thay đổi",
+    "colReason": "Lý do",
+    "empty": "Không có sự kiện nào khớp bộ lọc.",
+    "next": "Trang sau",
+    "count": "{count} sự kiện",
+    "invalid": "Bộ lọc không hợp lệ; đã bỏ qua.",
+    "service": "service (token quản trị)",
+    "types": {
+      "trip": "Chuyến đi",
+      "review": "Đánh giá",
+      "user": "Tài khoản",
+      "story": "Bài viết"
+    },
+    "actions": {
+      "user_create": "Tạo tài khoản",
+      "role_change": "Đổi vai trò",
+      "password_reset": "Đặt lại mật khẩu",
+      "ban": "Khóa tài khoản",
+      "unban": "Mở khóa tài khoản",
+      "soft_delete": "Xóa mềm tài khoản",
+      "restore": "Khôi phục tài khoản",
+      "purge": "Xóa vĩnh viễn tài khoản",
+      "google_unlink": "Gỡ liên kết Google",
+      "token_rotate": "Xoay token",
+      "publish": "Xuất bản",
+      "unpublish": "Gỡ xuất bản",
+      "archive": "Lưu trữ"
     }
   }
 }

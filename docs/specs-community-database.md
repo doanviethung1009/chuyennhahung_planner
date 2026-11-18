@@ -4,7 +4,7 @@
 
 Status: **Proposed**. Labels **[C] [P] [A]**: see
 [specs-community-overview.md](specs-community-overview.md). Next free migration number is
-`0015` (`db/migrations/0014_guest_key_privacy.sql` exists, ADR 0024; Phase 11 takes `0015` and `0016`, [ADR 0025](adr/0025-member-profiles-and-use-this-trip.md)). No migration is
+`0016` (`db/migrations/0015_audit_admin_events.sql`, P07-13, took `0015`; Phase 11's two migrations take the next free numbers by merge order, [ADR 0025](adr/0025-member-profiles-and-use-this-trip.md)). No migration is
 written or run by this document.
 
 ## Goals and scope
@@ -91,7 +91,7 @@ erDiagram
 
 ### Migrations (proposed numbering)
 
-Proposed numbering, one migration per slice: `0010` `audit_events` (Phase 10, shipped) · `0011` rate-limit counters (Phase 10, shipped, [ADR 0019](adr/0019-community-foundation.md)) · `0012` `terms_acceptances` (Phase 10, shipped) · `0013` `reports` (Phase 10, shipped) · `0014` guest-key privacy (Phase 10, shipped, [ADR 0024](adr/0024-guest-identity-privacy.md)) · `0015` `member_profiles`, `0016` trip `origin` (Phase 11, proposed, [ADR 0025](adr/0025-member-profiles-and-use-this-trip.md); listing states are added with their own slice) · `0017` `journal_posts` (Phase 12) · `0018` `media_assets` (Phase 13) · `0019` follows, likes, saves, comments (Phase 14) · `0020` search columns, notifications (Phase 15). Each with rollback note, import/export update, and a test through both stores (ADR 0014 precedent).
+Proposed numbering, one migration per slice: `0010` `audit_events` (Phase 10, shipped) · `0011` rate-limit counters (Phase 10, shipped, [ADR 0019](adr/0019-community-foundation.md)) · `0012` `terms_acceptances` (Phase 10, shipped) · `0013` `reports` (Phase 10, shipped) · `0014` guest-key privacy (Phase 10, shipped, [ADR 0024](adr/0024-guest-identity-privacy.md)) · `0015` admin audit kinds and indexes (P07-13, shipped, taken ahead of Phase 11) · `member_profiles` and trip `origin` (Phase 11, proposed, numbers by merge order from `0016`, [ADR 0025](adr/0025-member-profiles-and-use-this-trip.md); listing states are added with their own slice) · `0017` `journal_posts` (Phase 12) · `0018` `media_assets` (Phase 13) · `0019` follows, likes, saves, comments (Phase 14) · `0020` search columns, notifications (Phase 15). Each with rollback note, import/export update, and a test through both stores (ADR 0014 precedent).
 
 ## Flows and failure states
 

@@ -114,6 +114,7 @@ adding or removing a route means editing this table in both languages.
 | POST | `/api/planner/terms` | Traveller (session cookie or access token) | Accept the current Creator Terms version (idempotent) |
 | GET | `/api/admin/community/reports` | Admin token or admin session | Report queue, `?status=open\|actioned\|dismissed` (`community:moderate`) |
 | POST | `/api/admin/community/reports/[id]/resolve` | Admin token or admin session | Dismiss or mark a report actioned, idempotent, logs one event (`community:moderate`) |
+| GET | `/api/admin/audit` | Admin token or admin session | Admin audit log: filters `actor`, `targetType`, `action`, `from`, `to`, `limit`, `cursor` (`audit:read`) |
 | GET | `/api/admin/community/events` | Admin token or admin session | Audit log for one `?targetId=` (`community:moderate`) |
 | GET | `/api/admin/community/restrictions` | Admin token or admin session | List review restrictions (`community:restrict`) |
 | POST | `/api/admin/community/restrictions` | Admin token or admin session | Restrict a person (`community:restrict`) |

@@ -1,6 +1,6 @@
 # Admin Workspace — Task Contract Index
 - Role: system-architect (main session, Single-Agent First). Subagents: 0. Nothing implemented, committed, pushed or deployed by this document.
-- Created: 2026-11-17. State of contracts: **mixed — each contract file carries its own `State:`; P07-10, 11, 16, 19 DONE; P07-13, 17 READY (13 blocked); P07-12, 14, 15 not started; P07-18 BLOCKED (Phase 08)** (was: DESIGNED, awaiting approval) (decisions W1–W8 and gates below).
+- Created: 2026-11-17. State of contracts: **mixed — each contract file carries its own `State:`; P07-10, 11, 16, 19 DONE; P07-13 IN REVIEW, 17 READY; P07-12, 14, 15 not started; P07-18 BLOCKED (Phase 08)** (was: DESIGNED, awaiting approval) (decisions W1–W8 and gates below).
 - Sources (referenced, not restated): [specs-admin-workspace](../../docs/specs-admin-workspace.md) (inventory, sitemap, design, gaps), [specs-admin-workspace-impact](../../docs/specs-admin-workspace-impact.md) (DB/API/RBAC, security and QC checklists), [ADR 0020](../../docs/adr/0020-admin-workspace-shell.md) (Proposed), `phase10-index.md`, ADR 0006/0010/0011/0017/0019.
 - Phase placement: **no new Phase ID.** Completes Phase 07. Task IDs are proposed backlog rows `P07-10`…`P07-18` (next free after `P07-9`).
 - Phase 10 is untouched: its batches keep their IDs, scope, order and one-PR-at-a-time rule. `feat/submission-state-machine` (batch 10.1) is on a branch with no PR; it is not this work's concern.

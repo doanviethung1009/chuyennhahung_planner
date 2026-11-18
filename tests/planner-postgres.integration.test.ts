@@ -23,6 +23,7 @@ import {
 } from './planner-helpers';
 import { runScenario, stable } from './planner-pg-fixtures';
 import { registerEventCases } from './moderation-events-cases';
+import { registerAuditCases } from './admin-audit-cases';
 import { registerTermsCases } from './terms-acceptance-cases';
 import { registerReportCases } from './community-reports-cases';
 import { registerGuestKeyCases } from './guest-key-cases';
@@ -546,6 +547,10 @@ describe.skipIf(!url)('Planner on PostgreSQL (TEST_DATABASE_URL)', () => {
 
   describe('guest review erasure (ADR 0024 §8, no migration)', () => {
     registerErasureCases(async () => ({ planner: repository(), store }));
+  });
+
+  describe('admin audit events (migration 0015, P07-13)', () => {
+    registerAuditCases(async () => ({ planner: repository(), store }));
   });
 
   describe('moderation events (migration 0010, ADR 0019)', () => {

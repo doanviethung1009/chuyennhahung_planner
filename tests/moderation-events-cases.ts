@@ -8,6 +8,9 @@ import { activityInput, daLatTripInput, makeOwner } from './planner-helpers';
  * memory store in `moderation-events.test.ts` and PostgreSQL in the integration
  * file (skipped without `TEST_DATABASE_URL`).
  */
+/** P07-13 admin events share the log; these cases are about the community ones. */
+const ADMIN_ACTIONS = new Set(['user_create', 'role_change', 'password_reset', 'ban', 'unban', 'soft_delete', 'restore', 'purge', 'google_unlink', 'token_rotate']);
+
 export interface EventCtx {
   planner: PlannerRepository;
   store: PlannerStore;
@@ -17,7 +20,7 @@ const BODY = 'Hồ rất đẹp vào buổi sáng, nước trong, đi bộ quanh
 const review = { rating: 5, body: BODY, lang: 'vi' as const, visitedOn: '2026-02-20', authorDisplay: 'name' as const };
 
 export function registerEventCases(setup: () => Promise<EventCtx>): void {
-  const eventsOf = async (ctx: EventCtx) => (await ctx.store.read()).auditEvents;
+  const eventsOf = async (ctx: EventCtx) => (await ctx.store.read()).auditEvents.filter((e) => !ADMIN_ACTIONS.has(e.action));
   const strip = (events: Awaited<ReturnType<typeof eventsOf>>) =>
     events.map((e) => ({ targetKind: e.targetKind, action: e.action, from: e.fromStatus, to: e.toStatus, actor: e.actorId, kind: e.actorKind, reason: e.reason }));
 
@@ -139,6 +142,7 @@ export function registerEventCases(setup: () => Promise<EventCtx>): void {
     await ctx.planner.createRestriction({ reviewId: mine.id, scope: 'all', reason: 'quấy rối' }, 'service');
     await ctx.planner.deleteUser(userId);
     const data = await ctx.store.read();
+    data.auditEvents = data.auditEvents.filter((e) => !ADMIN_ACTIONS.has(e.action));
     const rows = strip(data.auditEvents);
     expect(rows.map((r) => [r.action, r.from, r.to, r.actor, r.kind])).toEqual([
       ['restrict', null, 'active', 'staff-1', 'user'],
@@ -165,6 +169,6 @@ export function registerEventCases(setup: () => Promise<EventCtx>): void {
   it('exposes no update or delete path', async () => {
     const ctx = await setup();
     const proto = Object.getOwnPropertyNames(Object.getPrototypeOf(ctx.planner));
-    expect(proto.filter((name) => /event/i.test(name))).toEqual(['listEvents']);
+    expect(proto.filter((name) => /event/i.test(name)).sort()).toEqual(['listAuditEvents', 'listEvents', 'recordAdminEvent']); // P07-13: read and append only
   });
 }

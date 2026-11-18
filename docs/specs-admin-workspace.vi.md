@@ -225,7 +225,7 @@ khi chủ dự án cung cấp dữ kiện (`D10`); không bịa.
 |---|---|---|---|
 | Chưa có khung chung | Mỗi màn mới phải tự giải layout, nav, mobile | `P07-10` | ADR 0020 |
 | Chưa có màn hình đầu | Staff mở năm trang mới biết việc đang chờ | `P07-11` | `P07-10` |
-| Chưa có dấu vết cho hành động staff | Admin nào cũng reset mật khẩu admin khác mà không ghi (giới hạn ADR 0010) | `P07-13` (viewer + sự kiện) | Phase 10 batch 10.2 |
+| Chưa có dấu vết cho hành động staff | Admin nào cũng reset mật khẩu admin khác mà không ghi (giới hạn ADR 0010) | `P07-13` (viewer + sự kiện) — đã làm | Phase 10 batch 10.2 |
 | API chưa có màn hình | Collections, integrity, gỡ Google, rotate-token chỉ dùng được bằng `curl` | `P07-15`, `P07-12` | — |
 | Tạo/archive chỉ bằng token | Editor không thêm được story trên trình duyệt | `P07-16` | quyết định `W5` |
 | Màn kiểm duyệt là chồng danh sách | Phân loại chậm, không có số đếm | `P07-14` | batch 10.5 |

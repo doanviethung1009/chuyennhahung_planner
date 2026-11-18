@@ -332,6 +332,8 @@ flowchart LR
 
 Trang `/admin` là bảng điều khiển (P07-11, [feature](features/admin-dashboard.vi.md)): `src/server/admin/overview.ts` gom số đếm chỉ đọc từ phương thức repository sẵn có, lọc theo `can()`, và `GET /api/admin/overview` trả cùng payload. Nguồn lỗi chỉ làm hỏng thẻ của nó.
 
+Nhật ký kiểm toán admin (P07-13, [feature](features/admin-audit-viewer.vi.md)): `/admin/audit` và `GET /api/admin/audit` (`audit:read`: admin, super admin, service; không có editor) đọc `audit_events` mới nhất trước, có lọc và con trỏ `(createdAt, id)` mờ. Hành động tài khoản (tạo, vai trò, đặt lại mật khẩu, khóa/mở khóa, xóa mềm/khôi phục/xóa vĩnh viễn, gỡ Google, xoay token) ghi qua `PlannerRepository.record` trong transaction của chính nó; trạng thái xuất bản bài viết nằm ở kho Content nên sự kiện là lần ghi thứ hai sau khi thành công. Migration `0015` thêm loại đối tượng `story` và các chỉ mục lọc.
+
 `adminPlannerRoute` trong `src/server/planner/http.ts` xác định một trong **hai principal**:
 
 | Principal | Credential | Tới được |

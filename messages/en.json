@@ -669,7 +669,8 @@
       "breadcrumb": "Breadcrumb",
       "home": "Admin",
       "brand": "Chuyện Nhà Hưng · Admin",
-      "viewSite": "View site"
+      "viewSite": "View site",
+      "audit": "Audit log"
     },
     "overview": {
       "heading": "Welcome to the admin area",
@@ -1388,6 +1389,55 @@
         "rateLimited": "You are going a bit fast. Wait a moment and try again.",
         "generic": "Could not add the place. Please try again later."
       }
+    }
+  },
+  "adminAudit": {
+    "metaTitle": "Admin audit log",
+    "title": "Admin audit log",
+    "description": "Who did what, and when: accounts, content and moderation. Read-only; events are kept for one year.",
+    "filtersLabel": "Filter the log",
+    "actor": "Actor",
+    "actorHint": "Account id or service",
+    "targetType": "Target type",
+    "anyType": "All",
+    "action": "Action",
+    "anyAction": "All",
+    "from": "From date",
+    "to": "To date",
+    "apply": "Filter",
+    "reset": "Clear filters",
+    "tableLabel": "Admin audit log, scroll sideways to read all columns",
+    "colTime": "Time",
+    "colActor": "Actor",
+    "colAction": "Action",
+    "colTarget": "Target",
+    "colChange": "Change",
+    "colReason": "Reason",
+    "empty": "No events match the filters.",
+    "next": "Next page",
+    "count": "{count} events",
+    "invalid": "Some filters were not valid and were ignored.",
+    "service": "service (admin token)",
+    "types": {
+      "trip": "Trip",
+      "review": "Review",
+      "user": "Account",
+      "story": "Story"
+    },
+    "actions": {
+      "user_create": "Account created",
+      "role_change": "Role changed",
+      "password_reset": "Password reset",
+      "ban": "Account banned",
+      "unban": "Account unbanned",
+      "soft_delete": "Account soft-deleted",
+      "restore": "Account restored",
+      "purge": "Account purged",
+      "google_unlink": "Google unlinked",
+      "token_rotate": "Token rotated",
+      "publish": "Published",
+      "unpublish": "Unpublished",
+      "archive": "Archived"
     }
   }
 }

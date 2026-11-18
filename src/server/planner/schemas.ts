@@ -890,7 +890,7 @@ export const reviewRestrictionSchema = z.object({
  */
 export const auditEventSchema = z.object({
   id: plannerIdSchema,
-  targetKind: z.enum(['trip', 'review', 'user']),
+  targetKind: z.enum(['trip', 'review', 'user', 'story']),
   targetId: plannerIdSchema,
   actorId: z.string().trim().min(1).max(80),
   actorKind: z.enum(['user', 'service']),

@@ -79,7 +79,7 @@ export function registerErasureCases(setup: () => Promise<ErasureCtx>): void {
     const id = (await ctx.planner.listReviewQueue())[0]!.id;
     expect(await codeOf(ctx.planner.eraseGuestReview(id, 's', 'lý do'))).toBe('invalid_state');
     expect(await codeOf(ctx.planner.eraseGuestReview('rev_nope', 's', 'lý do'))).toBe('not_found');
-    expect((await ctx.store.read()).auditEvents).toEqual([]);
+    expect((await ctx.store.read()).auditEvents.filter((e) => e.action !== 'user_create')).toEqual([]); // P07-13: provisioning the owner is logged
 
     await guest(ctx);
     const gid = (await ctx.planner.listReviewQueue()).find((r) => r.source === 'homepage')!.id;
