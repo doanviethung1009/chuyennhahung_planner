@@ -3,6 +3,7 @@
 import type { FormEvent, ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
+import { PlaceSiteLink } from '@/components/admin/community/place-link';
 import { buttonClass } from '@/components/ui/button';
 import { EditorProvider, type Draft } from './form-kit';
 import { ActionButtons, LiveNotice, StatusBadge } from './notices';
@@ -86,6 +87,7 @@ export function RecordShell({ apiPath, statusPath, fields, lifecycle, back, chil
               />
             </>
           ) : null}
+          {back === 'places' && typeof record.slug === 'string' ? <PlaceSiteLink slug={record.slug} /> : null}
           <p className="text-sm text-foreground-muted md:ml-auto">
             {t('form.updatedAt', { date: new Date(String(record.updatedAt)).toLocaleString(state.locale) })}
           </p>

@@ -829,6 +829,8 @@
       "newButton": "New story"
     },
     "places": {
+      "viewOnSite": "View on site",
+      "newTab": "(opens in a new tab)",
       "metaTitle": "Manage places",
       "description": "View and edit the places we have visited.",
       "title": "Manage places",

@@ -829,6 +829,8 @@
       "newButton": "Chuyến đi mới"
     },
     "places": {
+      "viewOnSite": "Xem trên site",
+      "newTab": "(mở trong tab mới)",
       "metaTitle": "Quản lý địa điểm",
       "description": "Xem và sửa các địa điểm đã ghé.",
       "title": "Quản lý địa điểm",

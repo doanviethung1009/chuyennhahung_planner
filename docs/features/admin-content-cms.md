@@ -30,6 +30,8 @@ Each page is a server component: `requireStaff` (`src/lib/admin-gate.ts`, built 
 
 Saving sends only the editable keys with `If-Match: "<updatedAt>"`. A stale stamp returns **412** `version_conflict`: the screen says someone else saved first and offers a reload. A 422 marks each field whose dotted `path` appears in `issues`. 401 offers sign-in again, 429 shows the wait. Buttons are disabled while a request is pending, and results are announced in a polite live region.
 
+- Since PLACES-UI-S5, each place in the list and its editor has a "View on site" link to its public page (`/places/[slug]`, VI `/dia-diem/[slug]`), opening in a new tab with an announced label (`PlaceSiteLink` in `community/place-link.tsx`). Places have no draft state, so the link never breaks. Not added: a link to the review queue per place (the queue only filters by status) and per-place review counts (the list response does not carry them); both would need an API change and are left out.
+
 ## Files
 
 | Path | Role |

@@ -7,6 +7,7 @@ import type { Locale } from '@/i18n/routing';
 import { buttonClass } from '@/components/ui/button';
 import { api } from '@/components/planner/api';
 import { inputClass } from '@/components/planner/field';
+import { PlaceSiteLink } from '@/components/admin/community/place-link';
 import { LiveNotice, StatusBadge } from './notices';
 import { useErrorNotice, type Notice } from './use-record';
 
@@ -147,6 +148,7 @@ export function ContentList({ kind }: { kind: 'stories' | 'places' }) {
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
+                    {kind === 'places' ? <PlaceSiteLink slug={item.slug} /> : null}
                     {item.status ? <StatusBadge status={item.status} /> : null}
                     {kind === 'stories' && item.status && item.status !== 'archived' ? (
                       <button
