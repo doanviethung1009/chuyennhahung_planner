@@ -9,6 +9,7 @@ import { siteConfig } from '@/content/site';
 import { getDestination } from '@/content/destinations';
 import { getPublicPlace } from '@/server/content/public-places';
 import { getApprovedReviews } from '@/server/community/public';
+import { PlaceAddToTrip } from '@/components/places/place-add-to-trip';
 import { PlaceReviewSection } from '@/components/places/place-review-section';
 import { ReviewList } from '@/components/reviews/review-list';
 import { Container } from '@/components/ui/container';
@@ -84,6 +85,15 @@ export default async function PlacePage({ params }: Params) {
             {name}
           </h1>
           <p className="mt-4 max-w-2xl text-lg text-foreground-muted">{place.location[locale]}</p>
+          <PlaceAddToTrip
+            place={{
+              slug: place.slug,
+              name,
+              destinationSlug: place.destinationSlug,
+              suggestedMinutes: place.suggestedMinutes,
+              estimatedCostVnd: place.estimatedCostVnd,
+            }}
+          />
 
           {cover ? (
             <div className="relative mt-8 aspect-16/10 w-full overflow-hidden rounded-2xl md:aspect-21/9">

@@ -1360,6 +1360,34 @@
       "nature": "Thiên nhiên",
       "activity": "Hoạt động",
       "transport": "Di chuyển"
+    },
+    "addToTrip": {
+      "loading": "Đang kiểm tra phiên đăng nhập…",
+      "signIn": "Đăng nhập để thêm vào chuyến đi",
+      "button": "Thêm vào chuyến đi",
+      "title": "Thêm {name} vào chuyến đi",
+      "loadingTrips": "Đang tải các chuyến đi của bạn…",
+      "noTrips": "Bạn chưa có chuyến đi đang hoạt động nào tới điểm đến này.",
+      "createTrip": "Tạo chuyến đi mới",
+      "myTrips": "Chuyến đi của tôi",
+      "tripLabel": "Chuyến đi",
+      "dayLabel": "Ngày",
+      "dayOption": "Ngày {day}",
+      "dayOptionDated": "Ngày {day} · {date}",
+      "dayFull": "đã đủ hoạt động",
+      "duplicate": "Địa điểm này đã có trong ngày {day} của chuyến. Bạn vẫn có thể thêm lần nữa.",
+      "add": "Thêm vào lịch trình",
+      "addAnyway": "Vẫn thêm",
+      "adding": "Đang thêm…",
+      "success": "Đã thêm vào ngày {day} của “{trip}”.",
+      "openTrip": "Mở chuyến đi",
+      "errors": {
+        "load": "Không tải được danh sách chuyến đi. Hãy thử lại sau.",
+        "gone": "Chuyến đi này không còn nữa. Đã tải lại danh sách.",
+        "unavailable": "Không thêm được: chuyến đi vừa được lưu trữ hoặc ngày đã đủ hoạt động.",
+        "rateLimited": "Bạn thao tác hơi nhanh. Hãy đợi một chút rồi thử lại.",
+        "generic": "Không thêm được địa điểm. Hãy thử lại sau."
+      }
     }
   }
 }
