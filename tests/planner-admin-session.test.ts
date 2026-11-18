@@ -156,22 +156,23 @@ describe('principal resolution on the opted-in routes', () => {
     expect(both.status).toBe(401);
   });
 
-  it('keeps rotate-token, google unlink and integrity token-only (DELETE is session-capable since ADR 0017)', async () => {
+  it('keeps integrity token-only; rotate-token and google unlink take a session only from user:provision (P07-12)', async () => {
     const admin = await makeUser('admin');
+    const member = await makeUser('member');
     const target = await makeUser('member');
     const id = target.id;
-    const responses = [
+    expect([401, 403]).toContain((await routes.integrity.GET(req({ path: '/api/admin/planner/integrity', cookie: admin.cookie }))).status);
+    const refused = [
       await routes.rotate.POST(
-        req({ method: 'POST', path: `/api/admin/planner/users/${id}/rotate-token`, cookie: admin.cookie }),
+        req({ method: 'POST', path: `/api/admin/planner/users/${id}/rotate-token`, cookie: member.cookie }),
         params(id),
       ),
       await routes.google.DELETE(
-        req({ method: 'DELETE', path: `/api/admin/planner/users/${id}/google`, cookie: admin.cookie }),
+        req({ method: 'DELETE', path: `/api/admin/planner/users/${id}/google`, cookie: member.cookie }),
         params(id),
       ),
-      await routes.integrity.GET(req({ path: '/api/admin/planner/integrity', cookie: admin.cookie })),
     ];
-    for (const response of responses) expect([401, 403]).toContain(response.status);
+    for (const response of refused) expect(response.status).toBe(403);
     // A session cannot permanently delete a member (nor skip the soft-delete step).
     const del = await routes.user.DELETE(
       req({ method: 'DELETE', path: `/api/admin/planner/users/${id}`, cookie: admin.cookie }),

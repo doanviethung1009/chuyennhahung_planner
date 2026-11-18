@@ -5,7 +5,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { buttonClass } from "@/components/ui/button";
 import { inputClass } from "@/components/planner/field";
 import { filterUsers, type RoleFilter, type StatusView } from "./filter-users";
-import { ADMIN_ROLES, assignableRoles, type AccountAction, type AccountImpact, type AdminRole, type AdminUser } from "./types";
+import { ADMIN_ROLES, assignableRoles, type AccountAction, type AccountImpact, type AdminRole, type AdminUser, type CredentialAction } from "./types";
 
 interface Props {
   users: AdminUser[];
@@ -15,11 +15,17 @@ interface Props {
   onSaveRole: (user: AdminUser, role: AdminRole) => Promise<void>;
   onReset: (user: AdminUser) => Promise<void>;
   onAccount: (user: AdminUser, kind: AccountAction, confirmHandle?: string) => Promise<void>;
+  onCredential: (user: AdminUser, kind: CredentialAction) => Promise<void>;
+  /** Total accounts on the server, and whether more pages remain (P07-12). */
+  total: number;
+  hasMore: boolean;
+  loadingMore: boolean;
+  onLoadMore: () => void;
   /** Counts what a permanent delete would remove; null when it could not be read. */
   onLoadImpact: (user: AdminUser) => Promise<AccountImpact | null>;
 }
 
-type ConfirmKind = "reset" | AccountAction;
+type ConfirmKind = "reset" | AccountAction | CredentialAction;
 
 export function UserTable({
   users,
@@ -28,6 +34,11 @@ export function UserTable({
   onSaveRole,
   onReset,
   onAccount,
+  onCredential,
+  total,
+  hasMore,
+  loadingMore,
+  onLoadMore,
   onLoadImpact,
 }: Props) {
   const t = useTranslations("admin.users");
@@ -143,6 +154,9 @@ export function UserTable({
           ? t("filterResult", { shown: visible.length, total: users.length })
           : null}
       </p>
+      {filtering && hasMore ? (
+        <p className="text-sm text-foreground-muted">{t("filterPartial")}</p>
+      ) : null}
       {visible.length === 0 ? (
         <p className="text-base text-foreground-muted">{t("filterEmpty")}</p>
       ) : (
@@ -294,7 +308,9 @@ export function UserTable({
                                 run(user.id, () =>
                                   confirm.kind === "reset"
                                     ? onReset(user)
-                                    : onAccount(user, confirm.kind, needsTyping ? typed : undefined),
+                                    : confirm.kind === "rotateToken" || confirm.kind === "unlinkGoogle"
+                                      ? onCredential(user, confirm.kind)
+                                      : onAccount(user, confirm.kind, needsTyping ? typed : undefined),
                                 )
                               }
                               className={buttonClass({ size: "sm" })}
@@ -317,7 +333,13 @@ export function UserTable({
                             ? (["restore", "purge"] as const)
                             : user.bannedAt
                               ? (["unban", "delete"] as const)
-                              : (["reset", "ban", "delete"] as const)
+                              : ([
+                                  "reset",
+                                  "rotateToken",
+                                  ...(user.hasGoogle ? (["unlinkGoogle"] as const) : []),
+                                  "ban",
+                                  "delete",
+                                ] as const)
                           ).map((kind) => (
                             <button
                               key={kind}
@@ -339,6 +361,21 @@ export function UserTable({
           </table>
         </div>
       )}
+      {hasMore ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            disabled={loadingMore}
+            onClick={onLoadMore}
+            className={buttonClass({ variant: "secondary", size: "sm" })}
+          >
+            {loadingMore ? t("loadingMore") : t("loadMore")}
+          </button>
+          <p role="status" className="text-sm text-foreground-muted">
+            {t("pageProgress", { loaded: users.length, total })}
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }
