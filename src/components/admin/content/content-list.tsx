@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
@@ -10,6 +10,7 @@ import { inputClass } from '@/components/planner/field';
 import { PlaceSiteLink } from '@/components/admin/community/place-link';
 import { LiveNotice, StatusBadge } from './notices';
 import { useErrorNotice, type Notice } from './use-record';
+import { SORT_KEYS, filterAndSort, itemTitle, type SortKey } from './list-utils';
 
 interface Localized {
   vi: string;
@@ -25,8 +26,8 @@ interface Item {
 
 const STATUSES = ['', 'draft', 'published', 'archived'] as const;
 
-/** Stories and places index. Places have no lifecycle, so no status filter. */
-export function ContentList({ kind }: { kind: 'stories' | 'places' }) {
+/** Stories, places and collections index. Places have no lifecycle, so no status filter. */
+export function ContentList({ kind }: { kind: 'stories' | 'places' | 'collections' }) {
   const t = useTranslations('adminContent');
   const locale = useLocale() as Locale;
   const describe = useErrorNotice();
@@ -35,6 +36,8 @@ export function ContentList({ kind }: { kind: 'stories' | 'places' }) {
   const [error, setError] = useState<Notice | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [archiving, setArchiving] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [sort, setSort] = useState<SortKey>('updated');
 
   const load = useCallback(async () => {
     setError(null);
@@ -53,6 +56,11 @@ export function ContentList({ kind }: { kind: 'stories' | 'places' }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
+
+  const visible = useMemo(
+    () => (items ? filterAndSort(items, { query, sort, locale: locale === 'en' ? 'en' : 'vi' }) : null),
+    [items, query, sort, locale],
+  );
 
   async function archive(slug: string) {
     setArchiving(slug);
@@ -75,11 +83,43 @@ export function ContentList({ kind }: { kind: 'stories' | 'places' }) {
           <Link href="/admin/content/stories/new" className={buttonClass({ size: 'md' })}>
             {t('stories.newButton')}
           </Link>
-        ) : (
+        ) : kind === 'places' ? (
           <Link href="/admin/content/places/new" className={buttonClass({ size: 'md' })}>
             {t('places.newButton')}
           </Link>
-        )}
+        ) : null}
+      </div>
+      <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor="content-search" className="block text-sm font-medium text-foreground">
+            {t('list.searchLabel')}
+          </label>
+          <div className="mt-1.5">
+            <input
+              id="content-search"
+              type="search"
+              className={inputClass}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t('list.searchPlaceholder')}
+              autoComplete="off"
+            />
+          </div>
+        </div>
+        <div>
+          <label htmlFor="content-sort" className="block text-sm font-medium text-foreground">
+            {t('list.sortLabel')}
+          </label>
+          <div className="mt-1.5">
+            <select id="content-sort" className={inputClass} value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
+              {SORT_KEYS.map((key) => (
+                <option key={key} value={key}>
+                  {t(`list.sort.${key}`)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
       {kind === 'stories' ? (
         <div className="max-w-xs">
@@ -116,12 +156,16 @@ export function ContentList({ kind }: { kind: 'stories' | 'places' }) {
         error ? null : <p className="text-base text-foreground-muted">{t('form.loading')}</p>
       ) : items.length === 0 ? (
         <p className="text-base text-foreground-muted">{t('list.empty')}</p>
+      ) : visible && visible.length === 0 ? (
+        <p role="status" className="text-base text-foreground-muted">
+          {t('list.noMatches')}
+        </p>
       ) : (
         <>
-          <p className="text-sm text-foreground-muted">{t('list.count', { count: items.length })}</p>
+          <p className="text-sm text-foreground-muted">{t('list.count', { count: visible?.length ?? 0 })}</p>
           <ul className="grid gap-3">
-            {items.map((item) => {
-              const title = (item.title ?? item.name)?.[locale] ?? item.slug;
+            {(visible ?? []).map((item) => {
+              const title = itemTitle(item, locale === 'en' ? 'en' : 'vi');
               return (
                 <li
                   key={item.slug}
@@ -131,6 +175,13 @@ export function ContentList({ kind }: { kind: 'stories' | 'places' }) {
                     {kind === 'stories' ? (
                       <Link
                         href={{ pathname: '/admin/content/stories/[slug]', params: { slug: item.slug } }}
+                        className="min-h-11 content-center font-display text-xl text-primary-strong underline underline-offset-4"
+                      >
+                        {title}
+                      </Link>
+                    ) : kind === 'collections' ? (
+                      <Link
+                        href={{ pathname: '/admin/content/collections/[slug]', params: { slug: item.slug } }}
                         className="min-h-11 content-center font-display text-xl text-primary-strong underline underline-offset-4"
                       >
                         {title}

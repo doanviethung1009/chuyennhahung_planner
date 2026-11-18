@@ -52,6 +52,7 @@ New features start from [`_template.md`](_template.md) /
 | Admin audit viewer | [admin-audit-viewer.md](admin-audit-viewer.md) | `/admin/audit` — filterable, paged read of the audit log; role, account and story-status acts now write events; `GET /api/admin/audit`, action `audit:read` (P07-13) |
 | Admin system status | [admin-system-status.md](admin-system-status.md) | `/admin/system` — super-admin read-only page: store mode, last migration, build, integration flags, health, backups "not configured"; `GET /api/admin/system`, action `runbook:read` (P07-17) |
 | Admin users and roles | [admin-users-roles.md](admin-users-roles.md) | `/admin/users/roles` read-only role matrix; unlink Google and rotate token from the user console; `limit`/`cursor`/`sort` on `GET /api/admin/planner/users` (P07-12) |
+| Admin collections and integrity | [admin-content-collections.md](admin-content-collections.md) | `/quan-tri/noi-dung/bo-suu-tap` and `/toan-ven` — editors edit collections (`If-Match`, publish status) and read the content integrity report; admins also the Planner report (P07-15) |
 | Admin moderation workspace | [admin-moderation-workspace.md](admin-moderation-workspace.md) | `/admin/community` triage workspace: counts and jump links, fixed section order, empty states, shared item layout, read-only item history (P07-14) |
 
 ## Phases not yet open

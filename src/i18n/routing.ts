@@ -46,6 +46,12 @@ export const pathnames = {
     en: '/admin/content/places/[slug]',
   },
   '/admin/content/reviews': { vi: '/quan-tri/noi-dung/danh-gia', en: '/admin/content/reviews' },
+  '/admin/content/collections': { vi: '/quan-tri/noi-dung/bo-suu-tap', en: '/admin/content/collections' },
+  '/admin/content/collections/[slug]': {
+    vi: '/quan-tri/noi-dung/bo-suu-tap/[slug]',
+    en: '/admin/content/collections/[slug]',
+  },
+  '/admin/content/integrity': { vi: '/quan-tri/noi-dung/toan-ven', en: '/admin/content/integrity' },
   '/admin/users': { vi: '/quan-tri/nguoi-dung', en: '/admin/users' },
   '/admin/users/roles': { vi: '/quan-tri/nguoi-dung/vai-tro', en: '/admin/users/roles' },
   '/admin/community': { vi: '/quan-tri/cong-dong', en: '/admin/community' },

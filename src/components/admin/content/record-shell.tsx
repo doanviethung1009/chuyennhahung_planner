@@ -15,7 +15,7 @@ interface Props {
   fields: readonly string[];
   /** Whether the record has a publish lifecycle (stories do, places do not). */
   lifecycle: boolean;
-  back: 'stories' | 'places';
+  back: 'stories' | 'places' | 'collections';
   children: (draft: Draft) => ReactNode;
 }
 
@@ -33,6 +33,10 @@ export function RecordShell({ apiPath, statusPath, fields, lifecycle, back, chil
     back === 'stories' ? (
       <Link href="/admin/content/stories" className="font-medium text-primary-strong underline underline-offset-4">
         {t('stories.back')}
+      </Link>
+    ) : back === 'collections' ? (
+      <Link href="/admin/content/collections" className="font-medium text-primary-strong underline underline-offset-4">
+        {t('collections.back')}
       </Link>
     ) : (
       <Link href="/admin/content/places" className="font-medium text-primary-strong underline underline-offset-4">

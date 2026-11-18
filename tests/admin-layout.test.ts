@@ -69,7 +69,7 @@ describe('admin root layout (ADR 0023)', () => {
 
   it('uses AdminPageHeader, never the public PageHeader, on every admin page', () => {
     const pages = files(`${adminRoot}/admin`, 'page.tsx').filter((f) => !f.includes('[...rest]'));
-    expect(pages.length).toBe(14);
+    expect(pages.length).toBe(17);
     for (const file of pages) {
       const source = readFileSync(file, 'utf8');
       expect(source, file).toContain('<AdminPageHeader');

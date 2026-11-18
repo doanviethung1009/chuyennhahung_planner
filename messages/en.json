@@ -684,7 +684,9 @@
       "home": "Admin",
       "brand": "Chuyện Nhà Hưng · Admin",
       "viewSite": "View site",
-      "audit": "Audit log"
+      "audit": "Audit log",
+      "collections": "Collections",
+      "integrity": "Data integrity"
     },
     "overview": {
       "heading": "Welcome to the admin area",
@@ -772,7 +774,16 @@
       "empty": "Nothing here yet.",
       "count": "{count, plural, one {# item} other {# items}}",
       "updated": "updated {date}",
-      "archived": "Story archived."
+      "archived": "Story archived.",
+      "searchLabel": "Search",
+      "searchPlaceholder": "Name or slug",
+      "sortLabel": "Sort by",
+      "sort": {
+        "updated": "Recently updated",
+        "title": "Name",
+        "slug": "Slug"
+      },
+      "noMatches": "Nothing matches your search."
     },
     "stories": {
       "metaTitle": "Manage stories",
@@ -925,6 +936,44 @@
       "firstParagraphHint": "The first block of the story body. Add more blocks later in the editor.",
       "submitStory": "Create draft story",
       "submitPlace": "Create place"
+    },
+    "collections": {
+      "metaTitle": "Manage collections",
+      "title": "Manage collections",
+      "description": "View and edit destination collections and change their publish status.",
+      "editMetaTitle": "Edit collection",
+      "editTitle": "Edit collection",
+      "editDescription": "Edit the Vietnamese and English text side by side, then save.",
+      "back": "Back to the collections list",
+      "sectionGeneral": "General",
+      "sectionMembers": "What the collection holds",
+      "sectionSeo": "SEO",
+      "fieldTitle": "Title",
+      "fieldTagline": "Tagline",
+      "fieldDescription": "Description",
+      "fieldCover": "Cover image",
+      "coverHint": "An image path, for example /images/covers/da-lat.svg.",
+      "fieldDestinations": "Destinations (slugs)",
+      "fieldStories": "Stories (slugs)",
+      "fieldPlaces": "Places (slugs)",
+      "linesHint": "One slug per line.",
+      "seoTitle": "SEO title",
+      "seoDescription": "SEO description",
+      "seoKeywords": "Keywords",
+      "seoOgImage": "Share image",
+      "seoCanonical": "Canonical path",
+      "seoNoindex": "Ask search engines not to index"
+    },
+    "integrity": {
+      "metaTitle": "Data integrity",
+      "title": "Data integrity",
+      "description": "Read-only report of broken references and inconsistent data in the content store. Nothing is fixed automatically.",
+      "contentTitle": "Travel content",
+      "plannerTitle": "Planner (admins only)",
+      "loading": "Checking…",
+      "clean": "No problems found.",
+      "count": "{count, plural, one {# finding} other {# findings}}",
+      "retry": "Check again"
     }
   },
   "storyPage": {
