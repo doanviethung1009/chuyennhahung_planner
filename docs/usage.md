@@ -67,7 +67,7 @@ Override deliberately with `--no-verify` if you ever really mean it.
 | `npm start` | Serves the production build |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint, flat config |
-| `npm run test` | Vitest, run-once |
+| `npm run test` | Vitest, run-once. Component tests (`tests/dom/*.test.tsx`) opt in to jsdom per file — [ADR 0027](adr/0027-component-test-stack.md) |
 | `npm run db:migrate` | Applies `db/migrations/*.sql` to `PLANNER_DATABASE_URL` and to `CONTENT_DATABASE_URL` (each one that is set); idempotent. Optional: the app runs the same code at startup |
 | `npm run content:import -- <file>` | Loads a `travel-content.json` into empty PostgreSQL content tables, validated, in one transaction |
 | `npm run content:export -- <file>` | Writes the PostgreSQL content out as a `travel-content.json` (backup and rollback) |

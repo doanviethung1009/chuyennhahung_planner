@@ -67,7 +67,7 @@ cố ý thì ghi đè bằng `--no-verify`.
 | `npm start` | Chạy bản build production |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint, flat config |
-| `npm run test` | Vitest, chạy một lượt |
+| `npm run test` | Vitest, chạy một lượt. Test component (`tests/dom/*.test.tsx`) bật jsdom theo từng file — [ADR 0027](adr/0027-component-test-stack.vi.md) |
 | `npm run db:migrate` | Áp dụng `db/migrations/*.sql` vào `PLANNER_DATABASE_URL` và `CONTENT_DATABASE_URL` (cái nào được đặt); idempotent. Tuỳ chọn: app chạy cùng đoạn code đó lúc khởi động |
 | `npm run content:import -- <file>` | Nạp một `travel-content.json` vào các bảng content PostgreSQL đang trống, có kiểm tra, trong một transaction |
 | `npm run content:export -- <file>` | Ghi content PostgreSQL ra `travel-content.json` (sao lưu và rollback) |
