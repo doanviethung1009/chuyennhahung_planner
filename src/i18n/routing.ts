@@ -50,6 +50,7 @@ export const pathnames = {
   '/admin/community': { vi: '/quan-tri/cong-dong', en: '/admin/community' },
   '/admin/audit': { vi: '/quan-tri/nhat-ky', en: '/admin/audit' },
   '/admin/runbook': { vi: '/quan-tri/runbook', en: '/admin/runbook' },
+  '/admin/system': { vi: '/quan-tri/he-thong', en: '/admin/system' },
   '/about': { vi: '/ve-nha-hung', en: '/about' },
 } as const;
 

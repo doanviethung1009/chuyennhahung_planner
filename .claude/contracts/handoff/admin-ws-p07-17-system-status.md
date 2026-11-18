@@ -1,0 +1,12 @@
+# Handoff — P07-17 System status page
+- Branch `feat/admin-system-status` · PR https://github.com/doanviethung1009/chuyennhahung_planner/pull/162 (open, not merged). Commits: bfa8cd7 feat, e613120 handoff, eee69cf timeouts, 02ab9b0 colour tokens.
+- Done: `GET /api/admin/system` (`runbook:read`, no-store), `/admin/system` (`/quan-tri/he-thong`), allow-listed `SystemStatus` (`src/server/admin/system.ts`), sidebar link under Operations, VI/EN messages (`adminSystem`), feature doc + VI twin, README rows, `docs/runbook.*` API row.
+- Outside the plan: `tests/admin-layout.test.ts:72` page count 12 -> 13; `postgres-pool.ts` optional `queryTimeoutMs` (only the probe passes it).
+- Behaviour: super admin 200; admin/editor/member/service token 403; anonymous 401; page 404 for non-super-admin.
+- Checks (last run, after final code change): typecheck PASS; lint PASS; test PASS (90 files passed, 3 skipped; 1164 tests passed, 89 skipped); build PASS (qc cycle 2 run).
+- UI smoke (local dev, file stores, test accounts): PASS at 375/768/1280 for super admin; admin gets page 404 / API 403. Not covered: PostgreSQL path in a browser, editor, EN locale, a real "unreachable" render.
+- /qc-check: cycle 1 BLOCKED (`text-danger` not a token) -> fixed in 02ab9b0; cycle 2 PASS.
+- /sec-check: cycle 1 and 2 PASS_WITH_WARNINGS, no blocker. W2 (no query timeout) fixed in eee69cf. W1 (no rate limit/cache on the GET, super admin only) left open; optional 5-10 s cache.
+- Risks: a Planner DB down, or a Content DB down at process start, blocks super-admin sign-in (Planner instance builds the Content repository), so the page is unreachable then (documented). `buildId` is `.next/BUILD_ID`, null/stale in dev. `pool.end()` on a dead socket is unbounded (theoretical).
+- Open decisions: add the W1 cache or not; backups stay "not configured" until owner supplies facts (D10). Contract State/index not updated (CORE-0 owns roadmap).
+- Next: owner review and merge of #162; no migration, no new dependency; rollback = revert PR.

@@ -12,6 +12,8 @@ export interface PoolOptions {
   /** Extra startup options, e.g. `-c search_path=...` (tests use a schema). */
   options?: string;
   max?: number;
+  /** Fails a query that has not answered in this many ms (default: none). */
+  queryTimeoutMs?: number;
 }
 
 export function createPostgresPool(connectionString: string, extra: PoolOptions = {}): pg.Pool {
@@ -22,6 +24,7 @@ export function createPostgresPool(connectionString: string, extra: PoolOptions 
     connectionTimeoutMillis: 5_000,
     idleTimeoutMillis: 30_000,
     options: extra.options,
+    ...(extra.queryTimeoutMs ? { query_timeout: extra.queryTimeoutMs } : {}),
     // DATE stays the `YYYY-MM-DD` text Postgres sends. The default parser
     // builds a local-time Date, which shifts the day across time zones.
     types: {
