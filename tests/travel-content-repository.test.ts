@@ -452,6 +452,46 @@ describe('travel templates', () => {
     await expectRejection(repo.getPublicTemplate('test-template'), 'not_found');
   });
 
+  describe('optimistic concurrency stamp (P07-6)', () => {
+    const STALE = '2000-01-01T00:00:00.000Z';
+
+    it('updateTemplate: matching stamp writes, stale stamp is refused and writes nothing, absent stamp is last-write-wins', async () => {
+      const created = await repo.createTemplate(templateFixture());
+      const title = { vi: 'Mẫu mới', en: 'New template' };
+      await expectRejection(
+        repo.updateTemplate('test-template', { title }, STALE),
+        'version_conflict',
+      );
+      expect((await repo.getTemplate('test-template')).version).toBe(created.version);
+      const ok = await repo.updateTemplate('test-template', { title }, created.updatedAt);
+      expect(ok.title.en).toBe('New template');
+      const free = await repo.updateTemplate('test-template', { groupSize: { vi: '4 người', en: '4 people' } });
+      expect(free.version).toBe(created.version + 2);
+    });
+
+    it('reorderActivities: match, mismatch and absent stamp', async () => {
+      const created = await repo.createTemplate(templateFixture());
+      const input = { day: 1, activityIds: ['act_2', 'act_1'] };
+      await expectRejection(repo.reorderActivities('test-template', input, STALE), 'version_conflict');
+      expect((await repo.getTemplate('test-template')).days[0]?.activities[0]?.id).toBe('act_1');
+      const ok = await repo.reorderActivities('test-template', input, created.updatedAt);
+      expect(ok.days[0]?.activities.map((a) => a.id)).toEqual(['act_2', 'act_1']);
+      const free = await repo.reorderActivities('test-template', { day: 1, activityIds: ['act_1', 'act_2'] });
+      expect(free.days[0]?.activities.map((a) => a.id)).toEqual(['act_1', 'act_2']);
+    });
+
+    it('moveActivity: match, mismatch and absent stamp', async () => {
+      const created = await repo.createTemplate(templateFixture());
+      const input = { activityId: 'act_1', toDay: 2, toIndex: 0 };
+      await expectRejection(repo.moveActivity('test-template', input, STALE), 'version_conflict');
+      expect((await repo.getTemplate('test-template')).days[0]?.activities).toHaveLength(2);
+      const ok = await repo.moveActivity('test-template', input, created.updatedAt);
+      expect(ok.days[1]?.activities[0]?.id).toBe('act_1');
+      const free = await repo.moveActivity('test-template', { activityId: 'act_1', toDay: 1, toIndex: 0 });
+      expect(free.days[0]?.activities[0]?.id).toBe('act_1');
+    });
+  });
+
   describe('immutable source snapshot', () => {
     it('freezes the source story at creation and survives later edits', async () => {
       await repo.updateStory('test-story', {

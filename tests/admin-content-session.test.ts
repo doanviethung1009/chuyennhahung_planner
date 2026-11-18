@@ -32,6 +32,9 @@ let r: {
   review: typeof import('../src/app/api/admin/travel/reviews/[id]/route');
   reviewStatus: typeof import('../src/app/api/admin/travel/reviews/[id]/status/route');
   templates: typeof import('../src/app/api/admin/travel/templates/route');
+  template: typeof import('../src/app/api/admin/travel/templates/[slug]/route');
+  templateReorder: typeof import('../src/app/api/admin/travel/templates/[slug]/reorder/route');
+  templateMove: typeof import('../src/app/api/admin/travel/templates/[slug]/move-activity/route');
   integrity: typeof import('../src/app/api/admin/travel/integrity/route');
   collections: typeof import('../src/app/api/admin/travel/collections/route');
   collection: typeof import('../src/app/api/admin/travel/collections/[slug]/route');
@@ -102,6 +105,9 @@ beforeAll(async () => {
     review: await import('../src/app/api/admin/travel/reviews/[id]/route'),
     reviewStatus: await import('../src/app/api/admin/travel/reviews/[id]/status/route'),
     templates: await import('../src/app/api/admin/travel/templates/route'),
+    template: await import('../src/app/api/admin/travel/templates/[slug]/route'),
+    templateReorder: await import('../src/app/api/admin/travel/templates/[slug]/reorder/route'),
+    templateMove: await import('../src/app/api/admin/travel/templates/[slug]/move-activity/route'),
     integrity: await import('../src/app/api/admin/travel/integrity/route'),
     collections: await import('../src/app/api/admin/travel/collections/route'),
     collection: await import('../src/app/api/admin/travel/collections/[slug]/route'),
@@ -308,14 +314,13 @@ describe('create story and place (P07-16)', () => {
 describe('routes that stay token-only', () => {
   it('reject a session (even admin) and still accept the token', async () => {
     const admin = await makeUser('admin');
-    // Delete and templates never opted in (create did in P07-16; collections and
-    // integrity moved to session access in P07-15, but collection DELETE stayed token-only).
+    // Delete never opted in (create did in P07-16; collections and integrity moved to
+    // session access in P07-15, but collection DELETE stayed token-only). Template
+    // reads/updates moved in P07-6; template POST and DELETE stay token-only.
     const del = (o: Opts) =>
       r.place.DELETE(req({ method: 'DELETE', path: '/api/admin/travel/places/cms-never', ...o }), slugParams('cms-never'));
     expect([401, 403]).toContain((await del({ cookie: admin.cookie })).status);
     expect((await del({ bearer: ADMIN_TOKEN })).status).toBe(404);
-    expect([401, 403]).toContain((await r.templates.GET(req({ path: '/api/admin/travel/templates', cookie: admin.cookie }))).status);
-    expect((await r.templates.GET(req({ path: '/api/admin/travel/templates', bearer: ADMIN_TOKEN }))).status).toBe(200);
   });
 });
 
@@ -336,6 +341,144 @@ const collectionBody = (slug: string) => ({
     noindex: false,
     keywords: { vi: [], en: [] },
   },
+});
+
+const templateBody = (slug: string) => {
+  const activity = (n: string, startTime: string) => ({
+    title: { vi: `Việc ${n}`, en: `Activity ${n}` },
+    placeSlug: null,
+    startTime,
+    durationMinutes: 60,
+    estimatedCostVnd: 100_000,
+    note: null,
+  });
+  return {
+    slug,
+    sourceStorySlug: 'cms-story',
+    title: { vi: 'Mẫu', en: 'Template' },
+    summary: { vi: 'Tóm tắt.', en: 'Summary.' },
+    travelStyle: 'romantic',
+    pace: 'relaxed',
+    groupSize: { vi: '2 người', en: '2 people' },
+    itinerarySlugs: [],
+    visibility: 'private',
+    days: [
+      { title: { vi: 'Ngày 1', en: 'Day 1' }, summary: null, activities: [activity('A', '08:00'), activity('B', '10:00')] },
+      { title: { vi: 'Ngày 2', en: 'Day 2' }, summary: null, activities: [activity('C', '08:00')] },
+    ],
+  };
+};
+
+describe('templates on session access (P07-6)', () => {
+  const base = '/api/admin/travel/templates';
+  const list = (o: Opts = {}) => r.templates.GET(req({ path: base, ...o }));
+  const create = (slug: string, o: Opts = {}) =>
+    r.templates.POST(req({ method: 'POST', path: base, body: templateBody(slug), ...o }));
+  const get = (slug: string, o: Opts = {}) => r.template.GET(req({ path: `${base}/${slug}`, ...o }), slugParams(slug));
+  const patch = (slug: string, body: unknown, o: Opts = {}) =>
+    r.template.PATCH(req({ method: 'PATCH', path: `${base}/${slug}`, body, ...o }), slugParams(slug));
+  const reorder = (slug: string, body: unknown, o: Opts = {}) =>
+    r.templateReorder.POST(req({ method: 'POST', path: `${base}/${slug}/reorder`, body, ...o }), slugParams(slug));
+  const move = (slug: string, body: unknown, o: Opts = {}) =>
+    r.templateMove.POST(req({ method: 'POST', path: `${base}/${slug}/move-activity`, body, ...o }), slugParams(slug));
+  const del = (slug: string, o: Opts = {}) =>
+    r.template.DELETE(req({ method: 'DELETE', path: `${base}/${slug}`, ...o }), slugParams(slug));
+
+  it('matrix: nobody 401, member 403, editor/admin/super_admin/token allowed on the 4 handlers', async () => {
+    expect((await create('tpl-matrix', { bearer: ADMIN_TOKEN })).status).toBe(201);
+    const member = await makeUser('member');
+    const calls: Array<(o: Opts) => Promise<Response>> = [
+      (o) => list(o),
+      (o) => get('tpl-matrix', o),
+      (o) => patch('tpl-matrix', { pace: 'relaxed' }, o),
+      (o) => reorder('tpl-matrix', { day: 1, activityIds: ['x'] }, o),
+      (o) => move('tpl-matrix', { activityId: 'x', toDay: 1, toIndex: 0 }, o),
+    ];
+    for (const call of calls) {
+      expect((await call({})).status).toBe(401);
+      expect((await call({ cookie: member.cookie })).status).toBe(403);
+    }
+    for (const who of [await makeUser('editor'), await makeUser('admin'), await makeUser('super_admin')]) {
+      const response = await list({ cookie: who.cookie });
+      expect(response.status).toBe(200);
+      expect(response.headers.get('cache-control')).toBe('no-store');
+      expect((await get('tpl-matrix', { cookie: who.cookie })).status).toBe(200);
+      expect((await patch('tpl-matrix', { pace: 'relaxed' }, { cookie: who.cookie })).status).toBe(200);
+    }
+    expect((await list({ bearer: ADMIN_TOKEN })).status).toBe(200);
+    expect((await patch('tpl-matrix', { pace: 'relaxed' }, { bearer: ADMIN_TOKEN })).status).toBe(200);
+  });
+
+  it('refuses a cross-site cookie mutation on every mutating handler and writes nothing', async () => {
+    const editor = await makeUser('editor');
+    const evil = { cookie: editor.cookie, origin: 'https://evil.test' };
+    await create('tpl-csrf', { bearer: ADMIN_TOKEN });
+    const before = await (await get('tpl-csrf', { bearer: ADMIN_TOKEN })).json();
+    const ids = before.days[0].activities.map((a: { id: string }) => a.id).reverse();
+    expect((await patch('tpl-csrf', { pace: 'relaxed' }, evil)).status).toBe(403);
+    expect((await reorder('tpl-csrf', { day: 1, activityIds: ids }, evil)).status).toBe(403);
+    expect((await move('tpl-csrf', { activityId: ids[0], toDay: 2, toIndex: 0 }, evil)).status).toBe(403);
+    expect(await (await get('tpl-csrf', { bearer: ADMIN_TOKEN })).json()).toEqual(before);
+  });
+
+  it('applies If-Match to PATCH, reorder and move: match 200, stale 412 writing nothing, absent last-write-wins', async () => {
+    const editor = await makeUser('editor');
+    await create('tpl-ifmatch', { bearer: ADMIN_TOKEN });
+    const fresh = async () => (await get('tpl-ifmatch', { bearer: ADMIN_TOKEN })).json();
+    const stale = '"2000-01-01T00:00:00.000Z"';
+    const current = await fresh();
+    const ids: string[] = current.days[0].activities.map((a: { id: string }) => a.id);
+
+    const bad = [
+      await patch('tpl-ifmatch', { pace: 'relaxed' }, { cookie: editor.cookie, ifMatch: stale }),
+      await reorder('tpl-ifmatch', { day: 1, activityIds: [...ids].reverse() }, { cookie: editor.cookie, ifMatch: stale }),
+      await move('tpl-ifmatch', { activityId: ids[0], toDay: 2, toIndex: 0 }, { cookie: editor.cookie, ifMatch: stale }),
+    ];
+    for (const response of bad) {
+      expect(response.status).toBe(412);
+      expect((await response.json()).error.code).toBe('version_conflict');
+    }
+    expect(await fresh()).toEqual(current);
+
+    const ok = await reorder('tpl-ifmatch', { day: 1, activityIds: [...ids].reverse() }, { cookie: editor.cookie, ifMatch: `"${current.updatedAt}"` });
+    expect(ok.status).toBe(200);
+    const afterReorder = await ok.json();
+    expect(afterReorder.days[0].activities.map((a: { id: string }) => a.id)).toEqual([...ids].reverse());
+
+    const moved = await move('tpl-ifmatch', { activityId: ids[0], toDay: 2, toIndex: 0 }, { cookie: editor.cookie, ifMatch: `"${afterReorder.updatedAt}"` });
+    expect(moved.status).toBe(200);
+    const afterMove = await moved.json();
+    expect(afterMove.days[1].activities[0].id).toBe(ids[0]);
+
+    const patched = await patch('tpl-ifmatch', { pace: 'relaxed' }, { cookie: editor.cookie, ifMatch: `"${afterMove.updatedAt}"` });
+    expect(patched.status).toBe(200);
+    expect((await patch('tpl-ifmatch', { pace: 'relaxed' }, { bearer: ADMIN_TOKEN })).status).toBe(200);
+    expect((await reorder('tpl-ifmatch', { day: 2, activityIds: (await fresh()).days[1].activities.map((a: { id: string }) => a.id) }, { bearer: ADMIN_TOKEN })).status).toBe(200);
+  });
+
+  it('keeps template POST and DELETE token-only: editor/admin/super_admin sessions refused', async () => {
+    const sessions = [await makeUser('editor'), await makeUser('admin'), await makeUser('super_admin')];
+    await create('tpl-del', { bearer: ADMIN_TOKEN });
+    for (const who of sessions) {
+      expect([401, 403]).toContain((await del('tpl-del', { cookie: who.cookie })).status);
+      expect([401, 403]).toContain((await create('tpl-new', { cookie: who.cookie })).status);
+    }
+    expect((await create('tpl-new')).status).toBe(401);
+    expect((await del('tpl-del')).status).toBe(401);
+    expect((await get('tpl-new', { bearer: ADMIN_TOKEN })).status).toBe(404);
+    expect((await get('tpl-del', { bearer: ADMIN_TOKEN })).status).toBe(200);
+
+    // Token deletes a private template; a public one stays blocked.
+    expect((await del('tpl-del', { bearer: ADMIN_TOKEN })).status).toBe(204);
+    expect((await get('tpl-del', { bearer: ADMIN_TOKEN })).status).toBe(404);
+    const repo = await content.getRepository();
+    await repo.setStoryStatus('cms-story', { action: 'publish' });
+    await create('tpl-pub', { bearer: ADMIN_TOKEN });
+    expect((await patch('tpl-pub', { visibility: 'public' }, { bearer: ADMIN_TOKEN })).status).toBe(200);
+    const blocked = await del('tpl-pub', { bearer: ADMIN_TOKEN });
+    expect(blocked.status).toBe(409);
+    expect((await get('tpl-pub', { bearer: ADMIN_TOKEN })).status).toBe(200);
+  });
 });
 
 describe('collections and integrity on session access (P07-15)', () => {
