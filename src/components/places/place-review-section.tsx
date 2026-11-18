@@ -150,6 +150,8 @@ export function PlaceReviewSection({ place }: { place: { slug: string; name: str
               onUnauthorized={asGuest}
               onSaved={(saved) => {
                 setOwn(saved);
+                setEditing(false);
+                setMessage(t('form.posted'));
                 router.refresh();
               }}
             />
