@@ -67,6 +67,7 @@ có trước khi chạy nhiều instance.
 |---|---|---|---|
 | ~~P04-1~~ | ~~Editor ngày/hoạt động/chi phí trong `/my-trips/[id]` dùng API sẵn có~~ — xong (`docs/features/trip-editor.md`; còn thiếu test component) | frontend-engineer | — |
 | P04-2 | Nối `/plan-your-trip` vào Planner (thay hay giữ trang liên hệ — cần quyết định) | system-architect → FE | P04-1 |
+| P04-4 | **(owner duyệt ID 2026-11-18)** Danh sách template phía người dùng (chỉ template public, chưa bị rút), dẫn vào `/trip-setup/[template]`; không trùng P07-6 (CMS admin) | frontend-engineer | P04-1 |
 | P04-3 | Planner map — cần ADR riêng | system-architect | P04-1 |
 
 ## Phase 08 — Media Library & Analytics (P3)
@@ -186,3 +187,4 @@ Việc còn mở — chưa có ID backlog riêng, chờ chủ dự án xếp:
 | PLACES-UI-S3 | Thêm địa điểm vào chuyến từ trang địa điểm: chọn chuyến cùng điểm đến và ngày, khách dẫn tới đăng nhập, không đổi API. Contract: `.claude/contracts/places-ui-s3-add-to-trip.md` — **DONE (PR #155)** | main session (FE) | S1, S2 |
 | PLACES-UI-S4 | Audit log UI trong admin = **P07-13** (đã Done, PR #157); không phải dòng riêng | main session (FE) | — |
 | PLACES-UI-S5 | Admin Places polish: liên kết "Xem trên site" (tab mới) trong danh sách và trang sửa địa điểm; bỏ liên kết review theo địa điểm và số review vì cần đổi API. Contract: `.claude/contracts/places-ui-s5-admin-places-polish.md` | main session (FE) | S1, S4 (= P07-13) |
+| PLACES-UI-S6 | Danh sách `/places` (VI `/dia-diem`): tìm theo `q` phía server (tùy chọn, tương thích ngược, tìm trước phân trang), lọc điểm đến và danh mục. **Owner duyệt 2026-11-18**; contract chưa viết; không sửa contract S1 | main session (FE+BE) | S1, CORE-5 (chung `routing.ts`, `messages`) |
