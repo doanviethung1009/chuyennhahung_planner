@@ -647,7 +647,8 @@
         "last_super_admin": "Bị từ chối: đây là super admin cuối cùng. Hãy nâng một super admin khác trước.",
         "account_disabled": "Bị từ chối: tài khoản đang bị khóa hoặc đã xóa không đổi được vai trò. Hãy mở khóa hoặc khôi phục trước.",
         "not_soft_deleted": "Bị từ chối: hãy xóa mềm tài khoản trước. Chỉ tài khoản đã xóa mềm mới xóa vĩnh viễn được.",
-        "confirm_handle": "Bị từ chối: hãy gõ đúng mã tài khoản (handle) để xác nhận xóa vĩnh viễn."
+        "confirm_handle": "Bị từ chối: hãy gõ đúng mã tài khoản (handle) để xác nhận xóa vĩnh viễn.",
+        "manage_role": "Bị từ chối: chỉ siêu quản trị mới quản lý được tài khoản quản trị viên và siêu quản trị."
       },
       "validation_failed": "Thông tin chưa hợp lệ.",
       "validation_fields": "Thông tin chưa hợp lệ ở: {fields}.",

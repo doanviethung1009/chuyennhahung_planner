@@ -35,6 +35,8 @@ const REASONS = [
   'not_soft_deleted',
   'confirm_handle',
 ] as const;
+/** A 403 that names why; any other 403 keeps the generic message. */
+const FORBIDDEN_REASONS = ['manage_role'] as const;
 /** Rows per request; the server accepts up to 200 and caps anything above. */
 const PAGE_SIZE = 50;
 const FIELD_NAMES = ['handle', 'displayName', 'email', 'role'] as const;
@@ -72,6 +74,9 @@ export function AdminConsole({ currentUserId, actorRole }: Props) {
       }
       if (code === 'rate_limited') {
         return setStatus({ kind: 'error', text: t('errors.rate_limited', { seconds: failure.retryAfterSeconds ?? 60 }) });
+      }
+      if (code === 'forbidden' && failure.reason && (FORBIDDEN_REASONS as readonly string[]).includes(failure.reason)) {
+        return setStatus({ kind: 'error', text: t(`errors.reason.${failure.reason as (typeof FORBIDDEN_REASONS)[number]}`) });
       }
       if (code === 'invalid_state' && failure.reason && (REASONS as readonly string[]).includes(failure.reason)) {
         return setStatus({ kind: 'error', text: t(`errors.reason.${failure.reason as (typeof REASONS)[number]}`) });

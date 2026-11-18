@@ -647,7 +647,8 @@
         "last_super_admin": "Refused: this is the last super admin. Promote another super admin first.",
         "account_disabled": "Refused: a banned or deleted account cannot change role. Unban or restore it first.",
         "not_soft_deleted": "Refused: delete the account (soft) first. Only a soft-deleted account can be deleted permanently.",
-        "confirm_handle": "Refused: type the account handle exactly to confirm a permanent delete."
+        "confirm_handle": "Refused: type the account handle exactly to confirm a permanent delete.",
+        "manage_role": "Refused: only a super admin can manage admin and super admin accounts."
       },
       "validation_failed": "Some details are not valid.",
       "validation_fields": "Some details are not valid: {fields}.",

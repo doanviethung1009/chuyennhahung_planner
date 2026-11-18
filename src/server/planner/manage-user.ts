@@ -1,4 +1,4 @@
-import { ContentError, forbidden, notFound } from '@/server/content/errors';
+import { ContentError, notFound } from '@/server/content/errors';
 import { canManageRole, userRole } from '@/server/identity/permissions';
 import type { AdminPrincipal } from './http';
 import type { PlannerRepository } from './repository';
@@ -30,6 +30,12 @@ export async function assertMayManageUser(
   const target = (await repository.listUsers()).find((user) => user.id === userId);
   if (!target) throw notFound('planner user', userId);
   if (!canManageRole(principal.role, userRole(target))) {
-    throw forbidden('only a super admin can manage admin and super admin accounts');
+    throw new ContentError(
+      'forbidden',
+      'only a super admin can manage admin and super admin accounts',
+      [],
+      null,
+      'manage_role',
+    );
   }
 }

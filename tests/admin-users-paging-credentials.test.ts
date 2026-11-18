@@ -118,8 +118,10 @@ describe('unlink Google and rotate token: who may act', () => {
     const peer = await makeUser('admin');
     const boss = await makeUser('super_admin');
     for (const target of [peer, boss]) {
-      expect((await unlink(target.id, admin.cookie)).status).toBe(403);
-      expect((await rotateTok(target.id, admin.cookie)).status).toBe(403);
+      for (const res of [await unlink(target.id, admin.cookie), await rotateTok(target.id, admin.cookie)]) {
+        expect(res.status).toBe(403);
+        expect((await res.json()).error.reason).toBe('manage_role');
+      }
     }
     // Refused means untouched: the peer's token still signs in.
     await expect((await instance.getPlannerRepository()).signIn(peer.accessToken)).resolves.toBeTruthy();

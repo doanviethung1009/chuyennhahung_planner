@@ -29,6 +29,12 @@ describe('roles matrix follows the permission source', () => {
     });
   }
 
+  for (const [locale, messages] of [['vi', vi_messages], ['en', en_messages]] as const) {
+    it(`${locale}: the manage_role refusal has a message`, () => {
+      expect((messages.admin.errors.reason as Record<string, string>).manage_role).toBeTruthy();
+    });
+  }
+
   it('has a Vietnamese and an English path', () => {
     expect(pathnames['/admin/users/roles']).toEqual({ vi: '/quan-tri/nguoi-dung/vai-tro', en: '/admin/users/roles' });
   });
