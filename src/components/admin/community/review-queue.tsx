@@ -10,6 +10,9 @@ import { LiveNotice } from '@/components/admin/content/notices';
 import { useErrorNotice, type Notice } from '@/components/admin/content/use-record';
 import type { ReviewQueueItem } from '@/server/planner/schemas';
 import { PlaceLink, placeLabel } from './place-link';
+import { EmptyState, HistoryLink, ItemActions, QueueSection, StatusBadge } from './queue-parts';
+import { sectionId, splitReviews } from './workspace-model';
+import { useReportCount } from './workspace';
 
 type Decision = 'approve' | 'reject' | 'remove' | 'hold';
 
@@ -41,6 +44,10 @@ export function CommunityReviewQueue({ canRestrict, canErase = false }: { canRes
       setNotice(describe(failure));
     }
   }, [describe]);
+
+  const groups = items ? splitReviews(items) : null;
+  useReportCount('reviews', groups ? groups.pending.length : null);
+  useReportCount('held', groups ? groups.held.length : null);
 
   useEffect(() => {
     // Fetch once on mount.
@@ -105,287 +112,307 @@ export function CommunityReviewQueue({ canRestrict, canErase = false }: { canRes
     }
   }
 
+  const renderItem = (item: ReviewQueueItem) => {
+    const isAsking = asking?.id === item.id;
+    return (
+      <li key={item.id} className="grid gap-3 rounded-md border border-border-subtle bg-surface p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="grid gap-1">
+            <p className="text-sm text-foreground-muted">
+              <PlaceLink place={item.place} slug={item.placeSlug} />
+              {' · '}
+              {tr('meta', {
+                rating: item.rating,
+                author: item.author ?? tr('anonymous'),
+                source: tr(`sources.${item.source}`),
+              })}
+            </p>
+            {item.guestLimitAt ? (
+              <p className="text-sm font-medium text-foreground">
+                <span className="inline-flex items-center rounded-pill border border-border-strong bg-surface-muted px-3 py-1 text-xs">
+                  {tr('guestLimitBadge')}
+                </span>{' '}
+                <span className="text-foreground-muted">
+                  {tr('guestLimitAt', { date: new Date(item.guestLimitAt).toLocaleString(locale) })}
+                </span>
+              </p>
+            ) : null}
+            {item.authorAccount ? (
+              <p className="text-sm text-foreground-muted">{tr('account', { name: item.authorAccount })}</p>
+            ) : null}
+            {/* Traveller-written: plain text only. */}
+            {item.erased ? (
+              <p className="text-base italic text-foreground-muted">{tr('erased')}</p>
+            ) : (
+              <p lang={item.lang} className="whitespace-pre-line break-words text-base">
+                {item.body}
+              </p>
+            )}
+            <p className="text-sm text-foreground-muted">
+              {item.erased ? null : <>{tr('visited', { date: item.visitedOn })} · </>}
+              {tr('created', { date: new Date(item.createdAt).toLocaleString(locale) })}
+            </p>
+            {item.rejectReason ? (
+              <p className="text-sm text-foreground-muted">{t('reason', { reason: item.rejectReason })}</p>
+            ) : null}
+          </div>
+          <StatusBadge>
+            {tr(`statuses.${item.status}`)}
+            {item.restricted ? ` · ${tr('restrictedBadge')}` : ''}
+          </StatusBadge>
+        </div>
+
+        <ItemActions>
+          {item.status === 'pending' ? (
+            <>
+              <button
+                type="button"
+                disabled={busyId === item.id}
+                className={buttonClass({ size: 'sm' })}
+                onClick={() => void decide(item, 'approve')}
+              >
+                {t('approve')}
+              </button>
+              <button
+                type="button"
+                disabled={busyId === item.id}
+                className={buttonClass({ variant: 'secondary', size: 'sm' })}
+                onClick={() => setAsking({ id: item.id, decision: 'reject' })}
+              >
+                {t('reject')}
+              </button>
+            </>
+          ) : null}
+          {item.status === 'approved' && item.source === 'planner' ? (
+            <button
+              type="button"
+              disabled={busyId === item.id}
+              className={buttonClass({ variant: 'secondary', size: 'sm' })}
+              onClick={() => setAsking({ id: item.id, decision: 'hold' })}
+            >
+              {tr('hold')}
+            </button>
+          ) : null}
+          {item.status === 'approved' || item.status === 'held' ? (
+            <button
+              type="button"
+              disabled={busyId === item.id}
+              className={buttonClass({ variant: 'secondary', size: 'sm' })}
+              onClick={() => setAsking({ id: item.id, decision: 'remove' })}
+            >
+              {tr('remove')}
+            </button>
+          ) : null}
+          {canErase && item.source === 'homepage' && !item.erased ? (
+            <button
+              type="button"
+              disabled={busyId === item.id}
+              className={buttonClass({ variant: 'secondary', size: 'sm' })}
+              onClick={() => {
+                setErasing(item.id);
+                setEraseReason('');
+              }}
+            >
+              {tr('erase')}
+            </button>
+          ) : null}
+          {canRestrict && !item.erased && !item.restricted && item.status !== 'pending' ? (
+            <button
+              type="button"
+              disabled={busyId === item.id}
+              className={buttonClass({ variant: 'ghost', size: 'sm' })}
+              onClick={() => setMuting({ id: item.id, scope: 'place' })}
+            >
+              {tr('mute')}
+            </button>
+          ) : null}
+          <HistoryLink targetId={item.id} />
+        </ItemActions>
+
+        {erasing === item.id ? (
+          <form
+            role="group"
+            aria-labelledby={`erase-title-${item.id}`}
+            className="grid gap-3 border-t border-border-subtle pt-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void erase(item, eraseReason.trim());
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') setErasing(null);
+            }}
+          >
+            <p id={`erase-title-${item.id}`} className="text-base font-medium">
+              {tr('eraseTitle')}
+            </p>
+            <p role="alert" className="text-sm text-foreground">
+              {tr('eraseWarning')}
+            </p>
+            <label htmlFor={`erase-reason-${item.id}`} className="text-sm font-medium">
+              {tr('eraseReasonLabel')}
+            </label>
+            <textarea
+              id={`erase-reason-${item.id}`}
+              aria-describedby={`erase-help-${item.id}`}
+              className={inputClass}
+              rows={3}
+              required
+              minLength={3}
+              maxLength={500}
+              autoFocus
+              value={eraseReason}
+              onChange={(e) => setEraseReason(e.target.value)}
+            />
+            <p id={`erase-help-${item.id}`} className="text-sm text-foreground-muted">
+              {tr('eraseReasonHelp')}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <button type="submit" disabled={busyId === item.id} className={buttonClass({ size: 'sm' })}>
+                {tr('eraseConfirm')}
+              </button>
+              <button
+                type="button"
+                className={buttonClass({ variant: 'ghost', size: 'sm' })}
+                onClick={() => {
+                  setErasing(null);
+                  setEraseReason('');
+                }}
+              >
+                {t('cancel')}
+              </button>
+            </div>
+          </form>
+        ) : null}
+
+        {muting?.id === item.id ? (
+          <form
+            className="grid gap-3 border-t border-border-subtle pt-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void mute(item, muting.scope, muteReason.trim());
+            }}
+          >
+            <fieldset className="grid gap-2">
+              <legend className="text-sm font-medium">{tr('muteScope')}</legend>
+              {(item.source === 'homepage' ? (['place'] as const) : (['place', 'all'] as const)).map((scope) => (
+                <label key={scope} className="flex min-h-11 items-center gap-2 text-base">
+                  <input
+                    type="radio"
+                    name={`mute-scope-${item.id}`}
+                    checked={muting.scope === scope}
+                    onChange={() => setMuting({ id: item.id, scope })}
+                  />
+                  {tr(`muteScopes.${scope}`, { place: placeLabel(item.place, item.placeSlug, locale) })}
+                </label>
+              ))}
+            </fieldset>
+            <p className="text-sm text-foreground-muted">
+              {tr(item.source === 'homepage' ? 'muteGuestWarning' : 'muteHelp')}
+            </p>
+            <label htmlFor={`mute-reason-${item.id}`} className="text-sm font-medium">
+              {tr('muteReasonLabel')}
+            </label>
+            <textarea
+              id={`mute-reason-${item.id}`}
+              className={inputClass}
+              rows={3}
+              required
+              minLength={3}
+              maxLength={500}
+              value={muteReason}
+              onChange={(e) => setMuteReason(e.target.value)}
+            />
+            <div className="flex flex-wrap gap-3">
+              <button type="submit" disabled={busyId === item.id} className={buttonClass({ size: 'sm' })}>
+                {tr('muteConfirm')}
+              </button>
+              <button
+                type="button"
+                className={buttonClass({ variant: 'ghost', size: 'sm' })}
+                onClick={() => {
+                  setMuting(null);
+                  setMuteReason('');
+                }}
+              >
+                {t('cancel')}
+              </button>
+            </div>
+          </form>
+        ) : null}
+
+        {isAsking && asking ? (
+          <form
+            className="grid gap-3 border-t border-border-subtle pt-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void decide(item, asking.decision, reason.trim());
+            }}
+          >
+            <label htmlFor={`review-reason-${item.id}`} className="text-sm font-medium">
+              {asking.decision === 'hold'
+                ? tr('reasonLabelHold')
+                : tr(item.source === 'homepage' ? 'reasonLabelGuest' : 'reasonLabel')}
+            </label>
+            <textarea
+              id={`review-reason-${item.id}`}
+              className={inputClass}
+              rows={3}
+              required
+              minLength={3}
+              maxLength={500}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+            <div className="flex flex-wrap gap-3">
+              <button type="submit" disabled={busyId === item.id} className={buttonClass({ size: 'sm' })}>
+                {t(`confirm.${asking.decision}`)}
+              </button>
+              <button
+                type="button"
+                className={buttonClass({ variant: 'ghost', size: 'sm' })}
+                onClick={() => {
+                  setAsking(null);
+                  setReason('');
+                }}
+              >
+                {t('cancel')}
+              </button>
+            </div>
+          </form>
+        ) : null}
+      </li>
+    );
+  };
+
+  const list = (rows: ReviewQueueItem[]) => <ul className="grid gap-4">{rows.map(renderItem)}</ul>;
+  const loadingOrError = items === null ? (notice ? null : <p className="text-base text-foreground-muted">{t('loading')}</p>) : undefined;
+
   return (
-    <div className="grid gap-6">
-      <LiveNotice notice={notice} onReload={() => void load()} />
-      {items === null ? (
-        notice ? null : <p className="text-base text-foreground-muted">{t('loading')}</p>
-      ) : items.length === 0 ? (
-        <p className="text-base text-foreground-muted">{tr('empty')}</p>
-      ) : (
-        <ul className="grid gap-4">
-          {items.map((item) => {
-            const isAsking = asking?.id === item.id;
-            return (
-              <li key={item.id} className="grid gap-3 rounded-md border border-border-subtle bg-surface p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="grid gap-1">
-                    <p className="text-sm text-foreground-muted">
-                      <PlaceLink place={item.place} slug={item.placeSlug} />
-                      {' · '}
-                      {tr('meta', {
-                        rating: item.rating,
-                        author: item.author ?? tr('anonymous'),
-                        source: tr(`sources.${item.source}`),
-                      })}
-                    </p>
-                    {item.guestLimitAt ? (
-                      <p className="text-sm font-medium text-foreground">
-                        <span className="inline-flex items-center rounded-pill border border-border-strong bg-surface-muted px-3 py-1 text-xs">
-                          {tr('guestLimitBadge')}
-                        </span>{' '}
-                        <span className="text-foreground-muted">
-                          {tr('guestLimitAt', { date: new Date(item.guestLimitAt).toLocaleString(locale) })}
-                        </span>
-                      </p>
-                    ) : null}
-                    {item.authorAccount ? (
-                      <p className="text-sm text-foreground-muted">{tr('account', { name: item.authorAccount })}</p>
-                    ) : null}
-                    {/* Traveller-written: plain text only. */}
-                    {item.erased ? (
-                      <p className="text-base italic text-foreground-muted">{tr('erased')}</p>
-                    ) : (
-                      <p lang={item.lang} className="whitespace-pre-line break-words text-base">
-                        {item.body}
-                      </p>
-                    )}
-                    <p className="text-sm text-foreground-muted">
-                      {item.erased ? null : <>{tr('visited', { date: item.visitedOn })} · </>}
-                      {tr('created', { date: new Date(item.createdAt).toLocaleString(locale) })}
-                    </p>
-                    {item.rejectReason ? (
-                      <p className="text-sm text-foreground-muted">{t('reason', { reason: item.rejectReason })}</p>
-                    ) : null}
-                  </div>
-                  <span className="inline-flex items-center rounded-pill border border-border-strong bg-surface-muted px-3 py-1 text-xs font-medium">
-                    {tr(`statuses.${item.status}`)}
-                    {item.restricted ? ` · ${tr('restrictedBadge')}` : ''}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-3">
-                  {item.status === 'pending' ? (
-                    <>
-                      <button
-                        type="button"
-                        disabled={busyId === item.id}
-                        className={buttonClass({ size: 'sm' })}
-                        onClick={() => void decide(item, 'approve')}
-                      >
-                        {t('approve')}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busyId === item.id}
-                        className={buttonClass({ variant: 'secondary', size: 'sm' })}
-                        onClick={() => setAsking({ id: item.id, decision: 'reject' })}
-                      >
-                        {t('reject')}
-                      </button>
-                    </>
-                  ) : null}
-                  {item.status === 'approved' && item.source === 'planner' ? (
-                    <button
-                      type="button"
-                      disabled={busyId === item.id}
-                      className={buttonClass({ variant: 'secondary', size: 'sm' })}
-                      onClick={() => setAsking({ id: item.id, decision: 'hold' })}
-                    >
-                      {tr('hold')}
-                    </button>
-                  ) : null}
-                  {item.status === 'approved' || item.status === 'held' ? (
-                    <button
-                      type="button"
-                      disabled={busyId === item.id}
-                      className={buttonClass({ variant: 'secondary', size: 'sm' })}
-                      onClick={() => setAsking({ id: item.id, decision: 'remove' })}
-                    >
-                      {tr('remove')}
-                    </button>
-                  ) : null}
-                  {canErase && item.source === 'homepage' && !item.erased ? (
-                    <button
-                      type="button"
-                      disabled={busyId === item.id}
-                      className={buttonClass({ variant: 'secondary', size: 'sm' })}
-                      onClick={() => {
-                        setErasing(item.id);
-                        setEraseReason('');
-                      }}
-                    >
-                      {tr('erase')}
-                    </button>
-                  ) : null}
-                  {canRestrict && !item.erased && !item.restricted && item.status !== 'pending' ? (
-                    <button
-                      type="button"
-                      disabled={busyId === item.id}
-                      className={buttonClass({ variant: 'ghost', size: 'sm' })}
-                      onClick={() => setMuting({ id: item.id, scope: 'place' })}
-                    >
-                      {tr('mute')}
-                    </button>
-                  ) : null}
-                </div>
-
-                {erasing === item.id ? (
-                  <form
-                    role="group"
-                    aria-labelledby={`erase-title-${item.id}`}
-                    className="grid gap-3 border-t border-border-subtle pt-4"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      void erase(item, eraseReason.trim());
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Escape') setErasing(null);
-                    }}
-                  >
-                    <p id={`erase-title-${item.id}`} className="text-base font-medium">
-                      {tr('eraseTitle')}
-                    </p>
-                    <p role="alert" className="text-sm text-foreground">
-                      {tr('eraseWarning')}
-                    </p>
-                    <label htmlFor={`erase-reason-${item.id}`} className="text-sm font-medium">
-                      {tr('eraseReasonLabel')}
-                    </label>
-                    <textarea
-                      id={`erase-reason-${item.id}`}
-                      aria-describedby={`erase-help-${item.id}`}
-                      className={inputClass}
-                      rows={3}
-                      required
-                      minLength={3}
-                      maxLength={500}
-                      autoFocus
-                      value={eraseReason}
-                      onChange={(e) => setEraseReason(e.target.value)}
-                    />
-                    <p id={`erase-help-${item.id}`} className="text-sm text-foreground-muted">
-                      {tr('eraseReasonHelp')}
-                    </p>
-                    <div className="flex flex-wrap gap-3">
-                      <button type="submit" disabled={busyId === item.id} className={buttonClass({ size: 'sm' })}>
-                        {tr('eraseConfirm')}
-                      </button>
-                      <button
-                        type="button"
-                        className={buttonClass({ variant: 'ghost', size: 'sm' })}
-                        onClick={() => {
-                          setErasing(null);
-                          setEraseReason('');
-                        }}
-                      >
-                        {t('cancel')}
-                      </button>
-                    </div>
-                  </form>
-                ) : null}
-
-                {muting?.id === item.id ? (
-                  <form
-                    className="grid gap-3 border-t border-border-subtle pt-4"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      void mute(item, muting.scope, muteReason.trim());
-                    }}
-                  >
-                    <fieldset className="grid gap-2">
-                      <legend className="text-sm font-medium">{tr('muteScope')}</legend>
-                      {(item.source === 'homepage' ? (['place'] as const) : (['place', 'all'] as const)).map((scope) => (
-                        <label key={scope} className="flex min-h-11 items-center gap-2 text-base">
-                          <input
-                            type="radio"
-                            name={`mute-scope-${item.id}`}
-                            checked={muting.scope === scope}
-                            onChange={() => setMuting({ id: item.id, scope })}
-                          />
-                          {tr(`muteScopes.${scope}`, { place: placeLabel(item.place, item.placeSlug, locale) })}
-                        </label>
-                      ))}
-                    </fieldset>
-                    <p className="text-sm text-foreground-muted">
-                      {tr(item.source === 'homepage' ? 'muteGuestWarning' : 'muteHelp')}
-                    </p>
-                    <label htmlFor={`mute-reason-${item.id}`} className="text-sm font-medium">
-                      {tr('muteReasonLabel')}
-                    </label>
-                    <textarea
-                      id={`mute-reason-${item.id}`}
-                      className={inputClass}
-                      rows={3}
-                      required
-                      minLength={3}
-                      maxLength={500}
-                      value={muteReason}
-                      onChange={(e) => setMuteReason(e.target.value)}
-                    />
-                    <div className="flex flex-wrap gap-3">
-                      <button type="submit" disabled={busyId === item.id} className={buttonClass({ size: 'sm' })}>
-                        {tr('muteConfirm')}
-                      </button>
-                      <button
-                        type="button"
-                        className={buttonClass({ variant: 'ghost', size: 'sm' })}
-                        onClick={() => {
-                          setMuting(null);
-                          setMuteReason('');
-                        }}
-                      >
-                        {t('cancel')}
-                      </button>
-                    </div>
-                  </form>
-                ) : null}
-
-                {isAsking && asking ? (
-                  <form
-                    className="grid gap-3 border-t border-border-subtle pt-4"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      void decide(item, asking.decision, reason.trim());
-                    }}
-                  >
-                    <label htmlFor={`review-reason-${item.id}`} className="text-sm font-medium">
-                      {asking.decision === 'hold'
-                        ? tr('reasonLabelHold')
-                        : tr(item.source === 'homepage' ? 'reasonLabelGuest' : 'reasonLabel')}
-                    </label>
-                    <textarea
-                      id={`review-reason-${item.id}`}
-                      className={inputClass}
-                      rows={3}
-                      required
-                      minLength={3}
-                      maxLength={500}
-                      value={reason}
-                      onChange={(e) => setReason(e.target.value)}
-                    />
-                    <div className="flex flex-wrap gap-3">
-                      <button type="submit" disabled={busyId === item.id} className={buttonClass({ size: 'sm' })}>
-                        {t(`confirm.${asking.decision}`)}
-                      </button>
-                      <button
-                        type="button"
-                        className={buttonClass({ variant: 'ghost', size: 'sm' })}
-                        onClick={() => {
-                          setAsking(null);
-                          setReason('');
-                        }}
-                      >
-                        {t('cancel')}
-                      </button>
-                    </div>
-                  </form>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
+    <>
+      <QueueSection id={sectionId('reviews')} heading={t('reviewsHeading')} count={groups ? groups.pending.length : null}>
+        <LiveNotice notice={notice} onReload={() => void load()} />
+        {groups === null ? (
+          loadingOrError
+        ) : items?.length === 0 ? (
+          <EmptyState>{tr('empty')}</EmptyState>
+        ) : groups.pending.length === 0 ? (
+          <EmptyState>{t('workspace.emptyPending.reviews')}</EmptyState>
+        ) : (
+          list(groups.pending)
+        )}
+      </QueueSection>
+      <QueueSection id={sectionId('held')} heading={t('workspace.heldHeading')} count={groups ? groups.held.length : null}>
+        {groups === null ? null : groups.held.length === 0 ? (
+          <EmptyState>{t('workspace.emptyPending.held')}</EmptyState>
+        ) : (
+          list(groups.held)
+        )}
+      </QueueSection>
+      {groups && groups.other.length > 0 ? (
+        <QueueSection id="reviews-other" heading={t('workspace.otherReviewsHeading')} count={groups.other.length}>
+          {list(groups.other)}
+        </QueueSection>
+      ) : null}
+    </>
   );
 }

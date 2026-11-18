@@ -1,0 +1,11 @@
+# Handoff — P07-14 Community moderation workspace (CORE-3)
+- Branch: `claude/admin-moderation-workspace-be7c71` (contract says `feat/admin-moderation-workspace`; rename before pushing). PR: none — nothing committed or pushed.
+- Done: `/admin/community` workspace — jump-link nav with live counts, fixed order (trips → pending reviews → held → reports → restrictions), empty states, shared card layout (`queue-parts.tsx`), read-only History on trips/reviews via `GET /api/admin/community/events?targetId=`.
+- Pure helpers `workspace-model.ts` + `tests/admin-moderation-workspace.test.ts` (7 tests). Page, 4 queue components, `messages/*.json` (`adminCommunity.workspace.*`), docs `admin-moderation-workspace.{md,vi.md}` + README rows.
+- Outside the plan: review queue now renders three sections (pending/held/other) from the one existing GET; trip titles h2→h3 for heading order; tripsHeading/reviewsHeading text renamed.
+- No history link on reports/restrictions (events not keyed by report id; account restrictions logged under user id, not exposed). Documented.
+- Checks: typecheck PASS (no output errors) · lint PASS · test PASS (93 files passed, 3 skipped; 1188 tests passed, 89 skipped).
+- Smoke 375/768/1280: NOT RUN (no admin session; no password entered). Build: NOT RUN.
+- `/qc-check`: NOT RUN (recommended). `/sec-check`: NOT RUN (low need).
+- Risks: counts are of the listed rows (reviews API caps at 200); component rendering untested (CORE-6 adds jsdom tests next).
+- Next: owner authorises commit/PR; CORE-6.

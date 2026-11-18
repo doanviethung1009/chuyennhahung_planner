@@ -1180,9 +1180,9 @@
       "erase": "Review content erased for good.",
       "mute": "Author switched off. Their reviews are hidden until you lift it."
     },
-    "tripsHeading": "Trips",
+    "tripsHeading": "Trips awaiting review",
     "restrictionsHeading": "Switched-off authors",
-    "reviewsHeading": "Place reviews",
+    "reviewsHeading": "Reviews awaiting approval",
     "reviews": {
       "empty": "No reviews yet.",
       "meta": "{rating} stars · {author} · {source}",
@@ -1239,6 +1239,33 @@
       "inactive": "Ended",
       "lift": "Lift",
       "lifted": "Restriction lifted."
+    },
+    "workspace": {
+      "navLabel": "Moderation sections",
+      "countLabel": "{count} items",
+      "nav": {
+        "trips": "Trips awaiting review",
+        "reviews": "Reviews awaiting approval",
+        "held": "Held reviews",
+        "reports": "Reports",
+        "restrictions": "Switched-off authors"
+      },
+      "decided": "Already decided",
+      "heldHeading": "Held reviews",
+      "otherReviewsHeading": "Other reviews",
+      "emptyPending": {
+        "trips": "No trips are waiting for review.",
+        "reviews": "No reviews are waiting for approval.",
+        "held": "No review is being held."
+      },
+      "history": {
+        "show": "History",
+        "hide": "Hide history",
+        "loading": "Loading history…",
+        "empty": "No recorded actions yet.",
+        "failed": "Could not load the history. Try again.",
+        "by": "{by} · {date}"
+      }
     }
   },
   "communityReviews": {

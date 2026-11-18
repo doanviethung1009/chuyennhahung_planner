@@ -9,6 +9,9 @@ import { inputClass } from '@/components/planner/field';
 import { LiveNotice } from '@/components/admin/content/notices';
 import { useErrorNotice, type Notice } from '@/components/admin/content/use-record';
 import type { ReportListItem, ReportStatus } from '@/server/planner/schemas';
+import { EmptyState, ItemActions, QueueSection, StatusBadge } from './queue-parts';
+import { reportCount, sectionId } from './workspace-model';
+import { useReportCount } from './workspace';
 
 const STATUSES: ReportStatus[] = ['open', 'actioned', 'dismissed'];
 
@@ -38,6 +41,8 @@ export function ReportQueue() {
     }
   }, [describe, status]);
 
+  useReportCount('reports', items ? reportCount(status, items.length) : null);
+
   useEffect(() => {
     // Fetch on mount and whenever the filter changes.
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -64,7 +69,7 @@ export function ReportQueue() {
   const when = (iso: string) => new Date(iso).toLocaleString(locale);
 
   return (
-    <div className="grid gap-4">
+    <QueueSection id={sectionId('reports')} heading={t('heading')} count={items ? reportCount(status, items.length) : null}>
       <p className="text-base text-foreground-muted">{t('description')}</p>
       <div className="flex flex-wrap items-center gap-3">
         <label htmlFor={`${uid}-status`} className="text-sm font-medium">
@@ -85,15 +90,18 @@ export function ReportQueue() {
       </div>
       <LiveNotice notice={notice} onReload={() => void load()} />
       {items === null ? null : items.length === 0 ? (
-        <p className="text-base text-foreground-muted">{t('empty')}</p>
+        <EmptyState>{t('empty')}</EmptyState>
       ) : (
-        <ul className="grid gap-3">
+        <ul className="grid gap-4">
           {items.map((item) => (
-            <li key={item.id} className="grid gap-2 rounded-md border border-border-subtle bg-surface p-4">
-              <p className="text-base font-medium">
-                {t(`kinds.${item.targetKind}`)} · {t(`reasons.${item.reason}`)} ·{' '}
-                {item.signedIn ? t('signedIn') : t('guest')}
-              </p>
+            <li key={item.id} className="grid gap-3 rounded-md border border-border-subtle bg-surface p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <p className="text-base font-medium">
+                  {t(`kinds.${item.targetKind}`)} · {t(`reasons.${item.reason}`)} ·{' '}
+                  {item.signedIn ? t('signedIn') : t('guest')}
+                </p>
+                <StatusBadge>{t(`statuses.${item.status}`)}</StatusBadge>
+              </div>
               <p className="whitespace-pre-line break-words text-base">
                 {item.targetLabel ?? t('removedLabel')}
               </p>
@@ -113,7 +121,7 @@ export function ReportQueue() {
                     value={reasons[item.id] ?? ''}
                     onChange={(e) => setReasons((current) => ({ ...current, [item.id]: e.target.value }))}
                   />
-                  <div className="flex flex-wrap gap-3">
+                  <ItemActions>
                     <button
                       type="button"
                       disabled={busyId === item.id || (reasons[item.id] ?? '').trim().length < 3}
@@ -130,7 +138,7 @@ export function ReportQueue() {
                     >
                       {t('action')}
                     </button>
-                  </div>
+                  </ItemActions>
                 </div>
               ) : (
                 <p className="whitespace-pre-line break-words text-sm text-foreground-muted">
@@ -146,6 +154,6 @@ export function ReportQueue() {
           ))}
         </ul>
       )}
-    </div>
+    </QueueSection>
   );
 }
