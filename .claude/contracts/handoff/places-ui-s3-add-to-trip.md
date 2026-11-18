@@ -6,8 +6,8 @@
 - Files: 2 file component mới, `page.tsx`, `messages/{vi,en}.json` (`places.addToTrip`), `tests/place-add-to-trip.test.ts` (6 test), `docs/features/places.*`, `docs/usage.*`, `.claude/roadmap/backlog.md` (dòng S3), contract.
 - Checks: `typecheck` PASS · `lint` PASS · `test` PASS (87 file passed, 3 skipped; 1138 tests passed, 84 skipped) · `docs.test.ts` PASS · `build` NOT RUN (không đổi route/config).
 - Thủ công: khách ở 375 (liên kết đúng `returnTo`, cao 48px, không tràn ngang); thành viên ở 375 thêm thành công (activity có `placeSlug`, 60 phút, 0đ) rồi hiện cảnh báo trùng; 768 và 1280 không tràn ngang, một `<h1>`. EN, 429/409/404, ngày đủ 40 chỉ được test logic bằng unit test, chưa thử tay.
-- `/qc-check`: lần 1 BLOCKED (thông báo 404/409 bị xóa; race đổi chuyến; ngày reset về 1) → đã sửa; lần 2 PASS (còn một cạnh nhỏ: đổi chuyến khi đang gửi → đã khóa select khi busy). typecheck/lint/test PASS sau sửa (1138 passed). Chưa thử tay 404/409; test component chỉ phủ trạng thái đầu. `/sec-check`: NOT RUN.
+- `/qc-check`: lần 1 BLOCKED (thông báo 404/409 bị xóa; race đổi chuyến; ngày reset về 1) → đã sửa; lần 2 PASS (còn một cạnh nhỏ: đổi chuyến khi đang gửi → đã khóa select khi busy). typecheck/lint/test PASS sau sửa (1138 passed). Chưa thử tay 404/409; test component chỉ phủ trạng thái đầu. `/sec-check`: PASS sau merge (PR #155, commit 2a36473; không phát hiện chặn; chưa đọc lại bộ lọc `ownerId` ở repository, chưa kiểm HTML trong chuỗi i18n, chưa thử khai thác).
 - Rủi ro: `messages/*.json` dễ conflict nếu nhánh khác đang sửa; chỉ liệt kê 50 chuyến active đầu tiên.
 - Dữ liệu thử: tài khoản member `s3-test` và một chuyến "Đà Lạt thử S3" trong `.data/planner.json` (gitignore) — xóa file nếu không cần.
-- Mở: `/sec-check` (khuyến nghị mức thấp) khi chủ dự án yêu cầu.
+- Mở: không còn.
 - Next: S4 Audit Log UI (P07-13).
