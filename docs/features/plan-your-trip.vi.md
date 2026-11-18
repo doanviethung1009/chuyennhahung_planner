@@ -5,7 +5,7 @@
 ## Mục đích
 
 Điểm vào của Planner. Khách có thể bắt đầu thiết kế chuyến đi ngay qua hai link
-thật — một lịch trình có sẵn hoặc một chuyến trống — hoặc nhờ nhà mình gợi ý, việc
+thật — một chuyện có lịch trình thật hoặc một chuyến trống — hoặc nhờ nhà mình gợi ý, việc
 mà trang giải thích qua bốn bước và trao những đường liên hệ thật. **Trang không
 có form, và đó là chủ đích**: nó dẫn vào Planner chứ không gửi dữ liệu tới Planner,
 và một nút submit không có gì phía sau là một nút chết. Trang không hứa AI hay
@@ -36,9 +36,9 @@ mailto chỉ thật đúng bằng cái hộp thư nằm sau nó.
 
 Một server component với ba section, mỗi section có tiêu đề riêng gắn bằng
 `aria-labelledby`. Section đầu là phần chính, "bắt đầu thiết kế ngay", với hai
-`ButtonLink` (≥44px): `/itineraries` (chọn lịch trình có sẵn; mỗi trang lịch trình
-lại dẫn tiếp tới `/trip-setup/[template]`, đường này cần slug template nên không thể
-là đích duy nhất của trang) và `/my-trips/new` (chuyến trống). Phía dưới, dưới tiêu
+`ButtonLink` (≥44px): `/stories` (chọn một chuyện; phần lịch trình thật ở mỗi trang chuyện
+dẫn tiếp tới `/trip-setup/[template]`, đường này cần slug template nên không thể
+là đích duy nhất của trang — các trang lịch trình không có link tới nó) và `/my-trips/new` (chuyến trống). Phía dưới, dưới tiêu
 đề "hoặc nhờ nhà Hưng gợi ý", là phần giải thích bốn bước dạng danh sách có thứ tự
 và khối liên hệ.
 

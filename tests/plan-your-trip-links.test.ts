@@ -14,7 +14,7 @@ const keys = [
 
 describe('/plan-your-trip Planner entry points', () => {
   it('links to targets that exist in the pathname map', () => {
-    for (const target of ['/itineraries', '/my-trips/new']) {
+    for (const target of ['/stories', '/my-trips/new']) {
       expect(pathnames, target).toHaveProperty([target]);
     }
   });

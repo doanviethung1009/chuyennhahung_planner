@@ -26,8 +26,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 }
 
 /**
- * No form here: the page links into the Planner (ready itineraries and a blank
- * trip) and keeps the contact routes — a prefilled mailto and the live social
+ * No form here: the page links into the Planner (stories with a real itinerary and a
+ * blank trip) and keeps the contact routes — a prefilled mailto and the live social
  * profiles. A submit button with nothing behind it would be a dead control.
  */
 export default async function PlanYourTripPage({ params }: Params) {
@@ -73,7 +73,7 @@ export default async function PlanYourTripPage({ params }: Params) {
 
             <div className="mt-7 grid gap-8 sm:grid-cols-2">
               <div>
-                <ButtonLink href="/itineraries" size="lg">
+                <ButtonLink href="/stories" size="lg">
                   {t('startTemplatesCta')}
                 </ButtonLink>
                 <p className="mt-3 text-base leading-relaxed text-foreground-muted">

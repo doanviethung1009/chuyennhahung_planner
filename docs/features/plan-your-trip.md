@@ -5,7 +5,7 @@
 ## Summary
 
 The entry point to the Planner. A visitor can start designing a trip right away
-through two real links — a ready itinerary or a blank trip — or ask the family to
+through two real links — a story with a real itinerary or a blank trip — or ask the family to
 suggest a plan, which the page explains in four steps and backs with real contact
 routes. **It has no form on purpose**: the page links into the Planner rather than
 posting to it, and a submit button with nothing behind it is a dead control. It
@@ -36,9 +36,9 @@ link is only as real as the mailbox behind it.
 
 A server component with three sections, each with its own `aria-labelledby`
 heading. The first is the primary one, "start designing now", with two `ButtonLink`s
-(≥44px): `/itineraries` (pick a ready itinerary; each itinerary page leads on to
+(≥44px): `/stories` (pick a story; the real-itinerary section on each story page leads on to
 `/trip-setup/[template]`, which needs a template slug and so cannot be the page's
-single target) and `/my-trips/new` (a blank trip). Below, under "or ask the family
+single target — the itinerary pages do not link to it) and `/my-trips/new` (a blank trip). Below, under "or ask the family
 to suggest a plan", come the four-step explanation as an ordered list and the
 contact block.
 
