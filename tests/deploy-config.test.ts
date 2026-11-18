@@ -428,6 +428,11 @@ describe('nginx logging policy', () => {
     }
     expect(fmt).toContain('$log_uri');
     expect(conf).toMatch(/access_log\s+\/var\/log\/nginx\/access\.log\s+cnh\s*;/);
+    // Inside `server {}` so it REPLACES the image's http-level `access_log main`
+    // (full request line with query); at http level both would be written.
+    const serverBody = conf.slice(conf.indexOf('server {'));
+    expect(serverBody).toMatch(/access_log\s+\/var\/log\/nginx\/access\.log\s+cnh\s*;/);
+    expect(conf.slice(0, conf.indexOf('server {'))).not.toMatch(/access_log\s+\/var\/log/);
     expect(conf).toMatch(/error_log\s+\/var\/log\/nginx\/error\.log\s+warn\s*;/);
   });
 
