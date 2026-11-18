@@ -26,9 +26,9 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 }
 
 /**
- * No form: the Planner backend is a later phase, and a submit button with
- * nothing behind it is a dead control. The contact routes here are real —
- * a prefilled mailto and the live social profiles.
+ * No form here: the page links into the Planner (ready itineraries and a blank
+ * trip) and keeps the contact routes — a prefilled mailto and the live social
+ * profiles. A submit button with nothing behind it would be a dead control.
  */
 export default async function PlanYourTripPage({ params }: Params) {
   const { locale } = await params;
@@ -56,6 +56,40 @@ export default async function PlanYourTripPage({ params }: Params) {
           <p className="max-w-2xl text-lg leading-relaxed text-ink-800">
             {t('intro')}
           </p>
+
+          <section
+            aria-labelledby="start-heading"
+            className="mt-10 rounded-2xl bg-surface-muted p-6 md:p-10"
+          >
+            <h2
+              id="start-heading"
+              className="font-display text-2xl font-semibold md:text-3xl"
+            >
+              {t('startTitle')}
+            </h2>
+            <p className="mt-2 text-base text-foreground-muted">
+              {t('startLead')}
+            </p>
+
+            <div className="mt-7 grid gap-8 sm:grid-cols-2">
+              <div>
+                <ButtonLink href="/itineraries" size="lg">
+                  {t('startTemplatesCta')}
+                </ButtonLink>
+                <p className="mt-3 text-base leading-relaxed text-foreground-muted">
+                  {t('startTemplatesHint')}
+                </p>
+              </div>
+              <div>
+                <ButtonLink href="/my-trips/new" variant="secondary" size="lg">
+                  {t('startBlankCta')}
+                </ButtonLink>
+                <p className="mt-3 text-base leading-relaxed text-foreground-muted">
+                  {t('startBlankHint')}
+                </p>
+              </div>
+            </div>
+          </section>
 
           <section aria-labelledby="steps-heading" className="mt-14">
             <h2
@@ -115,20 +149,6 @@ export default async function PlanYourTripPage({ params }: Params) {
                   {channel.label}
                 </ButtonExternalLink>
               ))}
-            </div>
-          </section>
-
-          <section aria-labelledby="browse-heading" className="mt-14">
-            <h2
-              id="browse-heading"
-              className="font-display text-xl font-semibold md:text-2xl"
-            >
-              {t('orBrowse')}
-            </h2>
-            <div className="mt-5">
-              <ButtonLink href="/itineraries" variant="secondary" size="lg">
-                {t('browseCta')}
-              </ButtonLink>
             </div>
           </section>
         </div>
