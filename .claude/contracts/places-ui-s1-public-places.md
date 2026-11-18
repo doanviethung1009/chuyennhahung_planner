@@ -20,6 +20,6 @@
 - Security / migration: không migration; chỉ đọc nội dung công khai. `/sec-check` + `/qc-check` sau session **chỉ chạy khi chủ dự án xác nhận mở subagent**; đến lúc đó ghi NOT RUN.
 - Rollback: revert PR; không đổi dữ liệu.
 - Budget: sub-agents 0. Không merge khi chưa được duyệt.
-- State: READY (owner duyệt 2026-11-18; chạy trong session mới theo `.claude/templates/UNIVERSAL_TASK_EXECUTION.md`)
+- State: DONE (merged PR #152, 2026-11-18)
 - Feature document owner: main session — `docs/features/places.md` + `.vi.md`.
 - Architecture/usage doc updates: `docs/architecture.*` (route), `docs/usage.*`.

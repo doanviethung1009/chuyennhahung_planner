@@ -8,4 +8,4 @@
 - Files allowed: `src/app/[locale]/admin/content/{collections,integrity}/**`, `src/components/admin/content/**`, routing, `return-to`, messages, tests, `docs/features/admin-content-collections.*`, `docs/features/README.*`; handlers only after the amendment above.
 - Acceptance: editor can open both screens and edit a collection with `If-Match` conflicts shown (412 message); planner integrity visible to admin only; findings link to the owning record; empty/error states; VI/EN.
 - Tests: role matrix for both pages, 412 handling, list search/sort pure helper, i18n.
-- Security: integrity output may name user ids — shown only to `user:provision`; no secrets. Rollback: revert PR. Docs: frontend writes. Budget: sub-agents 0. State: READY (owner approved 2026-11-17) but BLOCKED until handlers move to session access (W11)
+- Security: integrity output may name user ids — shown only to `user:provision`; no secrets. Rollback: revert PR. Docs: frontend writes. Budget: sub-agents 0. State: READY (owner approved 2026-11-17) but READY after the amendment: owner approved W11 on 2026-11-18 (handlers move to `adminContentRoute`; class becomes L; amend this contract first)

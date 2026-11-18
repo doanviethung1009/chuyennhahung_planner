@@ -40,6 +40,6 @@
 - Security and migration risks: không migration. Ghi dữ liệu thành viên qua endpoint có sẵn (cookie phiên HttpOnly, same-origin, lọc `ownerId` ở server); client không quyết quyền. Không log/hiển thị token. `returnTo` đi qua `safeReturnTo` ở server. **Khuyến nghị `/qc-check`; `/sec-check` ở mức thấp** (không đổi trust boundary) — cả hai NOT RUN cho đến khi chủ dự án yêu cầu.
 - Rollback approach: revert PR; không đổi dữ liệu. Hoạt động đã thêm vẫn xóa được trong trình soạn chuyến.
 - Budget: subagent 0; một lượt implement + tối đa 2 vòng sửa; dừng và hỏi nếu phát hiện cần đổi API/DB.
-- State: IMPLEMENTED (owner đã duyệt contract và 6 đề xuất không đổi; chờ phép commit/PR; qc PASS vòng 2, sec PASS)
+- State: DONE (merged PR #155, 2026-11-18; qc PASS vòng 2, sec PASS)
 - Feature document owner: main session (FE) — cập nhật `docs/features/places.md` + `.vi.md` (đường thêm vào chuyến, trạng thái, hạn chế) và `docs/usage.md` + `.vi.md`.
 - Architecture/usage doc updates needed: `docs/usage.*` có; `docs/architecture.*` không.
