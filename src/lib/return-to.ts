@@ -33,6 +33,8 @@ const KEEPS_QUERY: readonly AppPathname[] = [
   '/admin/content/reviews',
   '/admin/content/collections',
   '/admin/content/collections/[slug]',
+  '/admin/content/templates',
+  '/admin/content/templates/[slug]',
   '/admin/content/integrity',
 ];
 const PUBLIC = (Object.keys(pathnames) as AppPathname[]).filter(

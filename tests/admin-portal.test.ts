@@ -116,6 +116,7 @@ describe('admin sidebar visibility (ADR 0020 §2)', () => {
       '/admin/content/places',
       '/admin/content/reviews',
       '/admin/content/collections',
+      '/admin/content/templates',
       '/admin/content/integrity',
       '/admin/community',
     ]);

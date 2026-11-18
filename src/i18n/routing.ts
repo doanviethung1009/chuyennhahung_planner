@@ -51,6 +51,11 @@ export const pathnames = {
     vi: '/quan-tri/noi-dung/bo-suu-tap/[slug]',
     en: '/admin/content/collections/[slug]',
   },
+  '/admin/content/templates': { vi: '/quan-tri/noi-dung/lich-trinh-mau', en: '/admin/content/templates' },
+  '/admin/content/templates/[slug]': {
+    vi: '/quan-tri/noi-dung/lich-trinh-mau/[slug]',
+    en: '/admin/content/templates/[slug]',
+  },
   '/admin/content/integrity': { vi: '/quan-tri/noi-dung/toan-ven', en: '/admin/content/integrity' },
   '/admin/users': { vi: '/quan-tri/nguoi-dung', en: '/admin/users' },
   '/admin/users/roles': { vi: '/quan-tri/nguoi-dung/vai-tro', en: '/admin/users/roles' },
