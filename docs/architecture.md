@@ -355,9 +355,11 @@ The admin audit log (P07-13, [feature](features/admin-audit-viewer.md)): `/admin
 | `stories`, `places` | POST (create; stories always draft) | `content:write` |
 | `stories/[slug]/places` | PATCH | `content:write` |
 | `stories/[slug]/status`, `reviews/[id]/status` | POST | `story:publish` |
-| DELETE, `templates/**`, `collections/**`, `integrity` | any | token-only (`adminRoute`) |
+| `collections`, `collections/[slug]`, `collections/[slug]/status`, `integrity` | GET, POST, PATCH, DELETE | `content:write` (P07-15) |
+| `planner/integrity` (via `adminPlannerRoute`) | GET | `user:provision`, `session: true` (P07-15; editors refused) |
+| DELETE of stories/places/reviews, `templates/**` | any | token-only (`adminRoute`) |
 
-PATCH accepts an optional `If-Match: "<updatedAt>"` (`ifMatchStamp`); the repository compares inside the transaction and a stale write answers **412** `version_conflict`. No header means last write wins.
+PATCH (stories, places, reviews and, since P07-15, collections) accepts an optional `If-Match: "<updatedAt>"` (`ifMatchStamp`); the repository compares inside the transaction and a stale write answers **412** `version_conflict`. No header means last write wins.
 
 ### Community trips (ADR 0014, PR 1)
 

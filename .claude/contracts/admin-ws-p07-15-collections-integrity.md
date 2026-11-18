@@ -20,3 +20,10 @@
 - **Security:** a trust boundary moves (token-only → session). `/sec-check` is **recommended before merge** (user calls it). Residual risk to state in the handoff: collections are now writable by every editor session — same exposure as stories and places.
 - **ADR:** no new ADR; ADR 0011 §1 covers the pattern. Record the moved routes in `docs/features/admin-content-collections.*` and, because the route/auth matrix changes, in `docs/architecture.*` and `docs/travel-content-api.*` (rule 10).
 - **Ownership order:** backend role (handlers + tests) first, then frontend role (pages, `content-list.tsx` search/sort, routing, messages, feature doc). One session, one branch, one PR; commit per role.
+
+## Amendment 2 (2026-11-18) — `If-Match` on collections PATCH
+- Why: the W11 amendment assumed the collections PATCH honours `If-Match`, but `updateCollection` has no stamp check and the handler ignores the header, so the UI's 412 criterion could not be met. Owner chose option A ("Chọn A").
+- Change (API-behaviour addition limited to an optional parameter): `src/server/content/repository.ts` — `updateCollection(slug, patch, expectedUpdatedAt?)` calls `checkStamp('collection', …)` inside the transaction (that method only; the one repository class serves both the JSON and PostgreSQL stores); `src/app/api/admin/travel/collections/[slug]/route.ts` PATCH passes `ifMatchStamp(request)`.
+- Absent header stays last-write-wins for API callers; empty header is 400; stale is 412 `version_conflict`. No new route, field or schema change.
+- Tests: match, mismatch (412, nothing written), absent header, in `tests/admin-content-session.test.ts`.
+- `place_in_use` stays OUT of scope.

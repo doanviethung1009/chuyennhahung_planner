@@ -33,6 +33,10 @@ let r: {
   reviewStatus: typeof import('../src/app/api/admin/travel/reviews/[id]/status/route');
   templates: typeof import('../src/app/api/admin/travel/templates/route');
   integrity: typeof import('../src/app/api/admin/travel/integrity/route');
+  collections: typeof import('../src/app/api/admin/travel/collections/route');
+  collection: typeof import('../src/app/api/admin/travel/collections/[slug]/route');
+  collectionStatus: typeof import('../src/app/api/admin/travel/collections/[slug]/status/route');
+  plannerIntegrity: typeof import('../src/app/api/admin/planner/integrity/route');
 };
 let planner: typeof import('../src/server/planner/instance');
 let content: typeof import('../src/server/content/instance');
@@ -99,6 +103,10 @@ beforeAll(async () => {
     reviewStatus: await import('../src/app/api/admin/travel/reviews/[id]/status/route'),
     templates: await import('../src/app/api/admin/travel/templates/route'),
     integrity: await import('../src/app/api/admin/travel/integrity/route'),
+    collections: await import('../src/app/api/admin/travel/collections/route'),
+    collection: await import('../src/app/api/admin/travel/collections/[slug]/route'),
+    collectionStatus: await import('../src/app/api/admin/travel/collections/[slug]/status/route'),
+    plannerIntegrity: await import('../src/app/api/admin/planner/integrity/route'),
   };
   planner = await import('../src/server/planner/instance');
   content = await import('../src/server/content/instance');
@@ -300,15 +308,160 @@ describe('create story and place (P07-16)', () => {
 describe('routes that stay token-only', () => {
   it('reject a session (even admin) and still accept the token', async () => {
     const admin = await makeUser('admin');
-    // Delete, templates and integrity never opted in (create did in P07-16).
+    // Delete and templates never opted in (create did in P07-16; collections and
+    // integrity moved to session access in P07-15).
     const del = (o: Opts) =>
       r.place.DELETE(req({ method: 'DELETE', path: '/api/admin/travel/places/cms-never', ...o }), slugParams('cms-never'));
     expect([401, 403]).toContain((await del({ cookie: admin.cookie })).status);
     expect((await del({ bearer: ADMIN_TOKEN })).status).toBe(404);
     expect([401, 403]).toContain((await r.templates.GET(req({ path: '/api/admin/travel/templates', cookie: admin.cookie }))).status);
     expect((await r.templates.GET(req({ path: '/api/admin/travel/templates', bearer: ADMIN_TOKEN }))).status).toBe(200);
-    expect([401, 403]).toContain((await r.integrity.GET(req({ path: '/api/admin/travel/integrity', cookie: admin.cookie }))).status);
-    expect((await r.integrity.GET(req({ path: '/api/admin/travel/integrity', bearer: ADMIN_TOKEN }))).status).toBe(200);
+  });
+});
+
+const collectionBody = (slug: string) => ({
+  slug,
+  title: { vi: 'Bộ sưu tập', en: 'Collection' },
+  tagline: { vi: 'Khẩu hiệu', en: 'Tagline' },
+  description: { vi: ['Mô tả.'], en: ['Description.'] },
+  cover: '/images/covers/da-lat.svg',
+  destinationSlugs: ['da-lat'],
+  storySlugs: [],
+  placeSlugs: [],
+  seo: {
+    title: null,
+    description: { vi: 'Mô tả SEO.', en: 'SEO description.' },
+    ogImage: null,
+    canonicalPath: null,
+    noindex: false,
+    keywords: { vi: [], en: [] },
+  },
+});
+
+describe('collections and integrity on session access (P07-15)', () => {
+  const base = '/api/admin/travel/collections';
+  const list = (o: Opts = {}) => r.collections.GET(req({ path: base, ...o }));
+  const create = (slug: string, o: Opts = {}) =>
+    r.collections.POST(req({ method: 'POST', path: base, body: collectionBody(slug), ...o }));
+  const get = (slug: string, o: Opts = {}) =>
+    r.collection.GET(req({ path: `${base}/${slug}`, ...o }), slugParams(slug));
+  const patch = (slug: string, body: unknown, o: Opts = {}) =>
+    r.collection.PATCH(req({ method: 'PATCH', path: `${base}/${slug}`, body, ...o }), slugParams(slug));
+  const status = (slug: string, action: string, o: Opts = {}) =>
+    r.collectionStatus.POST(
+      req({ method: 'POST', path: `${base}/${slug}/status`, body: { action }, ...o }),
+      slugParams(slug),
+    );
+  const integrity = (o: Opts = {}) => r.integrity.GET(req({ path: '/api/admin/travel/integrity', ...o }));
+  const plannerIntegrity = (o: Opts = {}) =>
+    r.plannerIntegrity.GET(req({ path: '/api/admin/planner/integrity', ...o }));
+
+  it('admits editor, admin and service; refuses member 403 and nobody 401, on every handler', async () => {
+    const editor = await makeUser('editor');
+    const admin = await makeUser('admin');
+    const member = await makeUser('member');
+    expect((await create('col-guard', { bearer: ADMIN_TOKEN })).status).toBe(201);
+    for (const o of [{ cookie: editor.cookie }, { cookie: admin.cookie }, { bearer: ADMIN_TOKEN }]) {
+      for (const response of [await list(o), await get('col-guard', o), await integrity(o)]) {
+        expect(response.status).toBe(200);
+        expect(response.headers.get('cache-control')).toBe('no-store');
+      }
+    }
+    const denied = { cookie: member.cookie };
+    for (const response of [
+      await list(denied),
+      await create('col-member', denied),
+      await get('col-guard', denied),
+      await patch('col-guard', { cover: '/images/covers/da-lat.svg' }, denied),
+      await status('col-guard', 'publish', denied),
+      await integrity(denied),
+    ]) {
+      expect(response.status).toBe(403);
+    }
+    for (const response of [
+      await list(),
+      await create('col-anon'),
+      await get('col-guard'),
+      await patch('col-guard', {}),
+      await status('col-guard', 'publish'),
+      await integrity(),
+    ]) {
+      expect(response.status).toBe(401);
+    }
+  });
+
+  it('lets an editor create, edit and change status; the token path still works', async () => {
+    const editor = await makeUser('editor');
+    expect((await create('col-edit', { cookie: editor.cookie })).status).toBe(201);
+    const edited = await patch('col-edit', { tagline: { vi: 'Mới', en: 'New' } }, { cookie: editor.cookie });
+    expect(edited.status).toBe(200);
+    expect((await edited.json()).tagline.en).toBe('New');
+    const published = await status('col-edit', 'publish', { cookie: editor.cookie });
+    expect(published.status).toBe(200);
+    expect((await published.json()).status).toBe('published');
+    expect((await status('col-edit', 'unpublish', { bearer: ADMIN_TOKEN })).status).toBe(200);
+    expect((await patch('col-edit', { cover: '/images/covers/da-lat.svg' }, { bearer: ADMIN_TOKEN })).status).toBe(200);
+  });
+
+  it('refuses a cross-site cookie mutation on every collection mutation and writes nothing', async () => {
+    const editor = await makeUser('editor');
+    const evil = { cookie: editor.cookie, origin: 'https://evil.test' };
+    await create('col-csrf', { bearer: ADMIN_TOKEN });
+    const before = await (await get('col-csrf', { bearer: ADMIN_TOKEN })).json();
+    expect((await create('col-csrf-new', evil)).status).toBe(403);
+    expect((await patch('col-csrf', { tagline: { vi: 'x', en: 'x' } }, evil)).status).toBe(403);
+    expect((await status('col-csrf', 'publish', evil)).status).toBe(403);
+    expect((await get('col-csrf', { bearer: ADMIN_TOKEN })).status).toBe(200);
+    expect(await (await get('col-csrf', { bearer: ADMIN_TOKEN })).json()).toEqual(before);
+    expect((await get('col-csrf-new', { bearer: ADMIN_TOKEN })).status).toBe(404);
+  });
+
+  it('applies If-Match to collection PATCH: match 200, stale 412 writing nothing, absent last-write-wins, empty 400', async () => {
+    const editor = await makeUser('editor');
+    await create('col-ifmatch', { bearer: ADMIN_TOKEN });
+    const current = await (await get('col-ifmatch', { bearer: ADMIN_TOKEN })).json();
+    const next = { tagline: { vi: 'Khác', en: 'Other' } };
+
+    const stale = await patch('col-ifmatch', next, { cookie: editor.cookie, ifMatch: '"2000-01-01T00:00:00.000Z"' });
+    expect(stale.status).toBe(412);
+    const staleBody = await stale.json();
+    expect(staleBody.error.code).toBe('version_conflict');
+    expect(staleBody.error.message).not.toContain('2000-01-01');
+    expect(await (await get('col-ifmatch', { bearer: ADMIN_TOKEN })).json()).toEqual(current);
+
+    const ok = await patch('col-ifmatch', next, { cookie: editor.cookie, ifMatch: `"${current.updatedAt}"` });
+    expect(ok.status).toBe(200);
+    expect((await ok.json()).tagline.en).toBe('Other');
+
+    expect((await patch('col-ifmatch', { tagline: { vi: 'A', en: 'A' } }, { bearer: ADMIN_TOKEN })).status).toBe(200);
+    expect((await patch('col-ifmatch', next, { bearer: ADMIN_TOKEN, ifMatch: '""' })).status).toBe(400);
+  });
+
+  it('lets exactly one of two concurrent collection PATCHes with the same stamp win', async () => {
+    await create('col-race', { bearer: ADMIN_TOKEN });
+    const current = await (await get('col-race', { bearer: ADMIN_TOKEN })).json();
+    const results = await Promise.all(
+      ['a', 'b'].map((n) =>
+        patch('col-race', { tagline: { vi: n, en: n } }, { bearer: ADMIN_TOKEN, ifMatch: `"${current.updatedAt}"` }),
+      ),
+    );
+    expect(results.map((x) => x.status).sort()).toEqual([200, 412]);
+  });
+
+  it('planner integrity: admin session and token 200, editor 403, member 403, nobody 401', async () => {
+    const admin = await makeUser('admin');
+    const editor = await makeUser('editor');
+    const member = await makeUser('member');
+    for (const o of [{ cookie: admin.cookie }, { bearer: ADMIN_TOKEN }]) {
+      const response = await plannerIntegrity(o);
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(typeof body.ok).toBe('boolean');
+      expect(Array.isArray(body.issues)).toBe(true);
+    }
+    expect((await plannerIntegrity({ cookie: editor.cookie })).status).toBe(403);
+    expect((await plannerIntegrity({ cookie: member.cookie })).status).toBe(403);
+    expect((await plannerIntegrity()).status).toBe(401);
   });
 });
 

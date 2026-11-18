@@ -156,12 +156,13 @@ describe('principal resolution on the opted-in routes', () => {
     expect(both.status).toBe(401);
   });
 
-  it('keeps integrity token-only; rotate-token and google unlink take a session only from user:provision (P07-12)', async () => {
+  it('gives integrity to an admin session (P07-15); rotate-token and google unlink take a session only from user:provision (P07-12)', async () => {
     const admin = await makeUser('admin');
     const member = await makeUser('member');
     const target = await makeUser('member');
     const id = target.id;
-    expect([401, 403]).toContain((await routes.integrity.GET(req({ path: '/api/admin/planner/integrity', cookie: admin.cookie }))).status);
+    // P07-15: planner integrity opted in to session access for `user:provision`.
+    expect((await routes.integrity.GET(req({ path: '/api/admin/planner/integrity', cookie: admin.cookie }))).status).toBe(200);
     const refused = [
       await routes.rotate.POST(
         req({ method: 'POST', path: `/api/admin/planner/users/${id}/rotate-token`, cookie: member.cookie }),
