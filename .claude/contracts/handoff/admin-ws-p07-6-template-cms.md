@@ -1,0 +1,11 @@
+# Handoff — P07-6 Template CMS (CORE-5)
+- Nhánh: `claude/admin-template-cms-ca5653` (contract ghi `feat/admin-template-cms`; đổi tên trước PR nếu chủ dự án muốn). PR: chưa có. Chưa commit/push (chưa được phép).
+- Backend xong: 4 handler (`templates` GET, `[slug]` GET/PATCH, `reorder`, `move-activity`) chuyển sang `adminContentRoute({ template:write, session:true })`; `POST templates` và `DELETE [slug]` giữ token-only. `expectedUpdatedAt` tùy chọn trên `updateTemplate`, `reorderActivities`, `moveActivity`; ba handler truyền `ifMatchStamp`.
+- Frontend xong: trang `/admin/content/templates` (VI `/quan-tri/noi-dung/lich-trinh-mau`) và `[slug]`; `template-list`, `template-editor`, `template-utils`; sidebar, routing, return-to, messages VI/EN. Editor chỉ gửi `days` khi nội dung hoạt động đổi; đổi thứ tự/chuyển ngày qua `reorder`/`move-activity` (khóa khi còn chỉnh sửa chưa lưu); hiển thị `sourceSnapshot`, gợi ý "chuyện nguồn đã đổi", thông báo khi công khai bị chặn, 412.
+- Tài liệu: feature doc + bản VI, README features, `architecture.*`, `travel-content-api.*` (cả hai ngôn ngữ).
+- Ngoài kế hoạch: sửa 2 test cũ (`admin-layout` số trang 17→19, `admin-portal` sidebar editor thêm templates); test cũ "routes that stay token-only" bỏ phần templates.GET (đã chuyển session).
+- Lệch contract: mã lỗi 412 thực tế là `version_conflict` (contract ghi `stale_content`).
+- Kiểm tra: typecheck PASS; lint PASS (không output); test PASS (100 file, 1270 passed, 89 skipped); build PASS. Kiểm đột biến DELETE→`adminContentRoute`: test thất bại như mong đợi (đã hoàn tác). Smoke UI 375/768/1280: NOT RUN (cần đăng nhập admin, không nhập mật khẩu). Test render component editor: chưa có. /qc-check, /sec-check: NOT RUN.
+- Rủi ro: ranh giới tin cậy token→session cho template read/update/reorder/move; mọi editor sửa được template công khai. Khuyến nghị `/sec-check` (đặc biệt) và `/qc-check` trước merge.
+- Chưa làm (follow-up): tạo template từ story trên UI; thêm/bớt ngày và hoạt động; xóa template (token-only theo quyết định chủ dự án).
+- Mở: commit theo vai (BE rồi FE) và mở PR khi chủ dự án cho phép; merge là việc của chủ dự án.

@@ -356,10 +356,11 @@ The admin audit log (P07-13, [feature](features/admin-audit-viewer.md)): `/admin
 | `stories/[slug]/places` | PATCH | `content:write` |
 | `stories/[slug]/status`, `reviews/[id]/status` | POST | `story:publish` |
 | `collections`, `collections/[slug]`, `collections/[slug]/status`, `integrity` | GET, POST, PATCH | `content:write` (P07-15) |
+| `templates` (GET), `templates/[slug]` (GET, PATCH), `templates/[slug]/reorder`, `templates/[slug]/move-activity` | GET, PATCH, POST | `template:write`, `session: true` (P07-6) |
 | `planner/integrity` (via `adminPlannerRoute`) | GET | `user:provision`, `session: true` (P07-15; editors refused) |
-| DELETE of stories/places/collections/reviews, `templates/**` | any | token-only (`adminRoute`) |
+| DELETE of stories/places/collections/reviews/templates, `POST templates` | any | token-only (`adminRoute`) |
 
-PATCH (stories, places, reviews and, since P07-15, collections) accepts an optional `If-Match: "<updatedAt>"` (`ifMatchStamp`); the repository compares inside the transaction and a stale write answers **412** `version_conflict`. No header means last write wins.
+PATCH (stories, places, reviews and, since P07-15, collections and, since P07-6, templates via `PATCH`, `reorder` and `move-activity`) accepts an optional `If-Match: "<updatedAt>"` (`ifMatchStamp`); the repository compares inside the transaction and a stale write answers **412** `version_conflict`. No header means last write wins.
 
 ### Community trips (ADR 0014, PR 1)
 

@@ -355,10 +355,11 @@ Nhật ký kiểm toán admin (P07-13, [feature](features/admin-audit-viewer.vi.
 | `stories/[slug]/places` | PATCH | `content:write` |
 | `stories/[slug]/status`, `reviews/[id]/status` | POST | `story:publish` |
 | `collections`, `collections/[slug]`, `collections/[slug]/status`, `integrity` | GET, POST, PATCH | `content:write` (P07-15) |
+| `templates` (GET), `templates/[slug]` (GET, PATCH), `templates/[slug]/reorder`, `templates/[slug]/move-activity` | GET, PATCH, POST | `template:write`, `session: true` (P07-6) |
 | `planner/integrity` (qua `adminPlannerRoute`) | GET | `user:provision`, `session: true` (P07-15; editor bị từ chối) |
-| DELETE story/place/collection/review, `templates/**` | mọi method | chỉ token (`adminRoute`) |
+| DELETE story/place/collection/review/template, `POST templates` | mọi method | chỉ token (`adminRoute`) |
 
-PATCH (story, place, review và, từ P07-15, collection) nhận header tuỳ chọn `If-Match: "<updatedAt>"` (`ifMatchStamp`); repository so sánh trong transaction và ghi cũ trả **412** `version_conflict`. Không có header nghĩa là ghi sau thắng.
+PATCH (story, place, review và, từ P07-15, collection và, từ P07-6, template qua `PATCH`, `reorder`, `move-activity`) nhận header tuỳ chọn `If-Match: "<updatedAt>"` (`ifMatchStamp`); repository so sánh trong transaction và ghi cũ trả **412** `version_conflict`. Không có header nghĩa là ghi sau thắng.
 
 ### Chuyến đi cộng đồng (ADR 0014, PR 1)
 

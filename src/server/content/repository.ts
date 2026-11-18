@@ -861,11 +861,16 @@ export class TravelContentRepository {
    * Replacing `days` wholesale re-issues activity ids — ordering changes should
    * go through `reorderActivities` / `moveActivity`, which preserve them.
    */
-  updateTemplate(slug: string, patch: TemplateUpdateInput): Promise<TravelTemplate> {
+  updateTemplate(
+    slug: string,
+    patch: TemplateUpdateInput,
+    expectedUpdatedAt?: string,
+  ): Promise<TravelTemplate> {
     return this.transaction((data) => {
       const index = data.templates.findIndex((t) => t.slug === slug);
       const existing = data.templates[index];
       if (index < 0 || !existing) throw notFound('template', slug);
+      checkStamp('template', existing.updatedAt, expectedUpdatedAt);
 
       const issues: FieldIssue[] = [];
       if (patch.itinerarySlugs !== undefined) {
@@ -909,11 +914,13 @@ export class TravelContentRepository {
   reorderActivities(
     slug: string,
     input: ReorderActivitiesInput,
+    expectedUpdatedAt?: string,
   ): Promise<TravelTemplate> {
     return this.transaction((data) => {
       const index = data.templates.findIndex((t) => t.slug === slug);
       const existing = data.templates[index];
       if (index < 0 || !existing) throw notFound('template', slug);
+      checkStamp('template', existing.updatedAt, expectedUpdatedAt);
 
       const day = existing.days.find((d) => d.day === input.day);
       if (!day) throw notFound(`template "${slug}" day`, String(input.day));
@@ -956,11 +963,16 @@ export class TravelContentRepository {
   }
 
   /** Move one activity to another day, or to a new index within its own day. */
-  moveActivity(slug: string, input: MoveActivityInput): Promise<TravelTemplate> {
+  moveActivity(
+    slug: string,
+    input: MoveActivityInput,
+    expectedUpdatedAt?: string,
+  ): Promise<TravelTemplate> {
     return this.transaction((data) => {
       const index = data.templates.findIndex((t) => t.slug === slug);
       const existing = data.templates[index];
       if (index < 0 || !existing) throw notFound('template', slug);
+      checkStamp('template', existing.updatedAt, expectedUpdatedAt);
 
       const target = existing.days.find((d) => d.day === input.toDay);
       if (!target) throw notFound(`template "${slug}" day`, String(input.toDay));
