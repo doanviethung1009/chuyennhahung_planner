@@ -31,6 +31,9 @@ const KEEPS_QUERY: readonly AppPathname[] = [
   '/admin/content/places/new',
   '/admin/content/places/[slug]',
   '/admin/content/reviews',
+  '/admin/content/collections',
+  '/admin/content/collections/[slug]',
+  '/admin/content/integrity',
 ];
 const PUBLIC = (Object.keys(pathnames) as AppPathname[]).filter(
   (key) => !NOT_RETURNABLE.includes(key) && !KEEPS_QUERY.includes(key),

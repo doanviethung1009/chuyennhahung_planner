@@ -115,6 +115,8 @@ describe('admin sidebar visibility (ADR 0020 §2)', () => {
       '/admin/content/stories',
       '/admin/content/places',
       '/admin/content/reviews',
+      '/admin/content/collections',
+      '/admin/content/integrity',
       '/admin/community',
     ]);
     expect(adminSidebarGroups({ role: 'editor' }).map((group) => group.id)).not.toContain('people');

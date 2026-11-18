@@ -684,7 +684,9 @@
       "home": "Quản trị",
       "brand": "Chuyện Nhà Hưng · Quản trị",
       "viewSite": "Xem trang chính",
-      "audit": "Nhật ký"
+      "audit": "Nhật ký",
+      "collections": "Bộ sưu tập",
+      "integrity": "Toàn vẹn dữ liệu"
     },
     "overview": {
       "heading": "Chào mừng đến khu quản trị",
@@ -772,7 +774,16 @@
       "empty": "Chưa có mục nào.",
       "count": "{count, plural, other {# mục}}",
       "updated": "cập nhật {date}",
-      "archived": "Đã lưu trữ chuyến đi."
+      "archived": "Đã lưu trữ chuyến đi.",
+      "searchLabel": "Tìm kiếm",
+      "searchPlaceholder": "Tên hoặc slug",
+      "sortLabel": "Sắp xếp",
+      "sort": {
+        "updated": "Mới cập nhật trước",
+        "title": "Theo tên",
+        "slug": "Theo slug"
+      },
+      "noMatches": "Không có mục nào khớp với tìm kiếm."
     },
     "stories": {
       "metaTitle": "Quản lý chuyến đi",
@@ -925,6 +936,44 @@
       "firstParagraphHint": "Khối đầu tiên của nội dung chuyến đi. Thêm các khối khác sau trong trình chỉnh sửa.",
       "submitStory": "Tạo chuyến đi nháp",
       "submitPlace": "Tạo địa điểm"
+    },
+    "collections": {
+      "metaTitle": "Quản lý bộ sưu tập",
+      "title": "Quản lý bộ sưu tập",
+      "description": "Xem và sửa các bộ sưu tập điểm đến, đổi trạng thái xuất bản.",
+      "editMetaTitle": "Sửa bộ sưu tập",
+      "editTitle": "Sửa bộ sưu tập",
+      "editDescription": "Sửa nội dung tiếng Việt và tiếng Anh cạnh nhau rồi lưu.",
+      "back": "Quay lại danh sách bộ sưu tập",
+      "sectionGeneral": "Thông tin chung",
+      "sectionMembers": "Nội dung trong bộ sưu tập",
+      "sectionSeo": "SEO",
+      "fieldTitle": "Tiêu đề",
+      "fieldTagline": "Khẩu hiệu",
+      "fieldDescription": "Mô tả",
+      "fieldCover": "Ảnh bìa",
+      "coverHint": "Đường dẫn ảnh, ví dụ /images/covers/da-lat.svg.",
+      "fieldDestinations": "Điểm đến (slug)",
+      "fieldStories": "Chuyến đi (slug)",
+      "fieldPlaces": "Địa điểm (slug)",
+      "linesHint": "Mỗi dòng một slug.",
+      "seoTitle": "Tiêu đề SEO",
+      "seoDescription": "Mô tả SEO",
+      "seoKeywords": "Từ khoá",
+      "seoOgImage": "Ảnh chia sẻ",
+      "seoCanonical": "Đường dẫn chuẩn",
+      "seoNoindex": "Không cho công cụ tìm kiếm lập chỉ mục"
+    },
+    "integrity": {
+      "metaTitle": "Toàn vẹn dữ liệu",
+      "title": "Toàn vẹn dữ liệu",
+      "description": "Báo cáo chỉ đọc: tham chiếu hỏng và dữ liệu lệch trong kho nội dung. Không tự sửa.",
+      "contentTitle": "Nội dung du lịch",
+      "plannerTitle": "Planner (chỉ quản trị viên)",
+      "loading": "Đang kiểm tra…",
+      "clean": "Không phát hiện vấn đề nào.",
+      "count": "{count, plural, other {# phát hiện}}",
+      "retry": "Kiểm tra lại"
     }
   },
   "storyPage": {

@@ -527,11 +527,13 @@ export class TravelContentRepository {
   updateCollection(
     slug: string,
     patch: CollectionUpdateInput,
+    expectedUpdatedAt?: string,
   ): Promise<DestinationCollection> {
     return this.transaction((data) => {
       const index = data.collections.findIndex((c) => c.slug === slug);
       const existing = data.collections[index];
       if (index < 0 || !existing) throw notFound('collection', slug);
+      checkStamp('collection', existing.updatedAt, expectedUpdatedAt);
 
       const merged = { ...existing, ...patch };
       this.validateCollectionReferences(data, merged);

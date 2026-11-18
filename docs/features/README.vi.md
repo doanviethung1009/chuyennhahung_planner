@@ -52,6 +52,7 @@ Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
 | Trình xem nhật ký quản trị | [admin-audit-viewer.vi.md](admin-audit-viewer.vi.md) | `/admin/audit` — đọc log kiểm toán có lọc và phân trang; đổi vai trò, hành động tài khoản và trạng thái bài viết nay ghi sự kiện; `GET /api/admin/audit`, action `audit:read` (P07-13) |
 | Trạng thái hệ thống (admin) | [admin-system-status.vi.md](admin-system-status.vi.md) | `/admin/system` — trang chỉ-xem cho super admin: chế độ kho, migration gần nhất, bản dựng, cờ tích hợp, sức khỏe, sao lưu "chưa cấu hình"; `GET /api/admin/system`, action `runbook:read` (P07-17) |
 | Người dùng và vai trò (admin) | [admin-users-roles.vi.md](admin-users-roles.vi.md) | `/admin/users/roles` ma trận vai trò chỉ-xem; gỡ liên kết Google và xoay token từ console người dùng; `limit`/`cursor`/`sort` cho `GET /api/admin/planner/users` (P07-12) |
+| Bộ sưu tập và toàn vẹn (admin) | [admin-content-collections.vi.md](admin-content-collections.vi.md) | `/quan-tri/noi-dung/bo-suu-tap` và `/toan-ven` — editor sửa bộ sưu tập (`If-Match`, trạng thái xuất bản) và đọc báo cáo toàn vẹn nội dung; admin còn xem báo cáo Planner (P07-15) |
 | Không gian kiểm duyệt (admin) | [admin-moderation-workspace.vi.md](admin-moderation-workspace.vi.md) | `/admin/community` không gian phân loại: số đếm và liên kết nhảy, thứ tự mục cố định, trạng thái rỗng, bố cục thẻ chung, lịch sử từng mục chỉ-đọc (P07-14) |
 
 ## Các phase chưa mở
