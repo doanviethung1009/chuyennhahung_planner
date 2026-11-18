@@ -1,5 +1,5 @@
 # Handoff — CORE-6 UI tests for community components
-- Branch: `claude/test-community-components-0fb97e` (from `main` @ 815f269, after #166). PR: none — not committed/pushed (awaiting owner).
+- Branch: `test/community-component-tests` (from `main` @ 815f269, after #166). PR: [#167](https://github.com/doanviethung1009/chuyennhahung_planner/pull/167) — open, not merged.
 ## Done
 - Dev deps: `jsdom`, `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom` (jest-dom installed but unused — drop if unwanted).
 - `vitest.config.ts`: `include` → `*.test.{ts,tsx}`; `server.deps.inline: ['next-intl']`. Default env stays `node`; component tests opt in with `// @vitest-environment jsdom`.
@@ -17,4 +17,4 @@
 - jsdom is not a browser: real focus trap/Escape/backdrop of `<dialog>` is modelled, not tested (WEB-3).
 - `npm install` printed an npm audit notice (not inspected); no `audit fix` run.
 ## Next
-- Owner: authorize commit + PR. Then CORE-4.
+- Owner: review and merge #167. Then CORE-4.
