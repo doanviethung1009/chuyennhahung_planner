@@ -48,6 +48,7 @@ không sửa ý.
 | _(ID do owner gán)_ | Mô hình xoá dài hạn cho nội dung CMS: Lưu trữ → Khôi phục → Xoá vĩnh viễn, xoá vĩnh viễn chỉ `super_admin` (quyết định bảo vệ dữ liệu 2026-11-19, từ P07-15: `DELETE collections/[slug]` giữ chỉ token). Chưa có contract; không thêm Phase mới | system-architect | P07-15 |
 | P07-20 | Template: bắt buộc `If-Match` (428 khi thiếu header) cho `PATCH`, `reorder`, `move-activity`; hiện tùy chọn nên token hoặc client khác vẫn ghi đè được (cảnh báo W1 `/sec-check` P07-6, 2026-11-19). Chưa có contract | backend-engineer | P07-6 |
 | P07-21 | Template công khai còn nguyên khi story nguồn bị unpublish/archive: hiện chỉ kiểm story nguồn `published` lúc đặt `public` (cảnh báo W2 `/sec-check` P07-6, 2026-11-19); cần quy tắc (chặn hoặc hạ về private) và test. Chưa có contract | system-architect → backend-engineer | P07-6 |
+| P07-22 | Slug UX cho form tạo story/place: tự sinh slug từ tiêu đề VI (`slugify`, hỗ trợ `đ`), preview URL VI/EN, báo trùng debounce; contract `.claude/contracts/admin-content-slug-ux.md` (owner duyệt 2026-11-19) | frontend-engineer | — |
 
 Rủi ro: admin portal tạo người ghi thứ hai vào store JSON một-process — SQL (P09-1) phải
 có trước khi chạy nhiều instance.

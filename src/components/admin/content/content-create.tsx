@@ -7,12 +7,11 @@ import { buttonClass } from '@/components/ui/button';
 import { ApiError, api } from '@/components/planner/api';
 import { EditorProvider, LocalizedField, LocalizedListField, SelectField, TextField } from './form-kit';
 import type { Draft, Json } from './form-kit';
-import { setAt } from './form-kit';
+import { getAt, setAt } from './form-kit';
 import { LiveNotice } from './notices';
+import { RESERVED_SLUGS, SlugField } from './slug-field';
+import { slugify } from '@/lib/slug';
 import { useErrorNotice, type Notice } from './use-record';
-
-/** A story with this slug would be shadowed by the `/new` page, so its editor could never open. */
-const RESERVED_SLUGS = ['new'];
 
 const PLACE_CATEGORIES = [
   'cafe',
@@ -79,8 +78,29 @@ export function ContentCreate({ kind }: { kind: 'stories' | 'places' }) {
   const [notice, setNotice] = useState<Notice | null>(null);
   const [pending, setPending] = useState(false);
 
+  // Until the editor touches the slug box, it follows the Vietnamese title.
+  const [slugEdited, setSlugEdited] = useState(false);
+  // `LocalizedField` sets the whole `{ vi, en }` object under `title` / `name`.
+  const titleKey = kind === 'stories' ? 'title' : 'name';
+  const viTitle = (source: Draft) => String(getAt(source, `${titleKey}.vi`) ?? '');
+
   const set = (path: string, value: Json) => {
-    setDraft((current) => setAt(current, path, value));
+    setDraft((current) => {
+      const next = setAt(current, path, value);
+      return path === titleKey && !slugEdited ? setAt(next, 'slug', slugify(viTitle(next))) : next;
+    });
+    setNotice(null);
+  };
+
+  const setSlug = (value: string) => {
+    setSlugEdited(true);
+    setDraft((current) => setAt(current, 'slug', value));
+    setNotice(null);
+  };
+
+  const regenerateSlug = () => {
+    setSlugEdited(false);
+    setDraft((current) => setAt(current, 'slug', slugify(viTitle(current))));
     setNotice(null);
   };
 
@@ -141,7 +161,14 @@ export function ContentCreate({ kind }: { kind: 'stories' | 'places' }) {
               <h2 id="create-general" className="font-display text-2xl text-foreground">
                 {ts('sectionGeneral')}
               </h2>
-              <TextField path="slug" label={tc('fieldSlug')} hint={tc('slugHint')} />
+              <SlugField
+                kind={kind}
+                value={String(draft.slug ?? '')}
+                invalid={issues.has('slug')}
+                disabled={pending}
+                onChange={setSlug}
+                onRegenerate={regenerateSlug}
+              />
               <LocalizedField path="title" label={ts('fieldTitle')} />
               <LocalizedField path="excerpt" label={ts('fieldExcerpt')} multiline rows={3} />
               <LocalizedField path="firstParagraph" label={tc('fieldFirstParagraph')} multiline rows={4} hint={tc('firstParagraphHint')} />
@@ -159,7 +186,14 @@ export function ContentCreate({ kind }: { kind: 'stories' | 'places' }) {
               <h2 id="create-general" className="font-display text-2xl text-foreground">
                 {tp('sectionGeneral')}
               </h2>
-              <TextField path="slug" label={tc('fieldSlug')} hint={tc('slugHint')} />
+              <SlugField
+                kind={kind}
+                value={String(draft.slug ?? '')}
+                invalid={issues.has('slug')}
+                disabled={pending}
+                onChange={setSlug}
+                onRegenerate={regenerateSlug}
+              />
               <LocalizedField path="name" label={tp('fieldName')} />
               <LocalizedField path="location" label={tp('fieldLocation')} />
               <LocalizedListField path="description" label={tp('fieldDescription')} paragraphs />
