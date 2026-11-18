@@ -578,7 +578,17 @@
       "filterRoleAll": "Mọi vai trò",
       "filterClear": "Xoá bộ lọc",
       "filterResult": "Hiển thị {shown}/{total} người dùng",
-      "filterEmpty": "Không có người dùng nào khớp bộ lọc."
+      "filterEmpty": "Không có người dùng nào khớp bộ lọc.",
+      "rotateToken": "Xoay token",
+      "rotateTokenConfirm": "Xoay token truy cập của {handle}? Token cũ và mọi phiên đăng nhập ngừng hoạt động ngay. Token mới chỉ hiện một lần.",
+      "rotateTokenYes": "Có, xoay token",
+      "unlinkGoogle": "Gỡ liên kết Google",
+      "unlinkGoogleConfirm": "Gỡ liên kết Google của {handle}? Các phiên đăng nhập kết thúc và họ đăng nhập bằng mật khẩu hoặc token.",
+      "unlinkGoogleYes": "Có, gỡ liên kết",
+      "loadMore": "Tải thêm",
+      "loadingMore": "Đang tải…",
+      "pageProgress": "Đã tải {loaded}/{total}",
+      "filterPartial": "Bộ lọc chỉ áp dụng cho người dùng đã tải. Hãy tải thêm để tìm trong phần còn lại."
     },
     "create": {
       "heading": "Tạo người dùng",
@@ -615,7 +625,9 @@
       "restoreDone": "Đã khôi phục {handle}.",
       "purgeDone": "Đã xóa vĩnh viễn {handle}.",
       "resetDone": "Đã cấp lại mật khẩu cho {handle}.",
-      "signedOutFailed": "Chưa đăng xuất được. Hãy thử lại."
+      "signedOutFailed": "Chưa đăng xuất được. Hãy thử lại.",
+      "rotateTokenDone": "Đã xoay token của {handle}. Hãy sao chép ngay: token không hiện lại.",
+      "unlinkGoogleDone": "Đã gỡ liên kết Google của {handle}."
     },
     "fields": {
       "handle": "mã tài khoản",
@@ -635,7 +647,8 @@
         "last_super_admin": "Bị từ chối: đây là super admin cuối cùng. Hãy nâng một super admin khác trước.",
         "account_disabled": "Bị từ chối: tài khoản đang bị khóa hoặc đã xóa không đổi được vai trò. Hãy mở khóa hoặc khôi phục trước.",
         "not_soft_deleted": "Bị từ chối: hãy xóa mềm tài khoản trước. Chỉ tài khoản đã xóa mềm mới xóa vĩnh viễn được.",
-        "confirm_handle": "Bị từ chối: hãy gõ đúng mã tài khoản (handle) để xác nhận xóa vĩnh viễn."
+        "confirm_handle": "Bị từ chối: hãy gõ đúng mã tài khoản (handle) để xác nhận xóa vĩnh viễn.",
+        "manage_role": "Bị từ chối: chỉ Quản trị cấp cao mới quản lý được tài khoản Quản trị viên và Quản trị cấp cao."
       },
       "validation_failed": "Thông tin chưa hợp lệ.",
       "validation_fields": "Thông tin chưa hợp lệ ở: {fields}.",
@@ -1478,6 +1491,35 @@
       "publish": "Xuất bản",
       "unpublish": "Gỡ xuất bản",
       "archive": "Lưu trữ"
+    }
+  },
+  "adminRoles": {
+    "metaTitle": "Vai trò và quyền",
+    "title": "Vai trò và quyền",
+    "description": "Mỗi vai trò được làm gì và quản trị viên được quản lý tài khoản nào. Chỉ đọc: sinh từ chính các quy tắc mà máy chủ áp dụng.",
+    "backToUsers": "Quay lại người dùng",
+    "actionsHeading": "Mỗi vai trò được làm gì",
+    "actionsNote": "Dấu \"Có\" nghĩa là vai trò được thực hiện thao tác. Danh sách lấy thẳng từ quy tắc phân quyền nên luôn khớp với những gì máy chủ áp dụng.",
+    "actionsCaption": "Thao tác được phép của từng vai trò",
+    "colAction": "Thao tác",
+    "manageHeading": "Vai trò được quản lý tài khoản nào",
+    "manageNote": "Gồm tạo, đổi vai trò, đặt lại mật khẩu, xoay token và gỡ liên kết Google. Quản trị viên chỉ quản lý được thành viên và biên tập viên; chỉ Quản trị cấp cao mới quản lý được tài khoản Quản trị viên và Quản trị cấp cao.",
+    "manageCaption": "Tài khoản mỗi vai trò được quản lý",
+    "colActor": "Vai trò thực hiện",
+    "yes": "Có",
+    "no": "Không",
+    "viewMatrix": "Xem vai trò và quyền",
+    "actions": {
+      "user_provision": "Tạo và quản lý tài khoản",
+      "user_promote": "Đổi vai trò tài khoản",
+      "template_write": "Soạn mẫu chuyến đi",
+      "story_publish": "Xuất bản bài viết",
+      "content_write": "Sửa địa điểm, bài viết và đánh giá",
+      "community_moderate": "Kiểm duyệt đánh giá cộng đồng",
+      "community_restrict": "Hạn chế thành viên cộng đồng",
+      "community_erase": "Xoá nội dung đánh giá của khách",
+      "runbook_read": "Xem runbook và trạng thái hệ thống",
+      "audit_read": "Xem nhật ký kiểm toán"
     }
   }
 }

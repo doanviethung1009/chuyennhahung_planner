@@ -578,7 +578,17 @@
       "filterRoleAll": "All roles",
       "filterClear": "Clear filters",
       "filterResult": "Showing {shown} of {total} users",
-      "filterEmpty": "No users match the filters."
+      "filterEmpty": "No users match the filters.",
+      "rotateToken": "Rotate token",
+      "rotateTokenConfirm": "Rotate the access token of {handle}? The old token and every session stop working now. The new token is shown once.",
+      "rotateTokenYes": "Yes, rotate",
+      "unlinkGoogle": "Unlink Google",
+      "unlinkGoogleConfirm": "Unlink Google from {handle}? Their sessions end and they sign in with their password or token instead.",
+      "unlinkGoogleYes": "Yes, unlink",
+      "loadMore": "Load more",
+      "loadingMore": "Loading…",
+      "pageProgress": "Loaded {loaded} of {total}",
+      "filterPartial": "Filters cover the users loaded so far. Load more to search the rest."
     },
     "create": {
       "heading": "Create a user",
@@ -615,7 +625,9 @@
       "restoreDone": "Restored {handle}.",
       "purgeDone": "Permanently deleted {handle}.",
       "resetDone": "Reset the password for {handle}.",
-      "signedOutFailed": "We could not sign you out. Please try again."
+      "signedOutFailed": "We could not sign you out. Please try again.",
+      "rotateTokenDone": "Rotated the token for {handle}. Copy it now: it is not shown again.",
+      "unlinkGoogleDone": "Unlinked Google from {handle}."
     },
     "fields": {
       "handle": "handle",
@@ -635,7 +647,8 @@
         "last_super_admin": "Refused: this is the last super admin. Promote another super admin first.",
         "account_disabled": "Refused: a banned or deleted account cannot change role. Unban or restore it first.",
         "not_soft_deleted": "Refused: delete the account (soft) first. Only a soft-deleted account can be deleted permanently.",
-        "confirm_handle": "Refused: type the account handle exactly to confirm a permanent delete."
+        "confirm_handle": "Refused: type the account handle exactly to confirm a permanent delete.",
+        "manage_role": "Refused: only a super admin can manage admin and super admin accounts."
       },
       "validation_failed": "Some details are not valid.",
       "validation_fields": "Some details are not valid: {fields}.",
@@ -1478,6 +1491,35 @@
       "publish": "Published",
       "unpublish": "Unpublished",
       "archive": "Archived"
+    }
+  },
+  "adminRoles": {
+    "metaTitle": "Roles and permissions",
+    "title": "Roles and permissions",
+    "description": "What each role may do, and whose accounts an admin may manage. Read-only: generated from the same rules the server enforces.",
+    "backToUsers": "Back to users",
+    "actionsHeading": "What each role may do",
+    "actionsNote": "A tick means the role may perform the action. The list comes straight from the permission rules, so it is always what the server enforces.",
+    "actionsCaption": "Actions allowed for each role",
+    "colAction": "Action",
+    "manageHeading": "Whose accounts a role may manage",
+    "manageNote": "Creating, re-roling, resetting, rotating tokens and unlinking Google for an account. An admin reaches only members and editors; only a super admin reaches admin and super admin accounts.",
+    "manageCaption": "Accounts each role may manage",
+    "colActor": "Acting role",
+    "yes": "Yes",
+    "no": "No",
+    "viewMatrix": "View roles and permissions",
+    "actions": {
+      "user_provision": "Create and manage accounts",
+      "user_promote": "Change account roles",
+      "template_write": "Write trip templates",
+      "story_publish": "Publish stories",
+      "content_write": "Edit places, stories and reviews",
+      "community_moderate": "Moderate community reviews",
+      "community_restrict": "Restrict community members",
+      "community_erase": "Erase guest review content",
+      "runbook_read": "Read the runbook and system status",
+      "audit_read": "Read the audit log"
     }
   }
 }

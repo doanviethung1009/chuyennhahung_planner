@@ -14,11 +14,15 @@ export function assignableRoles(actor: AdminRole): AdminRole[] {
 /** What the staff can do to an account (ADR 0017). `purge` = permanent delete. */
 export type AccountAction = 'ban' | 'unban' | 'delete' | 'restore' | 'purge';
 
+/** Credential acts on an active account (P07-12). Tokens and passwords are shown once. */
+export type CredentialAction = 'unlinkGoogle' | 'rotateToken';
+
 export interface AdminUser {
   id: string;
   handle: string;
   displayName: string;
   email?: string | null;
+  hasGoogle?: boolean;
   role?: AdminRole;
   bannedAt?: string | null;
   deletedAt?: string | null;

@@ -1,0 +1,12 @@
+# Handoff — P07-12 Users & roles (CORE-2)
+- Branch `feat/admin-users-roles` · PR [#165](https://github.com/doanviethung1009/chuyennhahung_planner/pull/165) (open, not merged; CI had reported no checks when last read).
+- Done: `/admin/users/roles` read-only matrix (`ROLE_ACTIONS`/`canManageRole` passed in by the server page); *Rotate token* and *Unlink Google* in the user table with the existing confirm + one-time `SecretPanel`; `limit`/`cursor`/`sort` keyset paging on `GET /users` (`total`+`nextCursor`; unchanged with no query); UI loads 50 + *Load more*.
+- `repository.ts` NOT touched: paging slices `listUsers()` in `src/server/planner/user-page.ts`; role check in `src/server/planner/manage-user.ts`.
+- After `/sec-check`: server refuses rotating your own token (409 `self_action`) for a session actor.
+- 403 from the two credential routes carries reason `manage_role`, mapped to its own VI/EN message in the console.
+- Outside the plan: the two credential routes now accept the admin session (`user:provision`) and pass the actor, so existing audit rows name the admin; two helper files above; `tests/planner-admin-session.test.ts` (pinned them token-only) and `tests/admin-layout.test.ts` (page count 13→14) updated; sidebar unchanged (link from users page).
+- Checks: typecheck PASS · lint PASS · test PASS (92 files, 1177 tests; 3 PG integration skipped) · build PASS (before the self-rotate fix; not re-run) · /qc-check PASS · /sec-check PASS_WITH_WARNINGS.
+- Manual smoke (local dev, super admin, 62 users): paging 50→62 PASS; rotate token + one-time panel, no storage PASS; matrix + no horizontal scroll at 375/768 PASS; 1280 not measured separately; filter note while partial PASS; self-rotate 409 PASS. NOT RUN in browser: Unlink Google (no Google-linked account), admin (non-super) session, UI 403/409 messages.
+- Risks: role check is in the route, not the repository (narrow check-then-write race); each page call reads and sorts the full list; filters cover loaded rows only; no UI test for 403/409 mapping or filter+paging.
+- Open: move the `canManageRole` check into the repository (Phase 10 shared file, needs architect); push paging into SQL when user count grows; merge decision for PR #165.
+- Next: CORE-3 per `core-completion-index.md`.

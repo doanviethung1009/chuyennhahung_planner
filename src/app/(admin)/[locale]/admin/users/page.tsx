@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { getPathname } from '@/i18n/navigation';
+import { getPathname, Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
 import { noIndex, requireStaff } from '@/lib/admin-gate';
@@ -39,10 +39,21 @@ export default async function AdminUsersPage({ params }: Params) {
   const access = await requireStaff(locale, getPathname({ href: '/admin/users' as const, locale }), 'users');
   const t = await getTranslations('admin');
   const tn = await getTranslations('adminContent.nav');
+  const tr = await getTranslations('adminRoles');
 
   return (
     <>
-      <AdminPageHeader title={tn('users')} description={t('shellDescription')} />
+      <AdminPageHeader title={tn('users')} 
+        description={t('shellDescription')}
+        actions={
+          <Link
+            href="/admin/users/roles"
+            className="inline-flex min-h-11 items-center rounded-pill border border-border-strong bg-surface px-4 text-sm font-medium hover:border-primary hover:text-primary-strong"
+          >
+            {tr('viewMatrix')}
+          </Link>
+        }
+      />
       <Container width="wide">
         <div className="grid gap-10 py-10 md:py-14">
           <AdminConsole currentUserId={access.principal.userId} actorRole={access.principal.role} />

@@ -8,7 +8,7 @@ import { ApiError, api, signInUrl } from '@/components/planner/api';
 import { CreateUserForm, type CreateUserInput } from './create-user-form';
 import { SecretPanel } from './secret-panel';
 import { UserTable } from './user-table';
-import type { AccountAction, AccountImpact, AdminRole, AdminUser, OneTimeSecret } from './types';
+import type { AccountAction, AccountImpact, AdminRole, AdminUser, CredentialAction, OneTimeSecret } from './types';
 
 interface Props {
   currentUserId: string;
@@ -35,6 +35,10 @@ const REASONS = [
   'not_soft_deleted',
   'confirm_handle',
 ] as const;
+/** A 403 that names why; any other 403 keeps the generic message. */
+const FORBIDDEN_REASONS = ['manage_role'] as const;
+/** Rows per request; the server accepts up to 200 and caps anything above. */
+const PAGE_SIZE = 50;
 const FIELD_NAMES = ['handle', 'displayName', 'email', 'role'] as const;
 
 /**
@@ -48,6 +52,9 @@ export function AdminConsole({ currentUserId, actorRole }: Props) {
   const t = useTranslations('admin');
   const locale = useLocale() as Locale;
   const [users, setUsers] = useState<AdminUser[] | null>(null);
+  const [total, setTotal] = useState(0);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [status, setStatus] = useState<Status>(null);
   const [secrets, setSecrets] = useState<OneTimeSecret[]>([]);
 
@@ -68,6 +75,9 @@ export function AdminConsole({ currentUserId, actorRole }: Props) {
       if (code === 'rate_limited') {
         return setStatus({ kind: 'error', text: t('errors.rate_limited', { seconds: failure.retryAfterSeconds ?? 60 }) });
       }
+      if (code === 'forbidden' && failure.reason && (FORBIDDEN_REASONS as readonly string[]).includes(failure.reason)) {
+        return setStatus({ kind: 'error', text: t(`errors.reason.${failure.reason as (typeof FORBIDDEN_REASONS)[number]}`) });
+      }
       if (code === 'invalid_state' && failure.reason && (REASONS as readonly string[]).includes(failure.reason)) {
         return setStatus({ kind: 'error', text: t(`errors.reason.${failure.reason as (typeof REASONS)[number]}`) });
       }
@@ -81,8 +91,12 @@ export function AdminConsole({ currentUserId, actorRole }: Props) {
 
   const load = useCallback(async () => {
     try {
-      const data = await api<{ users: AdminUser[] }>('/api/admin/planner/users');
+      const data = await api<{ users: AdminUser[]; total: number; nextCursor: string | null }>(
+        `/api/admin/planner/users?limit=${PAGE_SIZE}&sort=handle`,
+      );
       setUsers(data.users);
+      setTotal(data.total);
+      setNextCursor(data.nextCursor);
       return true;
     } catch (failure) {
       fail(failure);
@@ -95,6 +109,46 @@ export function AdminConsole({ currentUserId, actorRole }: Props) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
+
+  async function loadMore() {
+    if (!nextCursor) return;
+    setLoadingMore(true);
+    try {
+      const data = await api<{ users: AdminUser[]; total: number; nextCursor: string | null }>(
+        `/api/admin/planner/users?limit=${PAGE_SIZE}&sort=handle&cursor=${encodeURIComponent(nextCursor)}`,
+      );
+      // Keyset paging does not repeat rows; the id check also covers a row already patched locally.
+      setUsers((current) => {
+        const seen = new Set((current ?? []).map((u) => u.id));
+        return [...(current ?? []), ...data.users.filter((u) => !seen.has(u.id))];
+      });
+      setTotal(data.total);
+      setNextCursor(data.nextCursor);
+    } catch (failure) {
+      fail(failure);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
+  async function credentialAction(user: AdminUser, kind: CredentialAction) {
+    setStatus(null);
+    const base = `/api/admin/planner/users/${encodeURIComponent(user.id)}`;
+    try {
+      if (kind === 'rotateToken') {
+        const result = await api<{ user: AdminUser; accessToken: string }>(`${base}/rotate-token`, { method: 'POST', body: {} });
+        // The token lives in component state only, until dismissed or reloaded.
+        addSecret({ handle: user.handle, accessToken: result.accessToken });
+        setUsers((current) => current?.map((u) => (u.id === user.id ? result.user : u)) ?? current);
+      } else {
+        const result = await api<{ user: AdminUser }>(`${base}/google`, { method: 'DELETE' });
+        setUsers((current) => current?.map((u) => (u.id === user.id ? result.user : u)) ?? current);
+      }
+      setStatus({ kind: 'ok', text: t(`status.${kind}Done`, { handle: user.handle }) });
+    } catch (failure) {
+      fail(failure);
+    }
+  }
 
   const addSecret = (secret: Omit<OneTimeSecret, 'key'>) =>
     setSecrets((current) => [...current, { ...secret, key: `${Date.now()}-${current.length}` }]);
@@ -168,6 +222,7 @@ export function AdminConsole({ currentUserId, actorRole }: Props) {
         const confirmQuery = confirmHandle ? `&confirm=${encodeURIComponent(confirmHandle)}` : '';
         await api(`${base}?mode=hard${confirmQuery}`, { method: 'DELETE' });
         setUsers((current) => current?.filter((u) => u.id !== user.id) ?? current);
+        setTotal((count) => Math.max(0, count - 1));
       } else {
         const result = await api<{ user: AdminUser }>(
           kind === 'delete' ? `${base}?mode=soft` : `${base}/${kind}`,
@@ -217,7 +272,7 @@ export function AdminConsole({ currentUserId, actorRole }: Props) {
           <h2 id="admin-users-heading" className="font-display text-2xl text-foreground">
             {t('users.heading')}
           </h2>
-          {users ? <p className="text-sm text-foreground-muted">{t('users.count', { count: users.length })}</p> : null}
+          {users ? <p className="text-sm text-foreground-muted">{t('users.count', { count: total })}</p> : null}
         </div>
         <CreateUserForm actorRole={actorRole} onCreate={createUser} />
         {users === null ? (
@@ -225,7 +280,7 @@ export function AdminConsole({ currentUserId, actorRole }: Props) {
         ) : users.length === 0 ? (
           <p className="text-base text-foreground-muted">{t('users.empty')}</p>
         ) : (
-          <UserTable users={users} currentUserId={currentUserId} actorRole={actorRole} onSaveRole={saveRole} onReset={resetPassword} onAccount={accountAction} onLoadImpact={loadImpact} />
+          <UserTable users={users} currentUserId={currentUserId} actorRole={actorRole} onSaveRole={saveRole} onReset={resetPassword} onAccount={accountAction} onCredential={credentialAction} total={total} hasMore={nextCursor !== null} loadingMore={loadingMore} onLoadMore={() => void loadMore()} onLoadImpact={loadImpact} />
         )}
         {users === null && status?.kind === 'error' ? (
           <div>
