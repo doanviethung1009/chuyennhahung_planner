@@ -891,7 +891,7 @@ export const reviewRestrictionSchema = z.object({
 export const auditEventSchema = z.object({
   id: plannerIdSchema,
   targetKind: z.enum(['trip', 'review', 'user', 'story']),
-  targetId: plannerIdSchema,
+  targetId: z.string().trim().min(1).max(96), // a story slug is up to 96 characters
   actorId: z.string().trim().min(1).max(80),
   actorKind: z.enum(['user', 'service']),
   action: z.string().trim().min(1).max(40),

@@ -121,6 +121,17 @@ describe('story publish events', () => {
     expect(mine[0]).toMatchObject({ actorId: 'service', actorKind: 'service' });
   });
 
+  it('records an event for a 96-character slug and the log still lists', async () => {
+    const { storyFixture } = await import('./travel-content-helpers');
+    const slug = `long-${'a'.repeat(91)}`;
+    const repo = await content.getRepository();
+    await repo.createStory(storyFixture({ slug }));
+    expect((await post(slug, 'publish')).status).toBe(200);
+    const res = await get('?targetType=story&limit=100', { bearer: ADMIN_TOKEN });
+    expect(res.status).toBe(200);
+    expect((await res.json()).items.some((e: { targetId: string }) => e.targetId === slug)).toBe(true);
+  });
+
   it('a failed change writes no event', async () => {
     expect((await post('missing-story', 'publish')).status).toBe(404);
     const body = await (await get('?targetType=story', { bearer: ADMIN_TOKEN })).json();
@@ -134,5 +145,14 @@ describe('rendering', () => {
     for (const file of ['src/components/admin/audit/audit-table.tsx', 'src/app/(admin)/[locale]/admin/audit/page.tsx']) {
       expect(await readFile(file, 'utf8')).not.toMatch(/dangerouslySetInnerHTML|innerHTML/);
     }
+  });
+});
+
+describe('event schema', () => {
+  it('parses a 96-character story target, as the Postgres and import readers do', async () => {
+    const { auditEventSchema } = await import('../src/server/planner/schemas');
+    const row = { id: 'evt_1', targetKind: 'story', targetId: 'a'.repeat(96), actorId: 'service', actorKind: 'service', action: 'publish', fromStatus: 'draft', toStatus: 'published', reason: null, createdAt: '2026-11-18T00:00:00.000Z' };
+    expect(auditEventSchema.safeParse(row).success).toBe(true);
+    expect(auditEventSchema.safeParse({ ...row, targetId: 'a'.repeat(97) }).success).toBe(false);
   });
 });
