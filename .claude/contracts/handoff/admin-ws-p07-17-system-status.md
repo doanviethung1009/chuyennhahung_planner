@@ -1,13 +1,12 @@
 # Handoff — P07-17 System status page
-- Branch: `claude/admin-system-status-7d6949` (contract names `feat/admin-system-status`; rename before PR). PR: none (not authorized). Nothing committed.
-- Done: `GET /api/admin/system` (`runbook:read`, no-store), `/admin/system` (`/quan-tri/he-thong`), allow-listed `SystemStatus` in `src/server/admin/system.ts`, sidebar link under Operations, VI/EN messages (`adminSystem`), feature doc + VI twin, README rows, `docs/runbook.*` API row.
-- Outside the plan: `tests/admin-layout.test.ts:72` page count 12 → 13 (new admin page).
-- Behaviour: super admin 200; admin/editor/member/service token 403; anonymous 401; page 404 for non-super-admin via `requireStaff(...,'runbook')`.
-- Checks: typecheck PASS; lint PASS (no output); test PASS (90 files passed, 3 skipped; 1163 tests passed, 89 skipped); build PASS (routes listed).
-- Tests: `tests/admin-system.test.ts` (role matrix, sentinel no-leak, DB-down, probe throws, sidebar/page gate); `runbook.test.ts` sync passes.
-- UI smoke (local dev, file stores, test accounts): PASS. Super admin: page renders, no horizontal scroll at 375/768/1280, one h1, sidebar link, API 200 no-store. Admin: page 404, API 403, no sidebar link. Not covered: PostgreSQL path in browser, editor, EN locale. Dev `buildId` can be stale from an old `.next/BUILD_ID`.
-- `/qc-check`: BLOCKED once (`text-danger` is not a token) -> fixed with existing tokens (`text-primary-strong` + underline for bad, `text-accent` for good); computed colours verified in browser. Re-run of qc after the fix: NOT RUN.
-- Risks: when the Planner DB is down a super admin cannot sign in, so the page is unreachable then (a Content DB already down at startup also blocks sign-in, because the Planner instance builds the Content repository). `buildId` reads `.next/BUILD_ID`, null in dev.
-- Open: owner backup facts (D10) keep backups "not configured". Contract State not updated to DONE (index/roadmap belong to CORE-0).
-- Next: owner review, authorize commit/PR, then `/sec-check`.
-- /sec-check: PASS_WITH_WARNINGS. W2 (no query timeout) fixed: 3 s query timeout + 4 s race, test with a silent TCP server. W1 (no rate limit/cache on GET, super-admin only) left open.
+- Branch `feat/admin-system-status` · PR https://github.com/doanviethung1009/chuyennhahung_planner/pull/162 (open, not merged). Commits: bfa8cd7 feat, e613120 handoff, eee69cf timeouts, 02ab9b0 colour tokens.
+- Done: `GET /api/admin/system` (`runbook:read`, no-store), `/admin/system` (`/quan-tri/he-thong`), allow-listed `SystemStatus` (`src/server/admin/system.ts`), sidebar link under Operations, VI/EN messages (`adminSystem`), feature doc + VI twin, README rows, `docs/runbook.*` API row.
+- Outside the plan: `tests/admin-layout.test.ts:72` page count 12 -> 13; `postgres-pool.ts` optional `queryTimeoutMs` (only the probe passes it).
+- Behaviour: super admin 200; admin/editor/member/service token 403; anonymous 401; page 404 for non-super-admin.
+- Checks (last run, after final code change): typecheck PASS; lint PASS; test PASS (90 files passed, 3 skipped; 1164 tests passed, 89 skipped); build PASS (qc cycle 2 run).
+- UI smoke (local dev, file stores, test accounts): PASS at 375/768/1280 for super admin; admin gets page 404 / API 403. Not covered: PostgreSQL path in a browser, editor, EN locale, a real "unreachable" render.
+- /qc-check: cycle 1 BLOCKED (`text-danger` not a token) -> fixed in 02ab9b0; cycle 2 PASS.
+- /sec-check: cycle 1 and 2 PASS_WITH_WARNINGS, no blocker. W2 (no query timeout) fixed in eee69cf. W1 (no rate limit/cache on the GET, super admin only) left open; optional 5-10 s cache.
+- Risks: a Planner DB down, or a Content DB down at process start, blocks super-admin sign-in (Planner instance builds the Content repository), so the page is unreachable then (documented). `buildId` is `.next/BUILD_ID`, null/stale in dev. `pool.end()` on a dead socket is unbounded (theoretical).
+- Open decisions: add the W1 cache or not; backups stay "not configured" until owner supplies facts (D10). Contract State/index not updated (CORE-0 owns roadmap).
+- Next: owner review and merge of #162; no migration, no new dependency; rollback = revert PR.
