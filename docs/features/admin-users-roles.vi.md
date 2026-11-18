@@ -22,7 +22,7 @@ API (bổ sung): `GET /api/admin/planner/users?limit&cursor&sort`, `DELETE /api/
 
 - **Ma trận:** server component không props; mỗi ô tính từ nguồn phân quyền nên không thể lệch. Hai bảng: thao tác theo vai trò, và vai trò nào quản lý được vai trò đích nào. Chặn như bảng điều khiển người dùng (`user:provision`; người khác nhận 404).
 - **Phân trang:** không có query = toàn bộ tài khoản như cũ. Bất kỳ `limit` (1–200, lớn hơn bị chặn trần), `cursor`, `sort` (`handle` mặc định, `created`, `-created`) bật phân trang keyset; phản hồi thêm `total` và `nextCursor`. Cursor ghi dòng cuối đã thấy (khóa sắp xếp + id) nên tài khoản tạo giữa các trang không bị lặp hay bỏ sót. Cursor sai hoặc của kiểu sắp xếp khác trả 422. Repository không đổi: route cắt danh sách có sẵn (`src/server/planner/user-page.ts`).
-- **Thao tác thông tin xác thực:** console hiện xác nhận có sẵn rồi gọi API. Với phiên session, route kiểm `canManageRole` trên đích trước khi ghi (admin → chỉ member/editor; super admin → mọi người; còn lại 403, id không có 404). Token mới trả về một lần, `no-store`, chỉ nằm trong state của `SecretPanel`.
+- **Thao tác thông tin xác thực:** console hiện xác nhận có sẵn rồi gọi API. Với phiên session, route kiểm `canManageRole` trên đích trước khi ghi (admin → chỉ member/editor; super admin → mọi người; còn lại 403, id không có 404; tự xoay token của mình là 409 `self_action`). Token mới trả về một lần, `no-store`, chỉ nằm trong state của `SecretPanel`.
 - **Phân trang trên UI:** console tải 50 dòng mỗi lần với *Tải thêm*. Tìm kiếm và lọc vai trò chạy trên các dòng đã tải; còn trang chưa tải thì có ghi chú.
 
 ## Files

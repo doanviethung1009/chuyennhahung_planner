@@ -125,6 +125,14 @@ describe('unlink Google and rotate token: who may act', () => {
     await expect((await instance.getPlannerRepository()).signIn(peer.accessToken)).resolves.toBeTruthy();
   });
 
+  it('refuses rotating your own token (409 self_action), even for a super admin', async () => {
+    const boss = await makeUser('super_admin');
+    const res = await rotateTok(boss.id, boss.cookie);
+    expect(res.status).toBe(409);
+    expect((await res.json()).error.reason).toBe('self_action');
+    await expect((await instance.getPlannerRepository()).signIn(boss.accessToken)).resolves.toBeTruthy();
+  });
+
   it('an admin rotates an editor token: no-store, new token once, old one dead; unknown id is 404', async () => {
     const admin = await makeUser('admin');
     const editor = await makeUser('editor');

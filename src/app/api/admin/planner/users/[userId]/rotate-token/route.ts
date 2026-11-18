@@ -15,7 +15,7 @@ export function POST(
 ) {
   return adminPlannerRoute(request, { action: 'user:provision', session: true }, async (repository, principal) => {
     const { userId } = await context.params;
-    await assertMayManageUser(repository, principal, userId);
+    await assertMayManageUser(repository, principal, userId, { refuseSelf: true });
     const actor = principal.kind === 'session' ? { userId: principal.userId } : undefined;
     return plannerJson(await repository.rotateUserToken(userId, actor));
   });
