@@ -27,3 +27,7 @@
 - Absent header stays last-write-wins for API callers; empty header is 400; stale is 412 `version_conflict`. No new route, field or schema change.
 - Tests: match, mismatch (412, nothing written), absent header, in `tests/admin-content-session.test.ts`.
 - `place_in_use` stays OUT of scope.
+
+## Decision 2026-11-19 — collection DELETE stays token-only (data protection, owner)
+- After `/sec-check` W1 (editor-reachable permanent delete, inconsistent with stories and places) the owner chose: keep `DELETE collections/[slug]` on the token-only `adminRoute`. GET, POST, PATCH and status stay on session access (`content:write`). Story and place DELETE unchanged. The UI offers no delete.
+- Long-term model (Archive → Restore → Permanent Delete by `super_admin`) is a separate backlog row, ID to be assigned by the owner; not in this PR.

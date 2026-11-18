@@ -354,9 +354,9 @@ Nhật ký kiểm toán admin (P07-13, [feature](features/admin-audit-viewer.vi.
 | `stories`, `places` | POST (tạo; chuyến đi luôn là nháp) | `content:write` |
 | `stories/[slug]/places` | PATCH | `content:write` |
 | `stories/[slug]/status`, `reviews/[id]/status` | POST | `story:publish` |
-| `collections`, `collections/[slug]`, `collections/[slug]/status`, `integrity` | GET, POST, PATCH, DELETE | `content:write` (P07-15) |
+| `collections`, `collections/[slug]`, `collections/[slug]/status`, `integrity` | GET, POST, PATCH | `content:write` (P07-15) |
 | `planner/integrity` (qua `adminPlannerRoute`) | GET | `user:provision`, `session: true` (P07-15; editor bị từ chối) |
-| DELETE story/place/review, `templates/**` | mọi method | chỉ token (`adminRoute`) |
+| DELETE story/place/collection/review, `templates/**` | mọi method | chỉ token (`adminRoute`) |
 
 PATCH (story, place, review và, từ P07-15, collection) nhận header tuỳ chọn `If-Match: "<updatedAt>"` (`ifMatchStamp`); repository so sánh trong transaction và ghi cũ trả **412** `version_conflict`. Không có header nghĩa là ghi sau thắng.
 

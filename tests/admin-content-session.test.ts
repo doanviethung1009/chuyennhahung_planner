@@ -68,7 +68,7 @@ const slugParams = (slug: string) => ({ params: Promise.resolve({ slug }) });
 const idParams = (id: string) => ({ params: Promise.resolve({ id }) });
 
 let counter = 0;
-async function makeUser(role: 'member' | 'editor' | 'admin', extra: Record<string, unknown> = {}) {
+async function makeUser(role: 'member' | 'editor' | 'admin' | 'super_admin', extra: Record<string, unknown> = {}) {
   const repo = await planner.getPlannerRepository();
   const handle = `cms-${role}-${(counter += 1)}-${Math.random().toString(36).slice(2, 7)}`;
   const issued = await repo.createUser({ handle, displayName: 'Biên tập viên', role, ...extra });
@@ -309,7 +309,7 @@ describe('routes that stay token-only', () => {
   it('reject a session (even admin) and still accept the token', async () => {
     const admin = await makeUser('admin');
     // Delete and templates never opted in (create did in P07-16; collections and
-    // integrity moved to session access in P07-15).
+    // integrity moved to session access in P07-15, but collection DELETE stayed token-only).
     const del = (o: Opts) =>
       r.place.DELETE(req({ method: 'DELETE', path: '/api/admin/travel/places/cms-never', ...o }), slugParams('cms-never'));
     expect([401, 403]).toContain((await del({ cookie: admin.cookie })).status);
@@ -446,6 +446,32 @@ describe('collections and integrity on session access (P07-15)', () => {
       ),
     );
     expect(results.map((x) => x.status).sort()).toEqual([200, 412]);
+  });
+
+  it('keeps collection DELETE token-only: sessions refused, token follows the state rule', async () => {
+    const editor = await makeUser('editor');
+    const admin = await makeUser('admin');
+    const superAdmin = await makeUser('super_admin');
+    const del = (slug: string, o: Opts = {}) =>
+      r.collection.DELETE(req({ method: 'DELETE', path: `${base}/${slug}`, ...o }), slugParams(slug));
+    await create('col-del', { bearer: ADMIN_TOKEN });
+    for (const who of [editor, admin, superAdmin]) {
+      expect([401, 403]).toContain((await del('col-del', { cookie: who.cookie })).status);
+    }
+    expect((await del('col-del', { cookie: editor.cookie, origin: 'https://evil.test' })).status).not.toBe(204);
+    expect((await del('col-del', { bearer: 'not-the-admin-token-not-the-admin-token' })).status).toBe(401);
+    expect((await del('col-del')).status).toBe(401);
+    expect((await get('col-del', { bearer: ADMIN_TOKEN })).status).toBe(200);
+
+    // A published collection is refused even for the token.
+    expect((await status('col-del', 'publish', { bearer: ADMIN_TOKEN })).status).toBe(200);
+    const published = await del('col-del', { bearer: ADMIN_TOKEN });
+    expect(published.status).toBe(409);
+    expect((await published.json()).error.code).toBe('invalid_state');
+    expect((await status('col-del', 'unpublish', { bearer: ADMIN_TOKEN })).status).toBe(200);
+
+    expect((await del('col-del', { bearer: ADMIN_TOKEN })).status).toBe(204);
+    expect((await get('col-del', { bearer: ADMIN_TOKEN })).status).toBe(404);
   });
 
   it('planner integrity: admin session and token 200, editor 403, member 403, nobody 401', async () => {

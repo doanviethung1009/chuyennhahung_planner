@@ -1,5 +1,5 @@
 import { adminContentRoute, ifMatchStamp } from '@/server/admin/content-route';
-import { jsonOk, noContent, parseJsonBody } from '@/server/content/http';
+import { adminRoute, jsonOk, noContent, parseJsonBody } from '@/server/content/http';
 import { getRepository } from '@/server/content/instance';
 import { collectionUpdateSchema } from '@/server/content/schemas';
 
@@ -24,8 +24,9 @@ export function PATCH(request: Request, context: Context) {
   });
 }
 
+/** Token-only on purpose (owner decision 2026-11-19): permanent delete is not an editor action. */
 export function DELETE(request: Request, context: Context) {
-  return adminContentRoute(request, { action: 'content:write', session: true }, async () => {
+  return adminRoute(request, async () => {
     const { slug } = await context.params;
     const repository = await getRepository();
     await repository.deleteCollection(slug);
