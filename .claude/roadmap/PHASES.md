@@ -7,7 +7,7 @@ Trạng thái phase hiện tại: [`CURRENT.md`](CURRENT.md). Việc tồn đọ
 [`backlog.md`](backlog.md). Trạng thái deploy từng phase:
 [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md).
 
-Cập nhật lần cuối: 2026-11-17 — đồng bộ theo `main` @ `104278b` (chuẩn hóa roadmap: một dòng trạng thái mỗi phase, sơ đồ có Phase 10–15). Lần trước: 2026-11-16 — `main` @ `e362aea` (báo cáo
+Cập nhật lần cuối: 2026-11-18 — ưu tiên core-first (xem `CURRENT.md`, `.claude/contracts/core-completion-index.md`); `main` @ `6b35c8d`. Lần trước: 2026-11-17 — đồng bộ theo `main` @ `104278b` (chuẩn hóa roadmap: một dòng trạng thái mỗi phase, sơ đồ có Phase 10–15). Lần trước: 2026-11-16 — `main` @ `e362aea` (báo cáo
 `.claude/contracts/community-platform-audit.md`; chủ dự án chốt khuyến nghị Q1–Q12 cùng ngày).
 Lần trước: 2026-11-09 (`main` @ `124868e`). Tạo lần đầu từ `main` @ `3d42707`.
 
@@ -24,7 +24,7 @@ Lần trước: 2026-11-09 (`main` @ `124868e`). Tạo lần đầu từ `main` 
 5. Tham chiếu "Prompt NN" trong các contract/báo cáo cũ = `Phase NN` cùng số.
 
 Trạng thái: `Done` · `Partial` · `In progress` · `Designed` (có ADR/contract, chưa code)
-· `Not started`.
+· `Not started` · `Deferred` (chủ dự án hoãn có ngày và lý do; phạm vi giữ nguyên, **không** phải Done).
 
 ## Tổng quan
 
@@ -36,16 +36,16 @@ Trạng thái: `Done` · `Partial` · `In progress` · `Designed` (có ADR/contr
 | 03 | Travel Planner Core | Done | — | 02 |
 | 04 | Interactive Planner UI | Partial (editor Done; còn Planner map, `/plan-your-trip`) | P2 | 03 |
 | 05 | Story → Planner, My Trips & Sharing | **Done** (2026-11-16; đóng với cảnh báo, xem `CURRENT.md`) | — | 02, 03 |
-| 06 | AI Planner, Affiliate & Optimization | Not started | P2 | 05, 04 (editor), 07 (phần affiliate) |
-| 07 | Admin Portal, CMS & RBAC | In progress — Done: RBAC, CMS story/place/review, shell P07-10, dashboard P07-11, create/archive P07-16, UX P07-19, audit log (qua P10-1). Còn: P07-12/13/14/15/17, MFA (hoãn), template CMS; P07-18 chặn bởi Phase 08 | **P1** | 05 |
-| 08 | Media Library & Analytics | Not started | P3 | 07 |
+| 06 | AI Planner, Affiliate & Optimization | **Deferred** (2026-11-18, core-first) | P2 | 05, 04 (editor), 07 (phần affiliate) |
+| 07 | Admin Portal, CMS & RBAC | In progress — Done: RBAC, CMS story/place/review, shell P07-10, dashboard P07-11, create/archive P07-16, UX P07-19, audit log (qua P10-1). Audit viewer P07-13 (PR #157). Còn: P07-12/14/15/17 (P07-17 có PR #162), MFA (hoãn), template CMS; P07-18 chặn bởi Phase 08 | **P1** | 05 |
+| 08 | Media Library & Analytics | Not started — Analytics (P08-4) **Deferred**, media (P08-1..3) hoãn tới khi có ảnh thật (2026-11-18) | P3 | 07 |
 | 09 | Production Readiness & Launch | Partial — dev VM + Postgres đã chạy; production Not started | P4 | 07, 08 (hoặc loại trừ có ghi lại) |
 | 10 | Community Foundations | **Gần đóng** — batch 10.1–10.7 DONE (2026-11-17); `/sec-check` và `/qc-check` PASS_WITH_WARNINGS; việc còn mở chuyển sang Phase 11/backlog (10.8 bị bỏ, 2026-11-18) | **P1** | 07 |
 | 11 | Member Profiles & Creator Terms | Designed (đề xuất) | P1 | 10 |
-| 12 | Travel Journal & Blog (curated) | Designed (đề xuất) | P2 | 10, 11 |
-| 13 | Media Hybrid & Vlog | Designed (đề xuất) | P2 | 08, 12 |
-| 14 | Engagement: Save · Follow · Like · Comment | Designed (đề xuất) | P3 | 10, 11, 12; rate-limit store chung |
-| 15 | Curated Gallery & Discovery | Designed (đề xuất) | P4 | 12, 14 |
+| 12 | Travel Journal & Blog (curated) | **Deferred** (2026-11-18) | P2 | 10, 11 |
+| 13 | Media Hybrid & Vlog | **Deferred** (2026-11-18) | P2 | 08, 12 |
+| 14 | Engagement: Save · Follow · Like · Comment | **Deferred** (2026-11-18) | P3 | 10, 11, 12; rate-limit store chung |
+| 15 | Curated Gallery & Discovery | **Deferred** (2026-11-18) | P4 | 12, 14 |
 
 ## Thứ tự triển khai
 
@@ -71,6 +71,8 @@ flowchart LR
   P07 --> P09[09 Launch]
   P08 --> P09
 ```
+
+**Cập nhật 2026-11-18 (core-first):** chỉ làm phần lõi trước — 07 còn lại → 10 (đóng) → 11 (giữ) → 04 (P04-2); 06, 08 (Analytics, media), 12, 13, 14, 15 DEFERRED, 09 giữ nguyên phạm vi. Thứ tự từng session: `.claude/contracts/core-completion-index.md`. Dòng dưới là thứ tự cũ, giữ làm lịch sử.
 
 Thứ tự hiện hành (chốt 2026-11-16): **05 → 07 → 10 → 11 → 12 → 06 → 08 → 13 → 14 → 09 → 15**; audit log của 07 đã làm trong Phase 10 (P10-1). Thứ tự cũ (05 → 07 → 06 → 08 → 09) chỉ còn là lịch sử; 04 (editor) xen khi có slot frontend và phải xong trước phần AI của 06.
 
@@ -135,7 +137,7 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
   `docs/features/follow-hung-footsteps.md`.
 
 ## Phase 06 — AI Planner, Affiliate & Optimization
-- **Trạng thái:** Not started. ID và phạm vi giữ nguyên như đã định nghĩa; chỉ ưu tiên
+- **Trạng thái:** **DEFERRED (2026-11-18, chủ dự án: hoàn thiện chức năng lõi trước)** — trạng thái cũ: Not started. Phạm vi và ID giữ nguyên; không phải Done. Chi tiết cũ: Not started. ID và phạm vi giữ nguyên như đã định nghĩa; chỉ ưu tiên
   được hạ xuống sau Phase 07.
 - **Phạm vi:**
   - *AI Planner* — gợi ý lịch trình/hoạt động bằng AI ("AI suggestions" được hoãn có
@@ -163,7 +165,7 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
   trả lời: nhà cung cấp danh tính, ai là admin, có bắt buộc MFA cho `admin`.
 
 ## Phase 08 — Media Library & Analytics
-- **Trạng thái:** Not started.
+- **Trạng thái:** Not started. **Hoãn một phần (2026-11-18):** P08-4 (Analytics) DEFERRED theo quyết định core-first; P08-1..3 và P07-18 (media) hoãn tới khi chủ nhà cung cấp ảnh thật (P09-3). Phạm vi giữ nguyên.
 - **Phạm vi:** thư viện ảnh/video (upload, lưu trữ, `alt` song ngữ, thay cover SVG);
   analytics tôn trọng quyền riêng tư.
 - **Hiện trạng:** cover là SVG sinh ra; không có analytics trong `src/`. ADR 0005 cấm
@@ -198,26 +200,26 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
 - **Phụ thuộc:** 07; ADR 0014/0015.
 
 ## Phase 11 — Member Profiles & Creator Terms
-- **Trạng thái:** Designed; ADR [0025](../../docs/adr/0025-member-profiles-and-use-this-trip.md) viết xong (Proposed, chờ chủ dự án). `member_profiles` (1:1 theo `userId`, mặc định riêng tư), đồng
+- **Trạng thái:** Designed; ADR [0025](../../docs/adr/0025-member-profiles-and-use-this-trip.md) viết xong và đã merge vào `main` (PR #141) nhưng Status vẫn Proposed, chờ chủ dự án chốt; Phase 11 **được giữ** trong ưu tiên core ("Dùng chuyến này" thuộc luồng Trips). `member_profiles` (1:1 theo `userId`, mặc định riêng tư), đồng
   ý Terms theo phiên bản, sửa Terms cho khớp (hiện nhắc ảnh/video khi chưa có upload).
 - **Thêm (đề xuất, từ bộ spec Community Platform):** **Dùng chuyến này** — thành viên đã đăng nhập sao chép một chuyến cộng đồng đã đăng thành bản nháp riêng, ghi công qua `origin`, không đồng bộ ngược (yêu cầu của chủ dự án; audit PR #107 chưa liệt kê). Điều 3 Terms đã cho phép sao chép khi người tạo bật; cần công tắc sao chép theo từng chuyến (P11-D2 chốt mặc định và phạm vi đăng lại) và nút Report (P10-3) có trước.
 - **Phụ thuộc:** 10; chính sách riêng tư do chủ nhà cung cấp (Q9); quyết định công tắc sao chép (P11-D2).
 
 ## Phase 12 — Travel Journal & Blog (curated)
-- **Trạng thái:** Designed. `journal_posts` kind `journal|blog`, duyệt trước (Q2), gắn trip.
+- **Trạng thái:** **DEFERRED (2026-11-18, chủ dự án: hoàn thiện chức năng lõi trước)** — trạng thái cũ: Designed. Phạm vi và ID giữ nguyên; không phải Done. Chi tiết cũ: Designed. `journal_posts` kind `journal|blog`, duyệt trước (Q2), gắn trip.
 - **Phụ thuộc:** 10, 11.
 
 ## Phase 13 — Media Hybrid & Vlog
-- **Trạng thái:** Designed. Embed allow-list trước (YouTube, Q7), upload ảnh sau, `kind=vlog`.
+- **Trạng thái:** **DEFERRED (2026-11-18, chủ dự án: hoàn thiện chức năng lõi trước)** — trạng thái cũ: Designed. Phạm vi và ID giữ nguyên; không phải Done. Chi tiết cũ: Designed. Embed allow-list trước (YouTube, Q7), upload ảnh sau, `kind=vlog`.
   Thực thi trên nền Phase 08 (ID 08 giữ nguyên phạm vi). **Ranh giới:** Phase 08 xây thư viện media toàn site và interface `MediaStore`; Phase 13 chỉ dùng nó cho upload của thành viên, avatar và vlog (một interface, không xây lần hai).
 - **Phụ thuộc:** 08, 12; ADR storage + chính sách media.
 
 ## Phase 14 — Engagement: Save · Follow · Like · Comment
-- **Trạng thái:** Designed. Save riêng tư; comment hiện ngay + Report + hold (Q2).
+- **Trạng thái:** **DEFERRED (2026-11-18, chủ dự án: hoàn thiện chức năng lõi trước)** — trạng thái cũ: Designed. Phạm vi và ID giữ nguyên; không phải Done. Chi tiết cũ: Designed. Save riêng tư; comment hiện ngay + Report + hold (Q2).
 - **Phụ thuộc:** 10, 11, 12; store rate-limit chung đã xác minh trước khi tăng bề mặt ghi.
 
 ## Phase 15 — Curated Gallery & Discovery
-- **Trạng thái:** Designed. Tìm kiếm/lọc/phân trang gallery, collection do editor tuyển,
+- **Trạng thái:** **DEFERRED (2026-11-18, chủ dự án: hoàn thiện chức năng lõi trước)** — trạng thái cũ: Designed. Phạm vi và ID giữ nguyên; không phải Done. Chi tiết cũ: Designed. Tìm kiếm/lọc/phân trang gallery, collection do editor tuyển,
   thông báo; role `moderator` là quyết định riêng.
 - **Phụ thuộc:** 12, 14.
 

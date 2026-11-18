@@ -25,6 +25,8 @@ lại; mục bỏ đi được gạch và ghi lý do, không xóa. Sắp theo th
 
 ## Phase 07 — Admin Portal, CMS & RBAC (P1, ngay sau 05)
 
+> Core-first (2026-11-18): thứ tự và contract các session ở [`core-completion-index.md`](../contracts/core-completion-index.md). P07-10, 11, 13 (PR #157), 16, 19 Done; P07-12, 14, 15, 17 còn lại (P07-17: PR #162); P07-18 hoãn cùng media (Phase 08). Template CMS (P07-6): W4 chốt không lưu lịch sử, chỉ `If-Match`; W11 duyệt chuyển handler collections/integrity/templates sang session.
+
 Nguồn: ADR 0006 (PR #25) và mục Phases trong `docs/architecture.md`. Chép lại ở đây,
 không sửa ý.
 
@@ -49,6 +51,8 @@ có trước khi chạy nhiều instance.
 
 ## Phase 06 — AI Planner, Affiliate & Optimization (P2)
 
+> **DEFERRED (2026-11-18, chủ dự án: core-first).** Phạm vi và ID giữ nguyên; không phải Done.
+
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
 | P06-1 | ADR AI Planner: nhà cung cấp mô hình, chi phí, lưu key chỉ phía server, gợi ý là đề xuất người dùng chấp nhận | system-architect | P05 đóng |
@@ -66,6 +70,8 @@ có trước khi chạy nhiều instance.
 | P04-3 | Planner map — cần ADR riêng | system-architect | P04-1 |
 
 ## Phase 08 — Media Library & Analytics (P3)
+
+> **DEFERRED (2026-11-18, chủ dự án: core-first).** P08-4 Analytics DEFERRED; P08-1..3 hoãn tới khi có ảnh thật (P09-3).
 
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
@@ -136,12 +142,16 @@ Việc còn mở — chưa có ID backlog riêng, chờ chủ dự án xếp:
 
 ## Phase 12 — Travel Journal & Blog (P2, đề xuất)
 
+> **DEFERRED (2026-11-18, chủ dự án: core-first).** Phạm vi và ID giữ nguyên; không phải Done.
+
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
 | P12-1 | ADR `journal_posts` (state machine như `listing` + `held`; duyệt trước) | system-architect | P10, P11 |
 | P12-2 | API + moderation + trang công khai VI/EN + sitemap | BE + FE | P12-1 |
 
 ## Phase 13 — Media Hybrid & Vlog (P2, đề xuất)
+
+> **DEFERRED (2026-11-18, chủ dự án: core-first).** Phạm vi và ID giữ nguyên; không phải Done.
 
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
@@ -152,12 +162,16 @@ Việc còn mở — chưa có ID backlog riêng, chờ chủ dự án xếp:
 
 ## Phase 14 — Engagement (P3, đề xuất)
 
+> **DEFERRED (2026-11-18, chủ dự án: core-first).** Phạm vi và ID giữ nguyên; không phải Done.
+
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
 | P14-1 | ADR Save/Follow/Like/Comment; mở rộng restriction ra mọi `targetType` | system-architect | P10–P12, P10-6 |
 | P14-2 | Bốn bảng + API + UI; comment hiện ngay + report + hold | BE + FE | P14-1 |
 
 ## Phase 15 — Curated Gallery & Discovery (P4, đề xuất)
+
+> **DEFERRED (2026-11-18, chủ dự án: core-first).** Phạm vi và ID giữ nguyên; không phải Done.
 
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
@@ -167,7 +181,8 @@ Việc còn mở — chưa có ID backlog riêng, chờ chủ dự án xếp:
 
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
-| PLACES-UI-S1 | Public Places UI: mục "Địa điểm" trên `/destinations/[slug]`, trang `/dia-diem/[slug]` (EN `/places/[slug]`), review chỉ đọc, ADR 0026. Contract: `.claude/contracts/places-ui-s1-public-places.md` | main session (FE+BE) | — |
-| PLACES-UI-S2 | Place reviews UI: khối review và form viết review (khách/thành viên) trên trang địa điểm, 20 review mới nhất, không đổi API. Contract: `.claude/contracts/places-ui-s2-place-reviews.md` | main session (FE) | S1 |
-| PLACES-UI-S3 | Thêm địa điểm vào chuyến từ trang địa điểm: chọn chuyến cùng điểm đến và ngày, khách dẫn tới đăng nhập, không đổi API. Contract: `.claude/contracts/places-ui-s3-add-to-trip.md` | main session (FE) | S1, S2 |
-| PLACES-UI-S5 | Admin Places polish: liên kết "Xem trên site" (tab mới) trong danh sách và trang sửa địa điểm; bỏ liên kết review theo địa điểm và số review vì cần đổi API. Contract: `.claude/contracts/places-ui-s5-admin-places-polish.md` | main session (FE) | S1, S4 |
+| PLACES-UI-S1 | Public Places UI: mục "Địa điểm" trên `/destinations/[slug]`, trang `/dia-diem/[slug]` (EN `/places/[slug]`), review chỉ đọc, ADR 0026. Contract: `.claude/contracts/places-ui-s1-public-places.md` — **DONE (PR #152)** | main session (FE+BE) | — |
+| PLACES-UI-S2 | Place reviews UI: khối review và form viết review (khách/thành viên) trên trang địa điểm, 20 review mới nhất, không đổi API. Contract: `.claude/contracts/places-ui-s2-place-reviews.md` — **DONE (PR #153)** | main session (FE) | S1 |
+| PLACES-UI-S3 | Thêm địa điểm vào chuyến từ trang địa điểm: chọn chuyến cùng điểm đến và ngày, khách dẫn tới đăng nhập, không đổi API. Contract: `.claude/contracts/places-ui-s3-add-to-trip.md` — **DONE (PR #155)** | main session (FE) | S1, S2 |
+| PLACES-UI-S4 | Audit log UI trong admin = **P07-13** (đã Done, PR #157); không phải dòng riêng | main session (FE) | — |
+| PLACES-UI-S5 | Admin Places polish: liên kết "Xem trên site" (tab mới) trong danh sách và trang sửa địa điểm; bỏ liên kết review theo địa điểm và số review vì cần đổi API. Contract: `.claude/contracts/places-ui-s5-admin-places-polish.md` | main session (FE) | S1, S4 (= P07-13) |

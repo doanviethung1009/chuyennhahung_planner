@@ -7,4 +7,4 @@
 - Files allowed: `src/app/[locale]/admin/community/page.tsx`, `src/components/admin/community/**`, `messages/*.json`, tests, `docs/features/admin-moderation-workspace.*`, `docs/features/README.*`. Anything in `src/server/**` → ask.
 - Acceptance: no behavioural change to any queue action (same requests, same results); counts match list lengths; `canRestrict` gating unchanged; keyboard order follows reading order; one `<h1>`.
 - Tests: component-level logic extracted to pure helpers (counts, ordering) and unit tested; existing `community-*` and `review-restrictions-routes` suites unchanged and green; i18n.
-- Security: presentation only; no new data exposed. Rollback: revert PR. Budget: sub-agents 0. State: READY (owner approved 2026-11-17) but BLOCKED until 10.5 merges.
+- Security: presentation only; no new data exposed. Rollback: revert PR. Budget: sub-agents 0. State: READY (owner approved 2026-11-17); the 10.5 dependency is met (PR #126 merged 2026-11-17).

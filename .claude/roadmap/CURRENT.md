@@ -2,7 +2,7 @@
 
 Roadmap: [`PHASES.md`](PHASES.md) · Tồn đọng: [`backlog.md`](backlog.md) · Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
 
-Cập nhật: 2026-11-18, gộp với `main` sau PR #139–#144.
+Cập nhật: 2026-11-18, `main` @ `6b35c8d` (sau PR #161); đồng bộ theo quyết định core-first.
 
 ## Nguồn chính cho từng loại trạng thái
 | Cần biết | Xem |
@@ -15,10 +15,11 @@ Cập nhật: 2026-11-18, gộp với `main` sau PR #139–#144.
 | Bằng chứng | PR, `.claude/contracts/handoff/`, `.claude/reports/` |
 
 ## Hiện tại
-- **Phase đang làm:** Phase 10 — Community Foundations (gần đóng, chưa đóng) + phần còn lại của Phase 07 (Admin workspace).
-- **Batch hiện tại (Phase 10):** không có batch code nào đang chạy; 10.1–10.7 DONE (`.claude/contracts/phase10-index.md`).
-- **Batch kế tiếp:** không có. **Batch 10.8 bị bỏ** (chủ dự án chốt 2026-11-18); việc còn mở của Phase 10 chuyển sang Phase 11/backlog.
-- **Việc kế tiếp:** (1) **Phase 11** — duyệt ADR 0025 (PR #141) rồi lập contract; chặn bởi P11-D1 (chính sách riêng tư) và P11-D2 (công tắc sao chép); (2) Phase 07 còn lại: P07-12, P07-13 (chặn), P07-14/15/17.
+- **Ưu tiên (chủ dự án chốt 2026-11-18): hoàn thiện chức năng lõi trước** — UI, API, Database, CMS, Data và các luồng end-to-end. **DEFERRED:** Phase 06 (AI Planner, Affiliate), P08-4 (Analytics), Phase 12, 13 (Vlog), 14 (Social Engagement), 15; media P08-1..3/P07-18 hoãn tới khi có ảnh thật. Phase ID và phạm vi giữ nguyên. P10-7 (sao lưu) và D5 Terms vẫn thuộc Phase 09.
+- **Phase đang làm:** Phase 07 (Admin workspace, phần còn lại) + Phase 10 gần đóng, chưa đóng; Phase 11 được giữ.
+- **Batch hiện tại (Phase 10):** không có batch code nào đang chạy; 10.1–10.7 DONE (`.claude/contracts/phase10-index.md`). **Batch 10.8 bị bỏ** (2026-11-18).
+- **Thứ tự lõi và hợp đồng từng session:** [`core-completion-index.md`](../contracts/core-completion-index.md). Đang chạy: CORE-1 = P07-17 (PR #162, `/sec-check` PASS_WITH_WARNINGS; qc và smoke UI NOT RUN). Kế tiếp: CORE-2 P07-12, CORE-3 P07-14, CORE-4 P07-15 (W11 đã duyệt, sửa contract trước), CORE-5 template CMS (W4: không lưu lịch sử, chỉ `If-Match`), CORE-6 test UI cộng đồng, CORE-7 P04-2 (nối `/plan-your-trip` vào `/trip-setup`, giữ đường liên hệ), CORE-8 smoke + qc/sec. P07-13 đã Done (PR #157).
+- **Phase 11:** ADR 0025 đã merge (PR #141) nhưng còn **Proposed**; chặn bởi P11-D1 và P11-D2.
 
 Chi tiết Phase 10, điều kiện đóng và lịch sử Phase 05 ở bên dưới.
 
@@ -33,7 +34,7 @@ Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
 - **Trạng thái:** **Gần đóng — chưa đóng.** `main` @ `5b755d1`. Không đánh dấu Done cho tới khi đủ điều kiện đóng bên dưới.
 - **Đã merge:** PR #112, #115, #117, #122, #126, #129, #132, #136 (batch 10.1–10.7); migration `0010`–`0014`; [ADR 0019](../../docs/adr/0019-community-foundation.md) và [ADR 0024](../../docs/adr/0024-guest-identity-privacy.md) Accepted. Ngoài contract: #137 (giới hạn review khách 10/giờ + sự kiện `guest_limit`), #138 (tên địa điểm + nhãn `guest_limit` trong admin), #139 (staff ẩn danh hóa review khách theo yêu cầu xóa dữ liệu).
 - **Review độc lập 2026-11-17:** `/sec-check` PASS_WITH_WARNINGS, `/qc-check` PASS_WITH_WARNINGS, không BLOCKED. Cổng đóng góp đã mở nên W1/W2 mức Medium đang có hiệu lực — chi tiết ở `backlog.md` (mục Phase 10).
-- **Phase kế tiếp:** **Phase 11 — Member Profiles & Creator Terms**; ADR 0025 đang **Proposed** ở PR #141 (chưa merge, chưa có trên `main`).
+- **Phase kế tiếp:** **Phase 11 — Member Profiles & Creator Terms**; ADR 0025 đã merge vào `main` (PR #141) nhưng Status vẫn **Proposed**.
 - **Deploy:** chỉ dev VM (192.168.100.140); chưa có production — xem `DEPLOY-STATUS.md`.
 
 ## Điều kiện đóng Phase 10 (chưa đủ)

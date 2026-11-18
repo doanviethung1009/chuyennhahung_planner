@@ -7,7 +7,7 @@
   - Liên kết từ địa điểm sang hàng đợi review của đúng địa điểm đó trong admin (nếu hàng đợi đã lọc được theo địa điểm; nếu chưa, dừng và hỏi — **không** thêm API lọc trong S5).
   - Số review hiển thị theo địa điểm chỉ khi lấy được từ dữ liệu đã có trong đúng request đã tải, không thêm N+1 và không đổi API; nếu không có sẵn, bỏ phần này.
 - Scope OUT: sửa schema `placeInputSchema`; upload ảnh/media (P07-18, BLOCKED Phase 08); versioning; xóa cứng; thay đổi quyền; thay đổi API/DB/migration; mọi thay đổi Phase 10; audit viewer (S4).
-- Dependencies: S1 đã merge (trang công khai tồn tại), S4 đã merge (tránh xung đột `messages/*.json` và điều hướng admin). Đã kiểm 2026-11-18: danh sách place trong admin hiện chỉ có liên kết sang trang sửa (`content-list.tsx`), chưa có liên kết ra site.
+- Dependencies: S1 đã merge (trang công khai tồn tại), S4 = audit log UI (P07-13, merged PR #157) (tránh xung đột `messages/*.json` và điều hướng admin). Đã kiểm 2026-11-18: danh sách place trong admin hiện chỉ có liên kết sang trang sửa (`content-list.tsx`), chưa có liên kết ra site.
 - Evidence: `src/components/admin/content/content-list.tsx`, `src/components/admin/content/place-editor.tsx`, `src/components/admin/content/record-shell.tsx`, `src/components/admin/community/place-link.tsx` (mẫu liên kết ra trang công khai), `src/components/admin/content/review-queue.tsx`.
 - Tái sử dụng: `PlaceLink` hoặc cùng mẫu; không tạo component trùng.
 - Files dự kiến (xác nhận khi vào code): `src/components/admin/content/content-list.tsx`, `src/components/admin/content/place-editor.tsx` hoặc `record-shell.tsx`, `src/components/admin/community/place-link.tsx` (nếu cần tổng quát hóa), `messages/vi.json`, `messages/en.json`, `tests/admin-places-links.test.tsx`, `docs/features/admin-content-cms.*` (cập nhật), `docs/usage.*` nếu mô tả thao tác.
@@ -17,6 +17,6 @@
 - Security / migration: không migration, không dữ liệu mới, không đổi quyền. `/sec-check` không cần; `/qc-check` chỉ đề xuất, chạy khi chủ dự án yêu cầu (NOT RUN).
 - Rollback: revert PR; không đổi dữ liệu.
 - Budget: sub-agents 0. Không merge khi chưa được duyệt.
-- State: DONE (chờ PR). Đã làm: liên kết "Xem trên site". Bỏ có chủ đích: liên kết hàng đợi review theo địa điểm (hàng đợi chỉ lọc `?status=`, không lọc theo địa điểm) và số review (danh sách places không trả về) — cả hai cần đổi API, ngoài S5.
+- State: DONE (merged PR #159, 2026-11-18). Đã làm: liên kết "Xem trên site". Bỏ có chủ đích: liên kết hàng đợi review theo địa điểm (hàng đợi chỉ lọc `?status=`, không lọc theo địa điểm) và số review (danh sách places không trả về) — cả hai cần đổi API, ngoài S5.
 - Feature document owner: main session — cập nhật `docs/features/admin-content-cms.md` + `.vi.md`.
 - Architecture/usage doc updates: `docs/usage.*` nếu cần; không đổi `docs/architecture.*`.
