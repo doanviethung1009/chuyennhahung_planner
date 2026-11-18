@@ -1,0 +1,22 @@
+# Task Contract: Places UI — S5 Admin Places polish
+- ID: **PLACES-UI-S5** (cùng track [S1](places-ui-s1-public-places.md); thêm dòng vào `.claude/roadmap/backlog.md` trong PR). Không thuộc Phase 07/10/11; không mở rộng phạm vi Phase 10.
+- Class: M · Branch: `feat/admin-places-polish` · One contract = one session = one branch = one PR, single agent.
+- Desired outcome: nhân viên đang ở admin Places nhìn được địa điểm hiển thị thế nào ngoài site và biết nó có review đang chờ xem hay không, mà không phải tự mò URL.
+- Scope IN (nhỏ, xác nhận lại bằng code khi vào session):
+  - Trong `/admin/content/places` (danh sách) và `/admin/content/places/[slug]` (sửa): liên kết "Xem trên site" mở trang công khai của S1 (`/dia-diem/[slug]`, EN `/places/[slug]`), tab mới, `rel` đúng, nhãn nói rõ mở tab mới.
+  - Liên kết từ địa điểm sang hàng đợi review của đúng địa điểm đó trong admin (nếu hàng đợi đã lọc được theo địa điểm; nếu chưa, dừng và hỏi — **không** thêm API lọc trong S5).
+  - Số review hiển thị theo địa điểm chỉ khi lấy được từ dữ liệu đã có trong đúng request đã tải, không thêm N+1 và không đổi API; nếu không có sẵn, bỏ phần này.
+- Scope OUT: sửa schema `placeInputSchema`; upload ảnh/media (P07-18, BLOCKED Phase 08); versioning; xóa cứng; thay đổi quyền; thay đổi API/DB/migration; mọi thay đổi Phase 10; audit viewer (S4).
+- Dependencies: S1 đã merge (trang công khai tồn tại), S4 đã merge (tránh xung đột `messages/*.json` và điều hướng admin). Đã kiểm 2026-11-18: danh sách place trong admin hiện chỉ có liên kết sang trang sửa (`content-list.tsx`), chưa có liên kết ra site.
+- Evidence: `src/components/admin/content/content-list.tsx`, `src/components/admin/content/place-editor.tsx`, `src/components/admin/content/record-shell.tsx`, `src/components/admin/community/place-link.tsx` (mẫu liên kết ra trang công khai), `src/components/admin/content/review-queue.tsx`.
+- Tái sử dụng: `PlaceLink` hoặc cùng mẫu; không tạo component trùng.
+- Files dự kiến (xác nhận khi vào code): `src/components/admin/content/content-list.tsx`, `src/components/admin/content/place-editor.tsx` hoặc `record-shell.tsx`, `src/components/admin/community/place-link.tsx` (nếu cần tổng quát hóa), `messages/vi.json`, `messages/en.json`, `tests/admin-places-links.test.tsx`, `docs/features/admin-content-cms.*` (cập nhật), `docs/usage.*` nếu mô tả thao tác.
+- Acceptance criteria: liên kết dùng `Link` i18n đúng pathname theo locale (không hard-code URL); `<a>` thật, mục tiêu ≥44px, focus nhìn thấy, tab mới có nhãn; slug lạ không tạo liên kết gãy; không `href="#"`; đủ chuỗi VI+EN; quyền xem trang không đổi (editor/admin); `typecheck`, `lint`, `test` pass và ghi rõ output.
+- Test cases: danh sách và trang sửa có liên kết đúng theo locale; liên kết có `target` và `rel` đúng; parity VI/EN; không thêm request mới (kiểm số lần gọi API trong test); thủ công 375/768/1280 ở admin.
+- Rủi ro conflict: thấp–trung bình ở `messages/*.json` và `content-list.tsx` (S4 chạm nav/messages admin) → chỉ bắt đầu sau khi S4 merge.
+- Security / migration: không migration, không dữ liệu mới, không đổi quyền. `/sec-check` không cần; `/qc-check` chỉ đề xuất, chạy khi chủ dự án yêu cầu (NOT RUN).
+- Rollback: revert PR; không đổi dữ liệu.
+- Budget: sub-agents 0. Không merge khi chưa được duyệt.
+- State: DONE (chờ PR). Đã làm: liên kết "Xem trên site". Bỏ có chủ đích: liên kết hàng đợi review theo địa điểm (hàng đợi chỉ lọc `?status=`, không lọc theo địa điểm) và số review (danh sách places không trả về) — cả hai cần đổi API, ngoài S5.
+- Feature document owner: main session — cập nhật `docs/features/admin-content-cms.md` + `.vi.md`.
+- Architecture/usage doc updates: `docs/usage.*` nếu cần; không đổi `docs/architecture.*`.

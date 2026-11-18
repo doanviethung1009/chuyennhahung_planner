@@ -30,6 +30,8 @@ Mỗi trang là server component: `requireStaff` (`src/lib/admin-gate.ts`, dựn
 
 Khi lưu, chỉ các khoá sửa được được gửi kèm `If-Match: "<updatedAt>"`. Dấu thời gian cũ trả **412** `version_conflict`: màn hình báo có người khác lưu trước và đưa nút tải lại. Lỗi 422 đánh dấu từng trường có `path` dạng dấu chấm nằm trong `issues`. 401 mời đăng nhập lại, 429 báo thời gian chờ. Nút bị vô hiệu khi đang gửi, và kết quả được đọc qua vùng live lịch sự.
 
+- Từ PLACES-UI-S5, mỗi địa điểm trong danh sách và trang sửa có liên kết "Xem trên site" tới trang công khai (`/dia-diem/[slug]`, EN `/places/[slug]`), mở tab mới và có nhãn báo cho trình đọc màn hình (`PlaceSiteLink` trong `community/place-link.tsx`). Địa điểm không có trạng thái nháp nên liên kết không gãy. Chưa làm: liên kết sang hàng đợi review theo từng địa điểm (hàng đợi chỉ lọc theo trạng thái) và số review theo địa điểm (danh sách không trả về); cả hai cần đổi API nên bỏ.
+
 ## File liên quan
 
 | Path | Vai trò |

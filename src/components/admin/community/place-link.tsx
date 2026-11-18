@@ -26,3 +26,19 @@ export function PlaceLink({ place, slug }: { place: PlaceRef | null; slug: strin
     </Link>
   );
 }
+
+/** Opens a place's public page (S1) in a new tab. Places have no draft state, so every slug has a live page. */
+export function PlaceSiteLink({ slug }: { slug: string }) {
+  const t = useTranslations('adminContent.places');
+  return (
+    <Link
+      href={{ pathname: '/places/[slug]', params: { slug } }}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex min-h-11 items-center font-medium text-primary-strong underline underline-offset-4"
+    >
+      {t('viewOnSite')}
+      <span className="sr-only"> {t('newTab')}</span>
+    </Link>
+  );
+}

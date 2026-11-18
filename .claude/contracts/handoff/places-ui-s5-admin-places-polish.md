@@ -1,0 +1,13 @@
+# Handoff — PLACES-UI-S5 admin Places polish
+- Branch: `feat/admin-places-polish` (chưa commit, chưa push, chưa có PR — chờ chủ dự án cho phép)
+- Done: `PlaceSiteLink` (community/place-link.tsx) → "Xem trên site" tới `/places/[slug]` (VI `/dia-diem/[slug]`), tab mới, `rel="noopener noreferrer"`, sr-only "(mở trong tab mới)", min-h-11. Gắn vào danh sách places (content-list.tsx) và trang sửa (record-shell.tsx, chỉ khi `back==='places'`).
+- Chuỗi mới: `adminContent.places.viewOnSite`, `.newTab` (VI+EN).
+- Test mới: `tests/admin-places-links.test.ts` (4 test).
+- Docs: `docs/features/admin-content-cms.md` + `.vi.md`, backlog dòng PLACES-UI-S5, contract State. `docs/usage.*` không cần đổi.
+- Bỏ có chủ đích (cần đổi API, ngoài scope): liên kết hàng đợi review theo địa điểm (hàng đợi chỉ lọc `?status=`) và số review theo địa điểm (list places không trả về).
+- Ngoài kế hoạch: không có.
+- Checks: typecheck PASS · lint PASS (không cảnh báo) · test PASS (89 file pass, 3 skipped; 1157 tests pass) · build NOT RUN (không đổi route/config)
+- Kiểm thủ công 375/768/1280: NOT RUN (không có phiên admin).
+- /qc-check: NOT RUN (đề xuất nếu cần) · /sec-check: không cần.
+- Rủi ro: thấp; revert PR là đủ.
+- Next: chủ dự án duyệt → commit, push, PR.
