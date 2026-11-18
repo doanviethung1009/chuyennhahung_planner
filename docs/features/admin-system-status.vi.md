@@ -21,7 +21,7 @@ Không lưu gì. Phản hồi là `SystemStatus` có danh sách cho phép trong 
 
 ## How it works
 
-Chế độ kho suy ra từ việc **có mặt** của `PLANNER_DATABASE_URL` / `CONTENT_DATABASE_URL`; URL chỉ được đưa cho một pool `pg` một kết nối chạy `SELECT name FROM schema_migrations ORDER BY name DESC LIMIT 1` rồi đóng. Mọi lỗi thành `unreachable`; thông báo của driver không bao giờ được đọc. Tên migration phải khớp mẫu tệp migration. Health probe gọi cùng handler với `/api/health` ngay trong tiến trình. `buildId` là `.next/BUILD_ID` của Next (null nếu không có). Dòng sao lưu là hằng số: chưa có thông tin sao lưu (quyết định D10 của chủ dự án).
+Chế độ kho suy ra từ việc **có mặt** của `PLANNER_DATABASE_URL` / `CONTENT_DATABASE_URL`; URL chỉ được đưa cho một pool `pg` một kết nối chạy `SELECT name FROM schema_migrations ORDER BY name DESC LIMIT 1` rồi đóng. Mỗi probe có giới hạn thời gian (timeout truy vấn 3 giây cùng một giới hạn tổng 4 giây), nên cơ sở dữ liệu nhận kết nối nhưng không trả lời cũng thành `unreachable`. Mọi lỗi thành `unreachable`; thông báo của driver không bao giờ được đọc. Tên migration phải khớp mẫu tệp migration. Health probe gọi cùng handler với `/api/health` ngay trong tiến trình. `buildId` là `.next/BUILD_ID` của Next (null nếu không có). Dòng sao lưu là hằng số: chưa có thông tin sao lưu (quyết định D10 của chủ dự án).
 
 ## Files
 

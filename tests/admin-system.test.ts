@@ -1,4 +1,5 @@
 import { mkdtemp, readFile } from 'node:fs/promises';
+import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
@@ -134,6 +135,28 @@ describe('loadSystemStatus', () => {
     expect(s.build.buildId).toBeNull();
     expect(JSON.stringify(s)).not.toMatch(/hunter2|10\.0\.0\.5|ECONNREFUSED/);
   });
+});
+
+describe('a database that accepts the connection but never answers', () => {
+  it('reports "unreachable" within a bound instead of hanging', async () => {
+    const sockets: Array<{ destroy(): void }> = [];
+    const server = createServer((socket) => sockets.push(socket)); // accepts, never replies
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const { port } = server.address() as { port: number };
+    const saved = process.env.CONTENT_DATABASE_URL;
+    process.env.CONTENT_DATABASE_URL = `postgres://u:p@127.0.0.1:${port}/db`;
+    try {
+      const started = Date.now();
+      const s = await loadSystemStatus();
+      expect(s.content).toEqual({ store: 'postgres', database: 'unreachable', lastMigration: null });
+      expect(Date.now() - started).toBeLessThan(6_000);
+    } finally {
+      if (saved === undefined) delete process.env.CONTENT_DATABASE_URL;
+      else process.env.CONTENT_DATABASE_URL = saved;
+      sockets.forEach((socket) => socket.destroy());
+      server.close();
+    }
+  }, 15_000);
 });
 
 describe('system page wiring', () => {

@@ -51,9 +51,12 @@ export interface SystemSources {
   buildId(): Promise<string | null>;
 }
 
+/** Upper bound for one probe, so a half-dead database can never hang the page. */
+export const PROBE_TIMEOUT_MS = 3_000;
+
 /** Connects with a one-connection pool, asks for the newest migration, closes. */
 async function probePostgres(url: string): Promise<ProbeResult> {
-  const pool = createPostgresPool(url, { max: 1 });
+  const pool = createPostgresPool(url, { max: 1, queryTimeoutMs: PROBE_TIMEOUT_MS });
   try {
     const { rows } = await pool.query<{ name: string }>(
       'SELECT name FROM schema_migrations ORDER BY name DESC LIMIT 1',
@@ -73,7 +76,15 @@ const defaultSources: SystemSources = {
   databaseUrl: (domain) =>
     (domain === 'planner' ? process.env.PLANNER_DATABASE_URL : process.env.CONTENT_DATABASE_URL)?.trim() ||
     undefined,
-  probe: probePostgres,
+  probe: (url) =>
+    // The query timeout covers a stalled query; this race also covers a stalled
+    // connect or close, so the result is always "unreachable" within a bound.
+    Promise.race([
+      probePostgres(url),
+      new Promise<ProbeResult>((resolve) =>
+        setTimeout(() => resolve({ database: 'unreachable', lastMigration: null }), PROBE_TIMEOUT_MS + 1_000).unref(),
+      ),
+    ]),
   async health() {
     try {
       const { GET } = await import('@/app/api/health/route');

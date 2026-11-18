@@ -21,7 +21,7 @@ Nothing is stored. The response is the allow-listed `SystemStatus` in `src/serve
 
 ## How it works
 
-Store mode comes from the **presence** of `PLANNER_DATABASE_URL` / `CONTENT_DATABASE_URL`; the URL is passed only to a one-connection `pg` pool that runs `SELECT name FROM schema_migrations ORDER BY name DESC LIMIT 1` and closes. Any failure becomes `unreachable`; the driver message is never read. The migration name must match the migration file pattern. The health probe calls the same handler as `/api/health` in process. `buildId` is Next's `.next/BUILD_ID` (null if absent). The backups line is a constant: no backup facts exist yet (owner decision D10).
+Store mode comes from the **presence** of `PLANNER_DATABASE_URL` / `CONTENT_DATABASE_URL`; the URL is passed only to a one-connection `pg` pool that runs `SELECT name FROM schema_migrations ORDER BY name DESC LIMIT 1` and closes. Each probe is bounded (query timeout 3 s plus an overall 4 s race), so a database that accepts the connection but never answers also reads `unreachable`. Any failure becomes `unreachable`; the driver message is never read. The migration name must match the migration file pattern. The health probe calls the same handler as `/api/health` in process. `buildId` is Next's `.next/BUILD_ID` (null if absent). The backups line is a constant: no backup facts exist yet (owner decision D10).
 
 ## Files
 
