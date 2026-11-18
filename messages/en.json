@@ -1360,6 +1360,34 @@
       "nature": "Nature",
       "activity": "Activity",
       "transport": "Getting around"
+    },
+    "addToTrip": {
+      "loading": "Checking your sign-in…",
+      "signIn": "Sign in to add to a trip",
+      "button": "Add to a trip",
+      "title": "Add {name} to a trip",
+      "loadingTrips": "Loading your trips…",
+      "noTrips": "You have no active trip to this destination yet.",
+      "createTrip": "Create a new trip",
+      "myTrips": "My trips",
+      "tripLabel": "Trip",
+      "dayLabel": "Day",
+      "dayOption": "Day {day}",
+      "dayOptionDated": "Day {day} · {date}",
+      "dayFull": "day is full",
+      "duplicate": "This place is already on day {day} of the trip. You can still add it again.",
+      "add": "Add to itinerary",
+      "addAnyway": "Add anyway",
+      "adding": "Adding…",
+      "success": "Added to day {day} of “{trip}”.",
+      "openTrip": "Open trip",
+      "errors": {
+        "load": "Could not load your trips. Please try again later.",
+        "gone": "This trip no longer exists. The list was reloaded.",
+        "unavailable": "Could not add: the trip was just archived or the day is full.",
+        "rateLimited": "You are going a bit fast. Wait a moment and try again.",
+        "generic": "Could not add the place. Please try again later."
+      }
     }
   }
 }
