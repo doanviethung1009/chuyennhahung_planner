@@ -3,6 +3,7 @@ import type { TravelContentRepository } from '../src/server/content/repository';
 import { bilingual, makeRepository, placeFixture } from './travel-content-helpers';
 import { foldText, foldedIncludes } from '../src/lib/fold';
 import { listQuerySchema } from '../src/server/content/schemas';
+import { invalidateCatalogueCache } from '../src/server/public-catalogue-cache';
 
 const holder = vi.hoisted(() => ({ repo: null as unknown }));
 vi.mock('../src/server/content/instance', () => ({
@@ -24,6 +25,7 @@ async function seed() {
 }
 
 beforeEach(() => {
+  invalidateCatalogueCache();
   repo = makeRepository();
   holder.repo = repo;
 });

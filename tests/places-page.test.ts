@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TravelContentRepository } from '../src/server/content/repository';
 import { bilingual, makeRepository, placeFixture } from './travel-content-helpers';
+import { invalidateCatalogueCache } from '../src/server/public-catalogue-cache';
 import { pathnames } from '../src/i18n/routing';
 import vi_ from '../messages/vi.json';
 import en_ from '../messages/en.json';
@@ -27,6 +28,7 @@ vi.mock('../src/i18n/navigation', () => ({
 const src = resolve(import.meta.dirname, '../src');
 let repo: TravelContentRepository;
 beforeEach(() => {
+  invalidateCatalogueCache();
   repo = makeRepository();
   holder.repo = repo;
 });
