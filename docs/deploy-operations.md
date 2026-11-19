@@ -186,15 +186,25 @@ GitHub's runner and pushes it to ghcr next to the `app` image (`deploy-dev.yml`)
 never starts it. The VM only **pulls** it, because its build runs `next build`, which does not
 fit a 1.9 GB VM.
 
+### 0. Pick your layout
+
+There are two cases; define **one** of the two `dc` functions in your shell (it is lost on a new SSH login, so define it again). The wrong one fails with *the Travel Content database is unavailable*.
+
+```bash
+cd /opt/chuyennhahung/src/deploy
+# local-db: PostgreSQL in the same Compose stack as the app (the single-VM layout)
+dc() { docker compose --project-directory . --env-file /opt/chuyennhahung/.env --profile local-db -f compose.yml -f compose.app.yml -f compose.app.local-db.yml "$@"; }
+# external-db: PostgreSQL on another VM (needs pg-ca.crt, see deploy-runbook)
+dc() { docker compose --project-directory . --env-file /opt/chuyennhahung/.env -f compose.yml -f compose.app.yml -f compose.app.external-db.yml "$@"; }
+```
+
 ### 1. Pull the image (once per code version)
 ```bash
 cd /opt/chuyennhahung/src && git pull --ff-only          # compose files of the same commit
 cd deploy
 export TOOLS_IMAGE=ghcr.io/<owner>/chuyennhahung-tools APP_IMAGE_TAG=dev
 docker login ghcr.io -u <github-user>                    # a token with read:packages; once per VM
-docker compose --project-directory . --env-file /opt/chuyennhahung/.env \
-  -f compose.yml -f compose.app.yml -f compose.app.external-db.yml \
-  --profile tools pull tools
+dc --profile tools pull tools
 ```
 `dev` is the tag CI moves on every merge to `main`; `sha-<commit>` pins one build. The image
 holds the scripts of the commit it was built from: a script added in a later PR needs a newer
@@ -202,12 +212,9 @@ image.
 
 ### 2. Run the script (dry-run first, then for real)
 ```bash
-docker compose --project-directory . --env-file /opt/chuyennhahung/.env \
-  -f compose.yml -f compose.app.yml -f compose.app.external-db.yml \
-  run --rm tools npm run content:seed-places -- --dry-run
+dc run --rm tools npm run content:seed-places -- --dry-run
 ```
-Drop `--dry-run` to write. Use `compose.app.local-db.yml` instead of
-`compose.app.external-db.yml` on a `local-db` layout.
+Drop `--dry-run` to write.
 
 ### What each part means
 | Part | Why it is there |
@@ -215,7 +222,8 @@ Drop `--dry-run` to write. Use `compose.app.local-db.yml` instead of
 | `cd /opt/chuyennhahung/src/deploy` | Compose files live here; the commands are relative to it |
 | `--project-directory .` | Use this directory's files and project name, the same as `deploy.sh`, so the script reaches the same volume and network as the app |
 | `--env-file /opt/chuyennhahung/.env` | The secrets and URLs live outside the repository. Without it Compose reads only `deploy/.env` and fails with *required variable CNH_APP_PASSWORD is missing*, because `compose.yml` also defines the `postgres` service |
-| `-f compose.yml -f compose.app.yml -f compose.app.<overlay>.yml` | Base stack, the `app`/`tools` services, and the database overlay (`external-db` mounts the DB CA certificate `pg-ca.crt`). Always pass the same set that `deploy.sh` uses |
+| `--profile local-db` | Loads the `postgres` service of the same stack. `deploy.sh` passes it for this layout; without it the `tools` container has no database to reach |
+| `-f compose.yml -f compose.app.yml -f compose.app.<overlay>.yml` | Base stack, the `app`/`tools` services, and the database overlay. `local-db` puts `tools` on the private `backend` network where the host `postgres` lives; `external-db` mounts the DB CA certificate `pg-ca.crt` instead. Always pass the same set that `deploy.sh` uses |
 | `TOOLS_IMAGE`, `APP_IMAGE_TAG=dev` | Which image `tools` uses: the ghcr image CI built, at the `dev` tag. Without `TOOLS_IMAGE` Compose looks for a local `chuyennhahung/app-tools` and builds it |
 | `--profile tools` | The `tools` service is behind a profile so `up` never starts it. `pull` needs the profile to see it |
 | `run --rm tools` | Starts one container from that image and deletes it afterwards |
