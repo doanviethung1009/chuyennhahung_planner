@@ -217,3 +217,26 @@ describe('failure and source selection', () => {
     expect((await c.listSitemapEntries()).length).toBe(staticStories.length);
   });
 });
+
+describe('PublicStory.places projection (PLACES-API-PROJ follow-up)', () => {
+  it('carries only the allow-listed place fields, in the list and on the detail', async () => {
+    await repo.createPlace(
+      placeFixture({
+        slug: 'linked-place',
+        affiliateLinks: [{ partner: 'Acme', label: bilingual('Đặt', 'Book'), url: 'https://example.com/x' }],
+      }),
+    );
+    await publish('with-place', undefined, { placeSlugs: ['linked-place'] });
+    const keys = [
+      'category', 'description', 'destinationSlug', 'estimatedCostVnd', 'images', 'location',
+      'name', 'personalNote', 'rating', 'slug', 'suggestedMinutes',
+    ];
+    const detail = await content().getStory('with-place');
+    expect(detail?.places).toHaveLength(1);
+    expect(Object.keys(detail?.places[0] ?? {}).sort()).toEqual(keys);
+    expect(detail?.places[0]?.suggestedMinutes).toBe(60);
+    const listed = (await content().listStories()).find((s) => s.slug === 'with-place');
+    expect(Object.keys(listed?.places[0] ?? {}).sort()).toEqual(keys);
+    expect(JSON.stringify(detail?.places)).not.toMatch(/affiliate|coords|createdAt|updatedAt|example\.com\/x/);
+  });
+});
