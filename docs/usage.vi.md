@@ -380,6 +380,8 @@ npm run content:seed-places -- --dry-run   # liệt kê những gì sẽ tạo, 
 npm run content:seed-places                # tạo chúng
 ```
 
+Trên VM, script chạy trong container `tools` build bằng tay; lệnh đầy đủ và ý nghĩa từng cờ nằm ở [deploy-operations → Chạy script một lần trên VM](deploy-operations.vi.md#chạy-script-một-lần-trên-vm-container-tools).
+
 Chỉ tạo slug chưa có, dùng cùng store với app, không bao giờ ghi đè chỉnh sửa trong CMS. Chi phí và thời lượng trong các địa điểm đó là ước tính cần xác nhận; `rating` và `personalNote` để trống cho chủ dự án. Thay đổi này không chạy lệnh trên store thật nào.
 
 ### Nạp các bài viết tĩnh vào content store
