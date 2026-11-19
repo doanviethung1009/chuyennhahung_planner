@@ -13,6 +13,7 @@
     "db:migrate": "vite-node -c vitest.config.ts scripts/db-migrate.ts",
     "planner:import": "vite-node -c vitest.config.ts scripts/planner-import.ts",
     "admin:create": "vite-node -c vitest.config.ts scripts/admin-create.ts",
+    "content:seed-places": "vite-node -c vitest.config.ts scripts/content-seed-places.ts",
     "content:seed-static": "vite-node -c vitest.config.ts scripts/content-seed-static.ts",
     "planner:export": "vite-node -c vitest.config.ts scripts/planner-export.ts",
     "content:import": "vite-node -c vitest.config.ts scripts/content-import.ts",

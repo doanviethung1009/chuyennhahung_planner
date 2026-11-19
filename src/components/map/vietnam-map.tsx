@@ -1,6 +1,6 @@
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
-import type { Destination } from '@/content/types';
+import { isVisited, type Destination } from '@/content/types';
 import {
   MAP_HEIGHT,
   MAP_WIDTH,
@@ -87,7 +87,11 @@ export function VietnamMap({
                   />
                   <span
                     aria-hidden="true"
-                    className="relative block rounded-pill border-2 border-cream-50 bg-primary shadow-soft transition-transform duration-200 ease-gentle group-hover:scale-125 group-focus-visible:scale-125"
+                    className={`relative block rounded-pill border-2 shadow-soft transition-transform duration-200 ease-gentle group-hover:scale-125 group-focus-visible:scale-125 ${
+                      isVisited(destination)
+                        ? 'border-cream-50 bg-primary'
+                        : 'border-primary bg-cream-50'
+                    }`}
                     style={{ width: r * 2, height: r * 2 }}
                   />
                   <span

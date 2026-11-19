@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
-import type { Destination } from '@/content/types';
+import { isVisited, type Destination } from '@/content/types';
 import { CoverImage } from '@/components/ui/cover-image';
 import { Badge } from '@/components/ui/badge';
 
@@ -48,7 +48,14 @@ export async function DestinationCard({
           <p className="line-clamp-2 text-sm text-cream-100/85">
             {destination.summary[locale]}
           </p>
-          {destination.visits > 1 ? (
+          {!isVisited(destination) ? (
+            <Badge
+              tone="neutral"
+              className="mt-1 w-fit border-cream-50/25 bg-cream-50/15 text-cream-50"
+            >
+              {t('notVisited')}
+            </Badge>
+          ) : destination.visits > 1 ? (
             <Badge
               tone="neutral"
               className="mt-1 w-fit border-cream-50/25 bg-cream-50/15 text-cream-50"

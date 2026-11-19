@@ -1,0 +1,19 @@
+# Task Contract: DEST-1 Thêm điểm đến chưa đi + địa điểm seed
+- Class: L
+- Desired outcome / user impact: Site có thêm 8 điểm đến du lịch (Quảng Ninh, Đà Nẵng, Quy Nhơn, Nha Trang, Quảng Bình, Cần Thơ, TP.HCM, Hà Nội) mà hai đứa CHƯA đi, hiển thị trung thực (mô tả khách quan, không "đã đi N lần", không ngày đi); mỗi nơi 2 địa điểm seed; Hội An, Sa Pa, Hà Giang, Huế được bổ sung 2 địa điểm.
+- Scope IN / OUT:
+  - IN: `Destination.firstVisited`/`visits` tùy chọn; `isVisited()` helper; thẻ, trang chi tiết, bản đồ (pin điểm chưa đi), trang map, home; 8 destination mới trong `src/content/destinations.ts`; 8 cover SVG qua `scripts/generate-covers.mjs`; 24 địa điểm trong `demoPlaces`; script bổ sung địa điểm cho store có sẵn; tests; docs (feature doc VI/EN + README + usage nếu cần).
+  - OUT: sửa `/tour*` redirect, route mới, ADR (không đổi route/contract API), ảnh thật, rating/ghi chú cá nhân, chạy seed lên VM/DB thật, commit/push/PR khi chưa được phép.
+- Evidence: `src/content/types.ts` (Destination), `src/content/destinations.ts`, `src/content/travel/seed.ts` (`demoPlaces`, `seedTravelContent` chỉ chạy khi store rỗng), `scripts/content-seed-static.ts`, `scripts/generate-covers.mjs`, `src/lib/map.ts`, `tests/content.test.ts`, `tests/map.test.ts`.
+- Constraints / dependencies: Cắt từ `main` (77578df). PR #176 (`feat/places-list`) chưa merge, sửa `src/lib/slug.ts`, `src/server/content/*`, `messages` (`placesList`, `nav.places`), `docs/features/places*`, `src/app/[locale]/destinations/page.tsx`, `src/app/sitemap.ts` → tránh đụng; chỉ thêm key message mới trong `destinations`/`common`/`map` namespace. PR #175 chỉ sửa roadmap, không trùng. CLAUDE.md rule 8: không bịa dữ liệu cá nhân.
+- Architecture decision / ADR (if needed): Không cần ADR — mở rộng kiểu nội dung tĩnh, tương thích ngược; không đổi route hay API. `body` giữ bắt buộc nhưng với điểm đến chưa đi là đoạn mô tả khách quan, không ngôi thứ nhất.
+- Interface contract (API, types, DB): `Destination { firstVisited?: string; visits?: number }`; `isVisited(d) = d.visits !== undefined && d.visits > 0`. Không đổi schema DB/API. Place: `rating: null`, `personalNote: null`.
+- Tasks by owner: Architect (contract, kiểu) → BE (seed địa điểm, script bổ sung store có sẵn) → FE (card, detail, map, messages, cover) — một session, tuần tự.
+- File ownership (avoid parallel overlap): single agent, không subagent.
+- Acceptance criteria / tests: `typecheck`, `lint`, `test`, `build` pass; test mới: điểm đến chưa đi không có `firstVisited`/`visits`, tên VI/EN đủ, tọa độ trong biên VN, cover tồn tại, mỗi điểm đến ≥2 địa điểm seed, `destinationSlug` hợp lệ, mọi place seed mới `rating === null`; map pin cho chưa đi; browser 375/768/1280 VI+EN: `/kham-pha`, một điểm đến mới, một địa điểm mới, `/dia-diem` (route `/places` chỉ có sau PR #176 — ghi rõ nếu chưa có).
+- Security and migration risks: Thấp. Không đổi auth/DB. Store có sẵn không tự nhận địa điểm mới (xem "Rollback" và handoff); cách bổ sung là script create-only, chạy tay.
+- Rollback approach: revert PR; địa điểm đã bổ sung vào store thật có thể ẩn/xóa qua admin CMS.
+- Budget: 0 subagent; dừng nếu cần ADR hoặc đụng file của PR #176 quá mức.
+- State: REVIEW
+- Feature document owner (`docs/features/<slug>.md` + `.vi.md`, CLAUDE.md rules 11–12): `docs/features/more-destinations.md` + `.vi.md`, đăng ký trong `docs/features/README.*`.
+- Architecture/usage doc updates needed (`docs/architecture.*`, `docs/usage.*`, rule 10): kiểm tra phần mô tả `Destination` ở architecture/usage; sửa nếu nói "chỉ nơi đã đến".

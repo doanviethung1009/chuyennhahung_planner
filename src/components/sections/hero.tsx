@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
 import { destinations } from '@/content/destinations';
+import { isVisited } from '@/content/types';
 import type { StoryCardData } from '@/components/cards/story-card';
 import { Container } from '@/components/ui/container';
 import { ButtonLink } from '@/components/ui/button';
@@ -21,7 +22,7 @@ export async function Hero({
   const years = new Date().getFullYear() - FOUNDED_YEAR;
 
   const stats = [
-    { value: destinations.length, label: t('statDestinations') },
+    { value: destinations.filter(isVisited).length, label: t('statDestinations') },
     { value: storyCount, label: t('statStories') },
     { value: years, label: t('statYears') },
   ];

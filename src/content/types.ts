@@ -27,9 +27,14 @@ export interface Destination {
   summary: Localized<string>;
   body: Localized<string[]>;
   bestSeason: Localized<string>;
-  /** Our own visit, for the "Destinations we've explored" framing. */
-  firstVisited: string;
-  visits: number;
+  /**
+   * Our own visit, for the "Destinations we've explored" framing. Both are
+   * omitted for a destination we have NOT been to yet: such an entry carries only
+   * an objective description (no first-person account, date or visit count) —
+   * CLAUDE.md rule 8. Use `isVisited()` rather than testing the fields.
+   */
+  firstVisited?: string;
+  visits?: number;
   tags: Localized<string[]>;
   cover: string;
 }
@@ -98,4 +103,11 @@ export interface SocialLink {
   platform: VideoPlatform | 'instagram' | 'email' | 'zalo';
   label: string;
   url: string;
+}
+
+/** True when we have actually been to the destination (it has a visit count). */
+export function isVisited(
+  destination: Pick<Destination, 'visits'>,
+): destination is Pick<Destination, 'visits'> & { visits: number } {
+  return typeof destination.visits === 'number' && destination.visits > 0;
 }

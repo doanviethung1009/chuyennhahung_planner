@@ -122,7 +122,7 @@ thiếu bản dịch.
 
 | Bộ dữ liệu | File | Số lượng |
 |---|---|---|
-| Điểm đến | [`destinations.ts`](../src/content/destinations.ts) | 8 |
+| Điểm đến (8 đã đi, 8 chưa đi — không có `firstVisited`/`visits`) | [`destinations.ts`](../src/content/destinations.ts) | 16 |
 | Chuyện đi chơi (nguồn seed / adapter `static` / fixture test; story đang chạy đọc từ repository nội dung) | [`stories.ts`](../src/content/stories.ts) | 6 |
 | Lịch trình | [`itineraries.ts`](../src/content/itineraries.ts) | 4 |
 | Review video | [`video-reviews.ts`](../src/content/video-reviews.ts) | 6 |

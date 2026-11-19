@@ -119,7 +119,7 @@ missing translation.
 
 | Collection | File | Count |
 |---|---|---|
-| Destinations | [`destinations.ts`](../src/content/destinations.ts) | 8 |
+| Destinations (8 visited, 8 not visited yet — those carry no `firstVisited`/`visits`) | [`destinations.ts`](../src/content/destinations.ts) | 16 |
 | Stories (seed source / `static` adapter / test fixture; live stories come from the content repository) | [`stories.ts`](../src/content/stories.ts) | 6 |
 | Itineraries | [`itineraries.ts`](../src/content/itineraries.ts) | 4 |
 | Video reviews | [`video-reviews.ts`](../src/content/video-reviews.ts) | 6 |

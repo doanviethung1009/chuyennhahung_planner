@@ -43,6 +43,7 @@
     "dayCount": "{days} ngày",
     "nightCount": "{nights} đêm",
     "visitCount": "Đã đi {count} lần",
+    "notVisited": "Chưa đi",
     "firstVisited": "Lần đầu đến {date}",
     "firstVisitedLabel": "Lần đầu đến",
     "visitsLabel": "Số lần quay lại",
@@ -146,7 +147,7 @@
   },
   "destinations": {
     "title": "Khám phá",
-    "description": "Những nơi hai đứa đã đặt chân tới, kèm mùa nên đi và lý do nên đi.",
+    "description": "Những nơi hai đứa đã đặt chân tới và những nơi hai đứa muốn đi, kèm mùa nên đi. Nơi chưa đi chỉ có thông tin chung.",
     "count": "{count} điểm đến",
     "filterLabel": "Lọc theo vùng",
     "empty": "Chưa có điểm đến nào trong vùng này."
@@ -157,6 +158,7 @@
     "mapLabel": "Bản đồ các điểm đến tại Việt Nam",
     "legend": "Ký hiệu",
     "legendVisits": "Điểm càng lớn là đi càng nhiều lần",
+    "legendNotVisited": "Vòng rỗng là nơi hai đứa chưa đi",
     "listTitle": "Danh sách điểm đến",
     "selectHint": "Chọn một điểm trên bản đồ hoặc trong danh sách."
   },
