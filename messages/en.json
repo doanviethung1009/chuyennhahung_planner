@@ -21,7 +21,8 @@
     "signOut": "Sign out",
     "signingOut": "Signing out…",
     "signOutFailed": "Couldn't sign out. Please try again.",
-    "communityTrips": "Community trips"
+    "communityTrips": "Community trips",
+    "places": "Places"
   },
   "locale": {
     "label": "Language",
@@ -1690,5 +1691,29 @@
       "runbook_read": "Read the runbook and system status",
       "audit_read": "Read the audit log"
     }
+  },
+  "placesList": {
+    "title": "All places",
+    "metaTitle": "Places",
+    "description": "Cafés, food spots, viewpoints and places to stay we have been to. Search by name or area, and filter by destination and type.",
+    "searchLabel": "Search by name or area",
+    "searchPlaceholder": "For example: Da Lat, coffee, night market",
+    "searchButton": "Search",
+    "destinationLabel": "Destination",
+    "categoryLabel": "Type of place",
+    "allDestinations": "All destinations",
+    "allCategories": "All types",
+    "filtersLabel": "Search and filters",
+    "resultsHeading": "Results",
+    "resultCount": "{count, plural, =0 {No places} one {# place} other {# places}}",
+    "resultCountFor": "{count, plural, =0 {No places} one {# place} other {# places}} for “{q}”",
+    "clearFilters": "Clear filters",
+    "emptyTitle": "No matching places",
+    "emptyBody": "Try fewer words, check the spelling, or clear the filters to see every place.",
+    "paginationLabel": "Pagination",
+    "previous": "Previous page",
+    "next": "Next page",
+    "pageOf": "Page {page} of {pageCount}",
+    "browseAll": "Browse all places"
   }
 }

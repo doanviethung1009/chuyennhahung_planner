@@ -21,7 +21,8 @@
     "signOut": "Đăng xuất",
     "signingOut": "Đang đăng xuất…",
     "signOutFailed": "Chưa đăng xuất được. Hãy thử lại.",
-    "communityTrips": "Chuyến đi cộng đồng"
+    "communityTrips": "Chuyến đi cộng đồng",
+    "places": "Địa điểm"
   },
   "locale": {
     "label": "Ngôn ngữ",
@@ -1690,5 +1691,29 @@
       "runbook_read": "Xem runbook và trạng thái hệ thống",
       "audit_read": "Xem nhật ký kiểm toán"
     }
+  },
+  "placesList": {
+    "title": "Tất cả địa điểm",
+    "metaTitle": "Địa điểm",
+    "description": "Quán, chỗ ăn, điểm ngắm cảnh và nơi ở hai đứa đã ghé. Tìm theo tên hoặc khu vực, lọc theo điểm đến và loại địa điểm.",
+    "searchLabel": "Tìm theo tên hoặc khu vực",
+    "searchPlaceholder": "Ví dụ: Đà Lạt, cà phê, chợ đêm",
+    "searchButton": "Tìm",
+    "destinationLabel": "Điểm đến",
+    "categoryLabel": "Loại địa điểm",
+    "allDestinations": "Tất cả điểm đến",
+    "allCategories": "Tất cả loại",
+    "filtersLabel": "Tìm kiếm và bộ lọc",
+    "resultsHeading": "Kết quả",
+    "resultCount": "{count} địa điểm",
+    "resultCountFor": "{count} địa điểm cho “{q}”",
+    "clearFilters": "Xóa bộ lọc",
+    "emptyTitle": "Chưa tìm thấy địa điểm phù hợp",
+    "emptyBody": "Thử bớt từ khóa, kiểm tra chính tả hoặc xóa bộ lọc để xem tất cả địa điểm.",
+    "paginationLabel": "Phân trang",
+    "previous": "Trang trước",
+    "next": "Trang sau",
+    "pageOf": "Trang {page} / {pageCount}",
+    "browseAll": "Xem tất cả địa điểm"
   }
 }

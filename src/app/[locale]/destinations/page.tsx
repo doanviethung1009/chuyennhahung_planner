@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
 import { destinations } from '@/content/destinations';
@@ -32,9 +33,10 @@ export default async function DestinationsPage({ params }: Params) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const [t, tRegion] = await Promise.all([
+  const [t, tRegion, tPlaces] = await Promise.all([
     getTranslations('destinations'),
     getTranslations('region'),
+    getTranslations('placesList'),
   ]);
 
   const grouped = regions
@@ -50,9 +52,18 @@ export default async function DestinationsPage({ params }: Params) {
         title={t('title')}
         description={t('description')}
         meta={
-          <p className="text-sm text-foreground-muted">
-            {t('count', { count: destinations.length })}
-          </p>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
+            <p className="text-sm text-foreground-muted">
+              {t('count', { count: destinations.length })}
+            </p>
+            <Link
+              href="/places"
+              className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary-strong"
+            >
+              {tPlaces('browseAll')}
+              <span aria-hidden="true">→</span>
+            </Link>
+          </div>
         }
       >
         <nav aria-label={t('filterLabel')}>
