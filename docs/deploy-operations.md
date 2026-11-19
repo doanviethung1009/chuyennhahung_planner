@@ -231,6 +231,7 @@ in `.env`). It runs `next build`, so watch for the build being killed on a small
 - Stop the app while a script writes to the store, as [usage](usage.md) says for each script; the dry run is safe at any time.
 - The image bakes in the **dev** `NEXT_PUBLIC_SITE_URL`. For prod, build a separate image with the prod URL.
 - Never put real values from `.env` in a chat or a ticket.
+- `docker login` stores the token in `~/.docker/config.json` on the VM: use a token with `read:packages` only. Keep the `chuyennhahung-tools` package private (it holds the full source).
 
 ## Upgrades
 

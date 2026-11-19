@@ -224,6 +224,7 @@ Khi CI chưa publish image (fork, tag cũ), bỏ `TOOLS_IMAGE` rồi build:
 - Dừng app khi script ghi vào store, như [usage](usage.vi.md) nói với từng script; dry-run an toàn mọi lúc.
 - Image nhúng sẵn `NEXT_PUBLIC_SITE_URL` của **dev**. Với prod, build một image riêng với URL prod.
 - Không dán giá trị thật từ `.env` vào chat hay ticket.
+- `docker login` lưu token trong `~/.docker/config.json` trên VM: dùng token chỉ có `read:packages`. Giữ gói `chuyennhahung-tools` ở chế độ private (nó chứa toàn bộ mã nguồn).
 
 ## Nâng cấp
 

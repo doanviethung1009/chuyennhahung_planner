@@ -100,8 +100,8 @@ jobs:
           tags: |
             ${{ needs.plan.outputs.image }}:${{ needs.plan.outputs.tag }}
             ${{ needs.plan.outputs.image }}:dev
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=app
+          cache-to: type=gha,mode=max,scope=app
       # The one-off scripts image (`npm run content:seed-places`, `admin:create`, ...).
       # Built here because its `builder` stage runs `next build`, which does not fit
       # the VM. Never started by the deploy: it is only pulled by hand when a script
@@ -116,8 +116,8 @@ jobs:
           tags: |
             ${{ needs.plan.outputs.tools_image }}:${{ needs.plan.outputs.tag }}
             ${{ needs.plan.outputs.tools_image }}:dev
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=tools
+          cache-to: type=gha,mode=max,scope=tools
 
   deploy:
     needs: [plan, build]
