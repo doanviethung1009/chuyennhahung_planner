@@ -9,7 +9,7 @@ thật — một chuyện có lịch trình thật hoặc một chuyến trống
 mà trang giải thích qua bốn bước và trao những đường liên hệ thật. **Trang không
 có form, và đó là chủ đích**: nó dẫn vào Planner chứ không gửi dữ liệu tới Planner,
 và một nút submit không có gì phía sau là một nút chết. Trang không hứa AI hay
-trình tự lên lịch — cả hai đều đang hoãn.
+công cụ tự lên lịch — cả hai đều đang hoãn.
 
 Bản thân Planner ([ADR 0002](../adr/0002-planner-core.vi.md),
 [travel-planner-core.vi.md](travel-planner-core.vi.md)) nằm phía sau hai link đó.
