@@ -113,6 +113,11 @@ export const VIETNAM_OUTLINE_PATH = smoothClosedPath(
   OUTLINE.map(([lat, lng]) => project(lat, lng)),
 );
 
+/** Which side of a pin its label sits on: right-half pins flip left so the label stays in the frame. */
+export function labelSide(x: number): 'left' | 'right' {
+  return x > MAP_WIDTH / 2 ? 'left' : 'right';
+}
+
 /** Pin radius grows with repeat visits, capped so it never dominates. */
 export function pinRadius(visits: number | undefined): number {
   return Math.min(5 + (visits ?? 0) * 1.4, 11);
