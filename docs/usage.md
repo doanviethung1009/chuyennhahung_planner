@@ -380,6 +380,8 @@ npm run content:seed-places -- --dry-run   # list what would be created, write n
 npm run content:seed-places                # create them
 ```
 
+On the VM the script runs in the `tools` container, built by hand; the full commands and what each flag means are in [deploy-operations → One-off scripts on the VM](deploy-operations.md#one-off-scripts-on-the-vm-the-tools-container).
+
 Create-only per slug, same store as the app, never overwrites a CMS edit. Costs and durations in those places are estimates to confirm; `rating` and `personalNote` stay empty for the owner. Not run against any real store by this change.
 
 ### Seed the static stories into the content store
