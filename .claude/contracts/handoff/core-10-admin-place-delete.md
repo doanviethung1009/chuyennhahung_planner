@@ -1,0 +1,12 @@
+# Handoff — CORE-10 nút Xóa place (admin / super admin)
+- Nhánh: `feat/admin-place-delete` (cắt từ `fix/place-in-use`, PR #179 còn OPEN) · CHƯA commit/push/PR (chờ chủ dự án). Khi #179 merge: `git rebase --onto origin/main fix/place-in-use`.
+- Đã làm: action `content:delete` (admin, super_admin, service; không editor/member) — ADR 0028 song ngữ. `DELETE places/[slug]` chuyển sang `adminContentRoute({ action:'content:delete', session:true })`, vẫn nhận token; 409/503 của CORE-9 giữ nguyên.
+- UI: `delete-place.tsx` (vùng nguy hiểm + `<dialog>` xác nhận + alert lỗi), `canDelete` tính ở server page → `PlaceEditor` → `RecordShell`. `ApiError.details` + `place_in_use` kèm số đếm (chỉ loại >0). Chuỗi VI/EN mới, nhãn ma trận vai trò.
+- Test mới: `place-delete-session.test.ts` (13, đã thêm 4 test theo /sec-check), `dom/delete-place.test.tsx` (5), `place-delete-postgres.integration.test.ts` (4: 204/404/409/503 trên PG). Sửa `admin-content-session.test.ts` (case token-only chuyển sang story DELETE).
+- Docs: ADR 0028 + vi, `features/admin-place-delete.*`, `travel-content-api.*` dòng session, `runbook.*` dòng DELETE places, 2 README đăng ký.
+- Checks: typecheck PASS · lint PASS · test PASS (110 file; chạy kèm TEST_DATABASE_URL ở lượt trước nên suite PostgreSQL chạy thật) · build PASS · PG 14 đã dừng (DB thử xóa-không-cần).
+- NOT RUN: kiểm tay 375/768/1280 (chỉ có test DOM); `/qc-check`. /sec-check: PASS_WITH_WARNINGS, cảnh báo đã xử lý (4 test + ghi chú ADR); chưa có audit log cho xóa.
+- Chưa làm/ghi chú: không có banner "đã xóa" sau khi xóa (chỉ chuyển về danh sách); chưa thêm hàng CORE-10 vào core-completion-index; S-3…S-6, P-1…P-6 của CORE-8 chưa làm.
+- Quan sát: repository planner không kiểm độ dài body review (chỉ schema ở route) → dòng PG đọc lại lỗi nếu body < REVIEW_BODY_MIN; test dùng body đủ dài.
+- Rollback: revert PR; không migration.
+- Next: chủ dự án cho phép commit → push → PR (chờ/ stacked trên #179).

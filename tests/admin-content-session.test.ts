@@ -314,11 +314,11 @@ describe('create story and place (P07-16)', () => {
 describe('routes that stay token-only', () => {
   it('reject a session (even admin) and still accept the token', async () => {
     const admin = await makeUser('admin');
-    // Delete never opted in (create did in P07-16; collections and integrity moved to
+    // Story delete never opted in (place DELETE did in CORE-10, ADR 0028: tests/place-delete-session.test.ts; create did in P07-16; collections and integrity moved to
     // session access in P07-15, but collection DELETE stayed token-only). Template
     // reads/updates moved in P07-6; template POST and DELETE stay token-only.
     const del = (o: Opts) =>
-      r.place.DELETE(req({ method: 'DELETE', path: '/api/admin/travel/places/cms-never', ...o }), slugParams('cms-never'));
+      r.story.DELETE(req({ method: 'DELETE', path: '/api/admin/travel/stories/cms-never', ...o }), slugParams('cms-never'));
     expect([401, 403]).toContain((await del({ cookie: admin.cookie })).status);
     expect((await del({ bearer: ADMIN_TOKEN })).status).toBe(404);
   });

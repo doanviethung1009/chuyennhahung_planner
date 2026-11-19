@@ -1,5 +1,5 @@
 import { adminContentRoute, ifMatchStamp } from '@/server/admin/content-route';
-import { adminRoute, jsonOk, noContent, parseJsonBody } from '@/server/content/http';
+import { jsonOk, noContent, parseJsonBody } from '@/server/content/http';
 import { getRepository } from '@/server/content/instance';
 import { ContentError, placeInUse } from '@/server/content/errors';
 import { getPlannerRepository } from '@/server/planner/instance';
@@ -33,7 +33,8 @@ export function PATCH(request: Request, context: Context) {
  * backstop for a trip that adds the place in between.
  */
 export function DELETE(request: Request, context: Context) {
-  return adminRoute(request, async () => {
+  // ADR 0028: the service token or an admin / super admin session (`content:delete`); editors are refused.
+  return adminContentRoute(request, { action: 'content:delete', session: true }, async () => {
     const { slug } = await context.params;
     const repository = await getRepository();
     const content = await repository.countPlaceReferences(slug); // 404 if unknown
