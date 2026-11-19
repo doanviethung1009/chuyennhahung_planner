@@ -932,7 +932,6 @@
     },
     "create": {
       "fieldSlug": "Slug (tên trong URL)",
-      "slugHint": "Chữ thường nối bằng dấu gạch ngang, tối thiểu 3 ký tự. Không đổi được về sau.",
       "reservedSlug": "Slug này được dành riêng. Hãy chọn slug khác.",
       "slugConflict": "Đã có bản ghi dùng slug này. Không có gì bị ghi đè; hãy chọn slug khác.",
       "slugAutoHint": "Tự điền từ tiêu đề tiếng Việt cho đến khi bạn sửa tay. Chữ thường nối bằng dấu gạch ngang, 3 đến 96 ký tự. Không đổi được về sau.",

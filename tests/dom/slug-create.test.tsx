@@ -96,4 +96,14 @@ describe('ContentCreate slug UX', () => {
     fireEvent.click(screen.getByRole('button', { name: tc.submitPlace }));
     expect(await screen.findByText(tc.slugConflict)).toBeTruthy();
   });
+
+  it('announces when regenerating from a title too short to make a slug', async () => {
+    stubFetch(() => json(404, {}));
+    renderWithIntl(<ContentCreate kind="stories" />);
+    type(slugBox(), 'my-own-slug');
+    fireEvent.click(screen.getByRole('button', { name: tc.slugRegenerate }));
+    expect(slugBox().value).toBe('');
+    expect(screen.getByText(tc.slugRegenerateEmpty)).toBeTruthy();
+    await settle();
+  });
 });
