@@ -31,3 +31,7 @@ Facts from the code: a place has no publish or archive state (`publishStatusSche
 ## Amendment — list route (PLACES-UI-S6, 2026-11-19)
 
 The "no places index" consequence no longer holds: `/places` (`/dia-diem`, `/en/places`) is a second permanent route, a searchable and filterable list. Decisions 7 and 8 of the core-completion index: `GET /api/travel/places` gains an optional, backward-compatible `q` (trimmed, 1–80 characters, plain case- and diacritic-insensitive substring match on name and location, run before paging; no pattern built from input). The list is indexable only unfiltered on page 1; other states are `noindex, follow` with the canonical on `/places`. The public projection is still the allow-list. Details: [places.md](../features/places.md). Numbering unchanged.
+
+## Amendment — public API projection (PLACES-API-PROJ, 2026-11-19)
+
+The allow-list in decision 3 now also binds the public API: `GET /api/travel/places` and `/[slug]` return `PublicPlace` (via `toPublicPlace`), so `affiliateLinks`, `createdAt`, `updatedAt` and `coords` are not served publicly. Before, both routes returned the stored record by default, never by a documented decision; no in-repo client read the removed fields. The change is breaking only for an external client that did. Admin routes are unchanged. `coords` returns to the public shape with the Planner map's own contract. Numbering unchanged.

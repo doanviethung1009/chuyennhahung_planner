@@ -91,6 +91,7 @@ only; a draft is a 404.
 List query: `?destinationSlug=&category=&travelStyle=&limit=50&offset=0`.
 
 `GET /api/travel/places` also takes an optional `q` (PLACES-UI-S6): free text, trimmed, 1–80 characters (longer or blank → 422 `validation_failed`). It matches `name` and `location` (Vietnamese and English) by a plain case- and diacritic-insensitive substring test (`đ` = `d`); the category label is not matched (use `category`). The term is data only — no regex, wildcard or `LIKE` pattern is built from it. Search runs before `limit`/`offset`. Omitting `q` changes nothing; the response shape (`places`, `count`) is unchanged; the other list endpoints ignore `q`. The match is an in-memory scan of the catalogue (6 seed places today); a store-side search is a future change if the catalogue grows past a few thousand places.
+**Public shape (PLACES-API-PROJ).** Both places endpoints return the ADR 0026 allow-list, not the stored record: `slug`, `name`, `destinationSlug`, `location`, `category`, `images`, `description`, `suggestedMinutes`, `estimatedCostVnd`, `rating`, `personalNote`. `affiliateLinks`, `createdAt`, `updatedAt` and `coords` are **no longer returned** (breaking only for a client that read them; `/api/admin/travel/places*` still returns the full record). Envelope (`places`, `count`), `q`, `destinationSlug`, `category`, `limit`/`offset` and the 404 are unchanged.
 Places carry no publish status — a place exists or it does not.
 
 ## Admin endpoints

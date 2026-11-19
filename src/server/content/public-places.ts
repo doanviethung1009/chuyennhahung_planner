@@ -6,7 +6,7 @@ import type { ListQuery, LocalizedText, Place } from './schemas';
 /**
  * Public read of the place catalogue (ADR 0026). A place has no publish state,
  * so every place in the catalogue is public; the projection below is the
- * allow-list of fields a page may show — affiliate links and timestamps stay out.
+ * allow-list of fields a page or the public API may show — affiliate links, timestamps and coordinates stay out.
  */
 export interface PublicPlace {
   slug: string;
@@ -24,7 +24,8 @@ export interface PublicPlace {
 
 const PAGE = 100;
 
-function toPublicPlace(place: Place): PublicPlace {
+/** The one projection shared by the pages and the public API (PLACES-API-PROJ): no `affiliateLinks`, timestamps or `coords`. */
+export function toPublicPlace(place: Place): PublicPlace {
   return {
     slug: place.slug,
     name: place.name,
