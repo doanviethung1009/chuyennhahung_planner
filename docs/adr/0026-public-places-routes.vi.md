@@ -31,3 +31,7 @@ Sự thật từ code: địa điểm không có trạng thái publish hay archi
 ## Bổ sung — route danh sách (PLACES-UI-S6, 2026-11-19)
 
 Hệ quả "không có trang danh sách" không còn đúng: `/places` (`/dia-diem`, `/en/places`) là route cố định thứ hai, danh sách có tìm kiếm và lọc. Quyết định 7 và 8 của core-completion-index: `GET /api/travel/places` thêm `q` tuỳ chọn, tương thích ngược (cắt khoảng trắng, 1–80 ký tự, tìm chuỗi con thuần không phân biệt hoa thường và dấu trên tên và vị trí, chạy trước phân trang; không dựng mẫu từ input). Danh sách chỉ được index khi không lọc ở trang 1; các trạng thái khác là `noindex, follow` với canonical về `/places`. Phép chiếu công khai vẫn là allow-list. Chi tiết: [places.vi.md](../features/places.vi.md). Không đánh lại số.
+
+## Bổ sung — hình dạng API công khai (PLACES-API-PROJ, 2026-11-19)
+
+Allow-list ở quyết định 3 nay cũng ràng buộc API công khai: `GET /api/travel/places` và `/[slug]` trả `PublicPlace` (qua `toPublicPlace`), nên `affiliateLinks`, `createdAt`, `updatedAt` và `coords` không còn được phát công khai. Trước đây hai route trả bản ghi đã lưu theo mặc định, chưa từng là quyết định có tài liệu; không client nào trong repo đọc các trường bị bỏ. Thay đổi chỉ breaking với client bên ngoài từng đọc chúng. Route admin không đổi. `coords` sẽ quay lại hình dạng công khai cùng contract bản đồ Planner. Không đánh lại số.
