@@ -721,6 +721,7 @@ describe('If-Match on content PATCH', () => {
   it('checks the header before the record: a missing If-Match on an unknown slug is 428, not 404', async () => {
     const missing = await patchPlace('no-such-place', { rating: 4 }, { bearer: ADMIN_TOKEN, noMatch: true });
     expect(missing.status).toBe(428);
+    expect((await missing.json()).error.code).toBe('precondition_required');
   });
 
   it('covers story, review and story-places PATCH', async () => {

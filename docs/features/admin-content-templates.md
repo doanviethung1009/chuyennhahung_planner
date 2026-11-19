@@ -13,7 +13,7 @@ Editors maintain itinerary templates in the browser — list, search, sort, edit
 | `/admin/content/templates` | `/quan-tri/noi-dung/lich-trinh-mau` | `/en/admin/content/templates` |
 | `/admin/content/templates/[slug]` | `/quan-tri/noi-dung/lich-trinh-mau/[slug]` | `/en/admin/content/templates/[slug]` |
 
-API routes that moved from token-only to `adminContentRoute(request, { action: 'template:write', session: true })`: `GET /api/admin/travel/templates`, `GET`/`PATCH …/templates/[slug]`, `POST …/templates/[slug]/reorder`, `POST …/templates/[slug]/move-activity`. The service token keeps working. **`POST …/templates` (create) and `DELETE …/templates/[slug]` stay token-only** by owner decision (2026-11-19): creating from a story and permanent deletion are not editor actions. `PATCH`, `reorder` and `move-activity` honour an optional `If-Match: "<updatedAt>"` and answer 412 `version_conflict` on mismatch.
+API routes that moved from token-only to `adminContentRoute(request, { action: 'template:write', session: true })`: `GET /api/admin/travel/templates`, `GET`/`PATCH …/templates/[slug]`, `POST …/templates/[slug]/reorder`, `POST …/templates/[slug]/move-activity`. The service token keeps working. **`POST …/templates` (create) and `DELETE …/templates/[slug]` stay token-only** by owner decision (2026-11-19): creating from a story and permanent deletion are not editor actions. `PATCH`, `reorder` and `move-activity` require `If-Match: "<updatedAt>"` (CORE-11) and answer 428 `precondition_required` without it and 412 `version_conflict` on mismatch.
 
 ## Data
 

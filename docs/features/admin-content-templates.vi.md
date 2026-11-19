@@ -13,7 +13,7 @@ Editor quản lý lịch trình mẫu ngay trên trình duyệt — xem danh sá
 | `/admin/content/templates` | `/quan-tri/noi-dung/lich-trinh-mau` | `/en/admin/content/templates` |
 | `/admin/content/templates/[slug]` | `/quan-tri/noi-dung/lich-trinh-mau/[slug]` | `/en/admin/content/templates/[slug]` |
 
-Các route API chuyển từ chỉ-token sang `adminContentRoute(request, { action: 'template:write', session: true })`: `GET /api/admin/travel/templates`, `GET`/`PATCH …/templates/[slug]`, `POST …/templates/[slug]/reorder`, `POST …/templates/[slug]/move-activity`. Token dịch vụ vẫn dùng được. **`POST …/templates` (tạo) và `DELETE …/templates/[slug]` vẫn chỉ dùng token** theo quyết định của chủ dự án (2026-11-19): tạo từ story và xóa vĩnh viễn không phải hành động của editor. `PATCH`, `reorder` và `move-activity` nhận `If-Match: "<updatedAt>"` tuỳ chọn và trả 412 `version_conflict` khi lệch.
+Các route API chuyển từ chỉ-token sang `adminContentRoute(request, { action: 'template:write', session: true })`: `GET /api/admin/travel/templates`, `GET`/`PATCH …/templates/[slug]`, `POST …/templates/[slug]/reorder`, `POST …/templates/[slug]/move-activity`. Token dịch vụ vẫn dùng được. **`POST …/templates` (tạo) và `DELETE …/templates/[slug]` vẫn chỉ dùng token** theo quyết định của chủ dự án (2026-11-19): tạo từ story và xóa vĩnh viễn không phải hành động của editor. `PATCH`, `reorder` và `move-activity` yêu cầu `If-Match: "<updatedAt>"` (CORE-11; thiếu thì trả 428 `precondition_required`) và trả 412 `version_conflict` khi lệch.
 
 ## Data
 

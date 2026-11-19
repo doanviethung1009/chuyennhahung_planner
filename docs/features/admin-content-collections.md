@@ -4,7 +4,7 @@
 
 ## Summary
 
-Editors manage destination collections in the browser — list, search, sort, edit with vi and en side by side, and publish or unpublish — and read a read-only integrity report that lists broken references in the content store. Admins also see the Planner integrity report. The screens sit on APIs that already existed; the only API changes are an access guard (token-only to browser session) and an optional `If-Match` on the collection `PATCH` (W11, owner decisions 2026-11-18).
+Editors manage destination collections in the browser — list, search, sort, edit with vi and en side by side, and publish or unpublish — and read a read-only integrity report that lists broken references in the content store. Admins also see the Planner integrity report. The screens sit on APIs that already existed; the only API changes are an access guard (token-only to browser session) and a required `If-Match` on the collection `PATCH` (made required by CORE-11) (W11, owner decisions 2026-11-18).
 
 ## Routes
 
@@ -24,14 +24,14 @@ Reads and writes `DestinationCollection` (`title`, `tagline`, `description`, `co
 
 Both pages are server components behind `requireStaff(…, 'content')` (anonymous goes to sign-in, a member gets the admin 404). The integrity page passes `showPlanner = canUsers` (`user:provision`) to the client island, so editors never request the Planner report, and the API refuses them anyway. The list is `ContentList kind="collections"`: it fetches once, then searches (case and diacritic insensitive over slug and both titles) and sorts (recently updated, name, slug) with the pure helpers in `list-utils.ts`; the same search and sort now also serve stories and places. The editor is `RecordShell` with `CollectionEditor`: it saves with `If-Match: "<updatedAt>"`, and a stale save answers 412, shown as "someone else saved first" with a reload button. Status changes use the status endpoint. Findings link to the owning record (`ownerLink`): story, place and collection to their editor, review to the moderation queue; templates and Planner records are plain text. Empty, loading and error states are shown with a retry.
 
-`updateCollection(slug, patch, expectedUpdatedAt?)` in the repository compares the stamp inside the transaction (one repository class serves the JSON and PostgreSQL stores). An absent header stays last-write-wins for API callers.
+`updateCollection(slug, patch, expectedUpdatedAt?)` in the repository compares the stamp inside the transaction (one repository class serves the JSON and PostgreSQL stores). Since CORE-11 the route requires the header (a missing one is `428 precondition_required`), for API callers too.
 
 ## Files
 
 | Path | Role |
 |---|---|
 | `src/app/api/admin/travel/collections/**`, `…/integrity/route.ts`, `src/app/api/admin/planner/integrity/route.ts` | guards moved to session access; collection PATCH passes `ifMatchStamp` |
-| `src/server/content/repository.ts` | `updateCollection` optional `expectedUpdatedAt` |
+| `src/server/content/repository.ts` | `updateCollection` `expectedUpdatedAt` (the route requires `If-Match`) |
 | `src/app/(admin)/[locale]/admin/content/{collections,collections/[slug],integrity}/page.tsx` | pages |
 | `src/components/admin/content/{collection-editor,integrity-report,list-utils,integrity-utils}.ts(x)`, `content-list.tsx`, `record-shell.tsx` | UI and pure helpers |
 | `src/i18n/routing.ts`, `src/lib/admin-gate.ts`, `src/lib/return-to.ts`, `messages/*.json` | routes, sidebar, return-to, strings |
@@ -42,4 +42,4 @@ Both pages are server components behind `requireStaff(…, 'content')` (anonymou
 
 ## Limits and open questions
 
-No create or delete in the browser (the API supports both; ship them with the same confirm pattern as archive when needed). No automatic fixing of findings. Every editor session can now write collections, the same exposure as stories and places; `/sec-check` is recommended. The 30 per minute per-user limit is per process. `If-Match` is optional on the API, so token callers can still overwrite.
+No create or delete in the browser (the API supports both; ship them with the same confirm pattern as archive when needed). No automatic fixing of findings. Every editor session can now write collections, the same exposure as stories and places; `/sec-check` is recommended. The 30 per minute per-user limit is per process. `If-Match` is required on the API (CORE-11), so token callers cannot overwrite blindly.
