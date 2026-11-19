@@ -4,6 +4,8 @@
  * mutation without importing the dashboard itself. Held on `globalThis` so
  * the page and route bundles share one map.
  */
+import { invalidateCatalogueCache } from './public-catalogue-cache';
+
 export const OVERVIEW_CACHE_TTL_MS = 15_000;
 const CACHE_KEY = Symbol.for('chuyennhahung.adminOverviewCache');
 export type OverviewCacheEntry = { at: number; value: Promise<unknown> };
@@ -17,6 +19,8 @@ export function overviewCache(): Map<string, OverviewCacheEntry> {
 /** Forget every cached payload: call after a write that changes a count. */
 export function invalidateOverviewCache(): void {
   overviewCache().clear();
+  // The public place catalogue is cached for the same reason: a write must show at once.
+  invalidateCatalogueCache();
 }
 
 const SAFE = new Set(['GET', 'HEAD', 'OPTIONS']);

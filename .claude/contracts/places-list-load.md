@@ -1,0 +1,21 @@
+# Task Contract: places-list-load — cap the per-request cost of `/places`
+- Class: M (one module, `src/server/content/`; no API, schema or route change; no ADR needed — ADR 0026 stays true)
+- Desired outcome / user impact: an anonymous scan of `/places?q=…&page=…` no longer reads the whole catalogue from the store once per request (a `/sec-check` medium warning on PR #176). Behaviour, JSON shape, noindex/canonical and the `PublicPlace` allow-list are unchanged.
+- Scope IN: `src/server/content/public-places.ts` (read path), a dependency-free cache module `src/server/public-catalogue-cache.ts`, one line in `src/server/overview-cache.ts` (drop the cache after a state-changing request), tests, `docs/features/places.md` + `.vi.md`.
+- Scope OUT: `GET /api/travel/places` response shape (another session), `listPlaces`, the page markup, rate limiting, ISR.
+- Evidence: `readAll` loops `listPlaces` 100 at a time, one `store.read()` per loop (`repository.ts:97,165`); `searchPublicPlaces` calls it on every request with `q`; `cache()` only dedupes within a request. `src/server/rate-limit.ts` is a per-process limiter keyed by a spoofable forwarded header and is used by write endpoints only. `overview-cache.ts` already runs `invalidateOverviewCacheAfter(request)` after every state-changing admin/content/planner request.
+- Options:
+  - (a) one `listPlaces({limit: 1e6})` read instead of the 100-loop: cuts reads from ⌈n/100⌉+1 to 1 but still 1 per request.
+  - (b) cache the projected catalogue in memory, TTL 10 s, filter/search/page in memory. 1 read per TTL window, whatever `q`/`page` is. **Chosen, with (a) as its read.**
+  - (c) ISR: not usable, the page depends on `searchParams`. (d) rate limit: in-process and header-keyed, spoofable (see its own header comment), and the page has no request IP without `headers()`; not worth it for a read that (b) makes O(1).
+- Design: `loadCatalogue()` caches the *promise* of the full projected list (concurrent requests share one read); a rejection is never cached (strict failure semantics kept: sitemap and `searchPublicPlaces` still reject on a store failure). `destinationSlug`/`category`/`q` filtering uses the same fold as `listPlaces` over the same four fields (name vi/en, location vi/en) and the same slug order. Freshness: (1) in-process, any state-changing request drops the cache at once (`invalidateOverviewCache`); (2) otherwise an entry is at most `CATALOGUE_TTL_MS` = 10 s old, which covers writes from another instance. Held on `globalThis` so page and route bundles share it.
+- Interface contract: exports unchanged (`loadPublicPlaces`, `getPublicPlaces`, `searchPublicPlaces`, `getPublicPlace`, `PLACES_PAGE_SIZE`). New: `invalidateCatalogueCache()`.
+- Tasks: Architect (this file) → BE (cache + read) → docs. No FE change.
+- File ownership: single session, single agent.
+- Acceptance: tests — one store read for many searches/pages within the TTL; stale entry refetched after TTL; a write (`invalidateOverviewCacheAfter` with POST) shows the change immediately; a failed read is not cached; search results equal `listPlaces({q})`; `getPublicPlace` unchanged. `typecheck`, `lint`, `test`, `build` pass.
+- Risks: staleness ≤ 10 s across instances (accepted, documented); memory = one projected catalogue (a few KB per 100 places; fine to a few thousand places, same bound as the existing substring scan). No auth, secret or migration change.
+- Rollback: revert the commit; no data touched.
+- Budget: 0 subagents; stop after typecheck/lint/test/build and docs.
+- State: READY (chờ phép commit)
+- Feature document owner: main session — `docs/features/places.md` + `.vi.md` (How it works, Limits). No ADR to add; ADR 0026 does not specify the read path. `docs/architecture.*`: not affected (no new route or store).
+- Recommended, NOT RUN: `/sec-check` (read-path cache), `/qc-check`.

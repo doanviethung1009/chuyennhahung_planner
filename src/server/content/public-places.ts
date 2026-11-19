@@ -1,7 +1,9 @@
 import { cache } from 'react';
 import { getRepository } from './instance';
+import { foldText, foldedIncludes } from '@/lib/fold';
+import { readCatalogueCache } from '@/server/public-catalogue-cache';
 import { isContentError } from './repository';
-import type { ListQuery, LocalizedText, Place } from './schemas';
+import type { LocalizedText, Place } from './schemas';
 
 /**
  * Public read of the place catalogue (ADR 0026). A place has no publish state,
@@ -22,8 +24,6 @@ export interface PublicPlace {
   personalNote: LocalizedText | null;
 }
 
-const PAGE = 100;
-
 function toPublicPlace(place: Place): PublicPlace {
   return {
     slug: place.slug,
@@ -40,21 +40,39 @@ function toPublicPlace(place: Place): PublicPlace {
   };
 }
 
+/**
+ * The whole catalogue, projected, read once per cache window (places-list-load).
+ * One store read serves every search, filter and page until the entry is 10 s
+ * old or a write drops it (`invalidateCatalogueCache`). Ordered by slug, as
+ * `listPlaces` returns it.
+ */
+function loadCatalogue(): Promise<PublicPlace[]> {
+  return readCatalogueCache(async () => {
+    const repository = await getRepository();
+    // `limit` is only validated at the HTTP edge; this is one read, not a 100-item loop.
+    const all = await repository.listPlaces({ limit: Number.MAX_SAFE_INTEGER, offset: 0 });
+    return all.map(toPublicPlace);
+  });
+}
+
+/** Same rule as `listPlaces`: folded substring over name and location, vi and en. */
+function matches(place: PublicPlace, filter: Pick<PlaceSearch, 'q' | 'destinationSlug' | 'category'>, needle: string): boolean {
+  if (filter.destinationSlug && place.destinationSlug !== filter.destinationSlug) return false;
+  if (filter.category && place.category !== filter.category) return false;
+  if (!needle) return true;
+  return foldedIncludes([place.name.vi, place.name.en, place.location.vi, place.location.en], needle);
+}
+
+async function readAll(filter: Pick<PlaceSearch, 'q' | 'destinationSlug' | 'category'>): Promise<PublicPlace[]> {
+  const needle = filter.q ? foldText(filter.q.trim()) : '';
+  const catalogue = await loadCatalogue();
+  return catalogue.filter((place) => matches(place, filter, needle));
+}
+
 /** Strict read: a store failure rejects. The sitemap uses it so an outage is not read by crawlers as "all places removed". */
 export const loadPublicPlaces = cache(async (destinationSlug?: string): Promise<PublicPlace[]> => {
   return readAll({ ...(destinationSlug ? { destinationSlug } : {}) });
 });
-
-async function readAll(filter: Partial<Pick<ListQuery, 'destinationSlug' | 'category' | 'q'>>): Promise<PublicPlace[]> {
-  const repository = await getRepository();
-  const all: Place[] = [];
-  for (let offset = 0; ; offset += PAGE) {
-    const page = await repository.listPlaces({ ...filter, limit: PAGE, offset });
-    all.push(...page);
-    if (page.length < PAGE) break;
-  }
-  return all.map(toPublicPlace);
-}
 
 export const PLACES_PAGE_SIZE = 24;
 
