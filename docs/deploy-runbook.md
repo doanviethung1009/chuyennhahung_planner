@@ -26,7 +26,9 @@ An update goes: merge into `main` → CI green → GitHub builds the image and p
 to GHCR → the runner on the VM runs `deploy/deploy.sh` → `app` is restarted on the new
 tag and must report healthy within 180 s, otherwise the previous tag comes back.
 **The runner only recreates `app`.** nginx and PostgreSQL must already be running, so
-you start them by hand once (Phase 4).
+you start them by hand once (Phase 4). After a healthy release it also syncs
+`deploy/nginx/` into the checkout nginx mounts and reloads nginx (see
+[nginx config sync](#nginx-config-sync)).
 
 ## Choose a layout
 
@@ -50,7 +52,7 @@ updates each part, and what happens to the database during a release.
 
 | Part | Created by | Updated by | Where its state lives |
 |---|---|---|---|
-| `nginx` container | you, Phase 4 | you, by hand, when `deploy/nginx/` changes | none; logs in `logs/nginx` |
+| `nginx` container | you, Phase 4 | the runner, config only (`deploy.sh` copies, tests with `nginx -t`, reloads); you, for the image | none; logs in `logs/nginx` |
 | `postgres` container | you, Phase 4 (the init script runs once) | you, by hand, for an image upgrade | `data/postgres` on the host |
 | `app` container | the runner, at the first deploy | the runner, at every release | the database, and `data/app` when content is a JSON file |
 | Database tables (schema) | the app, when it starts | the app, when it starts (migrations) | inside PostgreSQL |
@@ -58,7 +60,7 @@ updates each part, and what happens to the database during a release.
 | The runner | you, Phase 5 | itself | none |
 
 A release changes only the `app` container (and, through it, the tables). nginx and
-PostgreSQL keep running.
+PostgreSQL keep running; a changed `deploy/nginx/` is reloaded into nginx without recreating it.
 
 ### Flow 1 — One-time setup
 
@@ -85,7 +87,7 @@ flowchart TD
   WAIT -->|no| BACK["print the app log, restart the previous tag, run goes red"]
 ```
 
-Only one deploy runs at a time; a newer one waits. `nginx` and `postgres` are not touched.
+Only one deploy runs at a time; a newer one waits. `postgres` is not touched, and `nginx` is only reloaded when its config changed.
 `/api/health` only says the process is serving: it deliberately touches no database, so a
 green deploy does **not** prove that migrations or Planner queries work. Run the
 [smoke test](#smoke-test-after-a-deploy) after a release that adds migrations.
@@ -131,7 +133,8 @@ Take a backup (`backup.sh`) **before** any release that adds a file to `db/migra
 |---|---|
 | A runtime value in `/opt/chuyennhahung/.env` (a token, a password, Google keys) | Edit the file, then **Run workflow** with `tag` = the content of `.deployed-tag`: the same image, recreated with the new values (`docker restart` would keep the old environment) |
 | The site address (`NEXT_PUBLIC_SITE_URL`, `DEV_SITE_URL`) | It is baked into the image: set both, then **Run workflow** with `tag` **empty** so a new image is built |
-| `deploy/nginx/` or the `postgres` service | Not applied by a deploy; recreate that service by hand ([Updating](#updating-redeploying-and-rolling-back)) |
+| `deploy/nginx/` | Applied by the deploy ([nginx config sync](#nginx-config-sync)); the `nginx` image itself is still yours |
+| The `postgres` service | Not applied by a deploy; recreate that service by hand ([Updating](#updating-redeploying-and-rolling-back)) |
 | A database password | Change it in PostgreSQL and in `.env`, then redeploy `app` ([deploy-operations](deploy-operations.md#rotating-secrets)) |
 
 ## Phase 0 — Prepare
@@ -599,13 +602,35 @@ Then check by hand in a browser:
 | Release | Merge a pull request into `main`; watch **Actions → Deploy dev** |
 | Redeploy or roll back by hand | **Run workflow** on `main` with `tag` = `sha-<commit>` (no build) |
 | Pause deploys | `systemctl stop <unit>`; jobs wait in the queue |
-| Change `deploy/nginx/` or the postgres service | Not applied by a deploy: run the Phase 4 command with `up -d nginx` (or `restart nginx`) yourself |
+| Change `deploy/nginx/` | Applied by the next deploy (config tested, then reloaded). Not applied: run once the one-time step in [nginx config sync](#nginx-config-sync) |
+| Change the postgres service | Not applied by a deploy: run the Phase 4 command with `up -d postgres` yourself |
 | Change `.env` | Edit it, then run **Deploy dev** again so `app` restarts with it |
 
 The run succeeds only if `app` reports healthy on the target image within 180 s;
 otherwise the previous tag is restored and the run fails. A rollback does **not** undo
 database migrations. Do not mix `up -d --build` by hand with the runner for one
 release: the runner expects the GHCR image.
+
+## nginx config sync
+
+After the app is healthy, `deploy.sh` copies `deploy/nginx/default.conf` and
+`maintenance.html` of the deployed commit over the files the running nginx container has
+mounted (`/opt/chuyennhahung/src/deploy/nginx`, override with `NGINX_CONF_DIR`), runs
+`nginx -t` inside that container and reloads it. Only changed files are touched, and nginx
+is never recreated, so there is no downtime. If nginx rejects the new config the previous
+files are restored and the job fails (the app stays deployed). Redeploying an older `tag`
+brings that commit's nginx config back too.
+
+**One-time step.** The runner cannot write to a checkout owned by root; without this the
+sync is skipped with a warning and the deploy still succeeds:
+
+```bash
+chown cnh-runner /opt/chuyennhahung/src/deploy/nginx/default.conf /opt/chuyennhahung/src/deploy/nginx/maintenance.html
+```
+
+The files are rewritten in place (same inode) because a single-file bind mount does not
+follow a replaced file; do not `git pull` over them with a tool that renames. The `nginx`
+image tag and `deploy/compose.yml` changes (ports, mounts) still need `up -d nginx` by hand.
 
 ## Troubleshooting
 

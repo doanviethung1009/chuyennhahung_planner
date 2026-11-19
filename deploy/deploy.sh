@@ -217,6 +217,58 @@ release() {
   done
 }
 
+# Copy deploy/nginx/* of the deployed commit over the files the running nginx
+# container has bind-mounted (the checkout at NGINX_CONF_DIR, not this runner
+# workspace), validate with `nginx -t` inside that container, then reload it.
+# A bad config is restored and nothing is reloaded. Files are rewritten IN PLACE
+# (same inode): a single-file bind mount keeps pointing at the old inode after
+# `mv`/`git pull`, so the container would never see the change.
+# Returns 0 when nothing needed doing or the sync was skipped with a warning
+# (missing/unwritable target: the app deploy still counts), 1 when nginx
+# rejected the new config.
+sync_nginx() {
+  local dest="${NGINX_CONF_DIR:-$STACK_DIR/src/deploy/nginx}" name cid bak
+  local changed=()
+  [[ -d "$dest" ]] || { echo "nginx sync skipped: $dest not found" >&2; return 0; }
+  [[ "$dest" -ef "$HERE/nginx" ]] && return 0
+  for name in default.conf maintenance.html; do
+    [[ -f "$HERE/nginx/$name" ]] || continue
+    cmp -s "$HERE/nginx/$name" "$dest/$name" 2>/dev/null && continue
+    [[ -w "$dest/$name" ]] || {
+      echo "nginx sync skipped: $dest/$name is not writable by $(id -un) (one-time fix: docs/deploy-runbook.md)" >&2
+      return 0
+    }
+    changed+=("$name")
+  done
+  ((${#changed[@]})) || return 0
+  cid="$(compose ps -q nginx 2>/dev/null)" || cid=""
+  [[ -n "$cid" ]] || { echo "nginx sync skipped: nginx container is not running" >&2; return 0; }
+
+  bak="$(mktemp -d)"
+  for name in "${changed[@]}"; do
+    cat "$dest/$name" >"$bak/$name" && cat "$HERE/nginx/$name" >"$dest/$name" \
+      || { echo "nginx sync failed writing $name" >&2; restore_nginx "$bak" "$dest"; rm -rf "$bak"; return 1; }
+  done
+  if docker exec "$cid" nginx -t >/dev/null 2>&1 && docker exec "$cid" nginx -s reload >/dev/null 2>&1; then
+    echo "nginx config synced and reloaded (${changed[*]})"
+    rm -rf "$bak"
+    return 0
+  fi
+  echo "nginx rejected the new config (${changed[*]}); restoring the previous files" >&2
+  restore_nginx "$bak" "$dest"
+  docker exec "$cid" nginx -s reload >/dev/null 2>&1 || true
+  rm -rf "$bak"
+  return 1
+}
+
+restore_nginx() {
+  local f
+  for f in "$1"/*; do
+    [[ -e "$f" ]] && cat "$f" >"$2/$(basename "$f")"
+  done
+  return 0
+}
+
 PREVIOUS=""
 [[ -f "$STATE" ]] && PREVIOUS="$(<"$STATE")"
 [[ -z "$PREVIOUS" || "$PREVIOUS" =~ ^[A-Za-z0-9_.-]+$ ]] || { echo "ignoring malformed $STATE" >&2; PREVIOUS=""; }
@@ -234,6 +286,9 @@ if release "$TAG"; then
   printf '%s\n' "$TAG" >"$STATE"
   docker image prune -f >/dev/null
   echo "deployed $TAG"
+  # The app is already live and recorded: an nginx problem fails the job
+  # (so it is seen) but never triggers a rollback of the app.
+  sync_nginx || { echo "app $TAG is deployed, but the nginx sync failed" >&2; exit 1; }
   exit 0
 fi
 

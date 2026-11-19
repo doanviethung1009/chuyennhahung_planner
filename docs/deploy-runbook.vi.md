@@ -24,7 +24,9 @@ Mọi thứ chạy trong Docker trên **một VM**, trừ runner và các công 
 Một lần cập nhật diễn ra: merge vào `main` → CI xanh → GitHub build image và đẩy lên GHCR →
 runner trên VM chạy `deploy/deploy.sh` → `app` khởi động lại với tag mới và phải báo healthy
 trong 180 giây, nếu không thì tag trước được khôi phục. **Runner chỉ tạo lại `app`.** nginx và
-PostgreSQL phải chạy sẵn, nên bạn dựng chúng bằng tay một lần (Phase 4).
+PostgreSQL phải chạy sẵn, nên bạn dựng chúng bằng tay một lần (Phase 4). Sau một bản phát
+hành healthy, runner còn đồng bộ `deploy/nginx/` vào checkout mà nginx mount rồi reload nginx
+(xem [đồng bộ cấu hình nginx](#đồng-bộ-cấu-hình-nginx)).
 
 ## Chọn layout
 
@@ -48,14 +50,14 @@ gì xảy ra với database trong một bản phát hành.
 
 | Thành phần | Do ai tạo | Do ai cập nhật | Trạng thái nằm ở đâu |
 |---|---|---|---|
-| Container `nginx` | bạn, Phase 4 | bạn, bằng tay, khi `deploy/nginx/` đổi | không có; log ở `logs/nginx` |
+| Container `nginx` | bạn, Phase 4 | runner, chỉ phần cấu hình (`deploy.sh` copy, kiểm tra bằng `nginx -t`, reload); bạn, với image | không có; log ở `logs/nginx` |
 | Container `postgres` | bạn, Phase 4 (script init chạy một lần) | bạn, bằng tay, khi nâng cấp image | `data/postgres` trên host |
 | Container `app` | runner, ở lần deploy đầu | runner, ở mỗi bản phát hành | database, và `data/app` khi content là file JSON |
 | Các bảng trong database (schema) | app, khi nó khởi động | app, khi nó khởi động (migration) | bên trong PostgreSQL |
 | `/opt/chuyennhahung/.env` | bạn | bạn, rồi deploy lại `app` | chính file đó |
 | Runner | bạn, Phase 5 | tự cập nhật | không có |
 
-Một bản phát hành chỉ đổi container `app` (và, qua nó, các bảng). nginx và PostgreSQL vẫn chạy.
+Một bản phát hành chỉ đổi container `app` (và, qua nó, các bảng). nginx và PostgreSQL vẫn chạy; `deploy/nginx/` đổi thì được reload vào nginx mà không tạo lại container.
 
 ### Luồng 1 — Thiết lập một lần
 
@@ -81,7 +83,7 @@ flowchart TD
   WAIT -->|không| BACK["in log của app, khởi động lại tag trước, lần chạy đỏ"]
 ```
 
-Mỗi lúc chỉ một lần deploy chạy; lần mới hơn chờ. `nginx` và `postgres` không bị đụng tới.
+Mỗi lúc chỉ một lần deploy chạy; lần mới hơn chờ. `postgres` không bị đụng tới, `nginx` chỉ được reload khi cấu hình của nó đổi.
 `/api/health` chỉ nói rằng tiến trình đang phục vụ: nó cố ý không chạm vào database, nên một lần
 deploy xanh **không** chứng minh được migration hay truy vấn Planner chạy tốt. Hãy chạy
 [smoke test](#smoke-test-sau-mỗi-lần-deploy) sau bản phát hành có thêm migration.
@@ -126,7 +128,8 @@ Hãy sao lưu (`backup.sh`) **trước** mọi bản phát hành thêm file vào
 |---|---|
 | Một giá trị runtime trong `/opt/chuyennhahung/.env` (token, mật khẩu, khoá Google) | Sửa file, rồi **Run workflow** với `tag` = nội dung của `.deployed-tag`: cùng image, được tạo lại với giá trị mới (`docker restart` sẽ giữ môi trường cũ) |
 | Địa chỉ site (`NEXT_PUBLIC_SITE_URL`, `DEV_SITE_URL`) | Nó được nướng vào image: đặt cả hai, rồi **Run workflow** với `tag` **để trống** để build image mới |
-| `deploy/nginx/` hoặc service `postgres` | Deploy không áp dụng; tạo lại service đó bằng tay ([Cập nhật](#cập-nhật-deploy-lại-và-rollback)) |
+| `deploy/nginx/` | Deploy áp dụng ([đồng bộ cấu hình nginx](#đồng-bộ-cấu-hình-nginx)); image `nginx` thì vẫn do bạn |
+| Service `postgres` | Deploy không áp dụng; tạo lại service đó bằng tay ([Cập nhật](#cập-nhật-deploy-lại-và-rollback)) |
 | Mật khẩu database | Đổi trong PostgreSQL và trong `.env`, rồi deploy lại `app` ([deploy-operations](deploy-operations.vi.md#xoay-vòng-secret)) |
 
 ## Phase 0 — Chuẩn bị
@@ -585,12 +588,33 @@ Rồi kiểm tra bằng tay trên trình duyệt:
 | Phát hành | Merge một pull request vào `main`; xem **Actions → Deploy dev** |
 | Deploy lại hoặc rollback bằng tay | **Run workflow** trên `main` với `tag` = `sha-<commit>` (không build) |
 | Tạm dừng deploy | `systemctl stop <unit>`; các job chờ trong hàng đợi |
-| Đổi `deploy/nginx/` hoặc service postgres | Deploy không áp dụng: tự chạy lệnh ở Phase 4 với `up -d nginx` (hoặc `restart nginx`) |
+| Đổi `deploy/nginx/` | Deploy kế tiếp áp dụng (kiểm tra cấu hình rồi reload). Chưa áp dụng: làm bước một lần trong [đồng bộ cấu hình nginx](#đồng-bộ-cấu-hình-nginx) |
+| Đổi service postgres | Deploy không áp dụng: tự chạy lệnh ở Phase 4 với `up -d postgres` |
 | Đổi `.env` | Sửa file, rồi chạy **Deploy dev** lại để `app` khởi động lại với nó |
 
 Lần chạy chỉ thành công nếu `app` báo healthy trên image đích trong 180 giây; nếu không, tag
 trước được khôi phục và lần chạy thất bại. Rollback **không** hoàn tác migration. Đừng trộn
 `up -d --build` bằng tay với runner cho cùng một bản phát hành: runner cần image GHCR.
+
+## Đồng bộ cấu hình nginx
+
+Sau khi app healthy, `deploy.sh` copy `deploy/nginx/default.conf` và `maintenance.html` của
+commit đang deploy đè lên các file mà container nginx đang chạy đã mount
+(`/opt/chuyennhahung/src/deploy/nginx`, đổi bằng `NGINX_CONF_DIR`), chạy `nginx -t` trong
+container đó rồi reload. Chỉ file nào đổi mới bị ghi, và nginx không bị tạo lại nên không
+có downtime. Nếu nginx từ chối cấu hình mới thì các file cũ được khôi phục và job báo lỗi
+(app vẫn ở bản mới). Deploy lại một `tag` cũ cũng đưa cấu hình nginx của commit đó trở lại.
+
+**Bước làm một lần.** Runner không ghi được vào checkout do root sở hữu; nếu thiếu bước này
+thì phần đồng bộ bị bỏ qua kèm cảnh báo, còn deploy vẫn thành công:
+
+```bash
+chown cnh-runner /opt/chuyennhahung/src/deploy/nginx/default.conf /opt/chuyennhahung/src/deploy/nginx/maintenance.html
+```
+
+Các file được ghi đè tại chỗ (cùng inode) vì bind mount một file không theo file bị thay
+thế; đừng `git pull` đè lên chúng bằng công cụ đổi tên file. Tag image `nginx` và thay đổi
+trong `deploy/compose.yml` (port, mount) vẫn cần `up -d nginx` bằng tay.
 
 ## Xử lý sự cố
 
