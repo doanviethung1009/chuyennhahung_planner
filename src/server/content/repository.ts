@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { destinations } from '@/content/destinations';
+import { foldText, foldedIncludes } from '@/lib/fold';
 import { itineraries } from '@/content/itineraries';
 import {
   type ContentError,
@@ -168,6 +169,15 @@ export class TravelContentRepository {
     }
     if (query.category) {
       places = places.filter((p) => p.category === query.category);
+    }
+    if (query.q) {
+      // Plain folded substring test over name and location (vi, en); the term is data, never a pattern.
+      const needle = foldText(query.q.trim());
+      if (needle) {
+        places = places.filter((p) =>
+          foldedIncludes([p.name.vi, p.name.en, p.location.vi, p.location.en], needle),
+        );
+      }
     }
     places.sort((a, b) => a.slug.localeCompare(b.slug));
     return paginate(places, query);

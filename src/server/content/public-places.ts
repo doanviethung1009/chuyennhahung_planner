@@ -1,7 +1,7 @@
 import { cache } from 'react';
 import { getRepository } from './instance';
 import { isContentError } from './repository';
-import type { LocalizedText, Place } from './schemas';
+import type { ListQuery, LocalizedText, Place } from './schemas';
 
 /**
  * Public read of the place catalogue (ADR 0026). A place has no publish state,
@@ -42,15 +42,56 @@ function toPublicPlace(place: Place): PublicPlace {
 
 /** Strict read: a store failure rejects. The sitemap uses it so an outage is not read by crawlers as "all places removed". */
 export const loadPublicPlaces = cache(async (destinationSlug?: string): Promise<PublicPlace[]> => {
+  return readAll({ ...(destinationSlug ? { destinationSlug } : {}) });
+});
+
+async function readAll(filter: Partial<Pick<ListQuery, 'destinationSlug' | 'category' | 'q'>>): Promise<PublicPlace[]> {
   const repository = await getRepository();
   const all: Place[] = [];
   for (let offset = 0; ; offset += PAGE) {
-    const page = await repository.listPlaces({ ...(destinationSlug ? { destinationSlug } : {}), limit: PAGE, offset });
+    const page = await repository.listPlaces({ ...filter, limit: PAGE, offset });
     all.push(...page);
     if (page.length < PAGE) break;
   }
   return all.map(toPublicPlace);
-});
+}
+
+export const PLACES_PAGE_SIZE = 24;
+
+export interface PlaceSearch {
+  /** Free text, 1–80 characters after trimming; anything else is ignored by the caller's validation. */
+  q?: string;
+  destinationSlug?: string;
+  category?: Place['category'];
+  /** 1-based. */
+  page: number;
+}
+
+export interface PlaceSearchResult {
+  places: PublicPlace[];
+  /** Matches before paging. */
+  total: number;
+  page: number;
+  pageCount: number;
+}
+
+/**
+ * Search and filter, then page (ADR 0026, PLACES-UI-S6). The search runs over the
+ * whole catalogue before paging, so `total` and the page window are exact. The
+ * match is an in-memory substring scan; a store failure rejects so the page errors
+ * instead of showing an empty list as if nothing matched.
+ */
+export async function searchPublicPlaces(search: PlaceSearch): Promise<PlaceSearchResult> {
+  const matches = await readAll({
+    ...(search.q ? { q: search.q } : {}),
+    ...(search.destinationSlug ? { destinationSlug: search.destinationSlug } : {}),
+    ...(search.category ? { category: search.category } : {}),
+  });
+  const pageCount = Math.max(1, Math.ceil(matches.length / PLACES_PAGE_SIZE));
+  const page = Math.min(Math.max(1, Math.trunc(search.page) || 1), pageCount);
+  const start = (page - 1) * PLACES_PAGE_SIZE;
+  return { places: matches.slice(start, start + PLACES_PAGE_SIZE), total: matches.length, page, pageCount };
+}
 
 /**
  * Places of one destination (or all). A store failure yields an empty list so

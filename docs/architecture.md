@@ -70,6 +70,7 @@ folders. The visible URL per locale is defined once, in
 | `/stories/[slug]` | `/chuyen-di-choi/[slug]` | `/en/stories/[slug]` |
 | `/destinations` | `/kham-pha` | `/en/destinations` |
 | `/destinations/[slug]` | `/kham-pha/[slug]` | `/en/destinations/[slug]` |
+| `/places` | `/dia-diem` | `/en/places` |
 | `/places/[slug]` | `/dia-diem/[slug]` | `/en/places/[slug]` |
 | `/map` | `/ban-do` | `/en/map` |
 | `/itineraries` | `/len-lich-trinh` | `/en/itineraries` |

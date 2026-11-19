@@ -188,6 +188,7 @@ export function parseListQuery(request: Request): z.infer<typeof listQuerySchema
     'category',
     'travelStyle',
     'visibility',
+    'q',
     'limit',
     'offset',
   ]) {
