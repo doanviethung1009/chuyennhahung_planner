@@ -6,6 +6,8 @@
  * of truth; `tests/slug.test.ts` checks both agree.
  */
 
+import { foldText } from './fold';
+
 export const SLUG_MIN = 3;
 export const SLUG_MAX = 96;
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -21,12 +23,7 @@ export function isValidSlug(value: string): boolean {
  * no slug is invented.
  */
 export function slugify(text: string): string {
-  const joined = text
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'd')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
+  const joined = foldText(text)
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
   let slug = joined;

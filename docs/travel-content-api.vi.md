@@ -88,6 +88,8 @@ bản nháp là 404.
 | `GET` | `/api/travel/templates` · `/api/travel/templates/[slug]` |
 
 Query khi lấy danh sách: `?destinationSlug=&category=&travelStyle=&limit=50&offset=0`.
+
+`GET /api/travel/places` còn nhận `q` tuỳ chọn (PLACES-UI-S6): chữ tự do, đã cắt khoảng trắng, 1–80 ký tự (dài hơn hoặc rỗng → 422 `validation_failed`). `q` so khớp `name` và `location` (tiếng Việt và tiếng Anh) bằng phép tìm chuỗi con thuần, không phân biệt hoa thường và dấu (`đ` = `d`); nhãn danh mục không được so khớp (dùng `category`). Giá trị chỉ là dữ liệu — không dựng regex, wildcard hay mẫu `LIKE` từ nó. Tìm kiếm chạy trước `limit`/`offset`. Bỏ `q` thì không đổi gì; hình dạng phản hồi (`places`, `count`) giữ nguyên; các endpoint danh sách khác bỏ qua `q`. Việc khớp là quét trong bộ nhớ toàn catalogue (hiện 6 địa điểm seed); tìm phía store là thay đổi sau nếu catalogue vượt vài nghìn địa điểm.
 Place không có trạng thái xuất bản — một place thì tồn tại hoặc không.
 
 ## Endpoint quản trị
