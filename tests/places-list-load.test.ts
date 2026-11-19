@@ -41,6 +41,17 @@ describe('public catalogue cache', () => {
     expect(reads).toHaveBeenCalledWith(expect.objectContaining({ offset: 0 }));
   });
 
+  it('shares one in-flight read between cold concurrent requests', async () => {
+    const { searchPublicPlaces } = await api();
+    const results = await Promise.all([
+      searchPublicPlaces({ page: 1 }),
+      searchPublicPlaces({ q: 'chợ', page: 1 }),
+      searchPublicPlaces({ category: 'market', page: 1 }),
+    ]);
+    expect(results.map((r) => r.total)).toEqual([2, 1, 1]);
+    expect(reads).toHaveBeenCalledTimes(1);
+  });
+
   it('gives the same results as the store-side search', async () => {
     const { searchPublicPlaces } = await api();
     for (const q of ['da lat', 'Đà Lạt', 'MARKET', 'zzz']) {
@@ -62,6 +73,16 @@ describe('public catalogue cache', () => {
     await repo.deletePlace('a');
     vi.setSystemTime(Date.now() + 2);
     expect((await searchPublicPlaces({ page: 1 })).total).toBe(1);
+    expect(reads).toHaveBeenCalledTimes(2);
+  });
+
+  it('treats an entry exactly TTL old as expired', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-03-01T00:00:00Z'));
+    const { searchPublicPlaces } = await api();
+    await searchPublicPlaces({ page: 1 });
+    vi.setSystemTime(Date.now() + CATALOGUE_TTL_MS);
+    await searchPublicPlaces({ page: 1 });
     expect(reads).toHaveBeenCalledTimes(2);
   });
 
