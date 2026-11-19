@@ -932,7 +932,6 @@
     },
     "create": {
       "fieldSlug": "Slug (URL name)",
-      "slugHint": "Lowercase words joined by hyphens, at least 3 characters. It cannot be changed later.",
       "reservedSlug": "This slug is reserved. Choose another one.",
       "slugConflict": "A record with this slug already exists. Nothing was overwritten; choose another slug.",
       "slugAutoHint": "Filled in from the Vietnamese title until you edit it by hand. Lowercase words joined by hyphens, 3 to 96 characters. It cannot be changed later.",

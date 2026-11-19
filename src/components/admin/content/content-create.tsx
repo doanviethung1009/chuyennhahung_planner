@@ -100,8 +100,10 @@ export function ContentCreate({ kind }: { kind: 'stories' | 'places' }) {
 
   const regenerateSlug = () => {
     setSlugEdited(false);
-    setDraft((current) => setAt(current, 'slug', slugify(viTitle(current))));
-    setNotice(null);
+    const next = slugify(viTitle(draft));
+    setDraft((current) => setAt(current, 'slug', next));
+    // A title too short to make a slug clears the box: say so instead of failing silently.
+    setNotice(next === '' ? { kind: 'error', text: tc('slugRegenerateEmpty') } : null);
   };
 
   async function submit(event: FormEvent<HTMLFormElement>) {

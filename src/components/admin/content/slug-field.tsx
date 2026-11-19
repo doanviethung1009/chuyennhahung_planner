@@ -96,7 +96,7 @@ export function SlugField({
           aria-invalid={bad || undefined}
           aria-describedby={`${id}-hint ${id}-status${valid ? ` ${id}-preview` : ''}${bad ? ` ${id}-err` : ''}`}
           onChange={(event) => onChange(event.target.value)}
-          className={`${inputClass} min-w-0 flex-1 ${bad ? 'border-primary' : ''}`}
+          className={`${inputClass} w-full min-w-0 sm:w-auto sm:flex-1 ${bad ? 'border-primary' : ''}`}
         />
         <button
           type="button"
