@@ -1,6 +1,9 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   MAP_HEIGHT,
+  MAP_TARGET_PX,
   MAP_WIDTH,
   VIETNAM_OUTLINE_PATH,
   pinRadius,
@@ -52,5 +55,20 @@ describe('travel map', () => {
   it('caps pin growth so a frequent destination cannot dominate', () => {
     expect(pinRadius(1)).toBeLessThan(pinRadius(4));
     expect(pinRadius(100)).toBeLessThanOrEqual(11);
+  });
+});
+
+describe('map pin touch targets', () => {
+  it('declares a 44px minimum target', () => {
+    expect(MAP_TARGET_PX).toBeGreaterThanOrEqual(44);
+  });
+
+  it('sizes the pin anchor itself to the target, not a child span', () => {
+    const src = readFileSync(
+      resolve(__dirname, '../src/components/map/vietnam-map.tsx'),
+      'utf8',
+    );
+    expect(src).toMatch(/className="group absolute flex size-11 /);
+    expect(src).not.toContain('href="#"');
   });
 });

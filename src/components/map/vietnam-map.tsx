@@ -63,6 +63,8 @@ export function VietnamMap({
               destination.coords.lng,
             );
             const r = pinRadius(destination.visits);
+            // Pins in the right half put the label on their left so it never leaves the frame.
+            const flipLabel = x > MAP_WIDTH / 2;
 
             return (
               <li
@@ -78,13 +80,9 @@ export function VietnamMap({
                     pathname: '/destinations/[slug]',
                     params: { slug: destination.slug },
                   }}
-                  className="group absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-2"
+                  className="group absolute flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
                 >
-                  {/* 44px hit area around a small visual dot. */}
-                  <span
-                    aria-hidden="true"
-                    className="absolute top-1/2 left-1/2 size-11 -translate-x-1/2 -translate-y-1/2 rounded-pill"
-                  />
+                  {/* The anchor box itself is the 44px target; the dot is centred on the projected point. */}
                   <span
                     aria-hidden="true"
                     className={`relative block rounded-pill border-2 shadow-soft transition-transform duration-200 ease-gentle group-hover:scale-125 group-focus-visible:scale-125 ${
@@ -97,7 +95,7 @@ export function VietnamMap({
                   <span
                     className={
                       showLabels
-                        ? 'relative whitespace-nowrap rounded-pill bg-cream-50/90 px-2 py-0.5 text-xs font-semibold text-ink-800 shadow-soft'
+                        ? `absolute top-1/2 -translate-y-1/2 whitespace-nowrap ${flipLabel ? 'right-full' : 'left-full'} rounded-pill bg-cream-50/90 px-2 py-0.5 text-xs font-semibold text-ink-800 shadow-soft`
                         : 'sr-only'
                     }
                   >
