@@ -1,9 +1,18 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it, vi } from 'vitest';
+
+// The localized Link needs a Next request; a plain anchor stand-in keeps the markup.
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({ href, className, style, children }: { href: { params: { slug: string } }; className?: string; style?: React.CSSProperties; children: React.ReactNode }) =>
+    createElement('a', { href: `/destinations/${href.params.slug}`, className, style }, children),
+}));
+
+const { VietnamMap } = await import('../src/components/map/vietnam-map');
 import {
   MAP_HEIGHT,
   MAP_TARGET_PX,
+  labelSide,
   MAP_WIDTH,
   VIETNAM_OUTLINE_PATH,
   pinRadius,
@@ -63,12 +72,40 @@ describe('map pin touch targets', () => {
     expect(MAP_TARGET_PX).toBeGreaterThanOrEqual(44);
   });
 
-  it('sizes the pin anchor itself to the target, not a child span', () => {
-    const src = readFileSync(
-      resolve(__dirname, '../src/components/map/vietnam-map.tsx'),
-      'utf8',
+  it('flips the label left only for pins in the right half', () => {
+    expect(labelSide(MAP_WIDTH / 2)).toBe('right');
+    expect(labelSide(MAP_WIDTH / 2 + 0.1)).toBe('left');
+    expect(labelSide(0)).toBe('right');
+  });
+
+  for (const variant of ['full', 'preview'] as const) {
+    it(`renders every ${variant} pin as a real anchor sized to the target`, () => {
+      const html = renderToStaticMarkup(
+        createElement(VietnamMap, { destinations, locale: 'vi', mapLabel: 'Bản đồ', variant }),
+      );
+      const anchors = [...html.matchAll(/<a [^>]*>/g)].map((m) => m[0]);
+
+      expect(anchors).toHaveLength(destinations.length);
+      for (const a of anchors) {
+        expect(a).toContain(`width:${MAP_TARGET_PX}px`);
+        expect(a).toContain(`height:${MAP_TARGET_PX}px`);
+        expect(a).not.toContain('href="#"');
+      }
+      expect(html).not.toContain('href="#"');
+    });
+  }
+
+  it('puts each label beside the 44px box and on the side labelSide picks', () => {
+    const html = renderToStaticMarkup(
+      createElement(VietnamMap, { destinations, locale: 'vi', mapLabel: 'Bản đồ', variant: 'full' }),
     );
-    expect(src).toMatch(/className="group absolute flex size-11 /);
-    expect(src).not.toContain('href="#"');
+    for (const d of destinations) {
+      const { x } = project(d.coords.lat, d.coords.lng);
+      const label = html.match(new RegExp(`<span class="([^"]*)">${d.name.vi.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}</span>`));
+      expect(label, d.slug).not.toBeNull();
+      const cls = label![1]!;
+      expect(cls, d.slug).toContain(labelSide(x) === 'left' ? 'right-full' : 'left-full');
+      expect(cls, d.slug).toContain('absolute');
+    }
   });
 });

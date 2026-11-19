@@ -3,7 +3,9 @@ import type { Locale } from '@/i18n/routing';
 import { isVisited, type Destination } from '@/content/types';
 import {
   MAP_HEIGHT,
+  MAP_TARGET_PX,
   MAP_WIDTH,
+  labelSide,
   VIETNAM_OUTLINE_PATH,
   pinRadius,
   project,
@@ -64,7 +66,7 @@ export function VietnamMap({
             );
             const r = pinRadius(destination.visits);
             // Pins in the right half put the label on their left so it never leaves the frame.
-            const flipLabel = x > MAP_WIDTH / 2;
+            const flipLabel = labelSide(x) === 'left';
 
             return (
               <li
@@ -80,7 +82,8 @@ export function VietnamMap({
                     pathname: '/destinations/[slug]',
                     params: { slug: destination.slug },
                   }}
-                  className="group absolute flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+                  className="group absolute flex -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+                  style={{ width: MAP_TARGET_PX, height: MAP_TARGET_PX }}
                 >
                   {/* The anchor box itself is the 44px target; the dot is centred on the projected point. */}
                   <span
