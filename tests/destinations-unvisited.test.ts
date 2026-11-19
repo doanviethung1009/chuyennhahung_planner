@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { destinations } from '@/content/destinations';
@@ -52,6 +52,14 @@ describe('destinations not visited yet (DEST-1)', () => {
       expect(existsSync(resolve(process.cwd(), 'public', d.cover.replace(/^\//, ''))), d.slug).toBe(true);
     }
     expect(pinRadius(undefined)).toBe(5);
+  });
+});
+
+describe('home hero stat (DEST-1)', () => {
+  it('counts only visited destinations under the "destinations visited" label', () => {
+    const src = readFileSync(resolve(process.cwd(), 'src/components/sections/hero.tsx'), 'utf8');
+    expect(src).toContain('destinations.filter(isVisited).length');
+    expect(src).not.toMatch(/value:\s*destinations\.length/);
   });
 });
 
