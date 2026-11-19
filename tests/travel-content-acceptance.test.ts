@@ -47,6 +47,12 @@ describe('acceptance: a Đà Lạt 3-day romantic story', () => {
     expect(inclusiveDays).toBe(3);
   });
 
+  it('links the story to its own public template so the page shows the CTA (CORE-15)', async () => {
+    const story = await repo.getPublishedStory('ba-ngay-lang-man-o-da-lat');
+    expect(story.plannerTemplateSlug).toBe('da-lat-3-ngay-lang-man');
+    expect((await repo.getPublicTemplate('da-lat-3-ngay-lang-man')).sourceStorySlug).toBe(story.slug);
+  });
+
   it('points at a destination that already exists — no duplicate entity', () => {
     expect(destinations.map((d) => d.slug)).toContain('da-lat');
   });

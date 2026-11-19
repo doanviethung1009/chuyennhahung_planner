@@ -1,0 +1,12 @@
+# Handoff CORE-15 — CTA template cho story gốc
+- Trạng thái: sửa xong, chưa commit/push/PR (chờ chủ dự án cho phép). Nhánh: claude/fix-source-story-cta-30bf05 (từ origin/main 855e5d3).
+- Quyết định: chủ dự án chọn phương án A (đổi seed). Contract: .claude/contracts/core-15-source-story-cta.md.
+- Đã sửa: src/content/travel/seed.ts:265 `plannerTemplateSlug: 'da-lat-3-ngay-lang-man'` (trước là null).
+- Test thêm: tests/travel-content-acceptance.test.ts — story gốc trỏ đúng template và template có sourceStorySlug quay lại.
+- Kiểm tra: typecheck PASS, lint PASS, test PASS (111 file pass / 4 skipped; 1378 tests pass / 95 skipped; exit 0).
+- /qc-check, /sec-check: NOT RUN (chỉ khi chủ dự án gọi).
+- Docs: chỉ ADR 0012 nhắc slug story gốc (dòng 16, 102), không nói về plannerTemplateSlug nên không cần sửa VI/EN.
+- Hạn chế: seed chỉ nạp khi store rỗng → dev VM và Postgres đã nạp KHÔNG tự có CTA.
+- Việc còn lại (tuỳ chọn, phương án B): PATCH story `ba-ngay-lang-man-o-da-lat` qua API admin đặt plannerTemplateSlug trên môi trường thật — chưa làm, cần chủ dự án cho phép.
+- Rollback: revert một dòng seed và test; không có migration.
+- Subagent dùng: 0.
