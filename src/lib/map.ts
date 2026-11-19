@@ -11,6 +11,9 @@
 export const MAP_WIDTH = 420;
 export const MAP_HEIGHT = 820;
 
+/** Minimum touch target for a pin, in CSS px (CLAUDE.md rule 5). Matches `size-11`. */
+export const MAP_TARGET_PX = 44;
+
 /** Bounds generous enough to keep every pin and the outline inside the frame. */
 const BOUNDS = { latMin: 8.2, latMax: 23.6, lngMin: 101.9, lngMax: 110.0 };
 
