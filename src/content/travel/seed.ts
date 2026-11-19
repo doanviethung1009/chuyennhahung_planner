@@ -262,7 +262,7 @@ export const demoReviews: ReviewCreateInput[] = [
 
 /** The acceptance-test story: three romantic days in Đà Lạt. */
 export const daLatRomanticStory: StoryCreateInput = {
-  plannerTemplateSlug: null,
+  plannerTemplateSlug: 'da-lat-3-ngay-lang-man',
   slug: 'ba-ngay-lang-man-o-da-lat',
   title: {
     vi: 'Ba ngày lãng mạn ở Đà Lạt, không cần kín lịch',
