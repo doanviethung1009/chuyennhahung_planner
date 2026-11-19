@@ -124,7 +124,7 @@ hay bỏ một route nghĩa là sửa bảng này ở cả hai ngôn ngữ.
 | POST | `/api/admin/travel/places` | Admin token hoặc phiên nhân viên | Tạo địa điểm |
 | GET | `/api/admin/travel/places/[slug]` | Admin token hoặc phiên nhân viên | Một địa điểm |
 | PATCH | `/api/admin/travel/places/[slug]` | Admin token hoặc phiên nhân viên | Sửa địa điểm (If-Match tùy chọn) |
-| DELETE | `/api/admin/travel/places/[slug]` | Admin token hoặc phiên nhân viên | Xóa địa điểm |
+| DELETE | `/api/admin/travel/places/[slug]` | Admin token | Xóa địa điểm (409 `place_in_use` khi còn được tham chiếu) |
 | GET | `/api/admin/travel/stories` | Admin token hoặc phiên nhân viên | Danh sách chuyện (mọi trạng thái) |
 | POST | `/api/admin/travel/stories` | Admin token hoặc phiên nhân viên | Tạo chuyện |
 | GET | `/api/admin/travel/stories/[slug]` | Admin token hoặc phiên nhân viên | Một chuyện |

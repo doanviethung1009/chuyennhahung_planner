@@ -62,6 +62,7 @@ as a misconfiguration, not a weak secret.
 | `not_found` | 404 | No such record — also what an unpublished record returns publicly |
 | `slug_conflict` | 409 | Slug or id already taken |
 | `invalid_state` | 409 | Refused by a lifecycle rule (see *Invariants*) |
+| `place_in_use` | 409 | A place cannot be deleted while content or Planner data references it; `error.details.counts` gives counts per kind |
 | `validation_failed` | 422 | Schema rejected the payload; `issues` lists field paths |
 | `invalid_reference` | 422 | Structurally valid but points at something absent |
 | `admin_auth_unconfigured` | 503 | `ADMIN_API_TOKEN` unset or too short |
@@ -132,8 +133,17 @@ unless its source story is published.
 **Taking things down** — a published story or collection cannot be deleted
 (unpublish or archive first) so a live URL cannot start 404-ing. A review cannot
 be unpublished while a published story links it. A public template cannot be
-deleted. A place cannot be deleted while anything references it, and the refusal
-**names every referrer**. A place cannot be unlinked from a story while still
+deleted. A place cannot be deleted while anything references it: `DELETE
+/api/admin/travel/places/[slug]` answers **409 `place_in_use`** with
+`error.details.counts` = `{ stories, collections, templates, contentReviews,
+tripActivities, communityReviews }` (counts only: no user, trip or review id). The
+Planner counts cover every activity (archived trips too) and every community
+review whatever its status. Nothing is cascaded or rewritten; archive or replace
+the references, or keep the place. If the Planner store cannot be read the answer
+is 503 `service_unavailable` and nothing is deleted. The content and Planner
+checks are not one transaction when the stores are separate, so a trip adding the
+place in between is possible; `GET /api/admin/planner/integrity` ("unknown place")
+is the backstop. A place cannot be unlinked from a story while still
 embedded in its body.
 
 **Templates** — days are numbered `1..n` and activity `order` runs `0..m` by

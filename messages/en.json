@@ -758,7 +758,8 @@
       "invalid_state": "Refused because of the content's current state, for example a story that still links to an unpublished review or is used by a public template.",
       "not_found": "This record was not found. It may have been deleted.",
       "bad_request": "The request was not valid. Reload the page and try again.",
-      "slug_conflict": "A record with this slug already exists. Nothing was overwritten; choose another slug."
+      "slug_conflict": "A record with this slug already exists. Nothing was overwritten; choose another slug.",
+      "place_in_use": "This place cannot be deleted because content or traveller data still refers to it. Archive or replace those references first."
     },
     "form": {
       "loading": "Loading…",
