@@ -94,4 +94,18 @@ describe('Delete place control (CORE-10)', () => {
     await userEvent.click(screen.getByRole('button', { name: t.confirm, hidden: true }));
     expect((await screen.findByRole('alert')).textContent).toBe(te.forbidden);
   });
+
+  it('a 503 (usage could not be verified) shows the generic error, stays on the page and re-enables the button', async () => {
+    stubFetch((call) =>
+      call.method === 'DELETE' ? json(503, { error: { code: 'service_unavailable' } }) : json(200, record),
+    );
+    push.mockClear();
+    shell(true);
+    await userEvent.click(await screen.findByRole('button', { name: t.button }));
+    await userEvent.click(screen.getByRole('button', { name: t.confirm, hidden: true }));
+    expect((await screen.findByRole('alert')).textContent).toBe(te.generic);
+    expect(push).not.toHaveBeenCalled();
+    expect(document.querySelector('dialog')!.hasAttribute('open')).toBe(false);
+    expect((screen.getByRole('button', { name: t.button }) as HTMLButtonElement).disabled).toBe(false);
+  });
 });
