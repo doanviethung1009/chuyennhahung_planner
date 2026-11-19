@@ -1,5 +1,5 @@
 # Task Contract: CORE-13 Dữ liệu seed & địa chỉ liên hệ (P-4, P-6)
-- Class: **S/M**. Branch đề xuất: `fix/seed-template-source-story` cắt từ `origin/main` @ `d154d96`. **State: APPROVED (2026-11-19); câu hỏi mở còn lại cần trả lời trước khi code.**
+- Class: **S/M**. Branch đề xuất: `fix/seed-template-source-story` cắt từ `origin/main` @ `d154d96`. **State: DONE — không đổi mã (P-4 là thiết kế có chủ đích, P-6 đã xác nhận). Xem kết luận cuối file.**
 
 ## Bằng chứng
 - **P-4** `src/content/travel/seed.ts:452-453`: template `da-lat-3-ngay-lang-man` có `sourceStorySlug: 'ba-ngay-lang-man-o-da-lat'`; nhưng story trỏ tới template (`src/content/stories.ts:133,161`, `plannerTemplateSlug`) là `di-da-lat-lan-thu-sau`. Chuyến tạo từ mẫu ghi nguồn story khác với story người dùng vừa đọc.
@@ -15,3 +15,8 @@ P-4: story nào là nguồn đúng của template Đà Lạt 3 ngày?
 
 ## Kiểm tra / Done
 typecheck, lint, test PASS kèm output. Handoff ≤25 dòng `.claude/contracts/handoff/core-13-seed-and-contact.md`.
+
+## Kết luận (2026-11-19)
+- **P-4 không phải lỗi.** `sourceStorySlug` (nguồn gốc: chuyện mà mẫu được cắt ra, chặn lưu trữ story khi còn mẫu công khai — `repository.ts:370-372`) và `plannerTemplateSlug` (CTA: mẫu là lịch trình thật của story — `stories/[slug]/page.tsx:73`) là hai trường độc lập theo ADR 0012; `schemas.ts:299-301` ghi rõ "a template may be cut from a different story". Seed khớp nội dung: `seed.ts:262,449` ghi mẫu là "cắt từ story trên" (`ba-ngay-lang-man-o-da-lat`), còn `stories.ts:133-161` là story biên tập có CTA tới mẫu. Chuyến tạo từ mẫu ghi nguồn đúng là story gốc. Không sửa dữ liệu.
+- Hệ quả để biết: story gốc `ba-ngay-lang-man-o-da-lat` có `plannerTemplateSlug: null` nên không hiện CTA; nếu chủ dự án muốn CTA ở cả hai story thì đó là một thay đổi nội dung riêng (seed acceptance-test được nhiều test dùng).
+- **P-6:** đóng, chủ dự án đã xác nhận địa chỉ là thật; không đổi mã.
