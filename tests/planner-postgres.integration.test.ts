@@ -104,6 +104,38 @@ describe.skipIf(!url)('Planner on PostgreSQL (TEST_DATABASE_URL)', () => {
     expect(deleted?.bannedAt ?? null).toBeNull();
   });
 
+  it('counts Planner rows naming a place: activities (archived trips too) and reviews of any status', async () => {
+    const planner = repository();
+    const { userId } = await makeOwner(planner);
+    const trip = await planner.createTrip(userId, daLatTripInput());
+    const withActivity = await planner.addActivity(
+      userId,
+      trip.trip.id,
+      activityInput({ placeSlug: 'vuon-ca-phe-me-linh' }),
+      trip.trip.version,
+    );
+    await planner.archiveTrip(userId, trip.trip.id, withActivity.trip.version);
+    await planner.upsertPlannerReview(userId, 'vuon-ca-phe-me-linh', {
+      rating: 5,
+      body: 'Vườn cà phê rất đẹp vào buổi sáng, đồ uống ngon, không gian yên tĩnh, đi bộ quanh vườn mất khoảng một tiếng.',
+      lang: 'vi',
+      visitedOn: '2026-02-01',
+      authorDisplay: 'name',
+    });
+    const [review] = await planner.listReviewQueue('approved');
+    await planner.decideReview(review!.id, 'remove', 'admin', null);
+
+    const fresh = repository(createPostgresPlannerStore(openPool()));
+    expect(await fresh.countPlaceReferences('vuon-ca-phe-me-linh')).toEqual({
+      tripActivities: 1,
+      communityReviews: 1,
+    });
+    expect(await fresh.countPlaceReferences('khong-co-cho-nay')).toEqual({
+      tripActivities: 0,
+      communityReviews: 0,
+    });
+  });
+
   it('migrate is idempotent and records the file', async () => {
     const files = await readMigrationFiles('db/migrations');
     const report = await runMigrations(pool, files);

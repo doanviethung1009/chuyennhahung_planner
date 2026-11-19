@@ -10,8 +10,8 @@
 - Test: `tests/place-in-use.test.ts` (11, JSON, route-level); cập nhật `travel-content-repository.test.ts`; thêm ca PG trong `content-postgres` và `planner-postgres` integration.
 ## Kiểm tra (đã chạy)
 - typecheck PASS; lint PASS (không output lỗi).
-- `npm run test` PASS: 104 file pass, 3 skipped; 1311 pass, 89 skipped (suite PG bị skip khi thiếu TEST_DATABASE_URL).
-- Với PG14 thử (cổng 55433, DB `core9test`): 107/107 file, 1399 pass, 1 skipped; đã dừng PG.
+- `npm run test` PASS: 104 file pass, 3 skipped; 1311 pass, 91 skipped (suite PG bị skip khi thiếu TEST_DATABASE_URL).
+- Với PG14 thử (cổng 55433, DB `core9test`): 107/107 file, 1401 pass, 1 skipped; đã dừng PG. Ca PG thêm ở commit thứ hai (lần đầu bị sót do một lệnh bị hook chặn, qc phát hiện).
 - Route-level trên PG: NOT RUN (PG chỉ test ở mức repository, cùng logic với route). `/qc-check`, `/sec-check`: NOT RUN — khuyến nghị `/sec-check`.
 ## Lưu ý
 - Hai kiểm tra không atomic khi hai store tách rời (đã ghi docs); backstop là `/api/admin/planner/integrity`.
