@@ -95,17 +95,49 @@ describe('map pin touch targets', () => {
     });
   }
 
-  it('puts each label beside the 44px box and on the side labelSide picks', () => {
-    const html = renderToStaticMarkup(
-      createElement(VietnamMap, { destinations, locale: 'vi', mapLabel: 'Bản đồ', variant: 'full' }),
+  const FEATURED = ['ha-noi', 'da-nang', 'tp-ho-chi-minh', 'sa-pa', 'ha-giang', 'da-lat', 'phu-quoc'];
+  const esc = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const render = (variant: 'full' | 'preview') =>
+    renderToStaticMarkup(
+      createElement(VietnamMap, { destinations, locale: 'vi', mapLabel: 'Bản đồ', variant }),
     );
+
+  it('keeps the owner-approved featured set', () => {
+    expect(destinations.filter((d) => d.featured).map((d) => d.slug).sort()).toEqual([...FEATURED].sort());
+  });
+
+  it('shows a permanent label only for featured pins, beside the box on the side labelSide picks', () => {
+    const html = render('full');
     for (const d of destinations) {
       const { x } = project(d.coords.lat, d.coords.lng);
-      const label = html.match(new RegExp(`<span class="([^"]*)">${d.name.vi.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}</span>`));
-      expect(label, d.slug).not.toBeNull();
-      const cls = label![1]!;
-      expect(cls, d.slug).toContain(labelSide(x) === 'left' ? 'right-full' : 'left-full');
-      expect(cls, d.slug).toContain('absolute');
+      const visible = html.match(new RegExp(`<span class="([^"]*)">${esc(d.name.vi)}</span>`));
+      const permanent = visible && !visible[1]!.includes('sr-only') ? visible : null;
+      if (d.featured) {
+        expect(permanent, d.slug).not.toBeNull();
+        expect(permanent![1], d.slug).toContain(labelSide(x) === 'left' ? 'right-full' : 'left-full');
+        expect(permanent![1], d.slug).toContain('absolute');
+      } else {
+        expect(permanent, `${d.slug} must not have a permanent label`).toBeNull();
+      }
     }
+  });
+
+  it('keeps every name in the anchor and a tooltip for non-featured pins', () => {
+    const html = render('full');
+    const anchors = [...html.matchAll(/<a [^>]*>[\s\S]*?<\/a>/g)].map((m) => m[0]);
+    expect(anchors).toHaveLength(destinations.length);
+    anchors.forEach((a, i) => {
+      const d = destinations[i]!;
+      expect(a, d.slug).toContain(d.name.vi);
+      if (!d.featured) {
+        expect(a, d.slug).toContain('sr-only');
+        expect(a, d.slug).toContain('group-focus-visible:opacity-100');
+      }
+    });
+  });
+
+  it('preview variant has no permanent labels at all', () => {
+    const html = render('preview');
+    expect(html).not.toContain('bg-cream-50/90');
   });
 });

@@ -37,6 +37,12 @@ export interface Destination {
   visits?: number;
   tags: Localized<string[]>;
   cover: string;
+  /**
+   * Big or popular destinations keep a permanent name label on the full travel
+   * map; every other pin shows its name as a tooltip on hover/focus. Independent
+   * of `visits` — an unvisited city can be featured. Owner-curated.
+   */
+  featured?: boolean;
 }
 
 export interface Story {

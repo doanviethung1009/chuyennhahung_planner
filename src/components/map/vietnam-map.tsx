@@ -28,7 +28,7 @@ export function VietnamMap({
   mapLabel: string;
   variant?: 'full' | 'preview';
 }) {
-  const showLabels = variant === 'full';
+  const fixedLabels = variant === 'full';
 
   return (
     <div
@@ -67,6 +67,9 @@ export function VietnamMap({
             const r = pinRadius(destination.visits);
             // Pins in the right half put the label on their left so it never leaves the frame.
             const flipLabel = labelSide(x) === 'left';
+            // Only featured pins keep a permanent label on the full map; the rest
+            // reveal their name as a tooltip, which keeps dense clusters readable.
+            const showLabel = fixedLabels && destination.featured === true;
 
             return (
               <li
@@ -97,14 +100,14 @@ export function VietnamMap({
                   />
                   <span
                     className={
-                      showLabels
+                      showLabel
                         ? `absolute top-1/2 -translate-y-1/2 whitespace-nowrap ${flipLabel ? 'right-full' : 'left-full'} rounded-pill bg-cream-50/90 px-2 py-0.5 text-xs font-semibold text-ink-800 shadow-soft`
                         : 'sr-only'
                     }
                   >
                     {destination.name[locale]}
                   </span>
-                  {showLabels ? null : (
+                  {showLabel ? null : (
                     <span
                       aria-hidden="true"
                       className="pointer-events-none absolute left-1/2 bottom-full mb-2 -translate-x-1/2 whitespace-nowrap rounded-pill bg-ink-900 px-2.5 py-1 text-xs font-medium text-cream-50 opacity-0 transition-opacity duration-200 ease-gentle group-hover:opacity-100 group-focus-visible:opacity-100"
