@@ -57,7 +57,7 @@ export default async function AdminPage({ params }: Params) {
               {tc('heading')}
             </h2>
             <p className="text-base text-foreground-muted">{tc('signedInAs', { handle: access.principal.handle })}</p>
-            <p className="text-base text-foreground-muted">{tc('body')}</p>
+            <p className="text-base text-foreground-muted">{tc(access.canRunbook ? 'bodySuperAdmin' : access.canUsers ? 'bodyAdmin' : 'bodyEditor')}</p>
             {access.canContent ? (
               <div>
                 <Link

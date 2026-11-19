@@ -231,6 +231,8 @@ client bundle exists for exactly two things: the mobile navigation drawer
 (focus trap, Escape, close-on-navigate) in
 [`main-nav.tsx`](../src/components/layout/main-nav.tsx), and the locale switcher.
 
+The locale switcher builds each link with `getPathname`, so Vietnamese stays unprefixed (no `/vi/...` redirect). The header account menu asks `GET /api/planner/session` after load; for a guest that is a `401`, which the browser logs in the console. This is deliberate (CORE-12 / P-2): several components read the same `401` as "guest", and the session cookie is `HttpOnly`, so the page cannot know in advance.
+
 The travel map is deliberately **not** a client component: an SVG silhouette
 with real `<a>` anchors positioned by [`lib/map.ts`](../src/lib/map.ts), so it is
 keyboard-navigable and crawlable with JavaScript disabled.

@@ -699,7 +699,9 @@
     "overview": {
       "heading": "Chào mừng đến khu quản trị",
       "signedInAs": "Đang đăng nhập là {handle}.",
-      "body": "Với vai trò biên tập viên, bạn có thể sửa chuyến đi, địa điểm và đánh giá. Phần quản lý người dùng chỉ dành cho quản trị viên.",
+      "bodyEditor": "Với vai trò biên tập viên, bạn có thể sửa chuyến đi, địa điểm và đánh giá. Phần quản lý người dùng chỉ dành cho quản trị viên.",
+      "bodyAdmin": "Với vai trò quản trị viên, bạn sửa được nội dung, quản lý thành viên và biên tập viên, và xử lý kiểm duyệt. Tài khoản quản trị và trạng thái hệ thống chỉ dành cho Quản trị cấp cao.",
+      "bodySuperAdmin": "Với vai trò Quản trị cấp cao, bạn quản lý được nội dung, mọi tài khoản và trạng thái hệ thống.",
       "goStories": "Mở danh sách chuyến đi",
       "title": "Quản trị",
       "metaTitle": "Quản trị",

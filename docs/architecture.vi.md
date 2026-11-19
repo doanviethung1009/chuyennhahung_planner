@@ -231,6 +231,8 @@ client tồn tại cho đúng hai thứ: drawer điều hướng trên mobile (b
 tự đóng khi chuyển trang) trong
 [`main-nav.tsx`](../src/components/layout/main-nav.tsx), và bộ đổi ngôn ngữ.
 
+Bộ đổi ngôn ngữ tạo từng liên kết bằng `getPathname`, nên tiếng Việt giữ URL không tiền tố (không còn chuyển hướng `/vi/...`). Menu tài khoản ở header gọi `GET /api/planner/session` sau khi tải trang; với khách đó là `401` và trình duyệt ghi vào console. Đây là chủ đích (CORE-12 / P-2): nhiều thành phần dùng chính `401` này để biết là khách, và cookie phiên là `HttpOnly` nên trang không thể biết trước.
+
 Bản đồ hành trình **không** phải client component, có chủ đích: đó là một SVG
 silhouette với các thẻ `<a>` thật, vị trí tính bởi [`lib/map.ts`](../src/lib/map.ts),
 nên nó đi được bằng bàn phím và bot vẫn đọc được khi tắt JavaScript.
