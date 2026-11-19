@@ -39,7 +39,7 @@ try {
   await pool?.end();
   process.exit(0);
 } catch (error) {
-  console.error(`content:seed-static failed: ${error instanceof Error ? error.message : 'unknown error'}`);
+  console.error(`content:seed-places failed: ${error instanceof Error ? error.message : 'unknown error'}`);
   await pool?.end().catch(() => undefined);
   process.exit(1);
 }

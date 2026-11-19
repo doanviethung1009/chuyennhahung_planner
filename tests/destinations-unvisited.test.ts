@@ -91,7 +91,7 @@ describe('landmark places (DEST-1)', () => {
     const store = new Set<string>(['vinh-ha-long']);
     const repo = {
       getPlace: async (slug: string) => {
-        if (!store.has(slug)) throw new Error('not found');
+        if (!store.has(slug)) throw Object.assign(new Error('not found'), { name: 'ContentError', code: 'not_found' });
       },
       createPlace: async (input: { slug: string }) => {
         store.add(input.slug);
@@ -103,6 +103,8 @@ describe('landmark places (DEST-1)', () => {
     expect(first.created).toHaveLength(landmarkPlaces.length - 1);
     const second = await seedLandmarkPlaces(repo as never);
     expect(second.created).toEqual([]);
+    const outage = { getPlace: async () => { throw new Error('db down'); }, createPlace: async () => undefined };
+    await expect(seedLandmarkPlaces(outage as never)).rejects.toThrow('db down');
     const dry = await seedLandmarkPlaces(repo as never, { dryRun: true });
     expect(dry.created).toEqual([]);
   });

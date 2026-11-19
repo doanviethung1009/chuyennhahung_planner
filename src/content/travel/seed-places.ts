@@ -1,4 +1,4 @@
-import type { TravelContentRepository } from '@/server/content/repository';
+import { isContentError, type TravelContentRepository } from '@/server/content/repository';
 import type { PlaceCreateInput } from '@/server/content/schemas';
 
 /**
@@ -520,7 +520,9 @@ export async function seedLandmarkPlaces(
     let exists = true;
     try {
       await repository.getPlace(input.slug);
-    } catch {
+    } catch (error) {
+      // Only "not found" means absent; a store outage must not fall through to create.
+      if (!(isContentError(error) && error.code === 'not_found')) throw error;
       exists = false;
     }
     if (exists) {
