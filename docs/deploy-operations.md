@@ -181,28 +181,28 @@ du -sh /opt/chuyennhahung/data/* /opt/chuyennhahung/logs /opt/chuyennhahung/back
 
 Some jobs are not part of a release: topping up the content store (`content:seed-places`,
 `content:seed-static`), importing a trip file (`planner:import`), creating the first admin
-(`admin:create`). They run as a one-shot container from the `tools` image. CI builds and
-deploys only the `app` image (`deploy-dev.yml`), so the `tools` image is built **by hand** on
-the VM and only when you need such a script.
+(`admin:create`). They run as a one-shot container from the `tools` image. CI builds it on
+GitHub's runner and pushes it to ghcr next to the `app` image (`deploy-dev.yml`); the deploy
+never starts it. The VM only **pulls** it, because its build runs `next build`, which does not
+fit a 1.9 GB VM.
 
-### 1. Update the code the image is built from
+### 1. Pull the image (once per code version)
 ```bash
-cd /opt/chuyennhahung/src && git pull --ff-only
-```
-The image contains the scripts of the commit you built from. A script added in a later PR
-does not exist in an older image: build again after every pull that changes the script.
-
-### 2. Build the image (once per code version)
-```bash
-cd /opt/chuyennhahung/src/deploy
-APP_SRC=.. docker compose --project-directory . --env-file /opt/chuyennhahung/.env \
+cd /opt/chuyennhahung/src && git pull --ff-only          # compose files of the same commit
+cd deploy
+export TOOLS_IMAGE=ghcr.io/<owner>/chuyennhahung-tools APP_IMAGE_TAG=dev
+docker login ghcr.io -u <github-user>                    # a token with read:packages; once per VM
+docker compose --project-directory . --env-file /opt/chuyennhahung/.env \
   -f compose.yml -f compose.app.yml -f compose.app.external-db.yml \
-  --profile tools build tools
+  --profile tools pull tools
 ```
+`dev` is the tag CI moves on every merge to `main`; `sha-<commit>` pins one build. The image
+holds the scripts of the commit it was built from: a script added in a later PR needs a newer
+image.
 
-### 3. Run the script (dry-run first, then for real)
+### 2. Run the script (dry-run first, then for real)
 ```bash
-APP_SRC=.. docker compose --project-directory . --env-file /opt/chuyennhahung/.env \
+docker compose --project-directory . --env-file /opt/chuyennhahung/.env \
   -f compose.yml -f compose.app.yml -f compose.app.external-db.yml \
   run --rm tools npm run content:seed-places -- --dry-run
 ```
@@ -213,19 +213,23 @@ Drop `--dry-run` to write. Use `compose.app.local-db.yml` instead of
 | Part | Why it is there |
 |---|---|
 | `cd /opt/chuyennhahung/src/deploy` | Compose files live here; the commands are relative to it |
-| `--project-directory .` | Use this directory's files and project name, the same as `deploy.sh` (line 180), so the script reaches the same volume and network as the app |
+| `--project-directory .` | Use this directory's files and project name, the same as `deploy.sh`, so the script reaches the same volume and network as the app |
 | `--env-file /opt/chuyennhahung/.env` | The secrets and URLs live outside the repository. Without it Compose reads only `deploy/.env` and fails with *required variable CNH_APP_PASSWORD is missing*, because `compose.yml` also defines the `postgres` service |
 | `-f compose.yml -f compose.app.yml -f compose.app.<overlay>.yml` | Base stack, the `app`/`tools` services, and the database overlay (`external-db` mounts the DB CA certificate `pg-ca.crt`). Always pass the same set that `deploy.sh` uses |
-| `APP_SRC=..` | Build context of `tools`. The default is `./app`, which does not exist on the VM; `..` is `/opt/chuyennhahung/src`, the repository root. Only the build step needs it |
-| `--profile tools` | The `tools` service is behind a profile so `up` never starts it. `build` needs the profile to see it |
-| `build tools` | Builds the `chuyennhahung/app-tools` image. `NEXT_PUBLIC_SITE_URL` must be set in `.env` |
+| `TOOLS_IMAGE`, `APP_IMAGE_TAG=dev` | Which image `tools` uses: the ghcr image CI built, at the `dev` tag. Without `TOOLS_IMAGE` Compose looks for a local `chuyennhahung/app-tools` and builds it |
+| `--profile tools` | The `tools` service is behind a profile so `up` never starts it. `pull` needs the profile to see it |
 | `run --rm tools` | Starts one container from that image and deletes it afterwards |
 | `npm run <script> -- --dry-run` | The `--` passes `--dry-run` to the script instead of npm. A dry run lists what would be created and writes nothing |
+
+### Fallback: build the image on the VM
+When CI has not published the image (a fork, an old tag), unset `TOOLS_IMAGE` and build it:
+`APP_SRC=.. docker compose ... --profile tools build tools` (`NEXT_PUBLIC_SITE_URL` must be set
+in `.env`). It runs `next build`, so watch for the build being killed on a small VM.
 
 ### Things to check
 - `CONTENT_DATABASE_URL` must be in `.env` (check with `grep -c '^CONTENT_DATABASE_URL=' /opt/chuyennhahung/.env`, never print the value); without it the script writes to a JSON file in the `app-data` volume, not to PostgreSQL.
 - Stop the app while a script writes to the store, as [usage](usage.md) says for each script; the dry run is safe at any time.
-- Building needs RAM: on a 1.9 GB VM, watch for the build being killed, and if so build on another machine and push the image.
+- The image bakes in the **dev** `NEXT_PUBLIC_SITE_URL`. For prod, build a separate image with the prod URL.
 - Never put real values from `.env` in a chat or a ticket.
 
 ## Upgrades

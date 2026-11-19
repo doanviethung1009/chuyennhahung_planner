@@ -176,28 +176,26 @@ du -sh /opt/chuyennhahung/data/* /opt/chuyennhahung/logs /opt/chuyennhahung/back
 
 Có những việc không thuộc một lần release: bổ sung content store (`content:seed-places`,
 `content:seed-static`), nhập file chuyến đi (`planner:import`), tạo admin đầu tiên
-(`admin:create`). Chúng chạy bằng một container dùng một lần từ image `tools`. CI chỉ build
-và deploy image `app` (`deploy-dev.yml`), nên image `tools` được build **bằng tay** trên VM,
-và chỉ khi bạn cần một script như vậy.
+(`admin:create`). Chúng chạy bằng một container dùng một lần từ image `tools`. CI build nó trên
+runner của GitHub và đẩy lên ghcr cạnh image `app` (`deploy-dev.yml`); deploy không bao giờ khởi
+động nó. VM chỉ **pull** về, vì bước build chạy `next build`, không vừa VM 1,9 GB.
 
-### 1. Cập nhật mã nguồn mà image được build từ đó
+### 1. Pull image (một lần cho mỗi phiên bản mã)
 ```bash
-cd /opt/chuyennhahung/src && git pull --ff-only
-```
-Image chứa các script của commit bạn build. Script thêm ở một PR sau không có trong image cũ:
-build lại sau mỗi lần pull làm thay đổi script.
-
-### 2. Build image (một lần cho mỗi phiên bản mã)
-```bash
-cd /opt/chuyennhahung/src/deploy
-APP_SRC=.. docker compose --project-directory . --env-file /opt/chuyennhahung/.env \
+cd /opt/chuyennhahung/src && git pull --ff-only          # file compose cùng commit
+cd deploy
+export TOOLS_IMAGE=ghcr.io/<owner>/chuyennhahung-tools APP_IMAGE_TAG=dev
+docker login ghcr.io -u <github-user>                    # token có read:packages; một lần cho mỗi VM
+docker compose --project-directory . --env-file /opt/chuyennhahung/.env \
   -f compose.yml -f compose.app.yml -f compose.app.external-db.yml \
-  --profile tools build tools
+  --profile tools pull tools
 ```
+`dev` là tag CI dời đi sau mỗi lần merge vào `main`; `sha-<commit>` ghim đúng một bản build.
+Image chứa các script của commit nó được build: script thêm ở PR sau cần image mới hơn.
 
-### 3. Chạy script (dry-run trước, rồi mới chạy thật)
+### 2. Chạy script (dry-run trước, rồi mới chạy thật)
 ```bash
-APP_SRC=.. docker compose --project-directory . --env-file /opt/chuyennhahung/.env \
+docker compose --project-directory . --env-file /opt/chuyennhahung/.env \
   -f compose.yml -f compose.app.yml -f compose.app.external-db.yml \
   run --rm tools npm run content:seed-places -- --dry-run
 ```
@@ -208,19 +206,23 @@ Bỏ `--dry-run` để ghi thật. Với layout `local-db`, dùng `compose.app.l
 | Phần | Vì sao có |
 |---|---|
 | `cd /opt/chuyennhahung/src/deploy` | Các file compose nằm ở đây; lệnh dùng đường dẫn tương đối từ đây |
-| `--project-directory .` | Dùng file và tên project của thư mục này, giống `deploy.sh` (dòng 180), để script dùng cùng volume và network với app |
+| `--project-directory .` | Dùng file và tên project của thư mục này, giống `deploy.sh`, để script dùng cùng volume và network với app |
 | `--env-file /opt/chuyennhahung/.env` | Secret và URL nằm ngoài repository. Thiếu cờ này Compose chỉ đọc `deploy/.env` và báo *required variable CNH_APP_PASSWORD is missing*, vì `compose.yml` còn định nghĩa service `postgres` |
 | `-f compose.yml -f compose.app.yml -f compose.app.<overlay>.yml` | Stack nền, các service `app`/`tools`, và overlay database (`external-db` mount chứng chỉ CA `pg-ca.crt`). Luôn dùng đúng bộ file mà `deploy.sh` dùng |
-| `APP_SRC=..` | Build context của `tools`. Mặc định là `./app`, không có trên VM; `..` là `/opt/chuyennhahung/src`, gốc repository. Chỉ bước build cần |
-| `--profile tools` | Service `tools` nằm sau một profile để `up` không bao giờ khởi động nó. `build` cần profile để thấy nó |
-| `build tools` | Build image `chuyennhahung/app-tools`. `NEXT_PUBLIC_SITE_URL` phải có trong `.env` |
+| `TOOLS_IMAGE`, `APP_IMAGE_TAG=dev` | Service `tools` dùng image nào: image ghcr CI đã build, tag `dev`. Thiếu `TOOLS_IMAGE`, Compose tìm `chuyennhahung/app-tools` cục bộ và tự build |
+| `--profile tools` | Service `tools` nằm sau một profile để `up` không bao giờ khởi động nó. `pull` cần profile để thấy nó |
 | `run --rm tools` | Khởi động một container từ image đó và xoá nó sau khi chạy xong |
 | `npm run <script> -- --dry-run` | Dấu `--` chuyển `--dry-run` cho script thay vì npm. Dry-run chỉ liệt kê những gì sẽ tạo và không ghi gì |
+
+### Phương án dự phòng: build image trên VM
+Khi CI chưa publish image (fork, tag cũ), bỏ `TOOLS_IMAGE` rồi build:
+`APP_SRC=.. docker compose ... --profile tools build tools` (cần `NEXT_PUBLIC_SITE_URL` trong
+`.env`). Bước này chạy `next build`, nên để ý việc build bị kill trên VM nhỏ.
 
 ### Cần kiểm tra
 - `CONTENT_DATABASE_URL` phải có trong `.env` (kiểm bằng `grep -c '^CONTENT_DATABASE_URL=' /opt/chuyennhahung/.env`, không in giá trị); thiếu nó, script ghi vào file JSON trong volume `app-data` chứ không vào PostgreSQL.
 - Dừng app khi script ghi vào store, như [usage](usage.vi.md) nói với từng script; dry-run an toàn mọi lúc.
-- Build cần RAM: trên VM 1,9 GB, để ý việc build bị kill; nếu vậy hãy build ở máy khác rồi đẩy image.
+- Image nhúng sẵn `NEXT_PUBLIC_SITE_URL` của **dev**. Với prod, build một image riêng với URL prod.
 - Không dán giá trị thật từ `.env` vào chat hay ticket.
 
 ## Nâng cấp

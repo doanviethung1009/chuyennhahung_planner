@@ -31,7 +31,9 @@ RUN npm run build
 # run through vite-node, a dev dependency, so they get the full tree.
 FROM builder AS tools
 ENV NODE_ENV=production
-RUN rm -rf .data && mkdir -p .data && chown node:node .data
+# vite-node bundles vitest.config.ts to a temp file NEXT TO it, so the user the
+# scripts run as must own /app itself (only the directory, not its contents).
+RUN rm -rf .data && mkdir -p .data && chown node:node .data /app
 USER node
 CMD ["npm", "run", "db:migrate"]
 

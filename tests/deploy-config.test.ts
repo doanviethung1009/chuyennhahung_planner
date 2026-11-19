@@ -43,6 +43,32 @@ describe('deploy-dev workflow', () => {
     expect(wf).toContain('group: deploy-dev');
     expect(wf).toContain('cancel-in-progress: false');
   });
+
+  it('builds and pushes the tools image on the hosted runner, never deploys it', () => {
+    const build = wf.slice(wf.indexOf('  build:'), wf.indexOf('  deploy:'));
+    expect(build).toContain('target: tools');
+    expect(build).toContain('needs.plan.outputs.tools_image');
+    const deploy = wf.slice(wf.indexOf('  deploy:'));
+    expect(deploy).not.toContain('tools');
+  });
+});
+
+describe('Dockerfile tools stage', () => {
+  it('lets the non-root user write next to vitest.config.ts (vite-node temp bundle)', () => {
+    const tools = read('Dockerfile').split('FROM builder AS tools')[1]!.split('FROM node:')[0]!;
+    expect(tools).toMatch(/chown node:node [^\n]*\/app\b/);
+    expect(tools).toContain('USER node');
+  });
+});
+
+describe('deploy/compose.app.yml tools service', () => {
+  const compose = read('deploy/compose.app.yml');
+
+  it('can pull a prebuilt image (TOOLS_IMAGE) and still builds locally by default', () => {
+    expect(compose).toContain('image: ${TOOLS_IMAGE:-chuyennhahung/app-tools}:${APP_IMAGE_TAG:-latest}');
+    expect(compose).toContain('target: tools');
+    expect(compose).toContain('profiles: ["tools"]');
+  });
 });
 
 describe('deploy/deploy.sh', () => {

@@ -76,12 +76,13 @@ services:
       retries: 3
 
   # One-off scripts that need dev dependencies (vite-node). Never started by
-  # `up`; run with:
+  # `up`. CI pushes this image to ghcr (deploy-dev.yml); set TOOLS_IMAGE to pull it
+  # instead of building on the VM (docs/deploy-operations.md). Run with:
   # with the same -f files as `up` (<overlay> = external-db or local-db):
   #   docker compose -f compose.yml -f compose.app.yml -f compose.app.<overlay>.yml run --rm tools
   #   docker compose -f compose.yml -f compose.app.yml -f compose.app.<overlay>.yml run --rm tools npm run planner:import -- /import/planner.json
   tools:
-    image: chuyennhahung/app-tools:${APP_IMAGE_TAG:-latest}
+    image: ${TOOLS_IMAGE:-chuyennhahung/app-tools}:${APP_IMAGE_TAG:-latest}
     build:
       context: ${APP_SRC:-./app}
       target: tools
