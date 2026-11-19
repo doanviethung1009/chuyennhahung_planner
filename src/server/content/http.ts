@@ -6,7 +6,7 @@ import { ContentError, payloadTooLarge, type FieldIssue } from './errors';
 import { listQuerySchema } from './schemas';
 
 export interface ApiErrorBody {
-  error: { code: string; message: string; issues: FieldIssue[]; reason?: string };
+  error: { code: string; message: string; issues: FieldIssue[]; reason?: string; details?: Record<string, unknown> };
 }
 
 /**
@@ -46,6 +46,7 @@ export function toErrorResponse(error: unknown): NextResponse {
         message: error.message,
         issues: error.issues,
         ...(error.reason ? { reason: error.reason } : {}),
+        ...(error.details ? { details: error.details } : {}),
       },
     };
     const headers: Record<string, string> = { ...NO_STORE };

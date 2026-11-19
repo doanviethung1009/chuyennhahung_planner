@@ -6,6 +6,7 @@ import {
   type FieldIssue,
   invalidReference,
   invalidState,
+  placeInUse,
   notFound,
   slugConflict,
   staleContent,
@@ -216,30 +217,28 @@ export class TravelContentRepository {
   }
 
   /**
-   * Refuses while anything still points at the place, and names every referrer
-   * — a dangling slug is worse than a failed delete.
+   * Content-side usage of a place, as counts only. Read-only; the admin DELETE
+   * handler combines it with the Planner's counts (CORE-9, decision 11).
+   */
+  async countPlaceReferences(slug: string): Promise<ContentPlaceUsage> {
+    const data = await this.snapshot();
+    if (!data.places.some((p) => p.slug === slug)) throw notFound('place', slug);
+    return placeUsage(data, slug);
+  }
+
+  /**
+   * Refuses while anything still points at the place — a dangling slug is worse
+   * than a failed delete. Answers `place_in_use` with counts, not referrer ids.
+   * Planner data is checked by the caller (this store cannot see it).
    */
   deletePlace(slug: string): Promise<void> {
     return this.transaction((data) => {
       const index = data.places.findIndex((p) => p.slug === slug);
       if (index < 0) throw notFound('place', slug);
 
-      const referrers = [
-        ...data.stories.filter((s) => storyReferencesPlace(s, slug)).map((s) => `story:${s.slug}`),
-        ...data.collections
-          .filter((c) => c.placeSlugs.includes(slug))
-          .map((c) => `collection:${c.slug}`),
-        ...data.templates
-          .filter((t) => t.placeSlugs.includes(slug))
-          .map((t) => `template:${t.slug}`),
-        ...data.reviews
-          .filter((r) => r.subject.kind === 'place' && r.subject.ref === slug)
-          .map((r) => `review:${r.id}`),
-      ];
-      if (referrers.length > 0) {
-        throw invalidState(
-          `place "${slug}" is still referenced by ${referrers.join(', ')}`,
-        );
+      const usage = placeUsage(data, slug);
+      if (usage.stories + usage.collections + usage.templates + usage.contentReviews > 0) {
+        throw placeInUse({ ...usage, tripActivities: 0, communityReviews: 0 });
       }
       data.places.splice(index, 1);
     });
@@ -1224,6 +1223,22 @@ function clampIndex(index: number, length: number): number {
 
 export function isContentError(error: unknown): error is ContentError {
   return error instanceof Error && error.name === 'ContentError';
+}
+
+export interface ContentPlaceUsage {
+  stories: number;
+  collections: number;
+  templates: number;
+  contentReviews: number;
+}
+
+function placeUsage(data: { stories: TravelStory[]; collections: { placeSlugs: string[] }[]; templates: { placeSlugs: string[] }[]; reviews: { subject: { kind: string; ref: string } }[] }, slug: string): ContentPlaceUsage {
+  return {
+    stories: data.stories.filter((s) => storyReferencesPlace(s, slug)).length,
+    collections: data.collections.filter((c) => c.placeSlugs.includes(slug)).length,
+    templates: data.templates.filter((t) => t.placeSlugs.includes(slug)).length,
+    contentReviews: data.reviews.filter((r) => r.subject.kind === 'place' && r.subject.ref === slug).length,
+  };
 }
 
 /** A story references a place either by declaration or by an embedded block. */

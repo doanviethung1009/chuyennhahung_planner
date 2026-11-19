@@ -25,6 +25,7 @@ const KNOWN_ERRORS = [
   'not_found',
   'bad_request',
   'slug_conflict',
+  'place_in_use',
 ] as const;
 
 /** Maps an API failure onto a message under `adminContent.errors`. */

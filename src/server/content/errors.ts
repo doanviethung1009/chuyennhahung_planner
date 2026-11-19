@@ -16,6 +16,7 @@ export type ContentErrorCode =
   | 'slug_conflict'
   | 'invalid_reference'
   | 'invalid_state'
+  | 'place_in_use'
   | 'precondition_required'
   | 'version_conflict'
   | 'rate_limited'
@@ -33,6 +34,7 @@ const STATUS_BY_CODE: Record<ContentErrorCode, number> = {
   slug_conflict: 409,
   invalid_reference: 422,
   invalid_state: 409,
+  place_in_use: 409,
   precondition_required: 428,
   version_conflict: 412,
   rate_limited: 429,
@@ -52,6 +54,8 @@ export class ContentError extends Error {
   readonly retryAfterSeconds: number | null;
   /** Stable sub-reason of a refusal (e.g. `last_admin`), so a UI can say which rule applied. */
   readonly reason: string | null;
+  /** Structured, non-identifying data a client may render (e.g. `place_in_use` counts). */
+  readonly details: Record<string, unknown> | null;
 
   constructor(
     code: ContentErrorCode,
@@ -59,6 +63,7 @@ export class ContentError extends Error {
     issues: FieldIssue[] = [],
     retryAfterSeconds: number | null = null,
     reason: string | null = null,
+    details: Record<string, unknown> | null = null,
   ) {
     super(message);
     this.name = 'ContentError';
@@ -67,6 +72,7 @@ export class ContentError extends Error {
     this.issues = issues;
     this.retryAfterSeconds = retryAfterSeconds;
     this.reason = reason;
+    this.details = details;
   }
 }
 
@@ -99,6 +105,31 @@ export function invalidReference(issues: FieldIssue[]): ContentError {
     'invalid_reference',
     'one or more references do not resolve',
     issues,
+  );
+}
+
+/** How many records of each kind still name a place. Counts only — never ids. */
+export interface PlaceUsageCounts {
+  stories: number;
+  collections: number;
+  templates: number;
+  contentReviews: number;
+  tripActivities: number;
+  communityReviews: number;
+}
+
+/**
+ * A place cannot be deleted while anything still points at it. The body carries
+ * counts per kind and nothing that identifies a user, trip or review.
+ */
+export function placeInUse(counts: PlaceUsageCounts): ContentError {
+  return new ContentError(
+    'place_in_use',
+    'the place is still referenced and cannot be deleted; archive or replace the references first',
+    [],
+    null,
+    null,
+    { counts: { ...counts } },
   );
 }
 

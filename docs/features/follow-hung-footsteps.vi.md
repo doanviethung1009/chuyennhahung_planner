@@ -120,8 +120,9 @@ API được dùng (đều cùng origin, xác thực bằng cookie; body là `.s
 
 - Đăng nhập vẫn là mã truy cập do người vận hành cấp ([ADR 0004](../adr/0004-planner-identity.vi.md));
   chưa có đăng ký công khai.
-- Chi tiết Chuyến đi của tôi chỉ có xem, tình trạng, nhân bản, lưu trữ và chia sẻ.
-  Chưa có sửa ngày, activity và chi phí trong trình duyệt.
+- Chi tiết Chuyến đi của tôi có tình trạng, nhân bản, lưu trữ và chia sẻ, và trình sửa
+  chuyến đi trong trình duyệt ([trip-editor.vi.md](trip-editor.vi.md)) sửa ngày, activity
+  và chi phí của chuyến đang dùng; chuyến đã lưu trữ vẫn chỉ xem.
 - Chưa có thư viện công khai các chuyến đi; `public` chỉ cho phép lập chỉ mục đúng
   một trang đó.
 - Rate limiter nằm trong từng process và tin `x-forwarded-for` (xem ADR 0005).

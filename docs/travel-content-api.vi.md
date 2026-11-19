@@ -62,6 +62,7 @@ sai, không phải là một secret yếu.
 | `not_found` | 404 | Không có bản ghi nào — cũng là thứ mà một bản ghi chưa xuất bản trả về khi gọi công khai |
 | `slug_conflict` | 409 | Slug hoặc id đã bị dùng |
 | `invalid_state` | 409 | Bị một quy tắc vòng đời từ chối (xem *Các bất biến*) |
+| `place_in_use` | 409 | Không xóa được địa điểm khi nội dung hoặc dữ liệu Planner còn tham chiếu; `error.details.counts` cho số đếm theo loại |
 | `validation_failed` | 422 | Schema từ chối payload; `issues` liệt kê đường dẫn từng trường |
 | `invalid_reference` | 422 | Đúng cấu trúc nhưng trỏ tới thứ không tồn tại |
 | `admin_auth_unconfigured` | 503 | `ADMIN_API_TOKEN` chưa đặt hoặc quá ngắn |
@@ -133,7 +134,16 @@ template không thể ở trạng thái công khai nếu story nguồn của nó
 (phải bỏ xuất bản hoặc lưu trữ trước) để một URL đang sống không bắt đầu trả 404.
 Một review không thể bỏ xuất bản khi còn một story đã xuất bản link tới nó. Một
 template công khai thì không thể xoá. Một place không thể xoá khi còn thứ gì tham
-chiếu tới nó, và lời từ chối **nêu tên mọi chỗ đang tham chiếu**. Một place không
+chiếu tới nó: `DELETE /api/admin/travel/places/[slug]` trả **409 `place_in_use`** kèm
+`error.details.counts` = `{ stories, collections, templates, contentReviews,
+tripActivities, communityReviews }` (chỉ số đếm: không có id người dùng, chuyến hay
+review). Số đếm phía Planner gồm mọi hoạt động (kể cả chuyến đã lưu trữ) và mọi
+đánh giá cộng đồng, bất kể trạng thái. Không cascade, không sửa dữ liệu; hãy lưu trữ
+hoặc thay các tham chiếu, hoặc giữ lại địa điểm. Nếu không đọc được store Planner thì
+trả 503 `service_unavailable` và không xoá gì. Kiểm tra phía content và Planner không
+phải một transaction khi hai store tách rời, nên một chuyến có thể thêm địa điểm này
+vào giữa hai bước; `GET /api/admin/planner/integrity` ("unknown place") là lưới đỡ.
+Một place không
 thể bị tách khỏi một story khi còn đang được nhúng trong phần nội dung của story đó.
 
 **Template** — các ngày được đánh số `1..n` và `order` của hoạt động chạy `0..m`

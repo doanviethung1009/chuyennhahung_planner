@@ -755,7 +755,8 @@
       "invalid_state": "Thao tác bị từ chối vì trạng thái hiện tại của nội dung, ví dụ chuyến đi còn liên kết đến đánh giá chưa xuất bản hoặc còn mẫu công khai dùng đến.",
       "not_found": "Không tìm thấy bản ghi này. Có thể nó đã bị xoá.",
       "bad_request": "Yêu cầu không hợp lệ. Hãy tải lại trang rồi thử lại.",
-      "slug_conflict": "Đã có bản ghi dùng slug này. Không có gì bị ghi đè; hãy chọn slug khác."
+      "slug_conflict": "Đã có bản ghi dùng slug này. Không có gì bị ghi đè; hãy chọn slug khác.",
+      "place_in_use": "Không thể xoá địa điểm này vì vẫn còn nội dung hoặc dữ liệu người dùng tham chiếu đến nó. Hãy lưu trữ hoặc thay các tham chiếu trước."
     },
     "form": {
       "loading": "Đang tải…",
