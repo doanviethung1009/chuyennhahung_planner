@@ -35,6 +35,25 @@ function authed(body?: unknown, method = 'POST'): Request {
   });
 }
 
+/** The record's current `updatedAt`, read from the same JSON store the routes write (If-Match is required, S-6). */
+async function stampOf(kind: 'place' | 'story' | 'template', slug: string): Promise<string> {
+  const { TravelContentRepository } = await import('../src/server/content/repository');
+  const { createJsonFileStore } = await import('../src/server/content/store');
+  const reader = new TravelContentRepository({ store: createJsonFileStore(join(workdir, 'content.json')) });
+  const record =
+    kind === 'place'
+      ? await reader.getPlace(slug)
+      : kind === 'story'
+        ? await reader.getStory(slug)
+        : await reader.getTemplate(slug);
+  return record.updatedAt;
+}
+
+function withMatch(request: Request, stamp: string): Request {
+  request.headers.set('if-match', `"${stamp}"`);
+  return request;
+}
+
 function anon(method = 'GET'): Request {
   return new Request(`${BASE}/api/admin/travel`, { method });
 }
@@ -150,13 +169,13 @@ describe('admin place CRUD over HTTP', () => {
 
   it('patches and returns 404 for an unknown slug', async () => {
     const patched = await routes.adminPlace.PATCH(
-      authed({ estimatedCostVnd: 95_000 }, 'PATCH'),
+      withMatch(authed({ estimatedCostVnd: 95_000 }, 'PATCH'), await stampOf('place', 'ho-tuyen-lam')),
       params({ slug: 'ho-tuyen-lam' }),
     );
     expect((await patched.json()).estimatedCostVnd).toBe(95_000);
 
     const missing = await routes.adminPlace.PATCH(
-      authed({ estimatedCostVnd: 1 }, 'PATCH'),
+      withMatch(authed({ estimatedCostVnd: 1 }, 'PATCH'), 'any'),
       params({ slug: 'ghost' }),
     );
     expect(missing.status).toBe(404);
@@ -223,7 +242,7 @@ describe('story publishing and the public read path', () => {
   it('adds a place to the story through the dedicated endpoint', async () => {
     await routes.adminPlaces.POST(authed(placeFixture({ slug: 'doi-che-cau-dat' })));
     const response = await routes.adminStoryPlaces.PATCH(
-      authed({ add: ['doi-che-cau-dat'], remove: [] }, 'PATCH'),
+      withMatch(authed({ add: ['doi-che-cau-dat'], remove: [] }, 'PATCH'), await stampOf('story', slug)),
       params({ slug }),
     );
     expect((await response.json()).placeSlugs).toEqual([
@@ -300,7 +319,7 @@ describe('template creation and activity reordering over HTTP', () => {
 
     const ids = template.days[0].activities.map((a: { id: string }) => a.id);
     const response = await routes.adminReorder.POST(
-      authed({ day: 1, activityIds: [ids[1], ids[0]] }),
+      withMatch(authed({ day: 1, activityIds: [ids[1], ids[0]] }), await stampOf('template', slug)),
       params({ slug }),
     );
     expect(response.status).toBe(200);
@@ -314,7 +333,7 @@ describe('template creation and activity reordering over HTTP', () => {
 
   it('rejects a reorder that is not a permutation with 409', async () => {
     const response = await routes.adminReorder.POST(
-      authed({ day: 1, activityIds: ['act_nope'] }),
+      withMatch(authed({ day: 1, activityIds: ['act_nope'] }), await stampOf('template', slug)),
       params({ slug }),
     );
     expect(response.status).toBe(409);

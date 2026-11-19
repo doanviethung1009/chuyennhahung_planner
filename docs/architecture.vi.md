@@ -360,7 +360,7 @@ Nhật ký kiểm toán admin (P07-13, [feature](features/admin-audit-viewer.vi.
 | `planner/integrity` (qua `adminPlannerRoute`) | GET | `user:provision`, `session: true` (P07-15; editor bị từ chối) |
 | DELETE story/place/collection/review/template, `POST templates` | mọi method | chỉ token (`adminRoute`) |
 
-PATCH (story, place, review và, từ P07-15, collection và, từ P07-6, template qua `PATCH`, `reorder`, `move-activity`) nhận header tuỳ chọn `If-Match: "<updatedAt>"` (`ifMatchStamp`); repository so sánh trong transaction và ghi cũ trả **412** `version_conflict`. Không có header nghĩa là ghi sau thắng.
+PATCH (story, place, review và, từ P07-15, collection và, từ P07-6, template qua `PATCH`, `reorder`, `move-activity`) yêu cầu header `If-Match: "<updatedAt>"` (`ifMatchStamp`); repository so sánh trong transaction và ghi cũ trả **412** `version_conflict`. Thiếu header là **428** `precondition_required` (CORE-11; trước đây ghi sau thắng).
 
 ### Chuyến đi cộng đồng (ADR 0014, PR 1)
 

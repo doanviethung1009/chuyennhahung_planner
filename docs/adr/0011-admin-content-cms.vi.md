@@ -3,6 +3,7 @@
 🇬🇧 English version: [0011-admin-content-cms.md](0011-admin-content-cms.md)
 
 - **Trạng thái:** Đã chấp nhận (2026-11-12)
+- **Sửa đổi bởi CORE-11:** `If-Match` nay bắt buộc trên `PATCH`/`reorder`/`move-activity` của nội dung với mọi người gọi (thiếu → 428 `precondition_required`); các chỗ ghi "tuỳ chọn" và "ghi sau thắng" bên dưới là quyết định ban đầu, giữ lại làm lịch sử.
 - **Ngày:** 2026-11-12
 - **Người sở hữu:** system-architect
 

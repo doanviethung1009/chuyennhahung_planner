@@ -67,7 +67,10 @@ export function toErrorResponse(error: unknown): NextResponse {
     return NextResponse.json(body, { status: 422, headers: NO_STORE });
   }
 
-  console.error('[travel-content] unhandled error', error);
+  // Name and a bounded message only: a driver error can carry query parameters.
+  const name = error instanceof Error ? error.name : typeof error;
+  const detail = error instanceof Error ? error.message.slice(0, 200) : '';
+  console.error('[travel-content] unhandled error', name, detail);
   const body: ApiErrorBody = {
     error: { code: 'internal_error', message: 'internal error', issues: [] },
   };

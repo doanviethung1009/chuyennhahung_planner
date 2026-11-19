@@ -52,6 +52,8 @@ interface Opts {
   cookie?: string;
   origin?: string | null;
   ifMatch?: string;
+  /** Send no If-Match even on a write (to prove the 428). */
+  noMatch?: boolean;
 }
 
 function req(o: Opts = {}) {
@@ -67,6 +69,29 @@ function req(o: Opts = {}) {
     ...(o.body === undefined ? {} : { body: JSON.stringify(o.body) }),
   });
 }
+/**
+ * `req` for a write: If-Match is required (CORE-11 / S-6), so unless the test
+ * sets it (or `noMatch`) the record's current `updatedAt` is read and sent.
+ */
+async function reqM(o: Opts) {
+  const m = /\/api\/admin\/travel\/(places|stories|templates|collections|reviews)\/([^/]+)/.exec(o.path ?? '');
+  const slug = m?.[2] ?? '';
+  if (m && o.ifMatch === undefined && !o.noMatch) {
+    const repo = await content.getRepository();
+    try {
+      const rec =
+        m[1] === 'places' ? await repo.getPlace(slug)
+        : m[1] === 'stories' ? await repo.getStory(slug)
+        : m[1] === 'templates' ? await repo.getTemplate(slug)
+        : m[1] === 'collections' ? await repo.getCollection(slug)
+        : await repo.getReview(slug);
+      return req({ ...o, ifMatch: `"${rec.updatedAt}"` });
+    } catch {
+      /* unknown record: let the route answer 404 */
+    }
+  }
+  return req(o);
+}
 const slugParams = (slug: string) => ({ params: Promise.resolve({ slug }) });
 const idParams = (id: string) => ({ params: Promise.resolve({ id }) });
 
@@ -81,9 +106,9 @@ async function makeUser(role: 'member' | 'editor' | 'admin' | 'super_admin', ext
 
 const getPlace = (slug: string, o: Opts = {}) =>
   r.place.GET(req({ path: `/api/admin/travel/places/${slug}`, ...o }), slugParams(slug));
-const patchPlace = (slug: string, body: unknown, o: Opts = {}) =>
+const patchPlace = async (slug: string, body: unknown, o: Opts = {}) =>
   r.place.PATCH(
-    req({ method: 'PATCH', path: `/api/admin/travel/places/${slug}`, body, ...o }),
+    await reqM({ method: 'PATCH', path: `/api/admin/travel/places/${slug}`, body, ...o }),
     slugParams(slug),
   );
 
@@ -375,12 +400,12 @@ describe('templates on session access (P07-6)', () => {
   const create = (slug: string, o: Opts = {}) =>
     r.templates.POST(req({ method: 'POST', path: base, body: templateBody(slug), ...o }));
   const get = (slug: string, o: Opts = {}) => r.template.GET(req({ path: `${base}/${slug}`, ...o }), slugParams(slug));
-  const patch = (slug: string, body: unknown, o: Opts = {}) =>
-    r.template.PATCH(req({ method: 'PATCH', path: `${base}/${slug}`, body, ...o }), slugParams(slug));
-  const reorder = (slug: string, body: unknown, o: Opts = {}) =>
-    r.templateReorder.POST(req({ method: 'POST', path: `${base}/${slug}/reorder`, body, ...o }), slugParams(slug));
-  const move = (slug: string, body: unknown, o: Opts = {}) =>
-    r.templateMove.POST(req({ method: 'POST', path: `${base}/${slug}/move-activity`, body, ...o }), slugParams(slug));
+  const patch = async (slug: string, body: unknown, o: Opts = {}) =>
+    r.template.PATCH(await reqM({ method: 'PATCH', path: `${base}/${slug}`, body, ...o }), slugParams(slug));
+  const reorder = async (slug: string, body: unknown, o: Opts = {}) =>
+    r.templateReorder.POST(await reqM({ method: 'POST', path: `${base}/${slug}/reorder`, body, ...o }), slugParams(slug));
+  const move = async (slug: string, body: unknown, o: Opts = {}) =>
+    r.templateMove.POST(await reqM({ method: 'POST', path: `${base}/${slug}/move-activity`, body, ...o }), slugParams(slug));
   const del = (slug: string, o: Opts = {}) =>
     r.template.DELETE(req({ method: 'DELETE', path: `${base}/${slug}`, ...o }), slugParams(slug));
 
@@ -421,7 +446,7 @@ describe('templates on session access (P07-6)', () => {
     expect(await (await get('tpl-csrf', { bearer: ADMIN_TOKEN })).json()).toEqual(before);
   });
 
-  it('applies If-Match to PATCH, reorder and move: match 200, stale 412 writing nothing, absent last-write-wins', async () => {
+  it('applies If-Match to PATCH, reorder and move: match 200, stale 412 writing nothing, absent 428', async () => {
     const editor = await makeUser('editor');
     await create('tpl-ifmatch', { bearer: ADMIN_TOKEN });
     const fresh = async () => (await get('tpl-ifmatch', { bearer: ADMIN_TOKEN })).json();
@@ -452,6 +477,9 @@ describe('templates on session access (P07-6)', () => {
 
     const patched = await patch('tpl-ifmatch', { pace: 'relaxed' }, { cookie: editor.cookie, ifMatch: `"${afterMove.updatedAt}"` });
     expect(patched.status).toBe(200);
+    expect((await patch('tpl-ifmatch', { pace: 'relaxed' }, { bearer: ADMIN_TOKEN, noMatch: true })).status).toBe(428);
+    expect((await reorder('tpl-ifmatch', { day: 1, activityIds: ids }, { bearer: ADMIN_TOKEN, noMatch: true })).status).toBe(428);
+    expect((await move('tpl-ifmatch', { activityId: ids[0], toDay: 2, toIndex: 0 }, { bearer: ADMIN_TOKEN, noMatch: true })).status).toBe(428);
     expect((await patch('tpl-ifmatch', { pace: 'relaxed' }, { bearer: ADMIN_TOKEN })).status).toBe(200);
     expect((await reorder('tpl-ifmatch', { day: 2, activityIds: (await fresh()).days[1].activities.map((a: { id: string }) => a.id) }, { bearer: ADMIN_TOKEN })).status).toBe(200);
   });
@@ -488,8 +516,8 @@ describe('collections and integrity on session access (P07-15)', () => {
     r.collections.POST(req({ method: 'POST', path: base, body: collectionBody(slug), ...o }));
   const get = (slug: string, o: Opts = {}) =>
     r.collection.GET(req({ path: `${base}/${slug}`, ...o }), slugParams(slug));
-  const patch = (slug: string, body: unknown, o: Opts = {}) =>
-    r.collection.PATCH(req({ method: 'PATCH', path: `${base}/${slug}`, body, ...o }), slugParams(slug));
+  const patch = async (slug: string, body: unknown, o: Opts = {}) =>
+    r.collection.PATCH(await reqM({ method: 'PATCH', path: `${base}/${slug}`, body, ...o }), slugParams(slug));
   const status = (slug: string, action: string, o: Opts = {}) =>
     r.collectionStatus.POST(
       req({ method: 'POST', path: `${base}/${slug}/status`, body: { action }, ...o }),
@@ -559,7 +587,7 @@ describe('collections and integrity on session access (P07-15)', () => {
     expect((await get('col-csrf-new', { bearer: ADMIN_TOKEN })).status).toBe(404);
   });
 
-  it('applies If-Match to collection PATCH: match 200, stale 412 writing nothing, absent last-write-wins, empty 400', async () => {
+  it('applies If-Match to collection PATCH: match 200, stale 412 writing nothing, absent 428, empty 400', async () => {
     const editor = await makeUser('editor');
     await create('col-ifmatch', { bearer: ADMIN_TOKEN });
     const current = await (await get('col-ifmatch', { bearer: ADMIN_TOKEN })).json();
@@ -576,6 +604,7 @@ describe('collections and integrity on session access (P07-15)', () => {
     expect(ok.status).toBe(200);
     expect((await ok.json()).tagline.en).toBe('Other');
 
+    expect((await patch('col-ifmatch', { tagline: { vi: 'A', en: 'A' } }, { bearer: ADMIN_TOKEN, noMatch: true })).status).toBe(428);
     expect((await patch('col-ifmatch', { tagline: { vi: 'A', en: 'A' } }, { bearer: ADMIN_TOKEN })).status).toBe(200);
     expect((await patch('col-ifmatch', next, { bearer: ADMIN_TOKEN, ifMatch: '""' })).status).toBe(400);
   });
@@ -660,10 +689,39 @@ describe('If-Match on content PATCH', () => {
     expect(again.status === 412 || current.updatedAt === updated.updatedAt).toBe(true);
   });
 
-  it('treats an absent header as last-write-wins and an empty one as 400', async () => {
-    expect((await patchPlace('cms-place', { rating: 4 }, { bearer: ADMIN_TOKEN })).status).toBe(200);
+  it('refuses an absent header with 428 (token too) and an empty one with 400', async () => {
+    const absent = await patchPlace('cms-place', { rating: 4 }, { bearer: ADMIN_TOKEN, noMatch: true });
+    expect(absent.status).toBe(428);
+    expect((await absent.json()).error.code).toBe('precondition_required');
     const empty = await patchPlace('cms-place', { rating: 4 }, { bearer: ADMIN_TOKEN, ifMatch: '""' });
     expect(empty.status).toBe(400);
+  });
+
+  it('answers 428 precondition_required without If-Match on story, review and story-places PATCH (token too)', async () => {
+    const calls = [
+      r.story.PATCH(
+        req({ method: 'PATCH', path: '/api/admin/travel/stories/cms-story', body: { readingMinutes: 7 }, bearer: ADMIN_TOKEN }),
+        slugParams('cms-story'),
+      ),
+      r.review.PATCH(
+        req({ method: 'PATCH', path: '/api/admin/travel/reviews/cms-review', body: { rating: 3 }, bearer: ADMIN_TOKEN }),
+        idParams('cms-review'),
+      ),
+      r.storyPlaces.PATCH(
+        req({ method: 'PATCH', path: '/api/admin/travel/stories/cms-story/places', body: { add: ['cms-place'], remove: [] }, bearer: ADMIN_TOKEN }),
+        slugParams('cms-story'),
+      ),
+    ];
+    for (const response of await Promise.all(calls)) {
+      expect(response.status).toBe(428);
+      expect((await response.json()).error.code).toBe('precondition_required');
+    }
+  });
+
+  it('checks the header before the record: a missing If-Match on an unknown slug is 428, not 404', async () => {
+    const missing = await patchPlace('no-such-place', { rating: 4 }, { bearer: ADMIN_TOKEN, noMatch: true });
+    expect(missing.status).toBe(428);
+    expect((await missing.json()).error.code).toBe('precondition_required');
   });
 
   it('covers story, review and story-places PATCH', async () => {
@@ -759,14 +817,14 @@ describe('update schemas keep absent keys absent', () => {
     expect(place).toMatchObject({ suggestedMinutes: 90, rating: 4, personalNote: { vi: 'ghi chú', en: 'note' } });
     const review = await (
       await r.review.PATCH(
-        req({ method: 'PATCH', path: '/api/admin/travel/reviews/keep-review', body: { rating: 3 }, bearer: ADMIN_TOKEN }),
+        await reqM({ method: 'PATCH', path: '/api/admin/travel/reviews/keep-review', body: { rating: 3 }, bearer: ADMIN_TOKEN }),
         idParams('keep-review'),
       )
     ).json();
     expect(review).toMatchObject({ rating: 3, pros: { vi: ['tốt'], en: ['good'] }, cons: { vi: ['xa'], en: ['far'] }, costVnd: 1000 });
     const story = await (
       await r.story.PATCH(
-        req({ method: 'PATCH', path: '/api/admin/travel/stories/keep-story', body: { readingMinutes: 8 }, bearer: ADMIN_TOKEN }),
+        await reqM({ method: 'PATCH', path: '/api/admin/travel/stories/keep-story', body: { readingMinutes: 8 }, bearer: ADMIN_TOKEN }),
         slugParams('keep-story'),
       )
     ).json();
