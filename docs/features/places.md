@@ -51,3 +51,5 @@ Reads the `Place` collection of the content repository (`placeInputSchema`) and 
 Search is substring-only (no ranking, typo tolerance, autocomplete or sorting); no rating filter; no map, no creating a trip from the page (it links to `/my-trips/new`), no start time or cost edit on adding (edit in the trip editor), no archived trips. The page shows the 20 newest reviews, with no pagination; paging needs a `limit`/`cursor` on `GET /api/community/reviews` (decision PLACES-UI-S2). Only the 50 most recent active trips of the destination are offered. Alt text is generic until the schema has per-image alt. Place coordinates are not shown. Placeholder catalogue places would be public as they are.
 
 **Public API (PLACES-API-PROJ).** `GET /api/travel/places` and `/[slug]` return the same allow-list as the pages (`toPublicPlace`); no `affiliateLinks`, timestamps or `coords`. Test: `tests/places-api-public-projection.test.ts`.
+
+**Story pages (PLACES-API-PROJ follow-up).** `PublicStory.places` holds `PublicPlace` (via `toPublicPlace`), so a story page and its RSC payload never carry `affiliateLinks`, timestamps or `coords`. Test: `tests/public-content.test.ts`.
