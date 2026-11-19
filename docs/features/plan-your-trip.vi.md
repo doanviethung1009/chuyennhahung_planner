@@ -4,14 +4,15 @@
 
 ## Mục đích
 
-Trang để khách nhờ nhà mình thiết kế một chuyến đi cho họ. Hiện tại nó giải thích
-cách làm việc đó qua bốn bước và trao cho khách những đường liên hệ thật. **Nó
-không có form, và đó là chủ đích** — việc nối trang này với API Planner là phần
-frontend chưa bắt đầu, mà một nút submit không có gì phía sau là một nút chết.
+Điểm vào của Planner. Khách có thể bắt đầu thiết kế chuyến đi ngay qua hai link
+thật — một chuyện có lịch trình thật hoặc một chuyến trống — hoặc nhờ nhà mình gợi ý, việc
+mà trang giải thích qua bốn bước và trao những đường liên hệ thật. **Trang không
+có form, và đó là chủ đích**: nó dẫn vào Planner chứ không gửi dữ liệu tới Planner,
+và một nút submit không có gì phía sau là một nút chết. Trang không hứa AI hay
+công cụ tự lên lịch — cả hai đều đang hoãn.
 
-Backend của Planner thì đã ra mắt ([ADR 0002](../adr/0002-planner-core.vi.md),
-[travel-planner-core.vi.md](travel-planner-core.vi.md)), nên hợp đồng mà trang này
-sẽ gửi tới đã tồn tại. Thứ còn thiếu là UI, không phải phía server.
+Bản thân Planner ([ADR 0002](../adr/0002-planner-core.vi.md),
+[travel-planner-core.vi.md](travel-planner-core.vi.md)) nằm phía sau hai link đó.
 
 ## Route
 
@@ -24,8 +25,8 @@ sẽ gửi tới đã tồn tại. Thứ còn thiếu là UI, không phải phí
 ## Dữ liệu
 
 Không dùng bộ nội dung nào. Mọi thứ trên trang đến từ namespace messages `plan`
-(title, description, intro, `step1Title`…`step4Detail`, phần liên hệ,
-`emailSubject`, `emailBody`, `browseCta`) cộng với `siteConfig.contactEmail` và
+(title, description, intro, `startTitle`…`startBlankHint`, `stepsTitle`,
+`step1Title`…`step4Detail`, phần liên hệ, `emailSubject`, `emailBody`) cộng với `siteConfig.contactEmail` và
 `social` trong [`src/content/site.ts`](../../src/content/site.ts).
 
 `contactEmail` và các handle mạng xã hội **cần chủ nhà xác nhận**: một link
@@ -34,16 +35,21 @@ mailto chỉ thật đúng bằng cái hộp thư nằm sau nó.
 ## Cách hoạt động
 
 Một server component với ba section, mỗi section có tiêu đề riêng gắn bằng
-`aria-labelledby`: phần giải thích bốn bước dưới dạng danh sách có thứ tự, khối
-liên hệ, và một link dự phòng dẫn sang danh sách lịch trình.
+`aria-labelledby`. Section đầu là phần chính, "bắt đầu thiết kế ngay", với hai
+`ButtonLink` (≥44px): `/stories` (chọn một chuyện; phần lịch trình thật ở mỗi trang chuyện
+dẫn tiếp tới `/trip-setup/[template]`, đường này cần slug template nên không thể
+là đích duy nhất của trang — các trang lịch trình không có link tới nó) và `/my-trips/new` (chuyến trống). Phía dưới, dưới tiêu
+đề "hoặc nhờ nhà Hưng gợi ý", là phần giải thích bốn bước dạng danh sách có thứ tự
+và khối liên hệ.
 
-Hành động chính là một `mailto:` điền sẵn — tiêu đề và nội dung thư dựng từ các
+Hành động liên hệ là một `mailto:` điền sẵn — tiêu đề và nội dung thư dựng từ các
 chuỗi đã dịch qua `encodeURIComponent`, nên khách Việt nhận được một bản nháp
 tiếng Việt. Hành động phụ là các kênh mạng xã hội thật (mục email bị lọc khỏi
 hàng này vì nó đã là nút chính). Mọi nút ra ngoài đều có nhãn "mở ở tab mới".
 
-Đây đúng là hình dạng mà quy tắc đòi hỏi: affordance thật, không phụ thuộc
-server, và không có control nào vô dụng.
+Đây đúng là hình dạng mà quy tắc đòi hỏi: affordance thật, trang này không phụ
+thuộc server, và không có control nào vô dụng. Trang giữ nguyên dòng nhà mình không
+bán tour và không nhận hoa hồng.
 
 ## File liên quan
 
@@ -56,17 +62,18 @@ server, và không có control nào vô dụng.
 
 ## Test
 
-Được phủ gián tiếp: `tests/routing.test.ts` chứng minh route tồn tại ở cả hai
-locale và đi tới được từ điều hướng ở footer, còn `tests/i18n.test.ts` chứng minh
-mọi chuỗi `plan` có đủ ở hai file và placeholder khớp nhau. `npm run verify:ui`
-chụp trang ở ba độ rộng. Không có test hành vi, vì chưa có hành vi nào.
+`tests/plan-your-trip-links.test.ts` chứng minh hai đích của link có trong
+pathname map và các khóa `plan` mới có ở cả hai file. `tests/routing.test.ts` chứng
+minh route tồn tại ở cả hai locale và đi tới được từ điều hướng ở footer, còn
+`tests/i18n.test.ts` chứng minh mọi chuỗi `plan` có đủ ở hai file và placeholder
+khớp nhau. `npm run verify:ui` chụp trang ở ba độ rộng.
 
 ## Giới hạn và câu hỏi còn mở
 
-Không form, không lưu trữ, không server action, không rate limiting — không dựng
-sẵn thứ nào, có chủ đích. Mở phase Planner nghĩa là, theo đúng thứ tự: một ADR
-được duyệt cho model dữ liệu và hợp đồng gửi form, rồi backend (validate ngay ở
-biên, phân quyền, ghi idempotent, hình dạng lỗi an toàn), rồi mới tới form.
+Trang này không form, không lưu trữ, không server action, không rate limiting —
+không dựng sẵn thứ nào, có chủ đích. Không có gợi ý AI và không có trình tự lên
+lịch: cả hai đều đang hoãn và cần ADR riêng. Khách chưa đăng nhập mở
+`/my-trips/new` thì do trang đó xử lý, không phải trang này.
 
 Trước lúc đó, rủi ro thật lại rất bình thường: một hộp thư không ai trông, và các
 handle mạng xã hội chưa từng được kiểm chứng. Cả hai đều có trong

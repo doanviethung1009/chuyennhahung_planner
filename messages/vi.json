@@ -175,8 +175,14 @@
   "plan": {
     "title": "Thiết kế chuyến đi của bạn",
     "description": "Mình sẽ gợi ý lịch trình dựa trên số ngày, ngân sách và kiểu đi bạn thích.",
-    "intro": "Hiện mình nhận gợi ý lịch trình qua email và tin nhắn. Công cụ tự lên lịch trình đang được làm, nhưng trong lúc chờ thì cách này nhanh hơn — và bạn nói chuyện với người thật.",
-    "stepsTitle": "Cách làm việc",
+    "intro": "Bạn có thể tự thiết kế chuyến đi ngay trong Planner của nhà Hưng, hoặc nhờ mình gợi ý lịch trình qua email và tin nhắn — lúc đó bạn nói chuyện với người thật.",
+    "startTitle": "Bắt đầu thiết kế ngay",
+    "startLead": "Chọn cách bắt đầu bạn thấy tiện nhất, rồi tự sắp xếp từng ngày theo ý mình.",
+    "startTemplatesCta": "Chọn từ một chuyện đã đi",
+    "startTemplatesHint": "Đọc một chuyện của nhà Hưng, rồi bấm vào phần lịch trình thật để chép về làm chuyến của bạn và chỉnh lại cho vừa.",
+    "startBlankCta": "Bắt đầu một chuyến trống",
+    "startBlankHint": "Tự thêm từng ngày và từng hoạt động từ đầu. Bạn có thể cần đăng nhập để lưu chuyến.",
+    "stepsTitle": "Hoặc nhờ nhà Hưng gợi ý",
     "step1Title": "Bạn kể qua về chuyến đi",
     "step1Detail": "Bao nhiêu ngày, đi với ai, đi từ đâu, ngân sách khoảng bao nhiêu, và thích đi chậm hay đi nhiều.",
     "step2Title": "Mình gửi bản nháp lịch trình",
@@ -189,9 +195,7 @@
     "contactLead": "Chọn cách nào tiện nhất cho bạn.",
     "emailCta": "Gửi email cho nhà Hưng",
     "emailSubject": "Nhờ nhà Hưng gợi ý lịch trình",
-    "emailBody": "Chào nhà Hưng,\n\nMình muốn nhờ gợi ý một chuyến đi.\n\n- Số ngày:\n- Đi từ:\n- Đi với ai:\n- Ngân sách khoảng:\n- Thích đi chậm / đi nhiều:\n- Đã đi những đâu rồi:\n\nCảm ơn hai bạn!",
-    "orBrowse": "Hoặc xem trước những lịch trình mình đã đi",
-    "browseCta": "Xem lịch trình có sẵn"
+    "emailBody": "Chào nhà Hưng,\n\nMình muốn nhờ gợi ý một chuyến đi.\n\n- Số ngày:\n- Đi từ:\n- Đi với ai:\n- Ngân sách khoảng:\n- Thích đi chậm / đi nhiều:\n- Đã đi những đâu rồi:\n\nCảm ơn hai bạn!"
   },
   "reviews": {
     "title": "Góc review",
