@@ -697,6 +697,32 @@ describe('If-Match on content PATCH', () => {
     expect(empty.status).toBe(400);
   });
 
+  it('answers 428 precondition_required without If-Match on story, review and story-places PATCH (token too)', async () => {
+    const calls = [
+      r.story.PATCH(
+        req({ method: 'PATCH', path: '/api/admin/travel/stories/cms-story', body: { readingMinutes: 7 }, bearer: ADMIN_TOKEN }),
+        slugParams('cms-story'),
+      ),
+      r.review.PATCH(
+        req({ method: 'PATCH', path: '/api/admin/travel/reviews/cms-review', body: { rating: 3 }, bearer: ADMIN_TOKEN }),
+        idParams('cms-review'),
+      ),
+      r.storyPlaces.PATCH(
+        req({ method: 'PATCH', path: '/api/admin/travel/stories/cms-story/places', body: { add: ['cms-place'], remove: [] }, bearer: ADMIN_TOKEN }),
+        slugParams('cms-story'),
+      ),
+    ];
+    for (const response of await Promise.all(calls)) {
+      expect(response.status).toBe(428);
+      expect((await response.json()).error.code).toBe('precondition_required');
+    }
+  });
+
+  it('checks the header before the record: a missing If-Match on an unknown slug is 428, not 404', async () => {
+    const missing = await patchPlace('no-such-place', { rating: 4 }, { bearer: ADMIN_TOKEN, noMatch: true });
+    expect(missing.status).toBe(428);
+  });
+
   it('covers story, review and story-places PATCH', async () => {
     const stale = '"2000-01-01T00:00:00.000Z"';
     const s = await r.story.PATCH(

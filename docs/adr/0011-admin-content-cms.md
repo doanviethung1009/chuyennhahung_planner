@@ -3,6 +3,7 @@
 🇻🇳 Bản tiếng Việt: [0011-admin-content-cms.vi.md](0011-admin-content-cms.vi.md)
 
 - **Status:** Accepted (2026-11-12)
+- **Amended by CORE-11:** `If-Match` is now required on content `PATCH`/`reorder`/`move-activity` for every caller (missing → 428 `precondition_required`); the "optional" and "last-write-wins" wording below is the original decision, kept as history.
 - **Date:** 2026-11-12
 - **Owner:** system-architect
 

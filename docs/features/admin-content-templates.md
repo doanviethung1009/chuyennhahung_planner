@@ -23,14 +23,14 @@ Reads and writes `TravelTemplate`: `title`, `summary`, `groupSize` (vi/en), `tra
 
 Both pages are server components behind `requireStaff(…, 'content')`; the list and the editor are client islands that call the existing endpoints. The list fetches once and searches and sorts with `list-utils.ts` (shared with stories, places and collections). The editor keeps a draft of the whole record. **Save** sends only the metadata keys that changed, and `days` only when activity content changed: a `days` patch re-issues activity ids, so ordering never goes through it. **Reorder (up/down)** and **move to another day** call `reorder` and `move-activity`, which keep activity ids; each saves at once and is disabled while there are unsaved edits (save first). A moved activity is appended to the target day; a day that holds one activity cannot give it up (the server refuses to leave a day empty). Publishing (`visibility: public`) needs the source story published: the server answers `invalid_state`, shown as a clear message. A 412 shows "someone else saved first" with a reload button. The source panel shows the snapshot and, when the source story's `updatedAt` is newer than `storyUpdatedAt`, a "source story changed" hint; if the story cannot be read the snapshot is still shown.
 
-`updateTemplate`, `reorderActivities` and `moveActivity` in the repository take an optional `expectedUpdatedAt` checked inside the transaction (`checkStamp`); an absent header stays last-write-wins for API callers.
+`updateTemplate`, `reorderActivities` and `moveActivity` in the repository take an `expectedUpdatedAt` checked inside the transaction (`checkStamp`); since CORE-11 the routes require the `If-Match` header (a missing one is `428 precondition_required`), for API callers too.
 
 ## Files
 
 | Path | Role |
 |---|---|
 | `src/app/api/admin/travel/templates/**` | four handlers moved to session access; three pass `ifMatchStamp`; POST and DELETE unchanged in access |
-| `src/server/content/repository.ts` | optional `expectedUpdatedAt` on the three methods |
+| `src/server/content/repository.ts` | `expectedUpdatedAt` on the three methods (the routes now require `If-Match`) |
 | `src/app/(admin)/[locale]/admin/content/templates/{,[slug]/}page.tsx` | pages |
 | `src/components/admin/content/{template-list,template-editor}.tsx`, `template-utils.ts` | UI and pure helpers |
 | `src/i18n/routing.ts`, `src/lib/admin-gate.ts`, `src/lib/return-to.ts`, `messages/*.json` | routes, sidebar, return-to, strings |
@@ -41,4 +41,4 @@ Both pages are server components behind `requireStaff(…, 'content')`; the list
 
 ## Limits and open questions
 
-No create (from a story), delete, or add/remove of days and activities in the browser; creating a template from a story is a separate decision. No version history (W4). Every editor session can now change public template content, the same exposure as stories and places; `/sec-check` is recommended. `If-Match` is optional on the API, so token callers can still overwrite. The 30 per minute per-user limit is per process.
+No create (from a story), delete, or add/remove of days and activities in the browser; creating a template from a story is a separate decision. No version history (W4). Every editor session can now change public template content, the same exposure as stories and places; `/sec-check` is recommended. `If-Match` is required on the API (CORE-11), so token callers cannot overwrite blindly. The 30 per minute per-user limit is per process.

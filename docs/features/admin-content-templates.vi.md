@@ -23,14 +23,14 @@ Các route API chuyển từ chỉ-token sang `adminContentRoute(request, { acti
 
 Cả hai trang là server component sau `requireStaff(…, 'content')`; danh sách và editor là client island gọi các endpoint có sẵn. Danh sách tải một lần rồi tìm và sắp xếp bằng `list-utils.ts` (dùng chung với story, place, collection). Editor giữ bản nháp của cả bản ghi. **Lưu** chỉ gửi các khóa thông tin chung đã đổi, và `days` chỉ khi nội dung hoạt động đổi: patch `days` cấp lại id hoạt động nên việc đổi thứ tự không đi qua đó. **Đổi thứ tự (lên/xuống)** và **chuyển sang ngày khác** gọi `reorder` và `move-activity`, giữ nguyên id hoạt động; mỗi thao tác lưu ngay và bị khóa khi còn chỉnh sửa chưa lưu (hãy lưu trước). Hoạt động được chuyển sẽ nối vào cuối ngày đích; ngày chỉ còn một hoạt động thì không chuyển đi được (server không cho ngày rỗng). Công khai (`visibility: public`) cần chuyện nguồn đã xuất bản: server trả `invalid_state`, hiển thị thành thông báo rõ ràng. Lỗi 412 hiện "có người lưu trước" kèm nút tải lại. Khung chuyện nguồn hiển thị ảnh chụp và, khi `updatedAt` của story nguồn mới hơn `storyUpdatedAt`, một gợi ý "chuyện nguồn đã đổi"; nếu không đọc được story thì ảnh chụp vẫn hiển thị.
 
-`updateTemplate`, `reorderActivities` và `moveActivity` trong repository nhận `expectedUpdatedAt` tuỳ chọn, kiểm tra trong transaction (`checkStamp`); không có header thì vẫn ghi sau thắng với người gọi API.
+`updateTemplate`, `reorderActivities` và `moveActivity` trong repository nhận `expectedUpdatedAt`, kiểm tra trong transaction (`checkStamp`); từ CORE-11 các route yêu cầu header `If-Match` (thiếu là `428 precondition_required`), cả với người gọi API.
 
 ## Files
 
 | Đường dẫn | Vai trò |
 |---|---|
 | `src/app/api/admin/travel/templates/**` | bốn handler chuyển sang truy cập bằng session; ba handler truyền `ifMatchStamp`; POST và DELETE giữ nguyên quyền truy cập |
-| `src/server/content/repository.ts` | `expectedUpdatedAt` tuỳ chọn trên ba hàm |
+| `src/server/content/repository.ts` | `expectedUpdatedAt` trên ba hàm (route nay yêu cầu `If-Match`) |
 | `src/app/(admin)/[locale]/admin/content/templates/{,[slug]/}page.tsx` | các trang |
 | `src/components/admin/content/{template-list,template-editor}.tsx`, `template-utils.ts` | giao diện và hàm thuần |
 | `src/i18n/routing.ts`, `src/lib/admin-gate.ts`, `src/lib/return-to.ts`, `messages/*.json` | route, sidebar, return-to, chuỗi |
@@ -41,4 +41,4 @@ Cả hai trang là server component sau `requireStaff(…, 'content')`; danh sá
 
 ## Limits and open questions
 
-Chưa có tạo mới (từ story), xóa, hay thêm/bớt ngày và hoạt động trên trình duyệt; tạo template từ story là quyết định riêng. Không có lịch sử phiên bản (W4). Mọi phiên editor giờ đều sửa được nội dung template công khai, cùng mức phơi bày như story và place; khuyến nghị `/sec-check`. `If-Match` là tuỳ chọn trên API nên người gọi bằng token vẫn ghi đè được. Giới hạn 30 lần/phút/người tính theo từng process.
+Chưa có tạo mới (từ story), xóa, hay thêm/bớt ngày và hoạt động trên trình duyệt; tạo template từ story là quyết định riêng. Không có lịch sử phiên bản (W4). Mọi phiên editor giờ đều sửa được nội dung template công khai, cùng mức phơi bày như story và place; khuyến nghị `/sec-check`. `If-Match` là bắt buộc trên API (CORE-11) nên người gọi bằng token không còn ghi đè được. Giới hạn 30 lần/phút/người tính theo từng process.
