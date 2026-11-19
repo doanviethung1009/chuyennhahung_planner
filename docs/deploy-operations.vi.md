@@ -234,6 +234,36 @@ Khi CI chưa publish image (fork, tag cũ), bỏ `TOOLS_IMAGE` rồi build:
 - Không dán giá trị thật từ `.env` vào chat hay ticket.
 - `docker login` lưu token trong `~/.docker/config.json` trên VM: dùng token chỉ có `read:packages`. Giữ gói `chuyennhahung-tools` ở chế độ private (nó chứa toàn bộ mã nguồn).
 
+### Production
+
+Mọi thứ ở trên viết cho VM dev. Production **chưa được tự động hoá**: ADR 0016 chỉ phủ dev và
+để ngỏ workflow cho prod, nên chưa có image `tools` cho prod cho tới khi bạn tạo ra nó.
+
+- **Một image riêng.** `NEXT_PUBLIC_SITE_URL` được nhúng lúc build, nên không thể đưa image dev
+  lên prod; phải build một image với URL của prod.
+- **Cách tạo chưa được quyết định.** `Dockerfile` nhận build argument, nên trên máy đủ RAM:
+  `docker build --target tools --build-arg NEXT_PUBLIC_SITE_URL=<prod-url> -t <name> .`, rồi
+  chuyển sang VM prod qua registry hoặc `docker save | docker load`. Đường này chưa được chạy
+  thử; một workflow cho prod sẽ thay nó và cần ADR riêng hoặc một bản sửa cho ADR 0016.
+- **Cùng quy tắc layout.** Dùng hàm `dc` của layout prod (`local-db` hoặc `external-db`), với
+  `.env` của prod.
+
+Thứ tự khi bổ sung nội dung như `content:seed-places` (các địa điểm DEST-1):
+
+1. Deploy mã trước (các điểm đến mới là nội dung tĩnh, đến cùng bản release).
+2. Kiểm tra store. Nếu store prod vẫn **trống** và `TRAVEL_CONTENT_AUTOSEED` là `true` (mặc
+   định), request đầu tiên sẽ tự nạp toàn bộ nội dung mẫu, gồm cả địa điểm, và script sau đó thấy
+   mọi thứ đã có. Với store đã có dữ liệu, chính script là thứ thêm chúng.
+3. Chạy script với `--dry-run`. Kỳ vọng thấy những slug còn thiếu; `skipped` liệt kê địa điểm đã
+   tồn tại với cùng slug, và chúng được để nguyên.
+4. Chạy thật, rồi chạy thêm một lần: lần hai phải in `created (0)`.
+5. Mở các trang công khai và trang địa điểm trong admin, kiểm bản ghi mới có xuất hiện.
+6. Chi phí và thời lượng trong địa điểm seed là ước lượng, còn `rating` / `personalNote` để
+   trống: hãy xác nhận hoặc điền trong CMS. Lần chạy script sau không bao giờ ghi đè các chỉnh sửa đó.
+
+Không có script hoàn tác. Một địa điểm tạo nhầm được ẩn hoặc xoá từ CMS admin; hãy sao lưu trước
+([Sao lưu và khôi phục](#sao-lưu-và-khôi-phục)).
+
 ## Nâng cấp
 
 - **App** được phát hành bằng cách merge vào `main` ([deploy-runbook](deploy-runbook.vi.md)).

@@ -241,6 +241,36 @@ in `.env`). It runs `next build`, so watch for the build being killed on a small
 - Never put real values from `.env` in a chat or a ticket.
 - `docker login` stores the token in `~/.docker/config.json` on the VM: use a token with `read:packages` only. Keep the `chuyennhahung-tools` package private (it holds the full source).
 
+### Production
+
+Everything above is written for the dev VM. Production is **not automated**: ADR 0016 covers dev
+only and leaves the prod workflow open, so no prod `tools` image exists until you make one.
+
+- **A separate image.** `NEXT_PUBLIC_SITE_URL` is baked in at build time, so the dev image cannot
+  be promoted to prod; build one with the prod URL.
+- **How to get it is not decided.** The `Dockerfile` accepts the build argument, so on a machine
+  with enough RAM: `docker build --target tools --build-arg NEXT_PUBLIC_SITE_URL=<prod-url> -t <name> .`,
+  then move it to the prod VM through a registry or `docker save | docker load`. This path has not
+  been exercised; a prod workflow would replace it and needs its own ADR or an amendment to 0016.
+- **Same layout rules.** Use the `dc` function of the prod layout (`local-db` or `external-db`),
+  with the prod `.env`.
+
+Order for a content top-up such as `content:seed-places` (the DEST-1 landmark places):
+
+1. Deploy the code first (the new destinations are static content and arrive with the release).
+2. Check the store. If the prod store is still **empty** and `TRAVEL_CONTENT_AUTOSEED` is `true`
+   (the default), the first request seeds all demo content, places included, and the script then
+   finds everything present. On an existing store the script is what adds them.
+3. Run the script with `--dry-run`. Expect the slugs that are missing; `skipped` lists any place
+   that already exists under the same slug, which is left untouched.
+4. Run it for real, then once more: the second run must print `created (0)`.
+5. Open the public pages and the admin places page and check the new records appear.
+6. Costs and durations in seeded places are estimates and `rating` / `personalNote` are empty:
+   confirm or fill them in the CMS. A later run of the script never overwrites those edits.
+
+There is no undo script. A wrongly created place is hidden or deleted from the admin CMS; take a
+backup first ([Backups and restore](#backups-and-restore)).
+
 ## Upgrades
 
 - **The app** is released by merging into `main` ([deploy-runbook](deploy-runbook.md)).
