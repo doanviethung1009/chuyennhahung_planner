@@ -759,6 +759,13 @@
       "not_found": "Không tìm thấy bản ghi này. Có thể nó đã bị xoá.",
       "bad_request": "Yêu cầu không hợp lệ. Hãy tải lại trang rồi thử lại.",
       "slug_conflict": "Đã có bản ghi dùng slug này. Không có gì bị ghi đè; hãy chọn slug khác.",
+      "place_in_use_counts": "Đang được dùng bởi: {list}.",
+      "usage_stories": "bài viết {count}",
+      "usage_collections": "bộ sưu tập {count}",
+      "usage_templates": "mẫu lịch trình {count}",
+      "usage_contentReviews": "đánh giá nội dung {count}",
+      "usage_tripActivities": "hoạt động trong chuyến đi {count}",
+      "usage_communityReviews": "đánh giá cộng đồng {count}",
       "place_in_use": "Không thể xoá địa điểm này vì vẫn còn nội dung hoặc dữ liệu người dùng tham chiếu đến nó. Hãy lưu trữ hoặc thay các tham chiếu trước."
     },
     "form": {
@@ -863,6 +870,16 @@
       "newButton": "Chuyến đi mới"
     },
     "places": {
+      "delete": {
+        "dangerTitle": "Vùng nguy hiểm",
+        "dangerHint": "Xóa vĩnh viễn địa điểm này. Không thể hoàn tác.",
+        "button": "Xóa địa điểm",
+        "confirmTitle": "Xóa địa điểm này?",
+        "confirmBody": "Địa điểm “{name}” sẽ bị xóa vĩnh viễn và không thể khôi phục. Nếu còn nội dung hoặc chuyến đi tham chiếu đến nó, việc xóa sẽ bị từ chối.",
+        "confirm": "Xóa vĩnh viễn",
+        "cancel": "Hủy",
+        "deleting": "Đang xóa…"
+      },
       "viewOnSite": "Xem trên site",
       "newTab": "(mở trong tab mới)",
       "metaTitle": "Quản lý địa điểm",
@@ -1686,6 +1703,7 @@
       "user_promote": "Đổi vai trò tài khoản",
       "template_write": "Soạn mẫu chuyến đi",
       "story_publish": "Xuất bản bài viết",
+      "content_delete": "Xóa vĩnh viễn địa điểm",
       "content_write": "Sửa địa điểm, bài viết và đánh giá",
       "community_moderate": "Kiểm duyệt đánh giá cộng đồng",
       "community_restrict": "Hạn chế thành viên cộng đồng",

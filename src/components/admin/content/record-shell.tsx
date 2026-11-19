@@ -7,6 +7,7 @@ import { PlaceSiteLink } from '@/components/admin/community/place-link';
 import { buttonClass } from '@/components/ui/button';
 import { EditorProvider, type Draft } from './form-kit';
 import { ActionButtons, LiveNotice, StatusBadge } from './notices';
+import { DeletePlace } from './delete-place';
 import { useRecord } from './use-record';
 
 interface Props {
@@ -16,6 +17,8 @@ interface Props {
   /** Whether the record has a publish lifecycle (stories do, places do not). */
   lifecycle: boolean;
   back: 'stories' | 'places' | 'collections';
+  /** Places only: show the delete control. Decided on the server from `content:delete`; the API enforces it again. */
+  canDelete?: boolean;
   children: (draft: Draft) => ReactNode;
 }
 
@@ -24,7 +27,7 @@ interface Props {
  * publish controls and the live status region. The client island of every
  * edit page; the page around it is a server component.
  */
-export function RecordShell({ apiPath, statusPath, fields, lifecycle, back, children }: Props) {
+export function RecordShell({ apiPath, statusPath, fields, lifecycle, back, canDelete = false, children }: Props) {
   const t = useTranslations('adminContent');
   const state = useRecord(apiPath, fields, statusPath);
   const { record, draft, pending } = state;
@@ -113,6 +116,15 @@ export function RecordShell({ apiPath, statusPath, fields, lifecycle, back, chil
           </div>
         </div>
       </form>
+
+      {back === 'places' && canDelete && typeof record.slug === 'string' ? (
+        <DeletePlace apiPath={apiPath} name={placeName(record, state.locale)} disabled={pending !== null} />
+      ) : null}
     </div>
   );
+}
+
+function placeName(record: Draft, locale: string): string {
+  const name = record.name as { vi?: string; en?: string } | undefined;
+  return (locale === 'en' ? name?.en : name?.vi) || name?.vi || name?.en || String(record.slug);
 }

@@ -28,6 +28,8 @@ const KNOWN_ERRORS = [
   'place_in_use',
 ] as const;
 
+const USAGE_KINDS = ['stories', 'collections', 'templates', 'contentReviews', 'tripActivities', 'communityReviews'] as const;
+
 /** Maps an API failure onto a message under `adminContent.errors`. */
 export function useErrorNotice(): (failure: unknown) => Notice {
   const t = useTranslations('adminContent.errors');
@@ -41,6 +43,13 @@ export function useErrorNotice(): (failure: unknown) => Notice {
       if (failure.code === 'validation_failed') return { kind: 'error', text: t('validation_failed') };
       if (failure.code === 'rate_limited') {
         return { kind: 'error', text: t('rate_limited', { seconds: failure.retryAfterSeconds ?? 60 }) };
+      }
+      if (failure.code === 'place_in_use') {
+        // Counts only, never ids (CORE-9): list the kinds that still refer to the place.
+        const list = USAGE_KINDS.filter((kind) => (failure.details?.[kind] ?? 0) > 0)
+          .map((kind) => t(`usage_${kind}`, { count: failure.details?.[kind] ?? 0 }))
+          .join(' · ');
+        return { kind: 'error', text: list ? `${t('place_in_use')} ${t('place_in_use_counts', { list })}` : t('place_in_use') };
       }
       if ((KNOWN_ERRORS as readonly string[]).includes(failure.code)) {
         return { kind: 'error', text: t(failure.code as (typeof KNOWN_ERRORS)[number]) };
