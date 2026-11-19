@@ -2,7 +2,8 @@
 
 import { useParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { Link, usePathname } from '@/i18n/navigation';
+import NextLink from 'next/link';
+import { getPathname, usePathname } from '@/i18n/navigation';
 import { locales } from '@/i18n/routing';
 
 /**
@@ -26,16 +27,16 @@ export function LocaleSwitcher({ className = '' }: { className?: string }) {
         const isActive = locale === active;
 
         return (
-          <Link
+          <NextLink
             key={locale}
-            // next-intl needs the route params to rebuild a dynamic pathname in
-            // the other locale; `pathname` here is the canonical template.
+            // `getPathname` follows `localePrefix: 'as-needed'`, so VI stays
+            // unprefixed. next-intl's own `Link locale=` always writes the
+            // prefix (even `/vi/...`), which costs a 307 back (CORE-12 / P-5).
             // @ts-expect-error -- params are validated at runtime by next-intl
-            href={{ pathname, params }}
-            locale={locale}
+            href={getPathname({ locale, href: { pathname, params } })}
             hrefLang={locale}
             aria-current={isActive ? 'true' : undefined}
-            className={`inline-flex min-h-9 items-center rounded-pill px-3 text-sm font-medium transition-colors duration-200 ease-gentle ${
+            className={`inline-flex min-h-11 min-w-11 justify-center items-center rounded-pill px-3 text-sm font-medium transition-colors duration-200 ease-gentle ${
               isActive
                 ? 'bg-primary text-primary-foreground'
                 : 'text-foreground-muted hover:text-foreground'
@@ -45,7 +46,7 @@ export function LocaleSwitcher({ className = '' }: { className?: string }) {
             <span className="sr-only">
               {isActive ? t(locale) : t('switchTo', { name: t(locale) })}
             </span>
-          </Link>
+          </NextLink>
         );
       })}
     </div>

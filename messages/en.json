@@ -699,7 +699,9 @@
     "overview": {
       "heading": "Welcome to the admin area",
       "signedInAs": "Signed in as {handle}.",
-      "body": "As an editor you can edit stories, places and reviews. Managing users is for administrators only.",
+      "bodyEditor": "As an editor you can edit stories, places and reviews. Managing users is for administrators only.",
+      "bodyAdmin": "As an administrator you can edit content, manage members and editors, and handle moderation. Administrator accounts and system status are for super admins only.",
+      "bodySuperAdmin": "As a super admin you can manage content, every account and the system status.",
       "goStories": "Open the stories list",
       "title": "Admin",
       "metaTitle": "Admin",

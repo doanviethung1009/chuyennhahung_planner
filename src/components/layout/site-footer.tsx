@@ -69,7 +69,7 @@ export async function SiteFooter() {
                   <li key={link.key}>
                     <Link
                       href={link.href}
-                      className="inline-flex min-h-10 items-center text-[0.9375rem] text-ink-700 transition-colors duration-200 ease-gentle hover:text-primary-strong"
+                      className="inline-flex min-h-11 items-center text-[0.9375rem] text-ink-700 transition-colors duration-200 ease-gentle hover:text-primary-strong"
                     >
                       {tNav(link.key)}
                     </Link>
@@ -94,7 +94,7 @@ export async function SiteFooter() {
                     {...(item.platform === 'email'
                       ? {}
                       : { target: '_blank', rel: 'noopener noreferrer' })}
-                    className="inline-flex min-h-10 items-center gap-2 text-[0.9375rem] text-ink-700 transition-colors duration-200 ease-gentle hover:text-primary-strong"
+                    className="inline-flex min-h-11 items-center gap-2 text-[0.9375rem] text-ink-700 transition-colors duration-200 ease-gentle hover:text-primary-strong"
                   >
                     {item.platform === 'email' ? siteConfig.contactEmail : item.label}
                     {item.platform === 'email' ? null : (

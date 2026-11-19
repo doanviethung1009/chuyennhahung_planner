@@ -11,7 +11,7 @@ import { Field, inputClass } from '../field';
 import { COST_CATEGORIES, formatDong, wholeNumber, type Mutate } from './shared';
 
 type Expense = TripView['expenses'][number];
-const rowButton = buttonClass({ size: 'sm', variant: 'secondary' });
+const rowButton = buttonClass({ size: 'sm', variant: 'secondary', className: 'min-h-11 min-w-11' });
 
 function ExpenseForm({
   idPrefix,
