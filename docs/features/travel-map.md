@@ -46,7 +46,8 @@ On the full map (`/map`) only **featured** destinations (`featured: true` in
 permanent name label; every other pin shows its name as a tooltip on hover or
 keyboard focus, as the home preview does. The name stays in the anchor's
 accessible name either way. This keeps dense clusters (Hà Nội / Ninh Bình /
-Hạ Long, Huế / Hội An / Đà Nẵng) readable at 375px. On touch there is no hover,
+Hạ Long, Huế / Hội An / Đà Nẵng) readable at 375px. A featured destination may set `labelSide` to override the default side where
+its neighbour's label would collide (Sa Pa, Phú Quốc, TP. Hồ Chí Minh). On touch there is no hover,
 so a tap opens the destination page, whose heading carries the name.
 
 The simplification is deliberate and stated: the coastline is stylised, the pins

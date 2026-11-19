@@ -45,7 +45,8 @@ Trên bản đồ đầy đủ (`/map`) chỉ các điểm đến **featured** (
 nhãn tên cố định; mọi ghim còn lại hiện tên qua tooltip khi hover hoặc focus bàn
 phím, giống bản xem trước ở trang chủ. Tên vẫn nằm trong accessible name của thẻ
 liên kết ở cả hai trường hợp. Nhờ vậy các cụm dày (Hà Nội / Ninh Bình / Hạ Long,
-Huế / Hội An / Đà Nẵng) vẫn đọc được ở 375px. Trên cảm ứng không có hover, nên
+Huế / Hội An / Đà Nẵng) vẫn đọc được ở 375px. Một điểm featured có thể đặt `labelSide` để ghi đè phía nhãn mặc định khi nhãn
+lân cận va chạm (Sa Pa, Phú Quốc, TP. Hồ Chí Minh). Trên cảm ứng không có hover, nên
 chạm vào sẽ mở trang điểm đến, nơi tiêu đề có tên.
 
 Việc đơn giản hoá là có chủ đích và được nói rõ: đường bờ biển là cách điệu, còn

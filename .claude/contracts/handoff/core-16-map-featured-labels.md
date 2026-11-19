@@ -13,5 +13,6 @@
   - Phú Quốc / TP. Hồ Chí Minh
   Cụm Hà Nội/Ninh Bình/Hạ Long và Huế/Hội An/Đà Nẵng đã hết chồng.
 - Focus bàn phím (Tab) lên pin Ninh Bình (không featured): `:focus-visible` đúng, tooltip opacity 1.
-- Cần chủ dự án quyết (dữ liệu của chủ, quy tắc 8): (a) bỏ Hà Giang và Phú Quốc khỏi featured; hoặc (b) cho phép ghi đè phía nhãn theo pin (Sa Pa → trái, Phú Quốc → trái, TP.HCM → phải), đổi hợp đồng `labelSide` của #194.
+- ĐÃ XỬ LÝ 2 cặp chồng (chủ dự án chọn "sửa nhãn trước"): thêm `Destination.labelSide?: 'left' | 'right'` ghi đè phía nhãn; đặt Sa Pa → trái, Phú Quốc → trái, TP.HCM → phải (mặc định vẫn `labelSide(x)` của #194). Đo lại: 375px và 768px đều 0 nhãn chồng, 0 pin <44px, không bị cắt; typecheck/lint/test vẫn PASS (1392 test).
+- Còn lại (nhỏ): ở 375px nhãn "Hà Nội" nằm trên chấm Quảng Ninh; hộp Quảng Ninh nằm sau trong DOM nên vẫn bấm được, chưa kiểm tra bằng thao tác bấm thật.
 - Chưa chạy: /qc-check, /sec-check (NOT RUN). Server preview đã dừng.

@@ -66,7 +66,7 @@ export function VietnamMap({
             );
             const r = pinRadius(destination.visits);
             // Pins in the right half put the label on their left so it never leaves the frame.
-            const flipLabel = labelSide(x) === 'left';
+            const flipLabel = (destination.labelSide ?? labelSide(x)) === 'left';
             // Only featured pins keep a permanent label on the full map; the rest
             // reveal their name as a tooltip, which keeps dense clusters readable.
             const showLabel = fixedLabels && destination.featured === true;

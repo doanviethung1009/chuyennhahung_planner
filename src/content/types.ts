@@ -43,6 +43,12 @@ export interface Destination {
    * of `visits` — an unvisited city can be featured. Owner-curated.
    */
   featured?: boolean;
+  /**
+   * Optional override of the side a featured pin's permanent label sits on, for
+   * the rare pin whose default side (`labelSide(x)`) collides with a neighbour's
+   * label at 375px. Leave unset otherwise.
+   */
+  labelSide?: 'left' | 'right';
 }
 
 export interface Story {

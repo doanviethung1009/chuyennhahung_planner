@@ -77,6 +77,7 @@ export const destinations: Destination[] = [
     },
     cover: '/images/covers/sa-pa.svg',
     featured: true,
+    labelSide: 'left',
   },
   {
     slug: 'ninh-binh',
@@ -254,6 +255,7 @@ export const destinations: Destination[] = [
     },
     cover: '/images/covers/phu-quoc.svg',
     featured: true,
+    labelSide: 'left',
   },
   {
     slug: 'moc-chau',
@@ -484,6 +486,7 @@ export const destinations: Destination[] = [
     tags: { vi: ['Thành phố', 'Lịch sử', 'Ẩm thực'], en: ['City', 'History', 'Food'] },
     cover: '/images/covers/tp-ho-chi-minh.svg',
     featured: true,
+    labelSide: 'right',
   },
   {
     slug: 'can-tho',

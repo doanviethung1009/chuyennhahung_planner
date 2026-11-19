@@ -114,7 +114,7 @@ describe('map pin touch targets', () => {
       const permanent = visible && !visible[1]!.includes('sr-only') ? visible : null;
       if (d.featured) {
         expect(permanent, d.slug).not.toBeNull();
-        expect(permanent![1], d.slug).toContain(labelSide(x) === 'left' ? 'right-full' : 'left-full');
+        expect(permanent![1], d.slug).toContain((d.labelSide ?? labelSide(x)) === 'left' ? 'right-full' : 'left-full');
         expect(permanent![1], d.slug).toContain('absolute');
       } else {
         expect(permanent, `${d.slug} must not have a permanent label`).toBeNull();
