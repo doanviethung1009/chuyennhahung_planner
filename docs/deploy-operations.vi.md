@@ -180,27 +180,34 @@ Có những việc không thuộc một lần release: bổ sung content store (
 runner của GitHub và đẩy lên ghcr cạnh image `app` (`deploy-dev.yml`); deploy không bao giờ khởi
 động nó. VM chỉ **pull** về, vì bước build chạy `next build`, không vừa VM 1,9 GB.
 
+### 0. Chọn layout
+
+Có hai trường hợp; định nghĩa **một** trong hai hàm `dc` trong shell (mất khi SSH phiên mới, nên định nghĩa lại). Dùng sai sẽ báo *the Travel Content database is unavailable*.
+
+```bash
+cd /opt/chuyennhahung/src/deploy
+# local-db: PostgreSQL cùng stack Compose với app (layout một VM)
+dc() { docker compose --project-directory . --env-file /opt/chuyennhahung/.env --profile local-db -f compose.yml -f compose.app.yml -f compose.app.local-db.yml "$@"; }
+# external-db: PostgreSQL ở VM khác (cần pg-ca.crt, xem deploy-runbook)
+dc() { docker compose --project-directory . --env-file /opt/chuyennhahung/.env -f compose.yml -f compose.app.yml -f compose.app.external-db.yml "$@"; }
+```
+
 ### 1. Pull image (một lần cho mỗi phiên bản mã)
 ```bash
 cd /opt/chuyennhahung/src && git pull --ff-only          # file compose cùng commit
 cd deploy
 export TOOLS_IMAGE=ghcr.io/<owner>/chuyennhahung-tools APP_IMAGE_TAG=dev
 docker login ghcr.io -u <github-user>                    # token có read:packages; một lần cho mỗi VM
-docker compose --project-directory . --env-file /opt/chuyennhahung/.env \
-  -f compose.yml -f compose.app.yml -f compose.app.external-db.yml \
-  --profile tools pull tools
+dc --profile tools pull tools
 ```
 `dev` là tag CI dời đi sau mỗi lần merge vào `main`; `sha-<commit>` ghim đúng một bản build.
 Image chứa các script của commit nó được build: script thêm ở PR sau cần image mới hơn.
 
 ### 2. Chạy script (dry-run trước, rồi mới chạy thật)
 ```bash
-docker compose --project-directory . --env-file /opt/chuyennhahung/.env \
-  -f compose.yml -f compose.app.yml -f compose.app.external-db.yml \
-  run --rm tools npm run content:seed-places -- --dry-run
+dc run --rm tools npm run content:seed-places -- --dry-run
 ```
-Bỏ `--dry-run` để ghi thật. Với layout `local-db`, dùng `compose.app.local-db.yml` thay cho
-`compose.app.external-db.yml`.
+Bỏ `--dry-run` để ghi thật.
 
 ### Từng phần có nghĩa gì
 | Phần | Vì sao có |
@@ -208,7 +215,8 @@ Bỏ `--dry-run` để ghi thật. Với layout `local-db`, dùng `compose.app.l
 | `cd /opt/chuyennhahung/src/deploy` | Các file compose nằm ở đây; lệnh dùng đường dẫn tương đối từ đây |
 | `--project-directory .` | Dùng file và tên project của thư mục này, giống `deploy.sh`, để script dùng cùng volume và network với app |
 | `--env-file /opt/chuyennhahung/.env` | Secret và URL nằm ngoài repository. Thiếu cờ này Compose chỉ đọc `deploy/.env` và báo *required variable CNH_APP_PASSWORD is missing*, vì `compose.yml` còn định nghĩa service `postgres` |
-| `-f compose.yml -f compose.app.yml -f compose.app.<overlay>.yml` | Stack nền, các service `app`/`tools`, và overlay database (`external-db` mount chứng chỉ CA `pg-ca.crt`). Luôn dùng đúng bộ file mà `deploy.sh` dùng |
+| `--profile local-db` | Nạp service `postgres` của cùng stack. `deploy.sh` truyền nó cho layout này; thiếu nó, container `tools` không có database để nối tới |
+| `-f compose.yml -f compose.app.yml -f compose.app.<overlay>.yml` | Stack nền, các service `app`/`tools`, và overlay database. `local-db` đưa `tools` vào network `backend` riêng, nơi có host `postgres`; `external-db` thì mount chứng chỉ CA `pg-ca.crt`. Luôn dùng đúng bộ file mà `deploy.sh` dùng |
 | `TOOLS_IMAGE`, `APP_IMAGE_TAG=dev` | Service `tools` dùng image nào: image ghcr CI đã build, tag `dev`. Thiếu `TOOLS_IMAGE`, Compose tìm `chuyennhahung/app-tools` cục bộ và tự build |
 | `--profile tools` | Service `tools` nằm sau một profile để `up` không bao giờ khởi động nó. `pull` cần profile để thấy nó |
 | `run --rm tools` | Khởi động một container từ image đó và xoá nó sau khi chạy xong |
