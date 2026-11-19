@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="presentation">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f8f0dd"/>
+      <stop offset="62%" stop-color="#cdb294" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#cdb294" stop-opacity="0.2"/>
+    </linearGradient>
+    <radialGradient id="sun">
+      <stop offset="0%" stop-color="#fff6e6" stop-opacity="0.95"/>
+      <stop offset="70%" stop-color="#fff6e6" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#fff6e6" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="800" fill="url(#sky)"/>
+  <circle cx="628" cy="217" r="300" fill="url(#sun)"/>
+  <circle cx="628" cy="217" r="46" fill="#fff8ec" opacity="0.9"/>
+  <path d="M -40 800 L -40 500 Q -86 495 0 398 Q 85 387 171 420 Q 257 357 343 452 Q 428 395 514 493 Q 600 341 686 489 Q 771 344 857 483 Q 943 395 1029 474 Q 1114 462 1200 450 L 1240 500 L 1240 800 Z" fill="#cdb294" opacity="0.55"/>
+  <path d="M -40 800 L -40 610 Q -120 465 0 589 Q 120 465 240 544 Q 360 607 480 562 Q 600 547 720 567 Q 840 522 960 606 Q 1080 536 1200 556 L 1240 610 L 1240 800 Z" fill="#5c8470" opacity="0.8"/>
+  <path d="M -40 800 L -40 720 L 0 712 L 400 707 L 800 719 L 1200 710 L 1240 720 L 1240 800 Z" fill="#35423a" opacity="0.9"/>
+  <rect width="1200" height="800" filter="url(#grain)" opacity="0.045"/>
+</svg>

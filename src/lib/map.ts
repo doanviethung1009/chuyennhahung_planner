@@ -111,6 +111,6 @@ export const VIETNAM_OUTLINE_PATH = smoothClosedPath(
 );
 
 /** Pin radius grows with repeat visits, capped so it never dominates. */
-export function pinRadius(visits: number): number {
-  return Math.min(5 + visits * 1.4, 11);
+export function pinRadius(visits: number | undefined): number {
+  return Math.min(5 + (visits ?? 0) * 1.4, 11);
 }

@@ -6,6 +6,7 @@ import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
 import { siteConfig } from '@/content/site';
 import { getDestination } from '@/content/destinations';
+import { isVisited } from '@/content/types';
 import { getPublicContent } from '@/server/content/public';
 import { getPublicPlaces } from '@/server/content/public-places';
 import { PlaceCard } from '@/components/cards/place-card';
@@ -143,6 +144,8 @@ export default async function DestinationPage({ params }: Params) {
                   {destination.bestSeason[locale]}
                 </dd>
               </div>
+              {isVisited(destination) && destination.firstVisited ? (
+                <>
               <div>
                 <dt className="text-eyebrow text-foreground-muted">
                   {t('firstVisitedLabel')}
@@ -167,6 +170,15 @@ export default async function DestinationPage({ params }: Params) {
                   </Link>
                 </dd>
               </div>
+                </>
+              ) : (
+                <div>
+                  <dt className="text-eyebrow text-foreground-muted">
+                    {t('visitsLabel')}
+                  </dt>
+                  <dd className="mt-2 text-base text-ink-800">{t('notVisited')}</dd>
+                </div>
+              )}
             </dl>
           </div>
         </Container>

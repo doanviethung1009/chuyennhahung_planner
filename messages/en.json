@@ -43,6 +43,7 @@
     "dayCount": "{days} days",
     "nightCount": "{nights} nights",
     "visitCount": "Visited {count} times",
+    "notVisited": "Not visited yet",
     "firstVisited": "First visited {date}",
     "firstVisitedLabel": "First visited",
     "visitsLabel": "Times returned",
@@ -146,7 +147,7 @@
   },
   "destinations": {
     "title": "Destinations",
-    "description": "Places the two of us have actually been, with the season to go and the reason to bother.",
+    "description": "Places we have been and places we hope to go, with the season to go. Places we have not been yet carry general information only.",
     "count": "{count} destinations",
     "filterLabel": "Filter by region",
     "empty": "No destinations in this region yet."
@@ -157,6 +158,7 @@
     "mapLabel": "Map of destinations across Vietnam",
     "legend": "Legend",
     "legendVisits": "Bigger points are places we've returned to",
+    "legendNotVisited": "Hollow points are places we haven't been yet",
     "listTitle": "All destinations",
     "selectHint": "Pick a point on the map, or choose from the list."
   },

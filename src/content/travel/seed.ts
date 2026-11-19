@@ -1,3 +1,4 @@
+import { landmarkPlaces } from '@/content/travel/seed-places';
 import { seedStaticStories } from '@/content/travel/static-stories';
 import type { TravelContentRepository } from '@/server/content/repository';
 import type {
@@ -28,7 +29,7 @@ import type {
 
 export const DA_LAT = 'da-lat';
 
-export const demoPlaces: PlaceCreateInput[] = [
+const daLatPlaces: PlaceCreateInput[] = [
   {
     slug: 'ho-xuan-huong',
     name: { vi: 'Hồ Xuân Hương', en: 'Xuân Hương Lake' },
@@ -192,6 +193,9 @@ export const demoPlaces: PlaceCreateInput[] = [
     affiliateLinks: [],
   },
 ];
+
+/** Đà Lạt places (first-hand notes) plus the public-landmark places (DEST-1). */
+export const demoPlaces: PlaceCreateInput[] = [...daLatPlaces, ...landmarkPlaces];
 
 export const demoReviews: ReviewCreateInput[] = [
   {

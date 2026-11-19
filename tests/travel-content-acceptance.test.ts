@@ -209,7 +209,7 @@ describe('seed integrity', () => {
   });
 
   it('seeds the whole module set', async () => {
-    expect(await repo.listPlaces({ limit: 100 })).toHaveLength(6);
+    expect(await repo.listPlaces({ limit: 100 })).toHaveLength(demoPlaces.length);
     // The Đà Lạt story plus the typed-seed stories (ADR 0012).
     expect(await repo.listStories({ limit: 100 })).toHaveLength(1 + staticStories.length);
     expect(await repo.listCollections({ limit: 100 })).toHaveLength(1);
@@ -230,7 +230,7 @@ describe('seed integrity', () => {
 
   it('is idempotent — a second seed does not duplicate anything', async () => {
     await seedTravelContent(repo);
-    expect(await repo.listPlaces({ limit: 100 })).toHaveLength(6);
+    expect(await repo.listPlaces({ limit: 100 })).toHaveLength(demoPlaces.length);
     // The Đà Lạt story plus the typed-seed stories (ADR 0012).
     expect(await repo.listStories({ limit: 100 })).toHaveLength(1 + staticStories.length);
   });
