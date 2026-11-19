@@ -15,6 +15,7 @@ export type Action =
   | 'template:write'
   | 'story:publish'
   | 'content:write'
+  | 'content:delete'
   | 'community:moderate'
   | 'community:restrict'
   | 'community:erase'
@@ -40,10 +41,12 @@ export const ROLE_ACTIONS: Record<Role | 'service', readonly Action[]> = {
   editor: EDITOR_ACTIONS,
   // `community:restrict` (ADR 0015) switches a person off: heavier than removing one review, so not for editors.
   // `community:erase` (ADR 0024 §8) wipes a guest review's content for good: irreversible, so admin and up.
-  admin: [...EDITOR_ACTIONS, 'user:provision', 'user:promote', 'community:restrict', 'community:erase', 'audit:read'],
+  // `content:delete` (ADR 0028): permanent removal of a place; not an editor action.
+  admin: [...EDITOR_ACTIONS, 'content:delete', 'user:provision', 'user:promote', 'community:restrict', 'community:erase', 'audit:read'],
   // ADR 0017: everything an admin can do, plus the operations Runbook.
   super_admin: [
     ...EDITOR_ACTIONS,
+    'content:delete',
     'user:provision',
     'user:promote',
     'community:restrict',
@@ -51,7 +54,7 @@ export const ROLE_ACTIONS: Record<Role | 'service', readonly Action[]> = {
     'runbook:read',
     'audit:read',
   ],
-  service: ['user:provision', 'user:promote', 'community:restrict', 'community:erase', 'audit:read', ...EDITOR_ACTIONS],
+  service: ['content:delete', 'user:provision', 'user:promote', 'community:restrict', 'community:erase', 'audit:read', ...EDITOR_ACTIONS],
 };
 
 /** The one place an absent stored role reads as `member`. Never writes. */

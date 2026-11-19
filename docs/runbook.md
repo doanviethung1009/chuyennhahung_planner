@@ -124,7 +124,7 @@ adding or removing a route means editing this table in both languages.
 | POST | `/api/admin/travel/places` | Admin token or staff session | Create a place |
 | GET | `/api/admin/travel/places/[slug]` | Admin token or staff session | One place |
 | PATCH | `/api/admin/travel/places/[slug]` | Admin token or staff session | Edit a place (optional If-Match) |
-| DELETE | `/api/admin/travel/places/[slug]` | Admin token | Delete a place (409 `place_in_use` while referenced) |
+| DELETE | `/api/admin/travel/places/[slug]` | Admin token or admin session (`content:delete`; editors refused) | Delete a place (409 `place_in_use` while referenced) |
 | GET | `/api/admin/travel/stories` | Admin token or staff session | List stories (all statuses) |
 | POST | `/api/admin/travel/stories` | Admin token or staff session | Create a story |
 | GET | `/api/admin/travel/stories/[slug]` | Admin token or staff session | One story |

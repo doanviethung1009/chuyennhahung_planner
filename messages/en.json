@@ -759,6 +759,13 @@
       "not_found": "This record was not found. It may have been deleted.",
       "bad_request": "The request was not valid. Reload the page and try again.",
       "slug_conflict": "A record with this slug already exists. Nothing was overwritten; choose another slug.",
+      "place_in_use_counts": "Still used by: {list}.",
+      "usage_stories": "stories {count}",
+      "usage_collections": "collections {count}",
+      "usage_templates": "itinerary templates {count}",
+      "usage_contentReviews": "content reviews {count}",
+      "usage_tripActivities": "trip activities {count}",
+      "usage_communityReviews": "community reviews {count}",
       "place_in_use": "This place cannot be deleted because content or traveller data still refers to it. Archive or replace those references first."
     },
     "form": {
@@ -863,6 +870,16 @@
       "newButton": "New story"
     },
     "places": {
+      "delete": {
+        "dangerTitle": "Danger zone",
+        "dangerHint": "Permanently deletes this place. This cannot be undone.",
+        "button": "Delete place",
+        "confirmTitle": "Delete this place?",
+        "confirmBody": "“{name}” will be deleted for good and cannot be restored. If content or trips still refer to it, the deletion is refused.",
+        "confirm": "Delete permanently",
+        "cancel": "Cancel",
+        "deleting": "Deleting…"
+      },
       "viewOnSite": "View on site",
       "newTab": "(opens in a new tab)",
       "metaTitle": "Manage places",
@@ -1686,6 +1703,7 @@
       "user_promote": "Change account roles",
       "template_write": "Write trip templates",
       "story_publish": "Publish stories",
+      "content_delete": "Permanently delete places",
       "content_write": "Edit places, stories and reviews",
       "community_moderate": "Moderate community reviews",
       "community_restrict": "Restrict community members",

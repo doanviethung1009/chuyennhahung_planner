@@ -30,6 +30,7 @@ Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
 | Bảng điều khiển quản trị | [admin-dashboard.vi.md](admin-dashboard.vi.md) | Thẻ trên `/admin` theo vai trò: chuyến đi và đánh giá chờ duyệt, bản nháp chuyến đi/đánh giá, tài khoản, runtime; `GET /api/admin/overview` (P07-11) |
 | Cổng quản trị | [admin-portal.vi.md](admin-portal.vi.md) | `/quan-tri` — danh sách, tạo, đổi vai trò và cấp lại mật khẩu người dùng ngay trên trình duyệt, chỉ cho admin (ADR 0010) |
 | Lọc người dùng quản trị | [admin-user-filter.vi.md](admin-user-filter.vi.md) | Tìm kiếm (tên, handle, email) và lọc vai trò trên bảng người dùng `/quan-tri`, phía client |
+| Xóa địa điểm trong quản trị | [admin-place-delete.vi.md](admin-place-delete.vi.md) | Nút "Xóa địa điểm" ở `/admin/content/places/[slug]` chỉ cho admin và super admin; `content:delete`, hộp xác nhận, 409 `place_in_use` kèm số đếm (CORE-10) |
 | Tự động deploy lên dev | [auto-deploy-dev.vi.md](auto-deploy-dev.vi.md) | Workflow `deploy-dev`: `main` xanh build image, runner tự host trên VM deploy, health probe và rollback (ADR 0016) |
 | Đánh giá cộng đồng | [community-reviews.vi.md](community-reviews.vi.md) | Đánh giá địa điểm của người đi: viết trong Planner thì được duyệt, khách viết ở trang chủ thì lên ngay và staff gỡ được; tự khai, văn bản thuần (ADR 0014, PR 2) |
 | Thêm điểm đến | [more-destinations.vi.md](more-destinations.vi.md) | Tám điểm đến chưa đi (chỉ mô tả khách quan), địa điểm nổi tiếng cho chúng và cho bốn điểm đến cũ, lệnh bổ sung `content:seed-places` |

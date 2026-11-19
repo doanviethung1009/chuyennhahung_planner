@@ -52,3 +52,5 @@ Người xem duyệt được các địa điểm của một điểm đến và
 ## Limits and open questions
 
 Nội dung khách thấy có thể cũ tới 10 giây khi sửa xảy ra ở instance khác (instance đã sửa thì mới ngay); cache giữ một catalogue đã chiếu cho mỗi tiến trình. Tìm kiếm chỉ là chuỗi con (không xếp hạng, không chịu lỗi chính tả, không gợi ý tự động, không sắp xếp); chưa lọc theo điểm; chưa có bản đồ, tạo chuyến ngay trên trang (chỉ có liên kết tới `/my-trips/new`), sửa giờ bắt đầu hay chi phí lúc thêm (sửa trong trình soạn chuyến), chuyến đã lưu trữ. Trang hiện 20 review mới nhất, không phân trang; muốn phân trang phải thêm `limit`/`cursor` vào `GET /api/community/reviews` (quyết định PLACES-UI-S2). Chỉ đề xuất 50 chuyến đang hoạt động gần nhất của điểm đến. Alt còn chung chung cho đến khi schema có alt theo từng ảnh. Chưa hiển thị tọa độ địa điểm. Địa điểm nhập tạm làm placeholder sẽ hiển thị công khai như nó đang có.
+
+**API công khai (PLACES-API-PROJ).** `GET /api/travel/places` và `/[slug]` trả cùng allow-list với các trang (`toPublicPlace`); không có `affiliateLinks`, timestamp hay `coords`. Test: `tests/places-api-public-projection.test.ts`.
