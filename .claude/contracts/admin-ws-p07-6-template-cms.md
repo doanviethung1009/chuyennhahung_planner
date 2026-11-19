@@ -26,6 +26,6 @@
 - Security and migration risks: trust boundary moves (token-only → session) for template read/update/reorder/move: every editor session can now change public template content — same exposure as stories and places; `/sec-check` strongly recommended before merge (owner calls it). No DB migration (templates live in the content store; PostgreSQL goes through the same repository).
 - Rollback approach: revert the PR; `expectedUpdatedAt` is an optional parameter, so older callers are unaffected.
 - Budget: sub-agents 0. Stop and ask the owner if: the repository change needs more than the three methods, a schema change seems necessary, or the template editor cannot be built without a new endpoint.
-- State: READY (owner approved W11 and W4 on 2026-11-18; contract written 2026-11-19)
+- State: DONE (merged PR #169, 2026-11-19; qc PASS, sec PASS_WITH_WARNINGS; follow-ups P07-20, P07-21; browser smoke NOT RUN)
 - Feature document owner: frontend writes `docs/features/admin-content-templates.md` + `.vi.md` (backend edits only the API section), registered in `docs/features/README.*`.
 - Architecture/usage doc updates needed: `docs/architecture.*`, `docs/travel-content-api.*` (auth matrix and `If-Match` on templates), both languages.

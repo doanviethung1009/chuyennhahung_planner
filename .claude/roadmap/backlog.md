@@ -25,7 +25,7 @@ lại; mục bỏ đi được gạch và ghi lý do, không xóa. Sắp theo th
 
 ## Phase 07 — Admin Portal, CMS & RBAC (P1, ngay sau 05)
 
-> Core-first (2026-11-18): thứ tự và contract các session ở [`core-completion-index.md`](../contracts/core-completion-index.md). P07-10, 11, 13 (PR #157), 16, 19 Done; P07-12, 14, 15, 17 còn lại (P07-17: PR #162); P07-18 hoãn cùng media (Phase 08). Template CMS (P07-6): W4 chốt không lưu lịch sử, chỉ `If-Match`; W11 duyệt chuyển handler collections/integrity/templates sang session.
+> Core-first (2026-11-18): thứ tự và contract các session ở [`core-completion-index.md`](../contracts/core-completion-index.md). P07-10, 11, 12 (PR #165), 13 (#157), 14 (#166), 15 (#168), 16, 17 (#162), 19, 22 (#171) Done; template CMS P07-6 Done (#169, W4: không lưu lịch sử, chỉ `If-Match`; W11 đã chuyển handler sang session; DELETE/POST template và DELETE collection vẫn token-only theo quyết định của owner); P07-18 hoãn cùng media (Phase 08). Smoke trình duyệt các màn hình admin mới: NOT RUN.
 
 Nguồn: ADR 0006 (PR #25) và mục Phases trong `docs/architecture.md`. Chép lại ở đây,
 không sửa ý.
@@ -40,7 +40,7 @@ không sửa ý.
 | ~~P07-3~~ | ~~Session admin: thời hạn ngắn theo role; `requireSameOrigin` bắt buộc cho mutation admin~~ — xong (ADR 0010) | backend-engineer | P07-1 |
 | ~~P07-4~~ | ~~Audit log (`auditEvents`)~~ — **trùng P10-1, xong ở batch 10.2 (PR #115)**; còn mở: sự kiện đổi template/role/support read → xem P07-13 | backend-engineer | P07-1 |
 | P07-5 | Test còn thiếu: ma trận `can`; service principal bị từ chối `trip:*`; admin nhận `not_found` trên trip người khác; thiếu role = `member`; member không vào route admin | backend-engineer | P07-1..3 |
-| ~~P07-6~~ | ~~CMS sửa template/story qua content store; quyết định có lưu lịch sử bản template hay không ~~ — story/place/review xong (ADR 0011); **create/delete/template còn token-only, versioning template chưa quyết** | system-architect → BE/FE | P07-1 |
+| ~~P07-6~~ | ~~CMS sửa template/story qua content store; quyết định có lưu lịch sử bản template hay không ~~ — story/place/review xong (ADR 0011); create/delete story/place xong ở P07-16; **template CMS xong ở PR #169 (2026-11-19; W4: không lưu lịch sử, chỉ `If-Match`); tạo mới/xóa template và xóa collection vẫn token-only theo quyết định của owner** | system-architect → BE/FE | P07-1 |
 | ~~P07-7~~ | ~~UI Admin Portal (chỉ qua session + role, token không tới client)~~ — xong (ADR 0010/0011) | frontend-engineer | P07-3, P07-5 |
 | P07-8 | Rate-limit store chung cho đăng nhập admin khi > 1 process | backend-engineer | liên quan P09-1 |
 | P07-9 | Gỡ dùng token trong trình duyệt; token chỉ còn cho CI | backend-engineer | P07-7 |
@@ -70,7 +70,7 @@ có trước khi chạy nhiều instance.
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
 | ~~P04-1~~ | ~~Editor ngày/hoạt động/chi phí trong `/my-trips/[id]` dùng API sẵn có~~ — xong (`docs/features/trip-editor.md`; còn thiếu test component) | frontend-engineer | — |
-| P04-2 | Nối `/plan-your-trip` vào Planner (thay hay giữ trang liên hệ — cần quyết định) | system-architect → FE | P04-1 |
+| ~~P04-2~~ | ~~Nối `/plan-your-trip` vào Planner~~ — xong (PR #172, #173; hai lối vào `/stories` và `/my-trips/new`, giữ đường liên hệ) | system-architect → FE | P04-1 |
 | P04-4 | **(owner duyệt ID 2026-11-18)** Danh sách template phía người dùng (chỉ template public, chưa bị rút), dẫn vào `/trip-setup/[template]`; không trùng P07-6 (CMS admin) | frontend-engineer | P04-1 |
 | P04-3 | Planner map — cần ADR riêng | system-architect | P04-1 |
 
