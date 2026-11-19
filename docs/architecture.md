@@ -361,7 +361,7 @@ The admin audit log (P07-13, [feature](features/admin-audit-viewer.md)): `/admin
 | `planner/integrity` (via `adminPlannerRoute`) | GET | `user:provision`, `session: true` (P07-15; editors refused) |
 | DELETE of stories/places/collections/reviews/templates, `POST templates` | any | token-only (`adminRoute`) |
 
-PATCH (stories, places, reviews and, since P07-15, collections and, since P07-6, templates via `PATCH`, `reorder` and `move-activity`) accepts an optional `If-Match: "<updatedAt>"` (`ifMatchStamp`); the repository compares inside the transaction and a stale write answers **412** `version_conflict`. No header means last write wins.
+PATCH (stories, places, reviews and, since P07-15, collections and, since P07-6, templates via `PATCH`, `reorder` and `move-activity`) requires `If-Match: "<updatedAt>"` (`ifMatchStamp`); the repository compares inside the transaction and a stale write answers **412** `version_conflict`. No header is **428** `precondition_required` (CORE-11; it was last write wins).
 
 ### Community trips (ADR 0014, PR 1)
 

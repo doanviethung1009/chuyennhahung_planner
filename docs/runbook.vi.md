@@ -123,18 +123,18 @@ hay bỏ một route nghĩa là sửa bảng này ở cả hai ngôn ngữ.
 | GET | `/api/admin/travel/places` | Admin token hoặc phiên nhân viên | Danh sách địa điểm (mọi trạng thái) |
 | POST | `/api/admin/travel/places` | Admin token hoặc phiên nhân viên | Tạo địa điểm |
 | GET | `/api/admin/travel/places/[slug]` | Admin token hoặc phiên nhân viên | Một địa điểm |
-| PATCH | `/api/admin/travel/places/[slug]` | Admin token hoặc phiên nhân viên | Sửa địa điểm (If-Match tùy chọn) |
+| PATCH | `/api/admin/travel/places/[slug]` | Admin token hoặc phiên nhân viên | Sửa địa điểm (bắt buộc If-Match) |
 | DELETE | `/api/admin/travel/places/[slug]` | Admin token hoặc session admin (`content:delete`; editor bị từ chối) | Xóa địa điểm (409 `place_in_use` khi còn được tham chiếu) |
 | GET | `/api/admin/travel/stories` | Admin token hoặc phiên nhân viên | Danh sách chuyện (mọi trạng thái) |
 | POST | `/api/admin/travel/stories` | Admin token hoặc phiên nhân viên | Tạo chuyện |
 | GET | `/api/admin/travel/stories/[slug]` | Admin token hoặc phiên nhân viên | Một chuyện |
-| PATCH | `/api/admin/travel/stories/[slug]` | Admin token hoặc phiên nhân viên | Sửa chuyện (If-Match tùy chọn) |
+| PATCH | `/api/admin/travel/stories/[slug]` | Admin token hoặc phiên nhân viên | Sửa chuyện (bắt buộc If-Match) |
 | DELETE | `/api/admin/travel/stories/[slug]` | Admin token hoặc phiên nhân viên | Xóa chuyện |
 | POST | `/api/admin/travel/stories/[slug]/status` | Admin token hoặc phiên nhân viên | Đổi trạng thái chuyện |
 | GET | `/api/admin/travel/reviews` | Admin token hoặc phiên nhân viên | Danh sách đánh giá (mọi trạng thái) |
 | POST | `/api/admin/travel/reviews` | Admin token hoặc phiên nhân viên | Tạo đánh giá |
 | GET | `/api/admin/travel/reviews/[id]` | Admin token hoặc phiên nhân viên | Một đánh giá |
-| PATCH | `/api/admin/travel/reviews/[id]` | Admin token hoặc phiên nhân viên | Sửa đánh giá (If-Match tùy chọn) |
+| PATCH | `/api/admin/travel/reviews/[id]` | Admin token hoặc phiên nhân viên | Sửa đánh giá (bắt buộc If-Match) |
 | DELETE | `/api/admin/travel/reviews/[id]` | Admin token hoặc phiên nhân viên | Xóa đánh giá |
 | POST | `/api/admin/travel/reviews/[id]/status` | Admin token hoặc phiên nhân viên | Đổi trạng thái đánh giá |
 | PATCH | `/api/admin/travel/stories/[slug]/places` | Admin token hoặc phiên nhân viên | Đặt các địa điểm gắn với chuyện |
@@ -157,5 +157,7 @@ hay bỏ một route nghĩa là sửa bảng này ở cả hai ngôn ngữ.
 
 - Lỗi dùng chung một phong bì với `code` ổn định; các mã nằm trong [travel-content-api.vi.md](travel-content-api.vi.md).
 - Ghi vào Planner dùng khóa lạc quan: gửi `ETag` của lần đọc lại trong `If-Match`; lệch là `412 version_conflict`.
+- `PATCH`/`reorder`/`move-activity` admin của Travel Content cũng bắt buộc `If-Match: "<updatedAt>"` (cả phiên lẫn token): thiếu là `428 precondition_required`, cũ là `412 version_conflict`.
+- Bộ giới hạn đăng nhập (`signInLimiter`, `signInAccountLimiter`) đếm theo từng tiến trình và khóa theo giá trị đầu của `X-Forwarded-For`, nên nhiều instance thì giới hạn nhân lên và nginx **phải ghi đè** `X-Forwarded-For` (CORE-11 / S-4; chưa chia sẻ qua PostgreSQL).
 - `429 rate_limited` kèm `Retry-After`. Giới hạn theo từng tiến trình và khóa client có thể bị giả ([ADR 0005](adr/0005-trip-sharing-and-story-cloning.vi.md)).
 - Phản hồi admin là `no-store`.
