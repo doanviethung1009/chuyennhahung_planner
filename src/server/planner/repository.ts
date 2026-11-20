@@ -983,23 +983,23 @@ export class PlannerRepository {
       next[`${field}At`] = disabling ? this.timestamp() : null;
       next[`${field}By`] = disabling ? (actor?.userId ?? 'service') : null;
       data.users[index] = next;
-      if (disabling) {
-        data.sessions = data.sessions.filter((session) => session.userId !== userId);
-        // ADR 0030 §6 (L2): disabling turns the map link off for good, in this
-        // transaction, so a later unban or restore does not revive an old link.
-        const share = data.memberMapShares.find((row) => row.userId === userId);
-        if (share && share.tokenDigest !== null) {
-          share.tokenDigest = null;
-          share.updatedAt = this.timestamp();
-          this.record(data, {
-            targetKind: 'user',
-            targetId: userId,
-            actorId: PlannerRepository.actorId(actor),
-            action: 'map_share_off',
-            fromStatus: 'on',
-            toStatus: 'off',
-          });
-        }
+      if (disabling) data.sessions = data.sessions.filter((session) => session.userId !== userId);
+      // ADR 0030 §6, §8 (L2): any account state change leaves the map link off.
+      // Clearing on disable ends the link; clearing on unban/restore as well covers
+      // accounts disabled before this rule existed (no migration needed), so an old
+      // digest never comes back to life.
+      const share = data.memberMapShares.find((row) => row.userId === userId);
+      if (share && share.tokenDigest !== null) {
+        share.tokenDigest = null;
+        share.updatedAt = this.timestamp();
+        this.record(data, {
+          targetKind: 'user',
+          targetId: userId,
+          actorId: PlannerRepository.actorId(actor),
+          action: 'map_share_off',
+          fromStatus: 'on',
+          toStatus: 'off',
+        });
       }
       const [eventAction, from, to] = ({
         ban: ['ban', 'active', 'banned'],

@@ -291,6 +291,21 @@ describe('the public view', () => {
     }
   });
 
+  it('an account disabled before the rule (digest still stored) loses it on unban/restore', async () => {
+    const { planner, store } = setup();
+    const admin = (await planner.createUser({ handle: 'l2-old-admin', displayName: 'Quản trị', role: 'super_admin' })).user.id;
+    const id = await member(planner, 'l2-old');
+    const token = (await planner.setMemberMapShare(id, { enabled: true, shareName: 'anonymous' })).token ?? '';
+    // Simulate the old behaviour: disabled with the digest left in place.
+    await store.transact((data) => {
+      data.users.find((u) => u.id === id)!.bannedAt = FROZEN_NOW;
+    });
+    expect(await planner.getSharedMemberMap(token)).toBeNull();
+    await planner.changeAccountState(id, 'unban', { userId: admin });
+    expect(await planner.getSharedMemberMap(token)).toBeNull();
+    expect((await store.read()).memberMapShares[0]?.tokenDigest).toBeNull();
+  });
+
   it('audits the forced switch-off with the actor, and writes nothing when there was no link', async () => {
     const { planner } = setup();
     const admin = (await planner.createUser({ handle: 'l2-admin', displayName: 'Quản trị', role: 'super_admin' })).user.id;
