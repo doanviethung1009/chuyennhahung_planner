@@ -49,8 +49,8 @@ const noIndex = { key: 'X-Robots-Tag', value: 'noindex, nofollow' };
  * `SESSION_COOKIE` in `src/server/planner/auth.ts` (a test keeps them equal).
  */
 export const homePaths = ['/', '/en'];
-/** The member map is per-member at the same URL, so every response is private (ADR 0029). */
-export const memberMapPaths = ['/ban-do-cua-toi', '/en/my-map'];
+/** The member home (map + trips, ADR 0031) is per-member at the same URL, so every response is private (ADR 0029). */
+export const memberMapPaths = ['/chuyen-di-cua-toi', '/en/my-trips'];
 export const sessionCookieName = 'planner_session';
 const privateNoStore = { key: 'Cache-Control', value: 'private, no-store' };
 
@@ -95,6 +95,9 @@ const nextConfig: NextConfig = {
       { source: '/en/tours', destination: '/en/itineraries', permanent: true },
       { source: '/en/tour/:slug', destination: '/en/itineraries/:slug', permanent: true },
       { source: '/en/tours/:slug', destination: '/en/itineraries/:slug', permanent: true },
+      // The member map merged into My Trips (ADR 0031).
+      { source: '/ban-do-cua-toi', destination: '/chuyen-di-cua-toi', permanent: true },
+      { source: '/en/my-map', destination: '/en/my-trips', permanent: true },
     ];
   },
 };

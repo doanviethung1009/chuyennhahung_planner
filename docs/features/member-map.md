@@ -10,14 +10,14 @@ A signed-in member sees their own map of Vietnam: solid dots where they have bee
 
 | Internal | Vietnamese | English |
 |---|---|---|
-| `/my-map` | `/ban-do-cua-toi` | `/en/my-map` |
+| `/my-trips` (member home: map above the trip list) | `/chuyen-di-cua-toi` | `/en/my-trips` |
 
-`noindex`, not in the sitemap, always answered `Cache-Control: private, no-store`. Linked from the account menu and from My Trips.
+`noindex`, not in the sitemap, always answered `Cache-Control: private, no-store`. The map used to be its own page `/my-map`; [ADR 0031](../adr/0031-member-home-merge.md) merged it into My Trips. `/ban-do-cua-toi` and `/en/my-map` redirect (308) to it. The page is a server page; a guest sees the empty map and the sign-in button and the trip list is not mounted. The account menu has one entry.
 
 ## Data
 
 - Reads the member's trips (`listTrips`: `destinationSlug`, `status`, `planningStatus`, `startDate`, `endDate`) and own reviews (`listOwnReviews`: `placeSlug`, `visitedOn`, `status`), both scoped to the session's `userId`, plus the public place catalogue to map a review's place to its destination.
-- Coordinates, names, `featured` and label side come from the `destinations` seed, read-only. No new field, table or API. Message namespace `memberMap`; `nav.myMap`; `myTrips.mapLink`.
+- Coordinates, names, `featured` and label side come from the `destinations` seed, read-only. No new field, table or API. Message namespace `memberMap`; `myTrips.listTitle`.
 - Nothing real is needed from the owner, and no member data is invented.
 
 ## How it works
@@ -31,10 +31,10 @@ A signed-in member sees their own map of Vietnam: solid dots where they have bee
 | Path | Role |
 |---|---|
 | `src/server/planner/member-map.ts` | The pure rule, the session read and the allow-list |
-| `src/app/[locale]/my-map/page.tsx` | The page: `noindex`, dynamic, one `<h1>` |
+| `src/app/[locale]/my-trips/page.tsx` | The member home: `noindex`, dynamic, one `<h1>`, map then trip list |
 | `src/components/map/member-map-view.tsx` | Guest / empty / ready view |
 | `src/components/map/vietnam-map.tsx` | Prop type narrowed to `MapPin` (output unchanged) |
-| `next.config.ts` | `private, no-store` on `/ban-do-cua-toi` and `/en/my-map` |
+| `next.config.ts` | `private, no-store` on `/chuyen-di-cua-toi` and `/en/my-trips`; 308 redirects from the old map URLs |
 | `tests/member-map.test.ts`, `tests/member-map-view.test.ts` | Tests |
 
 ## Tests

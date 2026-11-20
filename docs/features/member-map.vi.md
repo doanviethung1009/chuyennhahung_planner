@@ -10,14 +10,14 @@ Thành viên đã đăng nhập thấy bản đồ Việt Nam của riêng mình
 
 | Internal | Vietnamese | English |
 |---|---|---|
-| `/my-map` | `/ban-do-cua-toi` | `/en/my-map` |
+| `/my-trips` (trang chủ thành viên: bản đồ trên danh sách chuyến) | `/chuyen-di-cua-toi` | `/en/my-trips` |
 
-`noindex`, không có trong sitemap, luôn trả `Cache-Control: private, no-store`. Có link từ menu tài khoản và từ Chuyến đi của tôi.
+`noindex`, không có trong sitemap, luôn trả `Cache-Control: private, no-store`. Bản đồ từng là trang riêng `/my-map`; [ADR 0031](../adr/0031-member-home-merge.vi.md) đã gộp vào Chuyến đi của tôi. `/ban-do-cua-toi` và `/en/my-map` redirect (308) về đó. Đây là trang server; khách thấy bản đồ trống và nút đăng nhập, danh sách chuyến không được mount. Menu tài khoản chỉ còn một mục.
 
 ## Data
 
 - Đọc chuyến đi của thành viên (`listTrips`: `destinationSlug`, `status`, `planningStatus`, `startDate`, `endDate`) và review của chính họ (`listOwnReviews`: `placeSlug`, `visitedOn`, `status`), đều theo `userId` của phiên, cùng catalogue địa điểm công khai để quy địa điểm của review về điểm đến.
-- Tọa độ, tên, `featured` và phía nhãn lấy từ seed `destinations`, chỉ đọc. Không thêm trường, bảng hay API. Namespace thông điệp `memberMap`; `nav.myMap`; `myTrips.mapLink`.
+- Tọa độ, tên, `featured` và phía nhãn lấy từ seed `destinations`, chỉ đọc. Không thêm trường, bảng hay API. Namespace thông điệp `memberMap`; `myTrips.listTitle`.
 - Không cần dữ liệu thật nào từ chủ, và không tạo dữ liệu thành viên giả.
 
 ## How it works
@@ -31,10 +31,10 @@ Thành viên đã đăng nhập thấy bản đồ Việt Nam của riêng mình
 | Path | Role |
 |---|---|
 | `src/server/planner/member-map.ts` | Quy tắc thuần, đọc phiên và allow-list |
-| `src/app/[locale]/my-map/page.tsx` | Trang: `noindex`, động, một `<h1>` |
+| `src/app/[locale]/my-trips/page.tsx` | Trang chủ thành viên: `noindex`, động, một `<h1>`, bản đồ rồi danh sách chuyến |
 | `src/components/map/member-map-view.tsx` | Giao diện khách / trống / có điểm |
 | `src/components/map/vietnam-map.tsx` | Kiểu prop thu hẹp thành `MapPin` (đầu ra không đổi) |
-| `next.config.ts` | `private, no-store` cho `/ban-do-cua-toi` và `/en/my-map` |
+| `next.config.ts` | `private, no-store` cho `/chuyen-di-cua-toi` và `/en/my-trips`; redirect 308 từ URL bản đồ cũ |
 | `tests/member-map.test.ts`, `tests/member-map-view.test.ts` | Test |
 
 ## Tests

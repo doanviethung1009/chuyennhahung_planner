@@ -71,8 +71,8 @@ Documentation is not a fourth role — whoever ships the change writes its docum
    [ADR 0002](docs/adr/0002-planner-core.md); browser session cookie —
    [ADR 0004](docs/adr/0004-planner-identity.md); password and Google sign-in —
    [ADR 0007](docs/adr/0007-password-and-google-sign-in.md)). `/plan-your-trip` is
-   still contact-only. The **member map** (`/my-map`, country level, read-only,
-   [ADR 0029](docs/adr/0029-member-map.md)) is open. Not to be scaffolded without its
+   still contact-only. The **member map** (on the member home `/my-trips`, country level, read-only,
+   [ADR 0029](docs/adr/0029-member-map.md), [ADR 0031](docs/adr/0031-member-home-merge.md)) is open. Not to be scaffolded without its
    own ADR: the **trip route map** (pins and day routes inside a trip), AI suggestions, a **hosted identity provider** (or Auth.js), MFA, foreign keys between content entities. The
    Planner runs on PostgreSQL when `PLANNER_DATABASE_URL` is set
    ([ADR 0009](docs/adr/0009-postgres-persistence.md)) and Travel Content when

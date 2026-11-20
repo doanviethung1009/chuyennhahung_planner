@@ -11,7 +11,7 @@ import {
   project,
 } from '@/lib/map';
 
-/** The fields a pin needs; `/map` passes whole destinations, `/my-map` a per-member projection. */
+/** The fields a pin needs; `/map` passes whole destinations, the member home a per-member projection. */
 export type MapPin = Pick<Destination, 'slug' | 'name' | 'coords' | 'visits' | 'featured' | 'labelSide'>;
 
 /**

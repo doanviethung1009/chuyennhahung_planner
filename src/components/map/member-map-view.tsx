@@ -33,7 +33,7 @@ export async function MemberMapView({
       : [];
 
   const signIn = `${getPathname({ href: '/sign-in', locale })}?returnTo=${encodeURIComponent(
-    getPathname({ href: '/my-map', locale }),
+    getPathname({ href: '/my-trips', locale }),
   )}`;
 
   return (

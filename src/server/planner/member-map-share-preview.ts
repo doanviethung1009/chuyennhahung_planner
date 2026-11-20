@@ -11,7 +11,7 @@ const SESSION_TOKEN_SHAPE = /^[A-Za-z0-9_-]{32,128}$/;
 
 /**
  * The exact public projection of the signed-in member's map (ADR 0030 §2), for
- * the preview on `/my-map`. It goes through the same pure builder the public page
+ * the preview on the member home (`/my-trips`). It goes through the same pure builder the public page
  * uses (`buildPublicMemberMapPoints`): completed trips only, archived or not,
  * destinations the catalogue knows, buckets 1 / 2–3 / 4+. Planned places and
  * review-only visits are not read. Returns `null` for a guest or on any failure,

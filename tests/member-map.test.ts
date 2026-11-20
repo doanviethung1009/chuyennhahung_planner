@@ -215,7 +215,7 @@ describe('resolveMemberMap', () => {
   });
 });
 
-describe('the /my-map boundary (ADR 0029)', () => {
+describe('the member home boundary (ADR 0029, ADR 0031)', () => {
   const src = resolve(import.meta.dirname, '../src');
   const read = (path: string) => readFileSync(resolve(src, path), 'utf8');
 
@@ -228,7 +228,7 @@ describe('the /my-map boundary (ADR 0029)', () => {
     }
     // The header paths must track the route table, not a second hand-kept copy.
     expect([...memberMapPaths].sort()).toEqual(
-      [pathnames['/my-map'].vi, `/en${pathnames['/my-map'].en}`].sort(),
+      [pathnames['/my-trips'].vi, `/en${pathnames['/my-trips'].en}`].sort(),
     );
   });
 
@@ -238,10 +238,25 @@ describe('the /my-map boundary (ADR 0029)', () => {
   });
 
   it('keeps the page noindex and dynamic, and /map free of member data', () => {
-    const page = read('app/[locale]/my-map/page.tsx');
+    const page = read('app/[locale]/my-trips/page.tsx');
     expect(page).toMatch(/index: false/);
     expect(page).toMatch(/force-dynamic/);
     expect(read('app/[locale]/map/page.tsx')).not.toMatch(/member-map|getMemberMap|cookies/);
     expect(read('components/map/member-map-view.tsx')).toMatch(/^import type \{ MemberMapState \}/m);
+  });
+
+  it('redirects the old member-map URLs to My Trips with a permanent redirect (ADR 0031)', async () => {
+    const nextConfig = (await import('../next.config')).default;
+    const redirects = (await nextConfig.redirects?.()) ?? [];
+    expect(redirects).toContainEqual({ source: '/ban-do-cua-toi', destination: '/chuyen-di-cua-toi', permanent: true });
+    expect(redirects).toContainEqual({ source: '/en/my-map', destination: '/en/my-trips', permanent: true });
+    expect(pathnames).not.toHaveProperty('/my-map');
+  });
+
+  it('mounts the trip list only for a signed-in member, so a guest keeps the empty map', () => {
+    const page = read('app/[locale]/my-trips/page.tsx');
+    expect(page).toMatch(/state\.status === 'guest' \? null/);
+    expect(page).toMatch(/<MemberMapView/);
+    expect(page).toMatch(/<MyTrips \/>/);
   });
 });

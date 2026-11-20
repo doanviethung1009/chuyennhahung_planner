@@ -16,7 +16,7 @@ New features start from [`_template.md`](_template.md) /
 | Stories | [stories.md](stories.md) | `/chuyen-di-choi` index and detail, the storytelling core |
 | Destinations | [destinations.md](destinations.md) | `/kham-pha` index and detail, the cross-reference hub |
 | Travel map | [travel-map.md](travel-map.md) | `/ban-do` — SVG silhouette, real coordinates, no JS |
-| Member map | [member-map.md](member-map.md) | `/ban-do-cua-toi` — a signed-in member's private map: solid dots visited, hollow dots planned (ADR 0029) |
+| Member map | [member-map.md](member-map.md) | `/chuyen-di-cua-toi` (My Trips, ADR 0031) — a signed-in member's private map: solid dots visited, hollow dots planned (ADR 0029) |
 | Itineraries | [itineraries.md](itineraries.md) | `/len-lich-trinh` plus the permanent tour redirects |
 | Video reviews | [video-reviews.md](video-reviews.md) | `/goc-review` — deliberately link-free cards, channel buttons |
 | Plan your trip | [plan-your-trip.md](plan-your-trip.md) | `/thiet-ke-chuyen-di` — Planner entry point, no form by design |

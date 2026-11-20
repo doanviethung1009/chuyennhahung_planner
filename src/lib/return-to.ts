@@ -19,7 +19,6 @@ const NOT_RETURNABLE: readonly AppPathname[] = ['/sign-in', '/shared/[token]'];
 const KEEPS_QUERY: readonly AppPathname[] = [
   '/my-trips',
   '/my-trips/[id]',
-  '/my-map',
   '/trip-setup/[template]',
   '/account/password',
   '/admin',
