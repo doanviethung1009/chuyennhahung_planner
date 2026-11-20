@@ -920,6 +920,34 @@ export const acceptTermsSchema = z
   .object({ version: z.string().trim().min(1).max(40), lang: reviewLangSchema.default('vi') })
   .strict();
 
+/** Who the shared member map names (ADR 0030 §3). `anonymous` is the default and always wins. */
+export const memberMapShareNameSchema = z.enum(['anonymous', 'name']);
+export type MemberMapShareName = z.infer<typeof memberMapShareNameSchema>;
+
+/**
+ * One member's map-sharing setting (ADR 0030 §1). 1:1 on `userId`. `tokenDigest`
+ * is the SHA-256 hex of the link's token, never the token; null means "not
+ * shared". A missing row reads as "not shared, anonymous".
+ */
+export const memberMapShareSchema = z.object({
+  id: plannerIdSchema,
+  userId: plannerIdSchema,
+  tokenDigest: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/)
+    .nullable(),
+  shareName: memberMapShareNameSchema.default('anonymous'),
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+});
+export type MemberMapShare = z.infer<typeof memberMapShareSchema>;
+
+/** `PUT /api/planner/map/share` body. Strict: the user comes from the session, never the body. */
+export const memberMapShareInputSchema = z
+  .object({ enabled: z.boolean(), shareName: memberMapShareNameSchema })
+  .strict();
+export type MemberMapShareInput = z.infer<typeof memberMapShareInputSchema>;
+
 /** `POST /api/admin/community/restrictions` body. Strict. */
 export const createRestrictionSchema = z
   .object({

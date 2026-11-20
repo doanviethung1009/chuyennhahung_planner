@@ -112,6 +112,10 @@ hay bỏ một route nghĩa là sửa bảng này ở cả hai ngôn ngữ.
 | POST | `/api/admin/community/reviews/[id]/erase` | Admin token hoặc phiên admin | Xóa vĩnh viễn nội dung review của khách theo yêu cầu xóa dữ liệu (`community:erase`, từ admin) |
 | GET | `/api/planner/terms` | Du khách (cookie phiên hoặc access token) | Trạng thái Điều khoản Người tạo hiện hành |
 | POST | `/api/planner/terms` | Du khách (cookie phiên hoặc access token) | Chấp nhận phiên bản Điều khoản Người tạo hiện hành (idempotent) |
+| GET | `/api/planner/map/share` | Du khách (cookie phiên hoặc access token) | Trạng thái chia sẻ bản đồ của chính mình (không bao giờ có token) |
+| PUT | `/api/planner/map/share` | Du khách (cookie phiên hoặc access token) | Bật hoặc tắt chia sẻ bản đồ, đặt chế độ tên; token trả một lần ở lần bật đầu (idempotent) |
+| DELETE | `/api/planner/map/share` | Du khách (cookie phiên hoặc access token) | Thu hồi link chia sẻ bản đồ (idempotent) |
+| POST | `/api/planner/map/share/rotate` | Du khách (cookie phiên hoặc access token) | Link chia sẻ bản đồ mới, trả một lần; link cũ chết |
 | GET | `/api/admin/community/reports` | Token admin hoặc phiên admin | Hàng đợi báo cáo, `?status=open\|actioned\|dismissed` (`community:moderate`) |
 | POST | `/api/admin/community/reports/[id]/resolve` | Token admin hoặc phiên admin | Bỏ qua hoặc đánh dấu đã xử lý báo cáo, idempotent, ghi một sự kiện (`community:moderate`) |
 | GET | `/api/admin/audit` | Admin token hoặc phiên admin | Nhật ký quản trị: lọc `actor`, `targetType`, `action`, `from`, `to`, `limit`, `cursor` (`audit:read`) |
