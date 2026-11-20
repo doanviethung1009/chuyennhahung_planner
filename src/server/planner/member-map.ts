@@ -103,7 +103,7 @@ export function buildMemberMapPoints(
 }
 
 /** Every trip the member owns in one status, paged: `listTrips` caps a page at 100. */
-async function allTrips(
+export async function allTrips(
   repository: Pick<PlannerRepository, 'listTrips'>,
   ownerId: string,
   status: 'active' | 'archived',

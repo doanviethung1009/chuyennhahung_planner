@@ -4,7 +4,7 @@
 
 ## Summary
 
-Thành viên đã đăng nhập có thể bật link chia sẻ bản đồ những nơi mình đã đi, đổi link hoặc thu hồi. Đây là **Lát 2a** của ADR [0030](../adr/0030-member-map-sharing.vi.md): chỉ gồm store, migration và API chủ sở hữu. Lát **2b** thêm trang công khai `/shared-map/[token]` (bên dưới). Vẫn **chưa có điều khiển trên `/my-map`** (Lát 2c): cho đến khi có, link chỉ cấp được qua API. Mặc định tắt và ẩn danh; token chỉ hiện một lần, chỉ lưu digest SHA-256.
+Thành viên đã đăng nhập có thể bật link chia sẻ bản đồ những nơi mình đã đi, đổi link hoặc thu hồi. Đây là **Lát 2a** của ADR [0030](../adr/0030-member-map-sharing.vi.md): chỉ gồm store, migration và API chủ sở hữu. Lát **2b** thêm trang công khai `/shared-map/[token]` (bên dưới). Lát **2c** thêm điều khiển và bản xem trước trên `/my-map` (bên dưới), nên thành viên không cần gọi API để cấp link. Mặc định tắt và ẩn danh; token chỉ hiện một lần, chỉ lưu digest SHA-256.
 
 ## Routes
 
@@ -50,6 +50,16 @@ Chủ thể là người dùng của phiên; không đọc user id hay slug từ
 - Tên chỉ hiện (dạng văn bản thường trong thân trang, ở `<h1>`) khi hình chiếu mang tên, tức chế độ `name` — hiện vẫn đóng, nên mọi bản đồ chia sẻ đều ẩn danh. Tên không vào title, metadata hay URL.
 - nginx (`deploy/nginx/default.conf`): hai đường dẫn **không ghi log** (`access_log … if=$cnh_loggable`), bản đồ che token cũng che chúng như lớp phòng thủ thứ hai, và không cấu hình cache nginx. Dòng request thô vẫn có thể xuất hiện trong `error.log`, vốn đã coi là nhạy cảm. **VM thật chưa được kiểm tra:** chủ dự án phải áp dụng cấu hình mới và kiểm (xem runbook vận hành).
 
+### The controls and the preview (slice 2c)
+
+Chỉ UI; API, store và migration của 2a không đổi. Trên `/my-map` (VI `/ban-do-cua-toi`), chỉ với thành viên đã đăng nhập (khách không thấy khối này), có mục "Chia sẻ bản đồ của bạn" dưới bản đồ.
+
+- **Điều khiển** (`MemberMapSharePanel`, client): đọc `GET /api/planner/map/share`, rồi bật chia sẻ (`PUT`), thu hồi (`DELETE`) và đổi link (`POST …/rotate`). Đổi link hỏi xác nhận trước (link cũ chết ngay); bật và thu hồi thì không.
+- **Link chỉ hiện một lần.** URL đầy đủ chỉ xuất hiện trong phản hồi cấp hoặc đổi link, trong một ô chỉ đọc với nút sao chép thật (44px). Token nằm trong state của component: không bao giờ ở URL trang, `localStorage`/`sessionStorage`, log hay analytics. "Tôi đã lưu, ẩn đường dẫn", thu hồi, đổi link lần nữa hoặc tải lại trang đều làm nó biến mất; sau đó trang chỉ nói link không được giữ lại, và cách duy nhất để có link mới là đổi link. Sao chép quay về chọn nội dung ô khi origin là http thường.
+- **Chế độ tên.** Ẩn danh là mặc định và đang được chọn. "Hiện tên của tôi" là radio thật; nếu API trả `403 share_name_unavailable` (trường hợp hiện nay) nó bị vô hiệu, có ghi chú nói chưa khả dụng và bản đồ vẫn ẩn danh. `422 display_name_unsuitable` nhắc đổi tên hiển thị trước.
+- **Lỗi** được thông báo trong vùng `role="alert"` (thành công ở `role="status"`): 401 (có nút đăng nhập), 403, 422, 429 (kèm số phút chờ), 409 `not_shared` (làm mới trạng thái), còn lại là thông báo chung. Chữ nằm ở `messages/*.json` mục `memberMapShare`, VI và EN.
+- **Xem trước** (`MemberMapSharePreview`, server): đúng hình chiếu công khai, dựng bởi `resolveMemberMapSharePreview` qua cùng hàm thuần `buildPublicMemberMapPoints` và `sharedMapDestinations` mà trang công khai dùng, nên không thể lệch: chỉ chuyến hoàn thành (đã lưu trữ hay chưa), bậc 1 / 2–3 / 4+, không điểm kế hoạch, không đánh giá, không ngày tháng, và tên người xem sẽ thấy (không có: ẩn danh). Dưới 2 điểm có cảnh báo bản đồ thưa dễ bị nhận ra (cảnh báo, không chặn). Tái dùng `VietnamMap` và quy tắc pin; không sửa `src/content/destinations.ts`. Bản xem trước không phụ thuộc việc chia sẻ đang bật hay tắt.
+
 ## Files
 
 | Đường dẫn | Vai trò |
@@ -62,17 +72,20 @@ Chủ thể là người dùng của phiên; không đọc user id hay slug từ
 | `src/app/api/planner/map/share/route.ts`, `…/rotate/route.ts` | API chủ sở hữu |
 | `src/server/rate-limit.ts`, `src/server/planner/instance.ts` | Limiter thay đổi chia sẻ và đọc công khai
 | `src/app/[locale]/shared-map/[token]/page.tsx`, `src/server/planner/shared-map-page.ts` | Trang công khai; bộ nạp (mọi lỗi → `null`) và cỡ pin |
+| `src/components/map/member-map-share-panel.tsx`, `member-map-share-preview.tsx`, `src/server/planner/member-map-share-preview.ts`, `src/app/[locale]/my-map/page.tsx`, `messages/*.json` (`memberMapShare`) | Lát 2c: điều khiển, link hiện một lần, xem trước |
 | `next.config.ts`, `src/app/robots.ts`, `src/i18n/routing.ts`, `messages/*.json` (`sharedMap`), `deploy/nginx/default.conf` | Header, robots, route, chuỗi, quy tắc log | |
 
 ## Tests
 
-`tests/member-map-share.test.ts` (hàm thuần; token hiện một lần và chỉ lưu digest; rotate; revoke idempotent; cổng tên và chặn 422; mọi thất bại đọc ra `null`; allow-list hình chiếu, chuyến hoàn thành đã lưu trữ vẫn hiện, chuyến bị xoá biến mất; hai thành viên cô lập; chủ bị khoá và xoá mềm; `deleteUser`; audit không có token hay tên; export bỏ digest; import không bao giờ bật; tệp cũ không có khoá). `tests/member-map-share-routes.test.ts` (401 cho mọi method, mutation khác origin hoặc không origin bị từ chối, body strict, `share_name_unavailable`, cô lập giữa thành viên, bucket giới hạn riêng, dòng audit). `tests/member-map-shared-page.test.ts` (Lát 2b: bộ nạp trả `null` cho token sai hình, lạ, đã thu hồi, chủ bị ban, chủ đã xoá và bị giới hạn tốc độ; hình chiếu chỉ có `slug` và `visitsBucket`, không điểm kế hoạch, không tên; xoá chuyến thì điểm mất, archive chuyến completed thì còn; slug ngoài catalog bị bỏ; header, robots, sitemap, không endpoint JSON, metadata không chứa token hay chủ; khoá VI/EN). `tests/deploy-config.test.ts` phủ quy tắc log nginx và việc không có cache. PostgreSQL chỉ được phủ bởi test engine bảng dùng chung; vòng ghi/đọc bảng mới trên cơ sở dữ liệu **chưa** được kiểm (NOT RUN khi không có `TEST_DATABASE_URL`).
+`tests/member-map-share.test.ts` (hàm thuần; token hiện một lần và chỉ lưu digest; rotate; revoke idempotent; cổng tên và chặn 422; mọi thất bại đọc ra `null`; allow-list hình chiếu, chuyến hoàn thành đã lưu trữ vẫn hiện, chuyến bị xoá biến mất; hai thành viên cô lập; chủ bị khoá và xoá mềm; `deleteUser`; audit không có token hay tên; export bỏ digest; import không bao giờ bật; tệp cũ không có khoá). `tests/member-map-share-routes.test.ts` (401 cho mọi method, mutation khác origin hoặc không origin bị từ chối, body strict, `share_name_unavailable`, cô lập giữa thành viên, bucket giới hạn riêng, dòng audit). `tests/member-map-shared-page.test.ts` (Lát 2b: bộ nạp trả `null` cho token sai hình, lạ, đã thu hồi, chủ bị ban, chủ đã xoá và bị giới hạn tốc độ; hình chiếu chỉ có `slug` và `visitsBucket`, không điểm kế hoạch, không tên; xoá chuyến thì điểm mất, archive chuyến completed thì còn; slug ngoài catalog bị bỏ; header, robots, sitemap, không endpoint JSON, metadata không chứa token hay chủ; khoá VI/EN). `tests/deploy-config.test.ts` phủ quy tắc log nginx và việc không có cache. Lát 2c: `tests/dom/member-map-share-panel.test.tsx` (trạng thái tắt, bật, vừa cấp link, đã chia sẻ; sao chép; link biến mất sau "đã lưu", thu hồi và khỏi storage, URL; đổi link hỏi trước và huỷ thì không gửi gì; `share_name_unavailable` vô hiệu lựa chọn tên; thông báo 401/403/422/429/500; lỗi tải; khớp khoá VI/EN), `tests/member-map-share-preview.test.ts` (khách và cookie sai hình không đọc store; chỉ điểm đã đi, không điểm kế hoạch, không trường thừa; hai thành viên cô lập; đang chờ đổi mật khẩu), `tests/member-map-share-preview-view.test.tsx` (chỉ vẽ điểm được đưa vào, bậc bằng chữ, tên ẩn danh, cảnh báo thưa, slug lạ bị bỏ, thứ tự heading). PostgreSQL chỉ được phủ bởi test engine bảng dùng chung; vòng ghi/đọc bảng mới trên cơ sở dữ liệu **chưa** được kiểm (NOT RUN khi không có `TEST_DATABASE_URL`).
 
 ## Limits and open questions
 
-- Chưa có điều khiển và bản xem trước (Lát 2c). Link bị mất phải đổi mới, không hiện lại được.
+- Link bị mất phải đổi mới, không hiện lại được. Trạng thái bật/tắt đọc lúc tải; hai tab có thể lệch nhau đến khi tải lại (câu trả lời của API vẫn là chuẩn).
+- Bản xem trước thêm một lần đọc chuyến của thành viên vào `/my-map` (đọc riêng, có phạm vi; chưa gộp với bản đồ Lát 1).
 - Chế độ `name` vẫn đóng cho đến khi `profilePublicOpen` được xây và Chính sách Quyền riêng tư của chủ được công bố (ADR 0030, câu hỏi chủ 1).
 - Không agent nào áp dụng migration. Quy tắc nginx cho `/shared-map/*` đã có trong repository, nhưng VM thật chưa được kiểm tra và quy tắc chưa được áp dụng ở đó.
 - Bản đồ thưa vẫn có thể lộ chủ nhân với người đã biết họ; cờ `sparse` chỉ hỗ trợ cảnh báo.
 - `/sec-check` cho Lát 2a và 2b **chưa chạy**; khuyến nghị chạy lại cho 2b vì trang công khai nhận bearer token từ URL.
-- Trang chưa được render trong trình duyệt cho thay đổi này (NOT RUN, xem handoff).
+- `/sec-check` cũng được khuyến nghị cho Lát 2c: UI xử lý một link bearer dùng một lần.
+- Kết quả trình duyệt của 2c nằm trong handoff `.claude/contracts/handoff/member-map-share-ui.md`.
