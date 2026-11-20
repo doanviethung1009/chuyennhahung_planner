@@ -97,7 +97,7 @@ Cho `userId` của phiên, mỗi `destinationSlug` biết đến (có trong seed
 ## Budget: max agent invocations; stop condition
 Subagent: **0** cho việc thực thi (`security` chỉ chạy khi chủ gọi). Điều kiện dừng: `tests/docs.test.ts`/typecheck đỏ >2 vòng sửa; Lát 1 phát hiện cần migration hoặc API ⇒ quay lại contract; Lát 2 không bắt đầu trước khi ADR 0030 (kèm các yêu cầu SEC-CHECK) được chủ duyệt.
 
-## State: DESIGNED (Lát 1: IN_PROGRESS ở session riêng; Lát 2: chờ ADR)
+## State: DONE in four slices: slice 1 `/my-map` (PR #201), ADR 0030 (#202), 2a share store and owner API with migration 0016 (#204, #207), 2b public shared page (#206), 2c share controls and preview (#208). **`/sec-check` NOT RUN** on 2a, 2b, 2c (class XL, bearer link); owner still has the nginx rule and the dev VM check; Postgres round trip not run on a VM
 
 ## Feature document owner (`docs/features/member-map.md` + `.vi.md`, CLAUDE.md rules 11–12)
 FE role viết; BE role góp mục Data/How it works phần server; đăng ký ở `docs/features/README.*`.
