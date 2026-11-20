@@ -2,7 +2,7 @@
 
 🇻🇳 Bản tiếng Việt: [0030-member-map-sharing.vi.md](0030-member-map-sharing.vi.md)
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-20
 - **Owner:** system-architect
 - **Affects:** new `member_map_shares` table (migration at the next free number and its `db/rollback` file) and collection `memberMapShares` in `src/server/persistence/planner-rows.ts` and `planner-transfer.ts`; `src/server/planner/schemas.ts`, `repository.ts` (share methods, `deleteUser`), `src/server/planner/member-map.ts` (public projection); new routes `src/app/api/planner/map/share/**` and a public page `/shared-map/[token]`; `src/i18n/routing.ts`; `src/server/rate-limit.ts`; `deploy/nginx/default.conf` (one `access_log` rule); the audit action list. Task Contract `member-map` (slice 2). Refines the slice 2 sketch in ADR 0029 (private member map, slice 1 — not yet on `main` when this was written, so it is not linked); builds on [ADR 0004](0004-planner-identity.md), [ADR 0005](0005-trip-sharing-and-story-cloning.md) and [ADR 0025](0025-member-profiles-and-use-this-trip.md).

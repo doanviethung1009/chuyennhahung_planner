@@ -2,7 +2,7 @@
 
 🇬🇧 English version: [0030-member-map-sharing.md](0030-member-map-sharing.md)
 
-- **Trạng thái:** Đề xuất
+- **Trạng thái:** Đã duyệt
 - **Ngày:** 2026-11-20
 - **Chủ trì:** system-architect
 - **Ảnh hưởng:** bảng mới `member_map_shares` (migration ở số trống kế tiếp và file `db/rollback` tương ứng) và collection `memberMapShares` trong `src/server/persistence/planner-rows.ts` và `planner-transfer.ts`; `src/server/planner/schemas.ts`, `repository.ts` (các method chia sẻ, `deleteUser`), `src/server/planner/member-map.ts` (hình chiếu công khai); route mới `src/app/api/planner/map/share/**` và trang công khai `/shared-map/[token]`; `src/i18n/routing.ts`; `src/server/rate-limit.ts`; `deploy/nginx/default.conf` (một quy tắc `access_log`); danh sách action audit. Task Contract `member-map` (lát 2). Làm rõ bản phác lát 2 trong ADR 0029 (bản đồ thành viên riêng tư, lát 1 — lúc viết chưa có trên `main` nên không đặt link); dựa trên [ADR 0004](0004-planner-identity.vi.md), [ADR 0005](0005-trip-sharing-and-story-cloning.vi.md) và [ADR 0025](0025-member-profiles-and-use-this-trip.vi.md).
