@@ -44,11 +44,11 @@ export interface Destination {
    */
   featured?: boolean;
   /**
-   * Optional override of the side a featured pin's permanent label sits on, for
+   * Optional override of the side (left, right or above the dot) a featured pin's permanent label sits on, for
    * the rare pin whose default side (`labelSide(x)`) collides with a neighbour's
    * label at 375px. Leave unset otherwise.
    */
-  labelSide?: 'left' | 'right';
+  labelSide?: 'left' | 'right' | 'top';
 }
 
 export interface Story {

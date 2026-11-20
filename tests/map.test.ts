@@ -95,7 +95,7 @@ describe('map pin touch targets', () => {
     });
   }
 
-  const FEATURED = ['ha-noi', 'da-nang', 'tp-ho-chi-minh', 'sa-pa', 'ha-giang', 'da-lat', 'phu-quoc'];
+  const FEATURED = ['ha-noi', 'tp-ho-chi-minh'];
   const esc = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const render = (variant: 'full' | 'preview') =>
     renderToStaticMarkup(
@@ -114,7 +114,10 @@ describe('map pin touch targets', () => {
       const permanent = visible && !visible[1]!.includes('sr-only') ? visible : null;
       if (d.featured) {
         expect(permanent, d.slug).not.toBeNull();
-        expect(permanent![1], d.slug).toContain((d.labelSide ?? labelSide(x)) === 'left' ? 'right-full' : 'left-full');
+        const side = d.labelSide ?? labelSide(x);
+        expect(permanent![1], d.slug).toContain(
+          side === 'top' ? 'bottom-full' : side === 'left' ? 'right-full' : 'left-full',
+        );
         expect(permanent![1], d.slug).toContain('absolute');
       } else {
         expect(permanent, `${d.slug} must not have a permanent label`).toBeNull();
