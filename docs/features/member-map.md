@@ -47,4 +47,4 @@ A signed-in member sees their own map of Vietnam: solid dots where they have bee
 - `visitedOn` is self-declared; it only draws the member's own map.
 - No sharing yet: a token-shared map is slice 2 (ADR 0029, item 7), which needs a security check.
 - No trip route map: that stays deferred.
-- The legend line of [travel-map.md](travel-map.md) (PR #198) is not edited here; cross-link after it merges.
+- The owners' map and its pin and label rules are in [travel-map.md](travel-map.md); this page reuses them and does not edit that document.

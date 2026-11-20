@@ -47,4 +47,4 @@ Thành viên đã đăng nhập thấy bản đồ Việt Nam của riêng mình
 - `visitedOn` do người dùng tự khai; chỉ dùng để vẽ bản đồ của chính họ.
 - Chưa chia sẻ: bản đồ chia sẻ qua token là lát 2 (ADR 0029, mục 7), cần kiểm tra bảo mật.
 - Chưa có bản đồ tuyến theo chuyến: phần đó vẫn hoãn.
-- Dòng chú giải của [travel-map.vi.md](travel-map.vi.md) (PR #198) không sửa ở đây; liên kết chéo sau khi PR đó merge.
+- Bản đồ của chủ và quy tắc pin, nhãn nằm ở [travel-map.vi.md](travel-map.vi.md); trang này dùng lại và không sửa tài liệu đó.

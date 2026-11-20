@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { memberMapPaths } from '../next.config';
+import { pathnames } from '../src/i18n/routing';
 import { buildMemberMapPoints, resolveMemberMap } from '../src/server/planner/member-map';
 import { createMemoryPlannerStore } from '../src/server/planner/store';
 import type { PlannerRepository } from '../src/server/planner/repository';
@@ -127,6 +128,22 @@ describe('resolveMemberMap', () => {
     expect(reads).toBe(0);
   });
 
+  it('loads the place catalogue only for a verified session', async () => {
+    const planner = makePlanner({ store: createMemoryPlannerStore() });
+    const { cookie } = await session(planner, 'that');
+    let loads = 0;
+    const loader = async () => {
+      loads += 1;
+      return PLACES;
+    };
+    for (const forged of ['A'.repeat(43), 'garbage', null]) {
+      expect(await resolveMemberMap(planner, forged, loader, KNOWN)).toEqual({ status: 'guest' });
+    }
+    expect(loads).toBe(0);
+    await resolveMemberMap(planner, cookie, loader, KNOWN);
+    expect(loads).toBe(1);
+  });
+
   it('is a guest while a password change is pending', async () => {
     const planner = makePlanner({ store: createMemoryPlannerStore() });
     const { temporaryPassword } = await planner.createUser({ handle: 'tam', displayName: 'Tâm', email: 'tam@example.com' });
@@ -209,7 +226,10 @@ describe('the /my-map boundary (ADR 0029)', () => {
       const rule = rules.find((r) => r.source === path);
       expect(rule?.headers).toContainEqual({ key: 'Cache-Control', value: 'private, no-store' });
     }
-    expect(memberMapPaths).toEqual(['/ban-do-cua-toi', '/en/my-map']);
+    // The header paths must track the route table, not a second hand-kept copy.
+    expect([...memberMapPaths].sort()).toEqual(
+      [pathnames['/my-map'].vi, `/en${pathnames['/my-map'].en}`].sort(),
+    );
   });
 
   it('signs out with a full navigation so the client router cache cannot show the old map', () => {

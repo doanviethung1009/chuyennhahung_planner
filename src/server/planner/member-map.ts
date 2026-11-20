@@ -39,6 +39,9 @@ type ReviewFacts = Pick<OwnReview, 'placeSlug' | 'visitedOn' | 'status'>;
 /** Reviews a moderator turned down or removed say nothing about the member's own visit. */
 const IGNORED_REVIEW_STATUS: ReadonlySet<OwnReview['status']> = new Set(['rejected', 'removed']);
 
+/** The place → destination map, or a loader run only once the session is verified. */
+type PlaceDestinations = ReadonlyMap<string, string> | (() => Promise<ReadonlyMap<string, string>>);
+
 const GUEST: MemberMapState = { status: 'guest' };
 
 /** Cheap shape filter, as in `home-page.ts`: a garbage cookie must not cost a store read. */
@@ -124,7 +127,7 @@ async function allTrips(
 export async function resolveMemberMap(
   repository: Pick<PlannerRepository, 'identify' | 'listTrips' | 'listOwnReviews'>,
   sessionToken: string | null,
-  placeDestination: ReadonlyMap<string, string>,
+  places: PlaceDestinations,
   knownSlugs: ReadonlySet<string>,
 ): Promise<MemberMapState> {
   if (!sessionToken || !SESSION_TOKEN_SHAPE.test(sessionToken)) return GUEST;
@@ -141,6 +144,8 @@ export async function resolveMemberMap(
       allTrips(repository, identity.userId, 'archived'),
       repository.listOwnReviews(identity.userId),
     ]);
+    // Only a verified session pays for the catalogue read: a forged cookie of the right shape stops at `identify`.
+    const placeDestination = typeof places === 'function' ? await places() : places;
     const points = buildMemberMapPoints([...active, ...archived], reviews, placeDestination, knownSlugs);
     return points.length > 0 ? { status: 'ready', points } : { status: 'empty' };
   } catch (error) {
@@ -158,9 +163,9 @@ export async function getMemberMap(knownSlugs: ReadonlySet<string>): Promise<Mem
   if (!token || !SESSION_TOKEN_SHAPE.test(token)) return GUEST;
 
   try {
-    const places = await getPublicPlaces();
-    const placeDestination = new Map(places.map((place) => [place.slug, place.destinationSlug]));
-    return await resolveMemberMap(await getPlannerRepository(), token, placeDestination, knownSlugs);
+    const loadPlaces = async () =>
+      new Map((await getPublicPlaces()).map((place) => [place.slug, place.destinationSlug] as const));
+    return await resolveMemberMap(await getPlannerRepository(), token, loadPlaces, knownSlugs);
   } catch (error) {
     console.error('[member-map] could not open the planner', error instanceof Error ? error.name : 'error');
     return GUEST;
