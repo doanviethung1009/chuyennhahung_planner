@@ -9,6 +9,7 @@ import {
   auditEventSchema,
   termsAcceptanceSchema,
   reportSchema,
+  memberMapShareSchema,
   tripActivitySchema,
   tripDaySchema,
   tripExpenseSchema,
@@ -335,6 +336,21 @@ export const TABLES: readonly TableSpec<PlannerCollection>[] = [
       col('handledAt', 'handled_at', 'timestamptz', 'nullable'),
       col('handledBy', 'handled_by', 'text', 'nullable'),
       col('handlerReason', 'handler_reason', 'text', 'nullable'),
+    ],
+  },
+  {
+    // ADR 0030 §1. One row per member; token_digest is a SHA-256 hex, never the token.
+    // Personal data; no foreign keys (ADR 0013). user_id and token_digest are unique.
+    collection: 'memberMapShares',
+    table: 'member_map_shares',
+    parse: (r) => memberMapShareSchema.parse(r),
+    columns: [
+      col('id', 'id', 'text'),
+      col('userId', 'user_id', 'text'),
+      col('tokenDigest', 'token_digest', 'text', 'nullable'),
+      col('shareName', 'share_name', 'text'),
+      col('createdAt', 'created_at', 'timestamptz'),
+      col('updatedAt', 'updated_at', 'timestamptz'),
     ],
   },
 ];

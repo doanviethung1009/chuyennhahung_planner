@@ -36,6 +36,14 @@ import {
   transition,
 } from '../community/submission';
 import { termsVersion as defaultTermsVersion } from '@/content/site';
+import {
+  buildPublicMemberMapPoints,
+  isDisplayNameSuitable,
+  mapShareDigest,
+  newMapShareToken,
+  type MemberMapShareStatus,
+  type PublicMemberMap,
+} from './member-map-share';
 import { guestKeyOf, readGuestKeySecret, type SecretSource } from '../community/guest-key';
 import { appendEvent, eventsForTarget, redactEventReasons, type NewAuditEvent } from '../community/events';
 import {
@@ -153,6 +161,11 @@ export interface PlannerRepositoryOptions {
    * A missing secret makes guest writes fail with `503 service_unavailable`.
    */
   guestKeySecret?: SecretSource;
+  /**
+   * Whether the shared map may show the member's name (ADR 0030 §3). Off until
+   * ADR 0025's `profilePublicOpen` is built and on; injected so tests can open it.
+   */
+  mapShareNameAvailable?: boolean;
 }
 
 /** A day with its activities attached, in order. */
@@ -235,6 +248,7 @@ export class PlannerRepository {
   private shareIndexRevision: string | number | null = null;
 
   private readonly guestKeySecret: SecretSource;
+  private readonly mapShareNameAvailable: boolean;
 
   constructor(options: PlannerRepositoryOptions) {
     this.store = options.store;
@@ -244,6 +258,7 @@ export class PlannerRepository {
     this.scryptCostLog2 = options.scryptCostLog2 ?? DEFAULT_SCRYPT_COST_LOG2;
     this.termsVersion = options.termsVersion ?? defaultTermsVersion;
     this.guestKeySecret = options.guestKeySecret ?? readGuestKeySecret;
+    this.mapShareNameAvailable = options.mapShareNameAvailable ?? false;
   }
 
   /** The keyed guest key of a client address; throws 503 when the secret is not configured. */
@@ -1068,6 +1083,8 @@ export class PlannerRepository {
       // Personal data on public pages goes with the account (ADR 0014).
       data.communityReviews = data.communityReviews.filter((review) => review.authorId !== userId);
       data.termsAcceptances = data.termsAcceptances.filter((row) => row.userId !== userId);
+      // The share link dies with the account, in the same transaction (ADR 0030 §6).
+      data.memberMapShares = data.memberMapShares.filter((row) => row.userId !== userId);
       // A member's own reports carry their id; they go with the account (the report stays anonymous-less).
       data.reports = data.reports.filter((row) => row.reporterId !== userId);
       // Restrictions stay as the audit record, but end with the account (security review, ADR 0015).
@@ -1640,6 +1657,165 @@ export class PlannerRepository {
       };
       return { visibility: 'private', shareToken: null, shareTokenCreatedAt: null, listing: null };
     });
+  }
+
+  // -------------------------------------------------------------------------
+  // Member map sharing (ADR 0030, slice 2a)
+  // -------------------------------------------------------------------------
+
+  /** The share status of the session's own user. Never carries the token. */
+  async getMemberMapShare(userId: string): Promise<MemberMapShareStatus> {
+    const data = await this.snapshot();
+    const user = data.users.find((candidate) => candidate.id === userId);
+    if (!user || isDisabled(user)) throw notFound('planner user', userId);
+    return this.mapShareStatus(data, userId);
+  }
+
+  private mapShareStatus(data: PlannerData, userId: string): MemberMapShareStatus {
+    const row = data.memberMapShares.find((candidate) => candidate.userId === userId);
+    const visitedPlaces = buildPublicMemberMapPoints(data.trips, userId, (slug) =>
+      this.catalog.hasDestination(slug),
+    ).length;
+    return {
+      enabled: Boolean(row?.tokenDigest),
+      shareName: row?.shareName ?? 'anonymous',
+      visitedPlaces,
+      sparse: visitedPlaces < 2,
+    };
+  }
+
+  /**
+   * Turns sharing on or off and sets the name mode, for the session's own user.
+   * Idempotent: enabling a map that already has a token keeps it and returns no
+   * token; enabling one without issues a token and returns it **once** (only its
+   * digest is stored). Audit rows carry the user id and a mode, never a token or
+   * a name.
+   */
+  async setMemberMapShare(
+    userId: string,
+    input: { enabled: boolean; shareName: 'anonymous' | 'name' },
+  ): Promise<MemberMapShareStatus & { token?: string }> {
+    return this.transaction((data) => {
+      const user = data.users.find((candidate) => candidate.id === userId);
+      if (!user || isDisabled(user)) throw notFound('planner user', userId);
+
+      if (input.shareName === 'name') {
+        if (!this.mapShareNameAvailable) {
+          throw new ContentError('forbidden', 'showing a name on the shared map is not available yet', [], null, 'share_name_unavailable');
+        }
+        if (!isDisplayNameSuitable(user.displayName)) {
+          throw new ContentError(
+            'validation_failed',
+            'change your display name first: it looks like contact details',
+            [{ path: 'shareName', message: 'the display name looks like an email address or a phone number' }],
+            null,
+            'display_name_unsuitable',
+          );
+        }
+      }
+
+      const at = this.timestamp();
+      // Two concurrent first PUTs cannot both insert: every store serialises
+      // `transaction` (in-process queue; on PostgreSQL a global advisory lock), so
+      // the second one finds the first one's row. A stray unique violation would
+      // still surface as a 409, never a raw driver error (`translateDatabaseError`).
+      let row = data.memberMapShares.find((candidate) => candidate.userId === userId);
+      if (!row) {
+        row = {
+          id: this.newId('mms'),
+          userId,
+          tokenDigest: null,
+          shareName: 'anonymous',
+          createdAt: at,
+          updatedAt: at,
+        };
+        data.memberMapShares.push(row);
+      }
+      const actorId = userId;
+      let token: string | undefined;
+
+      if (row.shareName !== input.shareName) {
+        this.record(data, { targetKind: 'user', targetId: userId, actorId, action: 'map_share_name', fromStatus: row.shareName, toStatus: input.shareName });
+        row.shareName = input.shareName;
+        row.updatedAt = at;
+      }
+      if (input.enabled && row.tokenDigest === null) {
+        token = newMapShareToken();
+        row.tokenDigest = mapShareDigest(token);
+        row.updatedAt = at;
+        this.record(data, { targetKind: 'user', targetId: userId, actorId, action: 'map_share_on', fromStatus: 'off', toStatus: 'on' });
+      } else if (!input.enabled && row.tokenDigest !== null) {
+        row.tokenDigest = null;
+        row.updatedAt = at;
+        this.record(data, { targetKind: 'user', targetId: userId, actorId, action: 'map_share_off', fromStatus: 'on', toStatus: 'off' });
+      }
+      const status = this.mapShareStatus(data, userId);
+      return token === undefined ? status : { ...status, token };
+    });
+  }
+
+  /** Issues a new token (returned once); the old one dies in the same transaction. Only for a map that is shared. */
+  async rotateMemberMapShare(userId: string): Promise<MemberMapShareStatus & { token: string }> {
+    return this.transaction((data) => {
+      const user = data.users.find((candidate) => candidate.id === userId);
+      if (!user || isDisabled(user)) throw notFound('planner user', userId);
+      const row = data.memberMapShares.find((candidate) => candidate.userId === userId);
+      if (!row || row.tokenDigest === null) {
+        throw new ContentError('invalid_state', 'the map is not shared, so there is no link to rotate', [], null, 'not_shared');
+      }
+      const token = newMapShareToken();
+      row.tokenDigest = mapShareDigest(token);
+      row.updatedAt = this.timestamp();
+      this.record(data, { targetKind: 'user', targetId: userId, actorId: userId, action: 'map_share_rotate', fromStatus: 'on', toStatus: 'on' });
+      return { ...this.mapShareStatus(data, userId), token };
+    });
+  }
+
+  /** Revokes the link (`tokenDigest = null`). Repeating it succeeds and writes nothing. */
+  async revokeMemberMapShare(userId: string): Promise<MemberMapShareStatus> {
+    return this.transaction((data) => {
+      const user = data.users.find((candidate) => candidate.id === userId);
+      if (!user || isDisabled(user)) throw notFound('planner user', userId);
+      const row = data.memberMapShares.find((candidate) => candidate.userId === userId);
+      if (row && row.tokenDigest !== null) {
+        row.tokenDigest = null;
+        row.updatedAt = this.timestamp();
+        this.record(data, { targetKind: 'user', targetId: userId, actorId: userId, action: 'map_share_off', fromStatus: 'on', toStatus: 'off' });
+      }
+      return this.mapShareStatus(data, userId);
+    });
+  }
+
+  /**
+   * Resolves a share token to the public projection, or null. Null is the answer
+   * for every failure — malformed, unknown, revoked, not shared, owner banned,
+   * soft-deleted or deleted — so a caller cannot tell them apart. Order: format,
+   * then a fresh read (no cached index), a constant-time compare of digests, the
+   * owner still active, then the view (ADR 0030 §5). Built from live data on
+   * every call, so a deleted completed trip is gone at once. The name is read
+   * fresh and shown only in `name` mode, when it is allowed and still suitable.
+   */
+  async getSharedMemberMap(token: string): Promise<PublicMemberMap | null> {
+    if (typeof token !== 'string' || !SHARE_TOKEN_PATTERN.test(token)) return null;
+    const presented = Buffer.from(mapShareDigest(token), 'hex');
+    const data = await this.snapshot();
+    // Every stored digest is compared in constant time and the scan never stops
+    // early, so the time taken does not depend on which row (if any) matches.
+    let row: (typeof data.memberMapShares)[number] | null = null;
+    for (const candidate of data.memberMapShares) {
+      if (candidate.tokenDigest === null) continue;
+      const stored = Buffer.from(candidate.tokenDigest, 'hex');
+      if (stored.length === presented.length && timingSafeEqual(stored, presented)) row = candidate;
+    }
+    if (!row) return null;
+    const owner = data.users.find((candidate) => candidate.id === row.userId);
+    if (!owner || isDisabled(owner)) return null;
+    const showName =
+      row.shareName === 'name' && this.mapShareNameAvailable && isDisplayNameSuitable(owner.displayName);
+    return {
+      displayName: showName ? owner.displayName : null,
+      points: buildPublicMemberMapPoints(data.trips, owner.id, (slug) => this.catalog.hasDestination(slug)),
+    };
   }
 
   // -------------------------------------------------------------------------
@@ -3652,6 +3828,7 @@ function withTripDefaults(data: PlannerData): PlannerData {
   data.auditEvents ??= [];
   data.termsAcceptances ??= [];
   data.reports ??= [];
+  data.memberMapShares ??= [];
   for (const trip of data.trips) {
     trip.planningStatus ??= 'draft';
     trip.visibility ??= 'private';

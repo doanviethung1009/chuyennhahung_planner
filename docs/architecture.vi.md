@@ -83,6 +83,7 @@ trong [`src/i18n/routing.ts`](../src/i18n/routing.ts):
 | `/admin/community` | `/quan-tri/cong-dong` | `/en/admin/community` |
 | `/admin/runbook` | `/quan-tri/runbook` | `/en/admin/runbook` |
 | `/about` | `/ve-nha-hung` | `/en/about` |
+| `/trip-templates` | `/lich-trinh-mau` | `/en/trip-templates` |
 | `/trip-setup/[template]` | `/tao-chuyen-di/[template]` | `/en/trip-setup/[template]` |
 | `/sign-in` | `/dang-nhap` | `/en/sign-in` |
 | `/account/password` | `/doi-mat-khau` | `/en/account/password` |
@@ -94,9 +95,14 @@ trong [`src/i18n/routing.ts`](../src/i18n/routing.ts):
 | `/admin/content/places/[slug]` | `/quan-tri/noi-dung/dia-diem/[slug]` | `/en/admin/content/places/[slug]` |
 | `/admin/content/reviews` | `/quan-tri/noi-dung/danh-gia` | `/en/admin/content/reviews` |
 | `/my-trips` | `/chuyen-di-cua-toi` | `/en/my-trips` |
+| `/my-map` | `/ban-do-cua-toi` | `/en/my-map` |
 | `/my-trips/new` | `/chuyen-di-cua-toi/moi` | `/en/my-trips/new` |
 | `/my-trips/[id]` | `/chuyen-di-cua-toi/[id]` | `/en/my-trips/[id]` |
 | `/shared/[token]` | `/chia-se/[token]` | `/en/shared/[token]` |
+
+`/trip-templates` là danh sách công khai, được index (có trong sitemap), của các
+template có `visibility` là `public`; mỗi thẻ dẫn tới `/trip-setup/[template]`, trang
+này vẫn `noindex`. Chi tiết: [features/trip-template-list.vi.md](features/trip-template-list.vi.md).
 
 Hai type giữ cho điều hướng không sai: `AppPathname` là mọi route nội bộ, còn
 `StaticPathname` loại bỏ các route `[slug]` để một route động không bao giờ bị
@@ -316,7 +322,7 @@ flowchart LR
   container và không đọc store nào. Merge vào `main` sẽ deploy VM dev qua runner tự host
   ([ADR 0016](adr/0016-auto-deploy-dev.vi.md)); image dev và prod khác nhau vì
   `NEXT_PUBLIC_SITE_URL` bị đóng lúc build.
-- **Trang riêng tư** (`/sign-in`, `/account/password`, `/my-trips`, `/my-trips/new`, `/my-trips/[id]`,
+- **Trang riêng tư** (`/sign-in`, `/account/password`, `/my-map`, `/my-trips`, `/my-trips/new`, `/my-trips/[id]`,
   `/trip-setup/[template]`) là `noindex` và không có trong sitemap; `/shared/[token]` là
   `noindex` trừ khi trip là `public`, và gửi `Referrer-Policy: no-referrer`.
 - **Mọi response đều có security header** từ `next.config.ts` (`securityHeaders`):
@@ -395,17 +401,19 @@ Xóa review của khách ([ADR 0024](adr/0024-guest-identity-privacy.vi.md) §8)
 
 Log kiểm toán ([ADR 0019](adr/0019-community-foundation.vi.md), [features/moderation-events.vi.md](features/moderation-events.vi.md)): mọi hành động listing, đánh giá và restriction thêm một `AuditEvent` (bảng `audit_events`, migration `0010`, khoá JSON `auditEvents`) trong cùng transaction của Planner store qua `src/server/community/events.ts`; chỉ nối thêm, dọn sau một năm, staff đọc tại `GET /api/admin/community/events?targetId=`. Chuyển trạng thái listing đi qua máy trạng thái thuần `src/server/community/submission.ts`. Điều khoản Người tạo ([features/creator-terms.vi.md](features/creator-terms.vi.md), migration `0012`): `termsVersion` trong `src/content/site.ts`; bảng `terms_acceptances` (khoá `termsAcceptances`, duy nhất `(user_id, version)`); `GET`/`POST /api/planner/terms`; hai route `PUT` xin đăng chuyến và đánh giá Planner gọi `repository.requireTermsAccepted` và trả `403 forbidden` reason `terms_not_accepted` cho tới khi chấp nhận phiên bản hiện hành; lần chấp nhận đầu ghi sự kiện `terms_accepted`. Giới hạn ghi dùng chung ([features/shared-write-limiter.vi.md](features/shared-write-limiter.vi.md), migration `0011`): giới hạn ghi đánh giá (Planner 5/giờ mỗi user, khách 10/giờ mỗi client) đếm trong bảng `rate_limit_counters` qua `AsyncRateLimiter` / `src/server/persistence/postgres-rate-limiter.ts` khi có `PLANNER_DATABASE_URL` (một upsert nguyên tử mỗi lần kiểm, ngoài transaction của store, cửa sổ cố định), chọn trong `planner/instance.ts` (`getWriteLimiters`); nếu không thì trong tiến trình. Database lỗi → `503` và không ghi đánh giá (fail closed); `x-forwarded-for` giả mạo vẫn vượt được giới hạn của khách. Báo cáo ([features/community-reports.vi.md](features/community-reports.vi.md), migration `0013`): bảng `reports` (khóa `reports`); `POST /api/community/reports` (khách hoặc thành viên, không cần Điều khoản, 10/ngày qua bộ giới hạn dùng chung, honeypot, fail closed); staff `GET /api/admin/community/reports` và `POST …/[id]/resolve` (`community:moderate`) ghi một sự kiện `report_dismissed` / `report_actioned` trên chuyến hoặc đánh giá bị báo cáo; `PublicCommunityReview` có thêm `id` mờ. Batch 10.6a (P10-15/16): `src/server/community/contribution-gate.ts` — `requireContributionOpen()` chạy đầu tiên ở route yêu cầu đăng chuyến, `PUT` review Planner và `POST` review khách, trả `403 forbidden` reason `contribution_closed` khi `contributionOpen` là false (đọc và báo cáo vẫn mở); `authorName` của khách được đối chiếu với `src/server/community/reserved-names.ts` trong `guestReviewInputSchema`.
 
+Chia sẻ bản đồ thành viên ([ADR 0030](adr/0030-member-map-sharing.vi.md), Lát 2a, [features/member-map-sharing.vi.md](features/member-map-sharing.vi.md), migration `0016`): bảng `member_map_shares` (khoá `memberMapShares`, `user_id` duy nhất, `token_digest` nullable duy nhất); token 43 ký tự chỉ hiện một lần và chỉ lưu digest SHA-256; `GET`/`PUT`/`DELETE /api/planner/map/share` và `POST …/rotate` tác động lên đúng người dùng của phiên, body strict, quy tắc same-origin và bucket limiter riêng (`memberMapShare`, 20/giờ); `PublicMemberMap` (chỉ chuyến đã hoàn thành, bậc 1 / 2–3 / từ 4, sắp theo slug) do `src/server/planner/member-map-share.ts` dựng; `deleteUser` xoá dòng; export bỏ digest và import không bao giờ bật chia sẻ. Trang công khai `/shared-map/[token]` và điều khiển trên `/my-map` là Lát 2b và 2c, chưa xây.
+
 ## Các phase
 
 Những thứ vắng mặt có chủ đích, và không được dựng sớm:
 
-- **Giao diện Planner** — được mở một phần bởi [ADR 0005](adr/0005-trip-sharing-and-story-cloning.vi.md): gồm nhân bản story thành trip, My Trips, đăng nhập và trang chia sẻ chỉ-đọc, rồi form tạo trip trống và trình sửa trip ở `/my-trips/[id]` ([features/trip-editor.vi.md](features/trip-editor.vi.md)). Bản đồ Planner và gợi ý AI thì chưa. Phần lõi *backend* của Planner đã ship dưới
+- **Giao diện Planner** — được mở một phần bởi [ADR 0005](adr/0005-trip-sharing-and-story-cloning.vi.md): gồm nhân bản story thành trip, My Trips, đăng nhập và trang chia sẻ chỉ-đọc, rồi form tạo trip trống và trình sửa trip ở `/my-trips/[id]` ([features/trip-editor.vi.md](features/trip-editor.vi.md)). Bản đồ thành viên `/my-map` đã mở ([ADR 0029](adr/0029-member-map.vi.md), [features/member-map.vi.md](features/member-map.vi.md)); bản đồ tuyến theo chuyến và gợi ý AI thì chưa. Phần lõi *backend* của Planner đã ship dưới
   `/api/planner` ([ADR 0002](adr/0002-planner-core.vi.md),
   [features/travel-planner-core.vi.md](features/travel-planner-core.vi.md)):
   trip, ngày sinh tự động, activity, chi phí, ngân sách, lưu trữ/khôi phục và
   clone template. `/thiet-ke-chuyen-di` vẫn là trang nội dung chỉ có liên hệ —
   nối nó vào API là việc của frontend và chưa bắt đầu.
-- **Map và gợi ý AI cho Planner.** Cố ý hoãn lại theo đề bài đã mở phase Planner.
+- **Bản đồ tuyến theo chuyến và gợi ý AI.** (Bản đồ thành viên cấp quốc gia `/my-map` không thuộc phần này: [ADR 0029](adr/0029-member-map.vi.md) tách đôi. Đó là trang server động — `src/server/planner/member-map.ts` đọc cookie phiên, chuyến và review của thành viên, chỉ đưa `{ slug, visits }` xuống component; `private, no-store`, không API, không migration. Chia sẻ bằng token là lát sau.) Cố ý hoãn lại theo đề bài đã mở phase Planner.
 - **Một nhà cung cấp danh tính hosted.** Đăng nhập Planner do ta tự quản: access
   token do người vận hành cấp, email kèm mật khẩu hash bằng scrypt, hoặc Google
   qua OIDC + PKCE tự viết, tạo tài khoản ở lần đăng nhập đầu, hoặc chỉ được liên

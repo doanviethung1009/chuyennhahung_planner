@@ -42,6 +42,8 @@ const noIndex = { key: 'X-Robots-Tag', value: 'noindex, nofollow' };
  * `SESSION_COOKIE` in `src/server/planner/auth.ts` (a test keeps them equal).
  */
 export const homePaths = ['/', '/en'];
+/** The member map is per-member at the same URL, so every response is private (ADR 0029). */
+export const memberMapPaths = ['/ban-do-cua-toi', '/en/my-map'];
 export const sessionCookieName = 'planner_session';
 const privateNoStore = { key: 'Cache-Control', value: 'private, no-store' };
 
@@ -59,6 +61,7 @@ const nextConfig: NextConfig = {
       // (ADR 0005: a share token must never leak through `Referer`).
       ...sharePaths.map((source) => ({ source, headers: [noReferrer] })),
       ...adminPaths.map((source) => ({ source, headers: [noIndex] })),
+      ...memberMapPaths.map((source) => ({ source, headers: [privateNoStore] })),
       ...homePaths.map((source) => ({
         source,
         has: [{ type: 'cookie' as const, key: sessionCookieName }],

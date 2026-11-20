@@ -22,6 +22,9 @@ hưởng. Bản ghi quyết định:
 | `/my-trips/[id]` | `/chuyen-di-cua-toi/[id]` | `/en/my-trips/[id]` | không |
 | `/shared/[token]` | `/chia-se/[token]` | `/en/shared/[token]` | chỉ khi `public` |
 
+Nút "bắt đầu từ lịch trình mẫu" trên `/plan-your-trip` nay dẫn tới danh sách mẫu
+`/trip-templates` ([trip-template-list.vi.md](trip-template-list.vi.md)) thay vì `/stories`.
+
 Trang `/stories/di-da-lat-lan-thu-sau` có thêm mục "Lịch trình thực tế" và một lời
 kêu gọi hành động. Các trang riêng tư là `noindex` và không nằm trong
 `src/app/sitemap.ts`. `/shared/[token]` không có `hreflang` alternates, để token

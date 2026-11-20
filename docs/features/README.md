@@ -16,6 +16,7 @@ New features start from [`_template.md`](_template.md) /
 | Stories | [stories.md](stories.md) | `/chuyen-di-choi` index and detail, the storytelling core |
 | Destinations | [destinations.md](destinations.md) | `/kham-pha` index and detail, the cross-reference hub |
 | Travel map | [travel-map.md](travel-map.md) | `/ban-do` — SVG silhouette, real coordinates, no JS |
+| Member map | [member-map.md](member-map.md) | `/ban-do-cua-toi` — a signed-in member's private map: solid dots visited, hollow dots planned (ADR 0029) |
 | Itineraries | [itineraries.md](itineraries.md) | `/len-lich-trinh` plus the permanent tour redirects |
 | Video reviews | [video-reviews.md](video-reviews.md) | `/goc-review` — deliberately link-free cards, channel buttons |
 | Plan your trip | [plan-your-trip.md](plan-your-trip.md) | `/thiet-ke-chuyen-di` — Planner entry point, no form by design |
@@ -34,11 +35,13 @@ New features start from [`_template.md`](_template.md) /
 | Auto deploy to dev | [auto-deploy-dev.md](auto-deploy-dev.md) | `deploy-dev` workflow: green `main` builds an image, the VM's self-hosted runner deploys it, health probe and rollback (ADR 0016) |
 | Community reviews | [community-reviews.md](community-reviews.md) | Traveller place reviews: Planner-written ones are moderated, home-page guest ones go live and staff can remove them; self-reported, plain text (ADR 0014, PR 2) |
 | More destinations | [more-destinations.md](more-destinations.md) | Eight destinations we have not visited yet (objective text only), landmark places for them and for four older destinations, `content:seed-places` top-up |
+| Trip template list | [trip-template-list.md](trip-template-list.md) | Public list at `/lich-trinh-mau` (`/en/trip-templates`) of templates whose visibility is public, text-only cards leading to `/trip-setup/[template]` (WEB-2, P04-4) |
 | Public places | [places.md](places.md) | Place pages at `/dia-diem/[slug]` (`/en/places/[slug]`) and a Places section on each destination; every catalogue place is public; read-only reviews (ADR 0026) |
 | Community trips | [community-trips.md](community-trips.md) | Public trips shown on the home page and `/community-trips` after owner opt-in and staff approval; any edit re-queues; author by name or anonymous (ADR 0014, PR 1) |
 | Moderation events | [moderation-events.md](moderation-events.md) | Append-only audit log of every community action (listing, review, restriction), written in the same transaction; staff read route; 1-year retention; includes the moderation state machine (ADR 0019) |
 | Community reports | [community-reports.md](community-reports.md) | Readers (guest or member) report a public community trip or review; staff dismiss or mark actioned in the admin queue, one audit event per resolve (batch 10.5) |
 | Creator Terms | [creator-terms.md](creator-terms.md) | Members accept the current Creator Terms version before a listing request or Planner review is accepted; recorded per version, logged; reads and withdrawals never blocked (ADR 0019 §4) |
+| Member map sharing | [member-map-sharing.md](member-map-sharing.md) | Slice 2a of ADR 0030: a member turns on, rotates or revokes a share link for their visited-places map; token shown once, digest stored, anonymous by default; store and owner API only, no public page yet |
 | Shared write limiter | [shared-write-limiter.md](shared-write-limiter.md) | Review write limits (5/h per user, 10/h per guest) counted in PostgreSQL so restarts and instances share them; database down → 503, review not written (ADR 0019 §3) |
 | Trip editor | [trip-editor.md](trip-editor.md) | Edit a trip on `/my-trips/[id]`: header, days, activities (add, edit, delete, reorder, move), expenses; every write sends `If-Match` |
 | Shared budget overrun | [shared-budget-overrun.md](shared-budget-overrun.md) | Shared and owner trip pages show the projected total, the overrun and each person's extra share |
@@ -65,6 +68,6 @@ Not features, and not to be scaffolded early. See
 
 | Phase | Blocked on |
 |---|---|
-| Planner map and AI suggestions | Deliberately deferred by the brief that opened the Planner phase |
+| Trip route map (pins and routes inside a trip) and AI suggestions | Deliberately deferred by the brief that opened the Planner phase |
 | Clickable video cards | Per-video URLs we do not hold |
 | Real photography | The owner's photos |

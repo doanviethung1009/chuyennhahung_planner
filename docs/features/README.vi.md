@@ -16,6 +16,7 @@ Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
 | Chuyện đi chơi | [stories.vi.md](stories.vi.md) | `/chuyen-di-choi` danh sách và chi tiết, phần kể chuyện cốt lõi |
 | Điểm đến | [destinations.vi.md](destinations.vi.md) | `/kham-pha` danh sách và chi tiết, trung tâm tham chiếu chéo |
 | Bản đồ hành trình | [travel-map.vi.md](travel-map.vi.md) | `/ban-do` — silhouette SVG, toạ độ thật, không cần JS |
+| Bản đồ thành viên | [member-map.vi.md](member-map.vi.md) | `/ban-do-cua-toi` — bản đồ riêng của thành viên đăng nhập: chấm đặc đã đi, chấm rỗng đã lên kế hoạch (ADR 0029) |
 | Lịch trình | [itineraries.vi.md](itineraries.vi.md) | `/len-lich-trinh` cùng các redirect tour vĩnh viễn |
 | Góc review video | [video-reviews.vi.md](video-reviews.vi.md) | `/goc-review` — card cố ý không link, nút kênh |
 | Thiết kế chuyến đi | [plan-your-trip.vi.md](plan-your-trip.vi.md) | `/thiet-ke-chuyen-di` — điểm vào Planner, chủ đích không form |
@@ -34,10 +35,12 @@ Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
 | Tự động deploy lên dev | [auto-deploy-dev.vi.md](auto-deploy-dev.vi.md) | Workflow `deploy-dev`: `main` xanh build image, runner tự host trên VM deploy, health probe và rollback (ADR 0016) |
 | Đánh giá cộng đồng | [community-reviews.vi.md](community-reviews.vi.md) | Đánh giá địa điểm của người đi: viết trong Planner thì được duyệt, khách viết ở trang chủ thì lên ngay và staff gỡ được; tự khai, văn bản thuần (ADR 0014, PR 2) |
 | Thêm điểm đến | [more-destinations.vi.md](more-destinations.vi.md) | Tám điểm đến chưa đi (chỉ mô tả khách quan), địa điểm nổi tiếng cho chúng và cho bốn điểm đến cũ, lệnh bổ sung `content:seed-places` |
+| Danh sách lịch trình mẫu | [trip-template-list.vi.md](trip-template-list.vi.md) | Danh sách công khai tại `/lich-trinh-mau` (`/en/trip-templates`) các template đang ở chế độ công khai, thẻ chỉ có chữ dẫn tới `/trip-setup/[template]` (WEB-2, P04-4) |
 | Địa điểm công khai | [places.vi.md](places.vi.md) | Trang địa điểm tại `/dia-diem/[slug]` (`/en/places/[slug]`) và mục Địa điểm trên mỗi điểm đến; mọi địa điểm trong catalogue đều công khai; review chỉ đọc (ADR 0026) |
 | Sự kiện kiểm duyệt | [moderation-events.vi.md](moderation-events.vi.md) | Log kiểm toán chỉ-nối-thêm cho mọi hành động cộng đồng (listing, đánh giá, restriction), ghi trong cùng transaction; route staff đọc; lưu 1 năm; gồm máy trạng thái kiểm duyệt (ADR 0019) |
 | Báo cáo nội dung cộng đồng | [community-reports.vi.md](community-reports.vi.md) | Người đọc (khách hoặc thành viên) báo cáo chuyến hoặc đánh giá công khai; staff bỏ qua hoặc đánh dấu đã xử lý trong hàng đợi admin, mỗi lần xử lý một sự kiện kiểm toán (batch 10.5) |
 | Điều khoản Người tạo | [creator-terms.vi.md](creator-terms.vi.md) | Thành viên chấp nhận phiên bản Điều khoản Người tạo hiện hành trước khi yêu cầu đăng chuyến hoặc đánh giá Planner được nhận; ghi theo phiên bản, có sự kiện; đọc và rút không bị chặn (ADR 0019 §4) |
+| Chia sẻ bản đồ thành viên | [member-map-sharing.vi.md](member-map-sharing.vi.md) | Lát 2a của ADR 0030: thành viên bật, đổi hoặc thu hồi link chia sẻ bản đồ nơi đã đi; token hiện một lần, chỉ lưu digest, mặc định ẩn danh; chỉ store và API chủ sở hữu, chưa có trang công khai |
 | Giới hạn ghi dùng chung | [shared-write-limiter.vi.md](shared-write-limiter.vi.md) | Giới hạn ghi đánh giá (5/giờ mỗi user, 10/giờ mỗi khách) đếm trong PostgreSQL để restart và nhiều instance dùng chung; database sập → 503, không ghi đánh giá (ADR 0019 §3) |
 | Chuyến đi cộng đồng | [community-trips.vi.md](community-trips.vi.md) | Chuyến đi công khai hiện trên trang chủ và `/chuyen-di-cong-dong` sau khi chủ chuyến đồng ý và staff duyệt; mọi sửa đổi xếp lại hàng; tác giả hiện tên hoặc ẩn danh (ADR 0014, PR 1) |
 | Trình sửa chuyến đi | [trip-editor.vi.md](trip-editor.vi.md) | Sửa trip ở `/my-trips/[id]`: thông tin chung, ngày, hoạt động (thêm, sửa, xoá, sắp xếp, chuyển ngày), khoản chi; mọi thao tác ghi đều gửi `If-Match` |
@@ -65,6 +68,6 @@ Không phải tính năng, và không được dựng sớm. Xem
 
 | Phase | Đang chờ |
 |---|---|
-| Map và gợi ý AI cho Planner | Cố ý hoãn lại theo đề bài đã mở phase Planner |
+| Bản đồ tuyến theo chuyến (pin và tuyến trong một chuyến) và gợi ý AI | Cố ý hoãn lại theo đề bài đã mở phase Planner |
 | Card video bấm được | URL của từng video mà ta chưa có |
 | Ảnh thật | Ảnh của chủ nhà |

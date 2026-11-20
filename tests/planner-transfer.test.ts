@@ -27,7 +27,9 @@ describe('planner import', () => {
     expect(summary.collections.trips).toBe(document.trips.length);
     expect(summary.rows).toBeGreaterThan(10);
     const exported = await exportPlannerDocument(target);
-    expect(JSON.parse(exported)).toEqual(document);
+    // ADR 0030 §6: the share digest never travels, so those rows come back unshared.
+    const expected = { ...document, memberMapShares: document.memberMapShares.map((row) => ({ ...row, tokenDigest: null })) };
+    expect(JSON.parse(exported)).toEqual(expected);
   });
 
   it('refuses a store that already holds rows, and leaves it untouched', async () => {

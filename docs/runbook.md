@@ -112,6 +112,10 @@ adding or removing a route means editing this table in both languages.
 | POST | `/api/admin/community/reviews/[id]/erase` | Admin token or admin session | Erase a guest review's content for good on a data-removal request (`community:erase`, admin and up) |
 | GET | `/api/planner/terms` | Traveller (session cookie or access token) | Current Creator Terms status |
 | POST | `/api/planner/terms` | Traveller (session cookie or access token) | Accept the current Creator Terms version (idempotent) |
+| GET | `/api/planner/map/share` | Traveller (session cookie or access token) | Own map-sharing status (never the token) |
+| PUT | `/api/planner/map/share` | Traveller (session cookie or access token) | Turn map sharing on or off, set the name mode; token returned once on first enable (idempotent) |
+| DELETE | `/api/planner/map/share` | Traveller (session cookie or access token) | Revoke the map share link (idempotent) |
+| POST | `/api/planner/map/share/rotate` | Traveller (session cookie or access token) | New map share link, returned once; the old one dies |
 | GET | `/api/admin/community/reports` | Admin token or admin session | Report queue, `?status=open\|actioned\|dismissed` (`community:moderate`) |
 | POST | `/api/admin/community/reports/[id]/resolve` | Admin token or admin session | Dismiss or mark a report actioned, idempotent, logs one event (`community:moderate`) |
 | GET | `/api/admin/audit` | Admin token or admin session | Admin audit log: filters `actor`, `targetType`, `action`, `from`, `to`, `limit`, `cursor` (`audit:read`) |

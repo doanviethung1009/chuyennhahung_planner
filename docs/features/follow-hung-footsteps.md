@@ -23,7 +23,9 @@ tours and the existing sign-in are unaffected. Decision record:
 | `/shared/[token]` | `/chia-se/[token]` | `/en/shared/[token]` | `public` only |
 
 The story page `/stories/di-da-lat-lan-thu-sau` gains a "Lịch trình thực tế"
-section and a call to action. Private pages are `noindex` and are not in
+section and a call to action. The "start from a template" button on `/plan-your-trip`
+now leads to the template list `/trip-templates` ([trip-template-list.md](trip-template-list.md))
+instead of `/stories`. Private pages are `noindex` and are not in
 `src/app/sitemap.ts`. `/shared/[token]` has no `hreflang` alternates, so a token
 is never advertised across locales.
 
