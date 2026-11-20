@@ -48,7 +48,7 @@ describe('MemberMapView', () => {
     const html = await render({ status: 'guest' });
     expect(pinHrefs(html)).toEqual([]);
     expect(html).toContain('memberMap.guestPrompt');
-    expect(html).toContain('href="/sign-in?returnTo=%2Fmy-map"');
+    expect(html).toContain('href="/sign-in?returnTo=%2Fmy-trips"');
     expect(html).not.toContain('memberMap.privateNote');
   });
 

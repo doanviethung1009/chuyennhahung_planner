@@ -13,7 +13,6 @@
     "primary": "Primary navigation",
     "skipToContent": "Skip to main content",
     "myTrips": "My trips",
-    "myMap": "My map",
     "signIn": "Sign in",
     "accountMenu": "Account for {name}",
     "signedInAs": "Signed in as {name}",
@@ -447,9 +446,9 @@
     "sparseWarning": "This map has fewer than 2 visited places. A sparse map is easier for people who already know you to recognise as yours."
   },
   "myTrips": {
-    "mapLink": "See my map",
+    "listTitle": "Your trips",
     "title": "My trips",
-    "description": "The trips you saved: change status, duplicate, share or put away.",
+    "description": "Your map of places and the trips you saved: change status, duplicate, share or put away.",
     "tabsLabel": "Filter trips",
     "tabActive": "Active",
     "tabArchived": "Archived",

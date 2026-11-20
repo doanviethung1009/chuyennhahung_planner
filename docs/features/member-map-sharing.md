@@ -52,7 +52,7 @@ The principal is the session's user; no user id or slug is read from a body or p
 
 ### The controls and the preview (slice 2c)
 
-UI only; the API, store and migration of 2a are unchanged. On `/my-map` (VI `/ban-do-cua-toi`), for a signed-in member only (a guest gets no panel), a "Share your map" section sits under the map.
+UI only; the API, store and migration of 2a are unchanged. On `/my-trips` (VI `/chuyen-di-cua-toi`, the member home of [ADR 0031](../adr/0031-member-home-merge.md)), for a signed-in member only (a guest gets no panel), a "Share your map" section sits under the map.
 
 - **Controls** (`MemberMapSharePanel`, client): reads `GET /api/planner/map/share`, then turns sharing on (`PUT`), revokes (`DELETE`) and rotates (`POST …/rotate`). Rotating asks for confirmation first (the old link dies at once); revoking and enabling do not.
 - **The link is shown once.** The full URL appears only in the response that issues or rotates it, in a read-only field with a real copy button (44px). The token lives in component state: never in the page URL, `localStorage`/`sessionStorage`, a log or analytics. "I saved it, hide the link", revoking, rotating again or a reload forget it; after that the page only says the link is not kept, and the only way to a new one is rotate. Copy falls back to selecting the field on a plain-http origin.
@@ -72,7 +72,7 @@ UI only; the API, store and migration of 2a are unchanged. On `/my-map` (VI `/ba
 | `src/app/api/planner/map/share/route.ts`, `…/rotate/route.ts` | Owner API |
 | `src/server/rate-limit.ts`, `src/server/planner/instance.ts` | Share-change and public-read limiters |
 | `src/app/[locale]/shared-map/[token]/page.tsx`, `src/server/planner/shared-map-page.ts` | Public page; loader (all failures → `null`) and pin sizes |
-| `src/components/map/member-map-share-panel.tsx`, `member-map-share-preview.tsx`, `src/server/planner/member-map-share-preview.ts`, `src/app/[locale]/my-map/page.tsx`, `messages/*.json` (`memberMapShare`) | Slice 2c: controls, one-time link, preview |
+| `src/components/map/member-map-share-panel.tsx`, `member-map-share-preview.tsx`, `src/server/planner/member-map-share-preview.ts`, `src/app/[locale]/my-trips/page.tsx`, `messages/*.json` (`memberMapShare`) | Slice 2c: controls, one-time link, preview |
 | `next.config.ts`, `src/app/robots.ts`, `src/i18n/routing.ts`, `messages/*.json` (`sharedMap`), `deploy/nginx/default.conf` | Headers, robots, route, copy, log rule |
 
 ## Tests
@@ -82,7 +82,7 @@ UI only; the API, store and migration of 2a are unchanged. On `/my-map` (VI `/ba
 ## Limits and open questions
 
 - A lost link must be rotated; it cannot be shown again. Whether sharing is on is read on load; two tabs can disagree until reload (the API answers stay authoritative).
-- The preview adds one more read of the member's trips to `/my-map` (a separate, scoped read; slice 1's map and this preview are not merged).
+- The preview adds one more read of the member's trips to `/my-trips` (a separate, scoped read; slice 1's map and this preview are not merged).
 - `name` mode stays closed until `profilePublicOpen` is built and the owner's Privacy Policy is published (ADR 0030, owner question 1).
 - The migration is not applied by any agent. The nginx rule for `/shared-map/*` is in the repository, but the live VM has not been inspected and the rule is not applied there.
 - A sparse map can still identify its owner to someone who already knows them; the `sparse` flag only supports a warning.

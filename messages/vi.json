@@ -13,7 +13,6 @@
     "primary": "Điều hướng chính",
     "skipToContent": "Bỏ qua, vào nội dung chính",
     "myTrips": "Chuyến đi của tôi",
-    "myMap": "Bản đồ của tôi",
     "signIn": "Đăng nhập",
     "accountMenu": "Tài khoản của {name}",
     "signedInAs": "Đang đăng nhập: {name}",
@@ -447,9 +446,9 @@
     "sparseWarning": "Bản đồ này có dưới 2 nơi đã đi. Một bản đồ quá ít điểm dễ bị nhận ra là của bạn bởi người đã biết bạn."
   },
   "myTrips": {
-    "mapLink": "Xem bản đồ của tôi",
+    "listTitle": "Các chuyến đi",
     "title": "Chuyến đi của tôi",
-    "description": "Các chuyến đi bạn đã lưu: đổi tình trạng, nhân bản, chia sẻ hoặc cất đi.",
+    "description": "Bản đồ những nơi bạn đã đi và các chuyến đi bạn đã lưu: đổi tình trạng, nhân bản, chia sẻ hoặc cất đi.",
     "tabsLabel": "Lọc chuyến đi",
     "tabActive": "Đang dùng",
     "tabArchived": "Đã lưu trữ",

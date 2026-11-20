@@ -52,7 +52,7 @@ Chủ thể là người dùng của phiên; không đọc user id hay slug từ
 
 ### The controls and the preview (slice 2c)
 
-Chỉ UI; API, store và migration của 2a không đổi. Trên `/my-map` (VI `/ban-do-cua-toi`), chỉ với thành viên đã đăng nhập (khách không thấy khối này), có mục "Chia sẻ bản đồ của bạn" dưới bản đồ.
+Chỉ UI; API, store và migration của 2a không đổi. Trên `/my-trips` (VI `/chuyen-di-cua-toi`, trang chủ thành viên theo [ADR 0031](../adr/0031-member-home-merge.vi.md)), chỉ với thành viên đã đăng nhập (khách không thấy khối này), có mục "Chia sẻ bản đồ của bạn" dưới bản đồ.
 
 - **Điều khiển** (`MemberMapSharePanel`, client): đọc `GET /api/planner/map/share`, rồi bật chia sẻ (`PUT`), thu hồi (`DELETE`) và đổi link (`POST …/rotate`). Đổi link hỏi xác nhận trước (link cũ chết ngay); bật và thu hồi thì không.
 - **Link chỉ hiện một lần.** URL đầy đủ chỉ xuất hiện trong phản hồi cấp hoặc đổi link, trong một ô chỉ đọc với nút sao chép thật (44px). Token nằm trong state của component: không bao giờ ở URL trang, `localStorage`/`sessionStorage`, log hay analytics. "Tôi đã lưu, ẩn đường dẫn", thu hồi, đổi link lần nữa hoặc tải lại trang đều làm nó biến mất; sau đó trang chỉ nói link không được giữ lại, và cách duy nhất để có link mới là đổi link. Sao chép quay về chọn nội dung ô khi origin là http thường.
@@ -72,7 +72,7 @@ Chỉ UI; API, store và migration của 2a không đổi. Trên `/my-map` (VI `
 | `src/app/api/planner/map/share/route.ts`, `…/rotate/route.ts` | API chủ sở hữu |
 | `src/server/rate-limit.ts`, `src/server/planner/instance.ts` | Limiter thay đổi chia sẻ và đọc công khai
 | `src/app/[locale]/shared-map/[token]/page.tsx`, `src/server/planner/shared-map-page.ts` | Trang công khai; bộ nạp (mọi lỗi → `null`) và cỡ pin |
-| `src/components/map/member-map-share-panel.tsx`, `member-map-share-preview.tsx`, `src/server/planner/member-map-share-preview.ts`, `src/app/[locale]/my-map/page.tsx`, `messages/*.json` (`memberMapShare`) | Lát 2c: điều khiển, link hiện một lần, xem trước |
+| `src/components/map/member-map-share-panel.tsx`, `member-map-share-preview.tsx`, `src/server/planner/member-map-share-preview.ts`, `src/app/[locale]/my-trips/page.tsx`, `messages/*.json` (`memberMapShare`) | Lát 2c: điều khiển, link hiện một lần, xem trước |
 | `next.config.ts`, `src/app/robots.ts`, `src/i18n/routing.ts`, `messages/*.json` (`sharedMap`), `deploy/nginx/default.conf` | Header, robots, route, chuỗi, quy tắc log | |
 
 ## Tests
@@ -82,7 +82,7 @@ Chỉ UI; API, store và migration của 2a không đổi. Trên `/my-map` (VI `
 ## Limits and open questions
 
 - Link bị mất phải đổi mới, không hiện lại được. Trạng thái bật/tắt đọc lúc tải; hai tab có thể lệch nhau đến khi tải lại (câu trả lời của API vẫn là chuẩn).
-- Bản xem trước thêm một lần đọc chuyến của thành viên vào `/my-map` (đọc riêng, có phạm vi; chưa gộp với bản đồ Lát 1).
+- Bản xem trước thêm một lần đọc chuyến của thành viên vào `/my-trips` (đọc riêng, có phạm vi; chưa gộp với bản đồ Lát 1).
 - Chế độ `name` vẫn đóng cho đến khi `profilePublicOpen` được xây và Chính sách Quyền riêng tư của chủ được công bố (ADR 0030, câu hỏi chủ 1).
 - Không agent nào áp dụng migration. Quy tắc nginx cho `/shared-map/*` đã có trong repository, nhưng VM thật chưa được kiểm tra và quy tắc chưa được áp dụng ở đó.
 - Bản đồ thưa vẫn có thể lộ chủ nhân với người đã biết họ; cờ `sparse` chỉ hỗ trợ cảnh báo.

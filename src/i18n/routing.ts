@@ -31,7 +31,6 @@ export const pathnames = {
   '/my-trips': { vi: '/chuyen-di-cua-toi', en: '/my-trips' },
   '/my-trips/new': { vi: '/chuyen-di-cua-toi/moi', en: '/my-trips/new' },
   '/my-trips/[id]': { vi: '/chuyen-di-cua-toi/[id]', en: '/my-trips/[id]' },
-  '/my-map': { vi: '/ban-do-cua-toi', en: '/my-map' },
   '/shared/[token]': { vi: '/chia-se/[token]', en: '/shared/[token]' },
   '/shared-map/[token]': { vi: '/ban-do-chia-se/[token]', en: '/shared-map/[token]' },
   '/reviews': { vi: '/goc-review', en: '/reviews' },

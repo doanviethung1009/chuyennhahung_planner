@@ -7,7 +7,7 @@ import type { PlannerRepository } from './repository';
 import type { OwnReview, Trip } from './schemas';
 
 /**
- * What `/my-map` needs to know about the visitor (ADR 0029). Read on the
+ * What the member home (`/my-trips`) needs to know about the visitor (ADR 0029). Read on the
  * server, for that one page only, like `home-page.ts` does for `/`.
  *
  * - `guest`: no cookie, an invalid or expired session, a pending password
