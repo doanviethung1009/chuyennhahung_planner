@@ -6,6 +6,7 @@ import {
   reviewRestrictionSchema,
   auditEventSchema,
   termsAcceptanceSchema,
+  memberMapShareSchema,
   reportSchema,
   oauthAttemptSchema,
   plannerSessionSchema,
@@ -44,6 +45,7 @@ const documentSchema = z
     auditEvents: z.array(auditEventSchema).default([]),
     termsAcceptances: z.array(termsAcceptanceSchema).default([]),
     reports: z.array(reportSchema).default([]),
+    memberMapShares: z.array(memberMapShareSchema).default([]),
   })
   .strict();
 
@@ -112,6 +114,13 @@ export async function importPlannerDocument(
   const before = incoming.sessions.length + incoming.oauthAttempts.length;
   incoming.sessions = incoming.sessions.filter((row) => Date.parse(row.expiresAt) > now);
   incoming.oauthAttempts = incoming.oauthAttempts.filter((row) => Date.parse(row.expiresAt) > now);
+  // ADR 0030 §6: importing a file never publishes anything. Every share row comes
+  // in with no token and the anonymous name, whatever the file said.
+  incoming.memberMapShares = incoming.memberMapShares.map((row) => ({
+    ...row,
+    tokenDigest: null,
+    shareName: 'anonymous' as const,
+  }));
   const droppedExpired = before - incoming.sessions.length - incoming.oauthAttempts.length;
 
   const issues = await integrityIssues(incoming, options);
@@ -152,6 +161,7 @@ export async function importPlannerDocument(
       auditEvents: incoming.auditEvents.length,
       termsAcceptances: incoming.termsAcceptances.length,
       reports: incoming.reports.length,
+      memberMapShares: incoming.memberMapShares.length,
     },
   };
 }
@@ -159,5 +169,7 @@ export async function importPlannerDocument(
 /** The document as the JSON store writes it, ready for a file. */
 export async function exportPlannerDocument(store: PlannerStore): Promise<string> {
   const data = await store.read();
-  return `${JSON.stringify({ ...emptyPlannerData(), ...data }, null, 2)}\n`;
+  // ADR 0030 §6: a backup file must not yield working share links, so the digests are not exported.
+  const memberMapShares = (data.memberMapShares ?? []).map((row) => ({ ...row, tokenDigest: null }));
+  return `${JSON.stringify({ ...emptyPlannerData(), ...data, memberMapShares }, null, 2)}\n`;
 }

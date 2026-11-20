@@ -152,6 +152,11 @@ export function clientKey(headers: Pick<Headers, 'get'>): string {
 /** Share-link reads: 60 per minute per client. Shared by the API and the page. */
 export const shareReadLimiter = createRateLimiter({ limit: 60, windowMs: 60_000 });
 /**
+ * Public shared-map reads (ADR 0030 §4): 60 per minute per client. Its own
+ * bucket, so trip-share traffic and map-share traffic cannot burn each other's budget.
+ */
+export const memberMapReadLimiter = createRateLimiter({ limit: 60, windowMs: 60_000 });
+/**
  * Review write limits. Their counters are shared across instances when the
  * Planner runs on PostgreSQL, so they are built in `planner/instance.ts`
  * (`getWriteLimiters`) from these specs; without a database they are the
@@ -168,6 +173,8 @@ export const WRITE_LIMITS = {
   guestReview: { name: 'guest-review', limit: 10, windowMs: 60 * 60_000 },
   /** Content reports (batch 10.5): 10 per day per member, or per client for a guest. */
   report: { name: 'report', limit: 10, windowMs: 24 * 60 * 60_000 },
+  /** Member-map share changes (ADR 0030 §4): 20 per hour per member. Its own bucket. */
+  memberMapShare: { name: 'member-map-share', limit: 20, windowMs: 60 * 60_000 },
 } as const;
 export type WriteLimitName = keyof typeof WRITE_LIMITS;
 /** Sign-in attempts: 10 per minute per client. A separate bucket. */
@@ -205,4 +212,9 @@ export function allowSignup(key: string): boolean {
  */
 export function checkShareRead(headers: Pick<Headers, 'get'>): RateLimitResult {
   return shareReadLimiter.check(clientKey(headers));
+}
+
+/** For the `/shared-map/[token]` page (slice 2b): pass `await headers()`. */
+export function checkMemberMapRead(headers: Pick<Headers, 'get'>): RateLimitResult {
+  return memberMapReadLimiter.check(clientKey(headers));
 }

@@ -93,7 +93,7 @@ function buildLimiters(databaseUrl: string | null): WriteLimiters {
       ? createPostgresRateLimiter({ pool, ...spec })
       : asAsyncLimiter(createRateLimiter({ limit: spec.limit, windowMs: spec.windowMs }));
   return { plannerReview: make(WRITE_LIMITS.plannerReview), guestReview: make(WRITE_LIMITS.guestReview),
-    report: make(WRITE_LIMITS.report),
+    report: make(WRITE_LIMITS.report), memberMapShare: make(WRITE_LIMITS.memberMapShare),
   };
 }
 
