@@ -65,6 +65,15 @@ export default async function MapPage({ params }: Params) {
                 />
                 {t('legendNotVisited')}
               </p>
+              <p className="mt-2 flex items-start gap-2 text-sm text-foreground-muted">
+                <span
+                  aria-hidden="true"
+                  className="mt-0.5 inline-block shrink-0 rounded-pill bg-cream-50/90 px-2 text-xs font-semibold leading-5 text-ink-800 shadow-soft"
+                >
+                  Aa
+                </span>
+                {t('legendNames')}
+              </p>
             </div>
           </div>
 

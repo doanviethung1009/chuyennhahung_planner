@@ -38,7 +38,7 @@ trong [`src/lib/map.ts`](../../src/lib/map.ts), không phải một file dữ li
 Component này là **server** component. Thẻ `<path>` silhouette được
 `aria-hidden`, còn các ghim là một `<ul>` gồm các thẻ `Link` thật của `next-intl`
 đặt tuyệt đối lên trên. Toàn bộ chuyện accessibility và SEO nằm ở đó: bot thấy
-link tới tám trang điểm đến, và người dùng bàn phím tab qua chúng theo thứ tự.
+link tới cả mười sáu trang điểm đến, và người dùng bàn phím tab qua chúng theo thứ tự.
 
 Trên bản đồ đầy đủ (`/map`) chỉ các điểm đến **featured** (`featured: true` trong
 `src/content/destinations.ts`, do chủ dự án chọn, không phụ thuộc `visits`) giữ
@@ -48,6 +48,21 @@ liên kết ở cả hai trường hợp. Nhờ vậy các cụm dày (Hà Nội
 Huế / Hội An / Đà Nẵng) vẫn đọc được ở 375px. Một điểm featured có thể đặt `labelSide` để ghi đè phía nhãn mặc định (trái, phải hoặc trên) khi nhãn
 lân cận va chạm (Hà Nội phía trên chấm, TP. Hồ Chí Minh bên phải). Trên cảm ứng không có hover, nên
 chạm vào sẽ mở trang điểm đến, nơi tiêu đề có tên.
+
+**Quy tắc ghim và nhãn hiện tại** (nơi duy nhất ghi gộp lại):
+
+| Khía cạnh | Quy tắc |
+|---|---|
+| Vị trí | `project(lat, lng)` từ `coords` thật của điểm đến; chấm đặt đúng tâm điểm đó |
+| Kích thước chấm | bán kính `min(5 + visits × 1.4, 11)` CSS px (`pinRadius`; không có `visits` tính là 0): đường kính 10px khi chưa đi, 12.8px khi 1 lần, 22px từ 5 lần trở lên (chạm trần ở 5 lần, nên Ninh Bình và Đà Lạt trông bằng nhau). Là px CSS cố định, không co giãn theo bản đồ |
+| Kiểu chấm | đặc = đã đến (`isVisited`); vòng rỗng = chưa đến |
+| Vùng bấm | thẻ `<a>` là hình vuông `MAP_TARGET_PX` = 44px, tâm đúng chấm, không phụ thuộc kích thước chấm |
+| Nhãn cố định | chỉ variant `full` và `featured: true`; hiện tại là **Hà Nội** và **TP. Hồ Chí Minh** |
+| Phía nhãn | `labelSide(x)` (nửa trái → phải, nửa phải → trái) trừ khi điểm đến đặt `labelSide` (`left` / `right` / `top`) |
+| Các ghim còn lại | tên dạng `sr-only` cùng tooltip khi hover/focus; `preview` không bao giờ có nhãn cố định |
+| Chú giải | khung "Ký hiệu" ở trang `/map` giải thích kích thước chấm, vòng rỗng và cách hiện tên (`legendVisits`, `legendNotVisited`, `legendNames` trong `messages/*.json`) |
+| Ai quyết định | danh sách featured và mọi `labelSide` ghi đè là **dữ liệu của chủ dự án** (CLAUDE.md quy tắc 8): chỉ thêm hoặc bớt điểm featured khi chủ dự án đồng ý |
+| Trước khi đổi | mở `/map` ở 375px và 768px: không hai nhãn cố định nào chồng nhau, không nhãn nào đè lên ghim khác, không bị cắt, mọi hộp ghim ≥44px, và Tab hiện tooltip ở ghim không featured |
 
 Việc đơn giản hoá là có chủ đích và được nói rõ: đường bờ biển là cách điệu, còn
 các ghim thì không. Vị trí một cái ghim luôn được tính từ toạ độ thật của điểm đến.
@@ -75,5 +90,6 @@ hard-code cho phần đất liền Việt Nam: một điểm đến ngoài phạ
 rất xa phía nam, hay bất cứ đâu ngoài nước) sẽ bị ép sát biên về mặt hình ảnh và
 `tests/map.test.ts` sẽ bắt được.
 
-Các ghim có thể đè nhau khi hai điểm đến ở gần nhau; với tám mục thì chưa xảy ra,
-và cách giải quyết thật là xử lý chồng lấn hoặc gom nhóm ghim.
+Các ghim có thể đè nhau khi hai điểm đến ở gần nhau; với mười sáu ghim thì có vài cặp
+đè nhau (ví dụ Hội An và Đà Nẵng; xem quy tắc nhãn ở trên), và cách giải quyết thật là xử lý chồng lấn hoặc gom
+nhóm ghim. Hiện chỉ có hai nhãn cố định nên nhãn không va nhau.

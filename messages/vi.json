@@ -161,6 +161,7 @@
     "legend": "Ký hiệu",
     "legendVisits": "Điểm càng lớn là đi càng nhiều lần",
     "legendNotVisited": "Vòng rỗng là nơi hai đứa chưa đi",
+    "legendNames": "Thành phố lớn có tên sẵn; điểm khác hiện tên khi rê chuột hoặc bấm Tab",
     "listTitle": "Danh sách điểm đến",
     "selectHint": "Chọn một điểm trên bản đồ hoặc trong danh sách."
   },
