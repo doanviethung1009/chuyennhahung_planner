@@ -29,7 +29,8 @@ describe('admin portal (frontend, ADR 0010)', () => {
   it('is disallowed in robots.txt and absent from the sitemap', () => {
     const rules = robots().rules;
     const rule = Array.isArray(rules) ? rules[0]! : rules;
-    expect(rule.disallow).toEqual(['/quan-tri', '/en/admin']);
+    // The shared member map (ADR 0030) is disallowed too; the admin pair stays first.
+    expect(rule.disallow).toEqual(['/quan-tri', '/en/admin', '/ban-do-chia-se', '/en/shared-map']);
     // sitemap.ts needs the Next runtime to import, so assert on its source: it
     // lists pages explicitly and must never name the admin route.
     const source = readFileSync(resolve(import.meta.dirname, '../src/app/sitemap.ts'), 'utf8');

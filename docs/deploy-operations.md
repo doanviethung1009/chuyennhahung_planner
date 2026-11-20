@@ -169,9 +169,9 @@ du -sh /opt/chuyennhahung/data/* /opt/chuyennhahung/logs /opt/chuyennhahung/back
   [`deploy/logrotate/chuyennhahung`](../deploy/logrotate/chuyennhahung) keeps the access
   log 14 days and the error log 30 days; `deploy/scripts/setup-host.sh` installs it to
   `/etc/logrotate.d/`. The access log uses a custom format that records the normalised path
-  (no query string), masks share-token paths (`/chia-se/`, `/shared/`, `/api/shared/`, with or without a `/vi` or `/en` prefix) and
+  (no query string), masks share-token paths (`/chia-se/`, `/shared/`, `/api/shared/`, `/ban-do-chia-se/`, `/shared-map/`, with or without a `/vi` or `/en` prefix), does not log the two member-map share paths at all (`access_log … if=$cnh_loggable`, ADR 0030) and
   never records `Cookie`, `Authorization` or `Referer`. nginx can still write a raw request
-  line into `error.log`, so treat that file as sensitive. Reload nginx after changing the
+  line into `error.log`, so treat that file as sensitive. **Not verified on the live VM:** the member-map log rule (ADR 0030) is in the repository only; the owner must deploy `deploy/nginx/default.conf`, reload nginx and confirm that a request to `/ban-do-chia-se/<any>` leaves no line in `access.log` and that no cache is in front. Reload nginx after changing the
   format. Containers also cap their own logs (10 MB × 3) and memory
   (`APP_MEM_LIMIT`, `POSTGRES_MEM_LIMIT`) in the compose files. `limit_req` is keyed on the client address: behind another proxy or a tunnel add `set_real_ip_from` first, or every client shares one bucket. Rotate or delete any `access.log` written before this format was applied (old lines hold full request lines). A stack with its own nginx (`deploy/nginx-app.conf`) keeps its own log format: this repository does not control it. Not yet verified on a VM.
 - **Backups** older than 14 days are removed by the script; the copy off the VM is yours to

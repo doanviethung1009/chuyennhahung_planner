@@ -29,6 +29,13 @@ const noReferrer = { key: 'Referrer-Policy', value: 'no-referrer' };
 /** Every path that carries a share token: the API and both localized pages. */
 export const sharePaths = ['/api/shared/:path*', '/chia-se/:path*', '/en/shared/:path*'];
 
+/**
+ * The shared member map (ADR 0030 §5): a token in the path, a page only. The
+ * header set is restated here so it is testable and so a layout or a proxy rule
+ * cannot weaken it: never indexed, never cached, never leaked through `Referer`.
+ */
+export const mapSharePaths = ['/ban-do-chia-se/:path*', '/en/shared-map/:path*'];
+
 /** The admin portal (ADR 0010) is never indexed, in either locale. */
 export const adminPaths = ['/quan-tri/:path*', '/en/admin/:path*'];
 
@@ -60,6 +67,10 @@ const nextConfig: NextConfig = {
       // rule wins, so the share surfaces restate their stricter policy here
       // (ADR 0005: a share token must never leak through `Referer`).
       ...sharePaths.map((source) => ({ source, headers: [noReferrer] })),
+      ...mapSharePaths.map((source) => ({
+        source,
+        headers: [noReferrer, noIndex, { key: 'Cache-Control', value: 'private, no-store' }],
+      })),
       ...adminPaths.map((source) => ({ source, headers: [noIndex] })),
       ...memberMapPaths.map((source) => ({ source, headers: [privateNoStore] })),
       ...homePaths.map((source) => ({
