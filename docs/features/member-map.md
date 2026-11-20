@@ -28,7 +28,7 @@ A signed-in member sees their own map of Vietnam: solid dots where they have bee
 
 ### Tabs on the member home ([ADR 0032](../adr/0032-member-home-tabs.md))
 
-`/my-trips` shows one section at a time: **Map** (default), **Trips**, **Sharing**, chosen by `?tab=map|trips|share` read on the server (unknown or repeated values fall back to Map; the value is never echoed). The tab bar is a `<nav aria-label>` of real links with `aria-current="page"` (no ARIA tablist), so deep links, Back and no-JavaScript browsers work. Each tab reads only its own data (`getMemberMap`, `getMemberMapShareOverview`, or `getMemberSession` for Trips). A guest gets the empty map and sign-in on every tab, with no tab bar. The Trips filter (Active / Archived) is a filter, not a tab.
+`/my-trips` shows one section at a time: **Map** (default), **Trips**, **Sharing**, chosen by `?tab=map|trips|share` read on the server (a missing or unknown value falls back to Map, a repeated parameter uses its first value; the value is never echoed). The tab bar is a `<nav aria-label>` of real links with `aria-current="page"` (no ARIA tablist), so deep links, Back and no-JavaScript browsers work. Each tab reads only its own data (`getMemberMap`, `getMemberMapShareOverview`, or `getMemberSession` for Trips). A guest gets the empty map and sign-in on every tab, with no tab bar. The Trips filter (Active / Archived) is a filter, not a tab.
 
 Stable selectors for end-to-end specs, by role and name from `messages/*.json`: `navigation` "Các mục của trang chuyến đi" / "Sections of the trips page" with links Bản đồ / Chuyến đi / Chia sẻ (Map / Trips / Sharing); URLs `/chuyen-di-cua-toi?tab=share`, `/en/my-trips?tab=trips`; `data-testid="share-state"`, `share-preview`, `share-unfinished` are kept.
 

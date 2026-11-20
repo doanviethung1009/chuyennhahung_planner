@@ -69,15 +69,13 @@ export default async function MyTripsPage({ params, searchParams }: Params) {
       <PageHeader title={t('title')} description={t('description')} />
       <Container width="wide">
         <MemberHomeTabs active={tab} />
-        {tab === 'share' ? (
-          overview ? (
-            <div className="py-10 md:py-12">
-              <MemberMapSharePanel
-                unfinishedTrips={overview.unfinishedTrips}
-                preview={<MemberMapSharePreview points={overview.points} locale={locale} />}
-              />
-            </div>
-          ) : null
+        {overview ? (
+          <div className="py-10 md:py-12">
+            <MemberMapSharePanel
+              unfinishedTrips={overview.unfinishedTrips}
+              preview={<MemberMapSharePreview points={overview.points} locale={locale} />}
+            />
+          </div>
         ) : (
           <section aria-labelledby="my-trips-list" className="py-10 md:py-12">
             <h2 id="my-trips-list" className="font-display text-2xl font-semibold md:text-3xl">

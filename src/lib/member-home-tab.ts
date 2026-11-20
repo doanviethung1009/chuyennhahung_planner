@@ -1,7 +1,7 @@
 /**
  * The tabs of the member home (`/my-trips`, ADR 0032). The tab is a `?tab=`
  * query read on the server: a link, not client state. Anything that is not one
- * of the constants below (missing, repeated, unknown) is the default tab — the
+ * of the constants below (missing, unknown) is the default tab; a repeated parameter uses its first value — the
  * raw value is never echoed into the page, a URL or a log.
  */
 export const MEMBER_HOME_TABS = ['map', 'trips', 'share'] as const;
