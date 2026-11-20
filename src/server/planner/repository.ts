@@ -38,11 +38,14 @@ import {
 import { termsVersion as defaultTermsVersion } from '@/content/site';
 import {
   buildPublicMemberMapPoints,
+  digestsEqual,
   isDisplayNameSuitable,
+  pickSharedMapSource,
   mapShareDigest,
   newMapShareToken,
   type MemberMapShareStatus,
   type PublicMemberMap,
+  type SharedMapSource,
 } from './member-map-share';
 import { guestKeyOf, readGuestKeySecret, type SecretSource } from '../community/guest-key';
 import { appendEvent, eventsForTarget, redactEventReasons, type NewAuditEvent } from '../community/events';
@@ -980,7 +983,24 @@ export class PlannerRepository {
       next[`${field}At`] = disabling ? this.timestamp() : null;
       next[`${field}By`] = disabling ? (actor?.userId ?? 'service') : null;
       data.users[index] = next;
-      if (disabling) data.sessions = data.sessions.filter((session) => session.userId !== userId);
+      if (disabling) {
+        data.sessions = data.sessions.filter((session) => session.userId !== userId);
+        // ADR 0030 §6 (L2): disabling turns the map link off for good, in this
+        // transaction, so a later unban or restore does not revive an old link.
+        const share = data.memberMapShares.find((row) => row.userId === userId);
+        if (share && share.tokenDigest !== null) {
+          share.tokenDigest = null;
+          share.updatedAt = this.timestamp();
+          this.record(data, {
+            targetKind: 'user',
+            targetId: userId,
+            actorId: PlannerRepository.actorId(actor),
+            action: 'map_share_off',
+            fromStatus: 'on',
+            toStatus: 'off',
+          });
+        }
+      }
       const [eventAction, from, to] = ({
         ban: ['ban', 'active', 'banned'],
         unban: ['unban', 'banned', 'active'],
@@ -1797,25 +1817,34 @@ export class PlannerRepository {
    */
   async getSharedMemberMap(token: string): Promise<PublicMemberMap | null> {
     if (typeof token !== 'string' || !SHARE_TOKEN_PATTERN.test(token)) return null;
-    const presented = Buffer.from(mapShareDigest(token), 'hex');
-    const data = await this.snapshot();
-    // Every stored digest is compared in constant time and the scan never stops
-    // early, so the time taken does not depend on which row (if any) matches.
-    let row: (typeof data.memberMapShares)[number] | null = null;
-    for (const candidate of data.memberMapShares) {
-      if (candidate.tokenDigest === null) continue;
-      const stored = Buffer.from(candidate.tokenDigest, 'hex');
-      if (stored.length === presented.length && timingSafeEqual(stored, presented)) row = candidate;
+    const presented = mapShareDigest(token);
+    // Hardening M1: look up by digest and load only this owner's rows, never the
+    // whole document. Every failure (store error included) is the same null.
+    let source: SharedMapSource | null;
+    try {
+      source = await this.sharedMapSource(presented);
+    } catch {
+      return null;
     }
-    if (!row) return null;
-    const owner = data.users.find((candidate) => candidate.id === row.userId);
-    if (!owner || isDisabled(owner)) return null;
+    if (!source) return null;
+    // The store matched by index; re-check in constant time so the decision does
+    // not rest on the query alone (and the null digest case cannot slip through).
+    const { share, owner } = source;
+    if (share.tokenDigest === null || !digestsEqual(share.tokenDigest, presented)) return null;
+    if (isDisabled(owner)) return null;
     const showName =
-      row.shareName === 'name' && this.mapShareNameAvailable && isDisplayNameSuitable(owner.displayName);
+      share.shareName === 'name' && this.mapShareNameAvailable && isDisplayNameSuitable(owner.displayName);
     return {
       displayName: showName ? owner.displayName : null,
-      points: buildPublicMemberMapPoints(data.trips, owner.id, (slug) => this.catalog.hasDestination(slug)),
+      points: buildPublicMemberMapPoints(source.trips, owner.id, (slug) => this.catalog.hasDestination(slug)),
     };
+  }
+
+  /** Narrowest read the store offers: indexed lookup, else a view over its copy, else a full read. */
+  private async sharedMapSource(digest: string): Promise<SharedMapSource | null> {
+    if (this.store.readSharedMapSource) return this.store.readSharedMapSource(digest);
+    if (this.store.view) return this.store.view((data) => pickSharedMapSource(data, digest));
+    return pickSharedMapSource(await this.snapshot(), digest);
   }
 
   // -------------------------------------------------------------------------

@@ -1,5 +1,5 @@
-import { createHash, randomBytes } from 'node:crypto';
-import type { MemberMapShareName, Trip } from './schemas';
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import type { MemberMapShare, MemberMapShareName, PlannerUser, Trip } from './schemas';
 
 /**
  * Pure half of member-map sharing (ADR 0030, slice 2a): the share token, the
@@ -84,4 +84,54 @@ export interface MemberMapShareStatus {
   /** Visited places the public map would show now; fewer than 2 is a warning, not a block. */
   visitedPlaces: number;
   sparse: boolean;
+}
+
+/**
+ * Everything the public page needs, for ONE share and its owner (ADR 0030 §5,
+ * hardening M1): the share row, the owner, and only the owner's completed trips.
+ * Stores that can look up by digest return exactly this, so a guest view never
+ * loads (or clones) the whole Planner document.
+ */
+export interface SharedMapSource {
+  share: MemberMapShare;
+  owner: PlannerUser;
+  trips: Array<Pick<Trip, 'ownerId' | 'destinationSlug' | 'planningStatus'>>;
+}
+
+/** Constant-time digest equality; false (never a throw) for different lengths. */
+export function digestsEqual(storedHex: string, presentedHex: string): boolean {
+  const stored = Buffer.from(storedHex, 'hex');
+  const presented = Buffer.from(presentedHex, 'hex');
+  return stored.length === presented.length && timingSafeEqual(stored, presented);
+}
+
+/**
+ * The same lookup over an in-memory document (memory and JSON stores). Every
+ * stored digest is compared in constant time and the scan never stops early.
+ * Pure and read-only: the caller may pass the store's own cached document.
+ */
+export function pickSharedMapSource(
+  data: {
+    memberMapShares: MemberMapShare[];
+    users: PlannerUser[];
+    trips: Trip[];
+  },
+  presentedDigest: string,
+): SharedMapSource | null {
+  let share: MemberMapShare | null = null;
+  for (const candidate of data.memberMapShares) {
+    if (candidate.tokenDigest === null) continue;
+    if (digestsEqual(candidate.tokenDigest, presentedDigest)) share = candidate;
+  }
+  if (!share) return null;
+  const owner = data.users.find((user) => user.id === share.userId);
+  if (!owner) return null;
+  const ownerId = owner.id;
+  return {
+    share: { ...share },
+    owner: { ...owner },
+    trips: data.trips
+      .filter((trip) => trip.ownerId === ownerId && trip.planningStatus === 'completed')
+      .map((trip) => ({ ownerId: trip.ownerId, destinationSlug: trip.destinationSlug, planningStatus: trip.planningStatus })),
+  };
 }

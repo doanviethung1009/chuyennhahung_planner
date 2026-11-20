@@ -64,7 +64,7 @@ Chủ thể là user của phiên: không đọc `userId` hay slug từ body hay
 
 ### 6. Vòng đời, audit và chuyển dữ liệu
 
-- `deleteUser` xoá dòng chia sẻ của thành viên trong cùng transaction. Link của user bị ban hoặc xoá mềm trả 404 trong khi dòng vẫn còn; khôi phục thì link cũ sống lại.
+- `deleteUser` xoá dòng chia sẻ của thành viên trong cùng transaction. Link của user bị ban hoặc xoá mềm trả 404; digest của dòng bị xoá trong cùng transaction (xem §8), nên khôi phục không làm link sống lại.
 - Dòng audit (`targetKind: 'user'`, `targetId` = id user, cùng transaction): `map_share_on`, `map_share_off`, `map_share_rotate`, `map_share_name`. Không token, không tên, không điểm đến trong bất kỳ dòng, log hay lỗi nào.
 - Export (`planner-transfer.ts`) **không** mang `token_digest`. Import tạo mọi dòng với `token_digest = null` và `share_name = anonymous`: **nhập một file không bao giờ công khai thứ gì**.
 
@@ -75,6 +75,15 @@ Chủ thể là user của phiên: không đọc `userId` hay slug từ body hay
 3. **2c** điều khiển và bản xem trước trên `/my-map`, cùng việc hiện link một lần.
 
 `/sec-check` chạy trên mã của 2a và 2b (khuyến nghị, do chủ gọi). BLOCKED thì dừng lát đó.
+
+### 8. Làm rõ (2026-11-21, làm cứng sau `/sec-check` 2a+2b+2c): tra cứu có chỉ mục và link đã tắt thì giữ tắt
+
+Không quyết định nào ở trên đổi. Hai điểm được nêu chính xác hơn:
+
+- **Tra cứu công khai theo digest, không quét cả bộ dữ liệu (phát hiện M1).** Trang chỉ đọc đúng thứ cần: dòng chia sẻ có `token_digest` bằng digest được đưa ra (PostgreSQL: `WHERE token_digest = $1`, dùng chỉ mục UNIQUE có sẵn), chủ của dòng đó theo khoá chính, và các chuyến đã hoàn thành của chủ (`trips_owner_id_idx`), trong một transaction chỉ đọc. Kho memory và JSON trả lời từ bản của chúng mà không clone cả tài liệu. Không cache gì giữa các request, nên thu hồi, khoá hay xoá được thấy ở lượt xem kế tiếp; `isDisabled` đọc mới mỗi lần. Kiểm định dạng vẫn đứng đầu, digest trả về được so lại bằng `timingSafeEqual`, và mọi thất bại, kể cả lỗi store, đều là cùng một `null` → 404. Không có migration.
+- **Vô hiệu hoá tài khoản tắt link vĩnh viễn (phát hiện L2).** `changeAccountState` với `ban` hoặc `delete` đặt `token_digest = null` trong cùng transaction, kèm dòng audit `map_share_off` ghi người thực hiện. `unban` và `restore` không đem link về; thành viên bật chia sẻ lại và nhận token mới. Điều này thay cho câu trước đó nói rằng khôi phục làm link cũ sống lại.
+
+Ghi chú vận hành (L1, L3, L5) nằm ở [runbook](../runbook.vi.md) và [tài liệu tính năng](../features/member-map-sharing.vi.md).
 
 ## Phương án đã xét
 

@@ -72,7 +72,7 @@ describe.skipIf(!url)('Planner on PostgreSQL (TEST_DATABASE_URL)', () => {
     // what tells every cached store so, exactly as a real commit would.
     await pool.query('UPDATE planner_revision SET revision = revision + 1');
     await pool.query(
-      'TRUNCATE reports, terms_acceptances, audit_events, review_restrictions, community_reviews, trip_expenses, trip_activities, trip_days, trips, planner_oauth_attempts, planner_sessions, planner_users RESTART IDENTITY CASCADE',
+      'TRUNCATE member_map_shares, reports, terms_acceptances, audit_events, review_restrictions, community_reviews, trip_expenses, trip_activities, trip_days, trips, planner_oauth_attempts, planner_sessions, planner_users RESTART IDENTITY CASCADE',
     );
   });
 
@@ -388,6 +388,26 @@ describe.skipIf(!url)('Planner on PostgreSQL (TEST_DATABASE_URL)', () => {
     expect(error).toBeInstanceOf(ContentError);
     expect(error.status).toBe(409);
     expect((await store.read()).users).toHaveLength(1);
+  });
+
+  it('the shared map is found by digest through SQL, scoped to its owner, and a ban switches the link off for good (ADR 0030 hardening)', async () => {
+    const planner = repository();
+    const boss = (await planner.createUser({ handle: 'pgm-boss', displayName: 'Boss', email: 'pgm-boss@example.test', role: 'super_admin' })).user.id;
+    const a = (await planner.createUser({ handle: 'pgm-a', displayName: 'Người A' })).user.id;
+    const b = (await planner.createUser({ handle: 'pgm-b', displayName: 'Người B' })).user.id;
+    for (const owner of [a, b]) {
+      const trip = await planner.createTrip(owner, daLatTripInput());
+      await planner.updateTrip(owner, trip.trip.id, { planningStatus: 'completed' }, trip.trip.version);
+    }
+    const tokenA = (await planner.setMemberMapShare(a, { enabled: true, shareName: 'anonymous' })).token ?? '';
+    const fresh = repository(createPostgresPlannerStore(openPool()));
+    expect(await fresh.getSharedMemberMap(tokenA)).toEqual({ displayName: null, points: [{ slug: 'da-lat', visitsBucket: 1 }] });
+    expect(await fresh.getSharedMemberMap('a'.repeat(43))).toBeNull();
+    await planner.changeAccountState(a, 'ban', { userId: boss });
+    await planner.changeAccountState(a, 'unban', { userId: boss });
+    expect(await fresh.getSharedMemberMap(tokenA)).toBeNull();
+    const rows = await pool.query('SELECT token_digest FROM member_map_shares WHERE user_id = $1', [a]);
+    expect(rows.rows[0]?.token_digest).toBeNull();
   });
 
   describe('startup migration', () => {

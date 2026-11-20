@@ -1,7 +1,9 @@
 import { ContentError } from '@/server/content/errors';
 import type { PlannerData, PlannerStore } from '@/server/planner/store';
 import type { DocumentStore } from './json-store';
-import { planStatements, rowsToData, TABLES, type TableSpec } from './planner-rows';
+import { fromRow, planStatements, rowsToData, TABLES, type TableSpec } from './planner-rows';
+import type { SharedMapSource } from '@/server/planner/member-map-share';
+import type { MemberMapShare, PlannerUser, Trip } from '@/server/planner/schemas';
 
 /**
  * The Planner on PostgreSQL (ADR 0009). One file of parameterised SQL over the
@@ -97,11 +99,64 @@ interface Snapshot<T> {
 }
 
 export function createPostgresPlannerStore(pool: PgPoolLike): PlannerStore {
-  return createPostgresTableStore<PlannerData>(pool, {
+  const store = createPostgresTableStore<PlannerData>(pool, {
     tables: TABLES,
     lockKey: PLANNER_LOCK_KEY,
     revisionTable: 'planner_revision',
     label: 'Planner',
+  });
+  return Object.assign(store, {
+    /**
+     * ADR 0030 hardening M1: the public shared map reads three indexed rows
+     * (share by its UNIQUE digest, the owner by primary key, the owner's completed
+     * trips by `trips_owner_id_idx`) instead of the whole document. Always fresh —
+     * no cache, so a revoke, ban or delete is seen on the next view.
+     */
+    async readSharedMapSource(digest: string): Promise<SharedMapSource | null> {
+      const client = await pool.connect().catch((error: unknown) => {
+        throw translateDatabaseError(error, 'Planner');
+      });
+      let broken = false;
+      try {
+        await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+        const specOf = (collection: string) => {
+          const spec = TABLES.find((candidate) => candidate.collection === collection);
+          if (!spec) throw new Error(`no table for ${collection}`);
+          return spec;
+        };
+        const shares = await client.query('SELECT * FROM member_map_shares WHERE token_digest = $1', [digest]);
+        const shareRow = shares.rows[0];
+        let result: SharedMapSource | null = null;
+        if (shareRow) {
+          const share = fromRow(specOf('memberMapShares'), shareRow) as unknown as MemberMapShare;
+          const owners = await client.query('SELECT * FROM planner_users WHERE id = $1', [share.userId]);
+          const ownerRow = owners.rows[0];
+          if (ownerRow) {
+            const owner = fromRow(specOf('users'), ownerRow) as unknown as PlannerUser;
+            const trips = await client.query(
+              "SELECT * FROM trips WHERE owner_id = $1 AND planning_status = 'completed'",
+              [owner.id],
+            );
+            result = {
+              share,
+              owner,
+              trips: trips.rows.map((row) => {
+                const trip = fromRow(specOf('trips'), row) as unknown as Trip;
+                return { ownerId: trip.ownerId, destinationSlug: trip.destinationSlug, planningStatus: trip.planningStatus };
+              }),
+            };
+          }
+        }
+        await client.query('COMMIT');
+        return result;
+      } catch (error) {
+        broken = isConnectionFailure(translateDatabaseError(error, 'Planner'));
+        await rollback(client);
+        throw translateDatabaseError(error, 'Planner');
+      } finally {
+        client.release(broken);
+      }
+    },
   });
 }
 

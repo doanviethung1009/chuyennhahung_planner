@@ -165,3 +165,8 @@ hay bỏ một route nghĩa là sửa bảng này ở cả hai ngôn ngữ.
 - Bộ giới hạn đăng nhập (`signInLimiter`, `signInAccountLimiter`) đếm theo từng tiến trình và khóa theo giá trị đầu của `X-Forwarded-For`, nên nhiều instance thì giới hạn nhân lên và nginx **phải ghi đè** `X-Forwarded-For` (CORE-11 / S-4; chưa chia sẻ qua PostgreSQL).
 - `429 rate_limited` kèm `Retry-After`. Giới hạn theo từng tiến trình và khóa client có thể bị giả ([ADR 0005](adr/0005-trip-sharing-and-story-cloning.vi.md)).
 - Phản hồi admin là `no-store`.
+- **Chia sẻ bản đồ thành viên (ADR 0030) — ghi chú vận hành.**
+  - *Khoá client (L1).* Bộ giới hạn đọc của trang công khai khoá theo hop đầu của `X-Forwarded-For` (`src/server/rate-limit.ts`, `clientKey`). Chỉ an toàn khi cổng app **chỉ** truy cập được qua nginx, nơi ghi đè header; client chạm thẳng được cổng sẽ tự chọn bucket. `TRUST_PROXY_HEADERS=true` chỉ điều khiển cờ `Secure` của cookie và scheme, không đổi bộ giới hạn.
+  - *JSON sang PostgreSQL (L3).* Export bỏ mọi digest chia sẻ và import không ghi digest nào, nên chuyển Planner từ file JSON sang PostgreSQL **làm chết mọi link bản đồ đang chạy**. Báo thành viên trước; mỗi người phải bật chia sẻ lại (link mới).
+  - *`error.log` của nginx (L5).* `access_log` tắt cho `/shared-map/*` và `/ban-do-chia-se/*`, nhưng nginx vẫn có thể ghi dòng request, gồm cả token, vào `error.log` (lỗi upstream hay timeout). Giới hạn người đọc được, giữ thời gian ngắn (xoay vòng ở `deploy/logrotate/chuyennhahung`), và không dán vào ticket hay chat khi chưa che `/shared-map/<token>`.
+  - *Tài khoản bị vô hiệu.* Khoá hay xoá mềm thành viên tắt link của họ vĩnh viễn; khôi phục không đem link về.

@@ -64,7 +64,7 @@ The principal is the session's user: no `userId` or slug is read from a body or 
 
 ### 6. Lifecycle, audit and transfer
 
-- `deleteUser` deletes the member's share row in the same transaction. A banned or soft-deleted user's link answers 404 while the row stays; a restore revives the same link.
+- `deleteUser` deletes the member's share row in the same transaction. A banned or soft-deleted user's link answers 404; the row's digest is cleared in the same transaction (see §8), so a restore does not revive it.
 - Audit rows (`targetKind: 'user'`, `targetId` = the user id, in the same transaction): `map_share_on`, `map_share_off`, `map_share_rotate`, `map_share_name`. No token, no name, no destination in any row, log line or error.
 - Export (`planner-transfer.ts`) does **not** carry `token_digest`. Import creates every row with `token_digest = null` and `share_name = anonymous`: **importing a file never publishes anything**.
 
@@ -75,6 +75,15 @@ The principal is the session's user: no `userId` or slug is read from a body or 
 3. **2c** the controls and preview on `/my-map`, and the one-time link display.
 
 `/sec-check` runs on the code of 2a and 2b (recommended, called by the owner). A BLOCKED stops that slice.
+
+### 8. Clarification (2026-11-21, hardening after `/sec-check` 2a+2b+2c): indexed lookup and a link that stays off
+
+No decision above changes. Two points are made precise:
+
+- **Public lookup is by digest, not by scan of the whole document (finding M1).** The page's lookup reads only what it needs: the share row whose `token_digest` equals the presented digest (PostgreSQL: `WHERE token_digest = $1`, served by the existing UNIQUE index), that row's owner by primary key, and the owner's completed trips (`trips_owner_id_idx`), in one read-only transaction. The memory and JSON stores answer from their own copy without cloning the document. Nothing is cached across requests, so a revoke, ban or delete is seen on the next view; `isDisabled` is read fresh each time. The format check still comes first, the returned digest is re-compared with `timingSafeEqual`, and every failure, including a store error, is the same `null` → 404. No migration.
+- **Disabling an account switches its link off for good (finding L2).** `changeAccountState` with `ban` or `delete` sets `token_digest = null` in the same transaction, with a `map_share_off` audit row naming the actor. `unban` and `restore` do not bring the link back; the member turns sharing on again and gets a new token. This supersedes the earlier sentence that a restore revives the same link.
+
+Operational notes (L1, L3, L5) are in the [runbook](../runbook.md) and the [feature document](../features/member-map-sharing.md).
 
 ## Options considered
 
