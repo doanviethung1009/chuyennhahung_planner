@@ -4,7 +4,7 @@
 
 ## Summary
 
-A signed-in member can switch on a share link for their own map of visited places, rotate it, or revoke it. This is **slice 2a** of ADR [0030](../adr/0030-member-map-sharing.md): the store, the migration and the owner API only. Slice **2b** adds the public page `/shared-map/[token]` (below). There are still **no controls on `/my-map`** (slice 2c): until it ships, a link can only be issued through the API. Sharing is off and anonymous by default; the token is shown once and only its SHA-256 digest is stored.
+A signed-in member can switch on a share link for their own map of visited places, rotate it, or revoke it. This is **slice 2a** of ADR [0030](../adr/0030-member-map-sharing.md): the store, the migration and the owner API only. Slice **2b** adds the public page `/shared-map/[token]` (below). Slice **2c** adds the controls and the preview on `/my-map` (below), so a member no longer needs the API to issue a link. Sharing is off and anonymous by default; the token is shown once and only its SHA-256 digest is stored.
 
 ## Routes
 
@@ -50,6 +50,16 @@ The principal is the session's user; no user id or slug is read from a body or p
 - The name is shown (as plain text in the body, in the `<h1>`) only when the projection carries one, i.e. `name` mode — which stays closed for now, so every shared map is anonymous. It never enters the title, metadata or URL.
 - nginx (`deploy/nginx/default.conf`): the two paths are **not logged at all** (`access_log … if=$cnh_loggable`), the redaction map also masks them as a second line of defence, and no nginx cache is configured. The raw request line can still appear in `error.log`, which is already treated as sensitive. **The live VM has not been inspected:** the owner must apply the new config and check it (see the operations runbook).
 
+### The controls and the preview (slice 2c)
+
+UI only; the API, store and migration of 2a are unchanged. On `/my-map` (VI `/ban-do-cua-toi`), for a signed-in member only (a guest gets no panel), a "Share your map" section sits under the map.
+
+- **Controls** (`MemberMapSharePanel`, client): reads `GET /api/planner/map/share`, then turns sharing on (`PUT`), revokes (`DELETE`) and rotates (`POST …/rotate`). Rotating asks for confirmation first (the old link dies at once); revoking and enabling do not.
+- **The link is shown once.** The full URL appears only in the response that issues or rotates it, in a read-only field with a real copy button (44px). The token lives in component state: never in the page URL, `localStorage`/`sessionStorage`, a log or analytics. "I saved it, hide the link", revoking, rotating again or a reload forget it; after that the page only says the link is not kept, and the only way to a new one is rotate. Copy falls back to selecting the field on a plain-http origin.
+- **Name mode.** Anonymous is the default and is selected. "Show my name" is a real radio; if the API answers `403 share_name_unavailable` (the case today) it is disabled, a note says it is not available and the map stays anonymous. `422 display_name_unsuitable` says to change the display name first.
+- **Errors**, announced in a `role="alert"` region (successes in `role="status"`): 401 (with a sign-in button), 403, 422, 429 (with the wait in minutes), 409 `not_shared` (status refreshed), anything else generic. Copy is in `messages/*.json` under `memberMapShare`, VI and EN.
+- **Preview** (`MemberMapSharePreview`, server): exactly the public projection, built by `resolveMemberMapSharePreview` through the same pure `buildPublicMemberMapPoints` and `sharedMapDestinations` the public page uses, so it cannot drift: completed trips only (archived or not), buckets 1 / 2–3 / 4+, no planned place, no review, no date, and the name viewers would see (none: anonymous). Under 2 places a warning says a sparse map is easier to recognise (a warning, not a block). It reuses `VietnamMap` and its pin rules; `src/content/destinations.ts` is not touched. The preview does not depend on whether sharing is on.
+
 ## Files
 
 | Path | Role |
@@ -62,17 +72,20 @@ The principal is the session's user; no user id or slug is read from a body or p
 | `src/app/api/planner/map/share/route.ts`, `…/rotate/route.ts` | Owner API |
 | `src/server/rate-limit.ts`, `src/server/planner/instance.ts` | Share-change and public-read limiters |
 | `src/app/[locale]/shared-map/[token]/page.tsx`, `src/server/planner/shared-map-page.ts` | Public page; loader (all failures → `null`) and pin sizes |
+| `src/components/map/member-map-share-panel.tsx`, `member-map-share-preview.tsx`, `src/server/planner/member-map-share-preview.ts`, `src/app/[locale]/my-map/page.tsx`, `messages/*.json` (`memberMapShare`) | Slice 2c: controls, one-time link, preview |
 | `next.config.ts`, `src/app/robots.ts`, `src/i18n/routing.ts`, `messages/*.json` (`sharedMap`), `deploy/nginx/default.conf` | Headers, robots, route, copy, log rule |
 
 ## Tests
 
-`tests/member-map-share.test.ts` (pure helpers; token shown once and only the digest stored; rotate; revoke idempotent; name gate and 422 guard; every failure reads as `null`; projection allow-list, archived-completed kept, deleted trip gone; two members isolated; banned and soft-deleted owner; `deleteUser`; audit has no token or name; export drops the digest; import never enables; older file without the key). `tests/member-map-share-routes.test.ts` (401 for every method, cross-origin and origin-less mutations refused, strict bodies, `share_name_unavailable`, isolation between members, own rate-limit bucket, audit rows). `tests/member-map-shared-page.test.ts` (slice 2b: the loader returns `null` for malformed, unknown, revoked, banned, deleted-owner and rate-limited requests; the projection has only `slug` and `visitsBucket`, no planned places and no name; deleted trip leaves, archived-completed stays; slug outside the catalog dropped; headers, robots, sitemap, no JSON endpoint, metadata free of the token and owner; VI/EN keys). `tests/deploy-config.test.ts` covers the nginx log rule and the absence of a cache. PostgreSQL is covered by the shared table-engine tests only; a database round trip of the new table is **not** covered (NOT RUN without `TEST_DATABASE_URL`).
+`tests/member-map-share.test.ts` (pure helpers; token shown once and only the digest stored; rotate; revoke idempotent; name gate and 422 guard; every failure reads as `null`; projection allow-list, archived-completed kept, deleted trip gone; two members isolated; banned and soft-deleted owner; `deleteUser`; audit has no token or name; export drops the digest; import never enables; older file without the key). `tests/member-map-share-routes.test.ts` (401 for every method, cross-origin and origin-less mutations refused, strict bodies, `share_name_unavailable`, isolation between members, own rate-limit bucket, audit rows). `tests/member-map-shared-page.test.ts` (slice 2b: the loader returns `null` for malformed, unknown, revoked, banned, deleted-owner and rate-limited requests; the projection has only `slug` and `visitsBucket`, no planned places and no name; deleted trip leaves, archived-completed stays; slug outside the catalog dropped; headers, robots, sitemap, no JSON endpoint, metadata free of the token and owner; VI/EN keys). `tests/deploy-config.test.ts` covers the nginx log rule and the absence of a cache. Slice 2c: `tests/dom/member-map-share-panel.test.tsx` (off, on, just-issued, already-shared states; copy; the link gone after "done", revoke and from storage and URL; rotate asks first and cancel sends nothing; `share_name_unavailable` disables the name option; 401/403/422/429/500 messages; load failure; VI/EN key parity), `tests/member-map-share-preview.test.ts` (guest and malformed cookie never read the store; visited only, planned absent, no extra field; two members isolated; password change pending), `tests/member-map-share-preview-view.test.tsx` (only given points drawn, bucket in words, anonymous name, sparse warning, unknown slug dropped, heading order). PostgreSQL is covered by the shared table-engine tests only; a database round trip of the new table is **not** covered (NOT RUN without `TEST_DATABASE_URL`).
 
 ## Limits and open questions
 
-- No controls and no preview yet (slice 2c). A lost link must be rotated; it cannot be shown again.
+- A lost link must be rotated; it cannot be shown again. Whether sharing is on is read on load; two tabs can disagree until reload (the API answers stay authoritative).
+- The preview adds one more read of the member's trips to `/my-map` (a separate, scoped read; slice 1's map and this preview are not merged).
 - `name` mode stays closed until `profilePublicOpen` is built and the owner's Privacy Policy is published (ADR 0030, owner question 1).
 - The migration is not applied by any agent. The nginx rule for `/shared-map/*` is in the repository, but the live VM has not been inspected and the rule is not applied there.
 - A sparse map can still identify its owner to someone who already knows them; the `sparse` flag only supports a warning.
 - `/sec-check` on slices 2a and 2b is **not run**; recommended again on 2b because the public page takes a bearer token from the URL.
-- The page itself was not rendered in a browser for this change (NOT RUN, see the handoff).
+- `/sec-check` is also recommended for slice 2c: the UI handles a one-time bearer link.
+- Browser results for 2c are in the handoff `.claude/contracts/handoff/member-map-share-ui.md`.
