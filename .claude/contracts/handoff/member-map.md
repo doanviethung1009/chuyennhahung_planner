@@ -10,4 +10,4 @@
 ## Checks
 - typecheck/lint/test/build: NOT RUN (chỉ file `.claude/`). `/qc-check`: NOT RUN. `/sec-check`: đã chạy cho thiết kế và diff; phải chạy lại trên mã Lát 1 và Lát 2.
 ## Next
-- Lát 1: xong thì review PR. Lát 2: viết ADR 0029 (kèm yêu cầu SEC-CHECK) → chủ duyệt → mới viết mã.
+- Lát 1: xong thì review PR. Lát 2: ADR 0030 (kèm yêu cầu SEC-CHECK) đã duyệt, PR #202 → merge → mới viết mã 2a/2b/2c.
