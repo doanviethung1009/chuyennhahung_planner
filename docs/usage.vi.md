@@ -68,6 +68,7 @@ cố ý thì ghi đè bằng `--no-verify`.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint, flat config |
 | `npm run test` | Vitest, chạy một lượt. Test component (`tests/dom/*.test.tsx`) bật jsdom theo từng file — [ADR 0027](adr/0027-component-test-stack.vi.md) |
+| `npm run e2e` | Smoke trên trình duyệt cho các luồng lõi, chạy trên bản build production và kho dữ liệu dùng một lần ([ADR 0032](adr/0032-playwright-e2e.vi.md)); cần `npm run build` trước và Google Chrome trên máy dev. Xem *End-to-end tests* |
 | `npm run db:migrate` | Áp dụng `db/migrations/*.sql` vào `PLANNER_DATABASE_URL` và `CONTENT_DATABASE_URL` (cái nào được đặt); idempotent. Tuỳ chọn: app chạy cùng đoạn code đó lúc khởi động |
 | `npm run content:import -- <file>` | Nạp một `travel-content.json` vào các bảng content PostgreSQL đang trống, có kiểm tra, trong một transaction |
 | `npm run content:export -- <file>` | Ghi content PostgreSQL ra `travel-content.json` (sao lưu và rollback) |
@@ -97,6 +98,24 @@ PR vào `main`. Hãy xem nó là ý kiến thứ hai, không phải cổng chặ
 **không thể đặt thành bắt buộc** khi repo còn private trên GitHub Free, vì ở đó
 không có branch protection lẫn ruleset. Vì vậy một lần chạy đỏ không ngăn được
 merge — vẫn phải có người xem.
+
+## End-to-end tests
+
+`npm run e2e` chạy smoke trên trình duyệt cho các luồng lõi ([ADR 0032](adr/0032-playwright-e2e.vi.md)): trang công khai tiếng Việt và tiếng Anh ở 375/768/1280px, các redirect tour, đăng nhập và bước ép đổi mật khẩu, chuyến đi từ template tới đường dẫn chia sẻ, review và thêm địa điểm vào chuyến, kiểm duyệt cộng đồng, ma trận quyền admin và trình sửa nội dung, bản đồ thành viên cùng đường dẫn chia sẻ. 14 test, khoảng nửa phút.
+
+```bash
+npm run build      # suite kiểm bản build production
+npm run e2e        # chạy nó trên cổng cục bộ còn trống, chạy test, dừng, xóa dữ liệu
+npm run e2e:ui     # chế độ UI của Playwright, để viết spec
+```
+
+- **Trình duyệt.** Trên máy dev dùng Google Chrome cài sẵn (`channel: 'chrome'`) — không tải gì. Ở CI dùng Chromium cài bằng `npx playwright install --with-deps chromium`.
+- **Không bao giờ chạm tới.** Không database production hay dev, không dev VM, không tài khoản thật. Server chạy ở `http://localhost:<cổng trống>` với kho dữ liệu riêng trong `.data/e2e/<run-id>/` (git bỏ qua, xóa khi kết thúc). `ADMIN_API_TOKEN`, `GUEST_KEY_SECRET` và mọi mật khẩu là ngẫu nhiên mỗi lần chạy và không bao giờ được in ra.
+- **Rào chắn an toàn.** `e2e/support/guard.ts` dừng lần chạy khi base URL không phải `localhost`/`127.0.0.1`/`[::1]`, khi `PLANNER_DATABASE_URL`, `CONTENT_DATABASE_URL` hoặc `E2E_DATABASE_URL` trỏ tới host không cục bộ hoặc database có tên không chứa `e2e`/`test`, hoặc khi một biến `E2E_*` nêu dev VM. Không có cách bỏ qua. Nếu bị chặn, hãy bỏ biến đó.
+- **PostgreSQL (tùy chọn).** `E2E_DB=postgres E2E_DATABASE_URL=postgres://…/planner_e2e npm run e2e` chạy trên database cục bộ dùng một lần qua được rào chắn. CI dùng JSON store.
+- **Khi lỗi** còn lại `test-results/` (mỗi test lỗi một trace — có thể chứa cookie phiên, đừng chia sẻ) và `playwright-report/`, đều git bỏ qua. Mở bằng `npx playwright show-trace <trace.zip>`.
+- **CI.** `.github/workflows/e2e.yml` chạy trên pull request và push vào `main` có đụng `src/`, `messages/`, `e2e/`, `db/`, `next.config.ts`, lockfile, cấu hình Playwright hoặc một workflow, và chạy tay (`workflow_dispatch`). Chỉ mang tính tham khảo, như `CI`.
+- **Viết một spec.** Đặt ở `e2e/*.spec.ts`, import `test` và `expect` từ `e2e/support/test`, lấy ngữ cảnh đã đăng nhập bằng `test.use({ storageState: storageStatePath('member') })` (vai trò: `member`, `member2`, `editor`, `admin`, `super_admin`), chọn phần tử theo role hoặc nhãn hiển thị — không có `data-testid`. Đừng dựa vào trạng thái spec khác tạo ra, và trả lại mọi thứ bạn đã đổi trong nội dung seed.
 
 ## Những việc thường làm
 

@@ -279,6 +279,9 @@ and the reason `--color-border-strong` exists. Details:
 | Tests | `npm run test` | content, i18n parity, routing, map, tokens, docs |
 | Build | `npm run build` | static pages prerender; Travel-content pages are `force-dynamic` and need no database at build |
 | UI | `npm run verify:ui` | screenshots at 375/768/1440, fails on overflow |
+| E2E | `npm run e2e` | the core flows in a real browser against the production build and a throwaway store: routing, cookies, same-origin checks, headers, redirects, two sessions on one record ([ADR 0032](adr/0032-playwright-e2e.md)) |
+
+Test layers: Vitest `node` for logic and routes (`tests/`), Vitest with jsdom for components ([ADR 0027](adr/0027-component-test-stack.md)), Playwright for end-to-end (`e2e/`, not picked up by Vitest). The E2E layer has a guard that refuses any non-local target or non-throwaway database, and it never reads production data.
 
 ## Trip sharing and story cloning
 

@@ -279,6 +279,9 @@ WCAG AA — đó là lý do màu primary tương tác là `clay-600` chứ khôn
 | Test | `npm run test` | nội dung, đồng bộ i18n, routing, bản đồ, token, tài liệu |
 | Build | `npm run build` | trang tĩnh prerender; trang nội dung Travel là `force-dynamic`, không cần database lúc build |
 | UI | `npm run verify:ui` | ảnh chụp ở 375/768/1440, fail nếu tràn ngang |
+| E2E | `npm run e2e` | các luồng lõi trên trình duyệt thật, chạy với bản build production và kho dữ liệu dùng một lần: routing, cookie, kiểm tra same-origin, header, redirect, hai phiên trên một bản ghi ([ADR 0032](adr/0032-playwright-e2e.vi.md)) |
+
+Các tầng test: Vitest `node` cho logic và route (`tests/`), Vitest với jsdom cho component ([ADR 0027](adr/0027-component-test-stack.vi.md)), Playwright cho end-to-end (`e2e/`, Vitest không nhặt). Tầng E2E có rào chắn từ chối mọi đích không cục bộ hoặc database không dùng một lần, và không bao giờ đọc dữ liệu production.
 
 ## Chia sẻ chuyến đi và nhân bản từ câu chuyện
 
