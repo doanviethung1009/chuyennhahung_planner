@@ -186,6 +186,8 @@ export function MemberMapSharePanel({ preview }: { preview: ReactNode }) {
                 id="map-share-link"
                 ref={linkInput}
                 readOnly
+                autoComplete="off"
+                spellCheck={false}
                 className={`${inputClass} mt-1.5`}
                 value={link}
                 onFocus={(e) => e.currentTarget.select()}

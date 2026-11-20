@@ -29,7 +29,7 @@ The public page is a **page only**: there is no public JSON endpoint.
 - The token is 43 base64url characters from `randomBytes(32)` (`SHARE_TOKEN_PATTERN`). It is returned once by the response that issues it and never stored.
 - Public types `PublicMemberMap { displayName: string | null; points }` and `PublicMemberMapPoint { slug; visitsBucket: 1 | 2 | 3 }`, separate from any private map type. Buckets: 1 trip → 1, 2–3 → 2, 4 or more → 3.
 - Audit actions on `targetKind: 'user'`: `map_share_on`, `map_share_off`, `map_share_rotate`, `map_share_name`. No token and no name in any row.
-- Rate limits: share changes use their own bucket, 20 per hour per member (`WRITE_LIMITS.memberMapShare`); the public read bucket (`memberMapReadLimiter`, 60 per minute per client) is defined for slice 2b and is separate from trip sharing.
+- Rate limits: share changes use their own bucket, 20 per hour per member for enable, name change and rotate (`WRITE_LIMITS.memberMapShare`); `DELETE` (revoke) is not limited, so a leaked link can always be killed; the public read bucket (`memberMapReadLimiter`, 60 per minute per client) is defined for slice 2b and is separate from trip sharing.
 
 ## How it works
 

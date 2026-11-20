@@ -149,6 +149,14 @@ describe('/api/planner/map/share (ADR 0030 §4)', () => {
     expect((await put(other.cookie, ON)).status).toBe(200);
   });
 
+  it('still lets a member revoke after the change bucket is used up', async () => {
+    const u = await newSession();
+    for (let i = 0; i < 21; i += 1) await put(u.cookie, ON);
+    expect((await put(u.cookie, ON)).status).toBe(429);
+    expect((await del(u.cookie)).status).toBe(200);
+    expect(await (await get(u.cookie)).json()).toMatchObject({ enabled: false });
+  });
+
   it('writes audit rows on the user and none holds a token', async () => {
     const u = await newSession();
     const repo = await planner.getPlannerRepository();

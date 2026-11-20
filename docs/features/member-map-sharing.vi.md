@@ -29,7 +29,7 @@ Trang công khai **chỉ là trang**: không có endpoint JSON công khai.
 - Token gồm 43 ký tự base64url từ `randomBytes(32)` (`SHARE_TOKEN_PATTERN`). Chỉ trả một lần ở phản hồi cấp token, không bao giờ lưu.
 - Kiểu công khai `PublicMemberMap { displayName: string | null; points }` và `PublicMemberMapPoint { slug; visitsBucket: 1 | 2 | 3 }`, tách riêng khỏi mọi kiểu bản đồ riêng tư. Bậc: 1 chuyến → 1, 2–3 → 2, từ 4 → 3.
 - Hành động audit trên `targetKind: 'user'`: `map_share_on`, `map_share_off`, `map_share_rotate`, `map_share_name`. Không dòng nào có token hay tên.
-- Giới hạn tốc độ: thay đổi chia sẻ có bucket riêng, 20 lần mỗi giờ mỗi thành viên (`WRITE_LIMITS.memberMapShare`); bucket đọc công khai (`memberMapReadLimiter`, 60 lần mỗi phút mỗi client) được định nghĩa sẵn cho Lát 2b, tách khỏi chia sẻ chuyến đi.
+- Giới hạn tốc độ: thay đổi chia sẻ có bucket riêng, 20 lần mỗi giờ mỗi thành viên cho bật, đổi tên và đổi link (`WRITE_LIMITS.memberMapShare`); `DELETE` (thu hồi) không bị giới hạn, để link bị lộ luôn thu hồi được; bucket đọc công khai (`memberMapReadLimiter`, 60 lần mỗi phút mỗi client) được định nghĩa sẵn cho Lát 2b, tách khỏi chia sẻ chuyến đi.
 
 ## How it works
 

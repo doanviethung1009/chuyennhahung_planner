@@ -36,11 +36,14 @@ export function PUT(request: Request) {
   });
 }
 
-/** Revokes the link at once. Repeating it succeeds. */
+/**
+ * Revokes the link at once. Repeating it succeeds. Deliberately **not** rate
+ * limited: it is idempotent, writes an audit row only when it changes something,
+ * and a member must always be able to kill a leaked link, even after an hour of
+ * toggling has used up the change bucket (sec-check L6).
+ */
 export function DELETE(request: Request) {
-  return plannerRoute(request, async ({ userId }, repository) => {
-    const limit = await (await getWriteLimiters()).memberMapShare.check(userId);
-    if (!limit.ok) throw rateLimited(limit.retryAfterSeconds);
-    return plannerJson(await repository.revokeMemberMapShare(userId));
-  });
+  return plannerRoute(request, async ({ userId }, repository) =>
+    plannerJson(await repository.revokeMemberMapShare(userId)),
+  );
 }
