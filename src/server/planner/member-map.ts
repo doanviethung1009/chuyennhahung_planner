@@ -28,6 +28,7 @@ export type MemberMapState =
  * No `visits` means "planned, not been yet" (a hollow dot).
  */
 export interface MemberMapPoint {
+  // Private page only: planned points and exact counts must never reach a public route.
   slug: string;
   visits?: number;
 }

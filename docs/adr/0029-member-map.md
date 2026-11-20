@@ -42,4 +42,6 @@ Rule 6 lists "the Planner map" as deliberately deferred. The text never defined 
 - Harder: the page reads the whole trip list of one member (paged, up to 1,000 trips per status) on each request; a very large account would need an index or an API. The count of visits is approximate by design.
 - A trip that is completed and then archived stays on the map; one archived without completing disappears, which a member may not expect — the page says so.
 - The "Planner map" wording is now two things; other documents that say "Planner map" (roadmap, specs) mean the trip route map.
+- Caching risk: the page is per-member at one URL, so no shared layer may keep it. Next answers it dynamic, `next.config.ts` states `private, no-store`, and the nginx VM and any CDN must not override or cache it (they should honour origin `Cache-Control`). The client router cache is cleared on sign-out because the menu signs out with a full navigation (`window.location.assign`); a test pins that. The same rule will apply to `/shared-map/*` in slice 2.
+- `MemberMapPoint` (with `visits?` and planned points) is for the private page only and must never be serialized by a public route; slice 2 defines its own public type (coarse visit bucket, completed trips only).
 - Rollback: pure addition — revert the PR.

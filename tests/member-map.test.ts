@@ -212,6 +212,11 @@ describe('the /my-map boundary (ADR 0029)', () => {
     expect(memberMapPaths).toEqual(['/ban-do-cua-toi', '/en/my-map']);
   });
 
+  it('signs out with a full navigation so the client router cache cannot show the old map', () => {
+    const menu = read('components/layout/account-menu.tsx');
+    expect(menu).toMatch(/window\.location\.assign\(getPathname\(\{ href: '\/', locale \}\)\)/);
+  });
+
   it('keeps the page noindex and dynamic, and /map free of member data', () => {
     const page = read('app/[locale]/my-map/page.tsx');
     expect(page).toMatch(/index: false/);

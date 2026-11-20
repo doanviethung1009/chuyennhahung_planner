@@ -42,4 +42,6 @@ Quy tắc 6 ghi "Planner map" là việc cố ý hoãn, nhưng chưa bao giờ �
 - Khó hơn: mỗi request trang đọc toàn bộ danh sách chuyến của một thành viên (phân trang, tối đa 1.000 chuyến mỗi trạng thái); tài khoản rất lớn sẽ cần chỉ mục hoặc API. Số lần đi chỉ xấp xỉ, có chủ ý.
 - Chuyến đã hoàn thành rồi lưu trữ vẫn ở trên bản đồ; chuyến lưu trữ mà chưa hoàn thành thì biến mất, thành viên có thể không ngờ — trang có ghi chú nói rõ.
 - Chữ "Planner map" nay là hai thứ; các tài liệu khác nói "Planner map" (roadmap, specs) là bản đồ tuyến theo chuyến.
+- Rủi ro cache: trang là của riêng từng thành viên ở một URL, nên không tầng chia sẻ nào được giữ nó. Next trả động, `next.config.ts` ghi rõ `private, no-store`, nginx trên VM và mọi CDN không được ghi đè hay cache (phải tôn trọng `Cache-Control` của origin). Router cache phía client được xóa khi đăng xuất vì menu đăng xuất bằng điều hướng đầy đủ (`window.location.assign`); có test ghim điều này. Cùng quy tắc áp dụng cho `/shared-map/*` ở lát 2.
+- `MemberMapPoint` (có `visits?` và điểm kế hoạch) chỉ dành cho trang riêng tư và không bao giờ được route công khai serialize; lát 2 định nghĩa kiểu công khai riêng (bậc lượt đi thô, chỉ chuyến completed).
 - Hoàn tác: chỉ thêm mới — revert PR.

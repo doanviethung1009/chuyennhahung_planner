@@ -6,8 +6,9 @@
 - ADR 0029 VI+EN (+ đăng ký), feature doc `member-map.*` (+ README), `docs/architecture.*`, chữ quy tắc 6 ở `CLAUDE.md` + `rules/03`, contract chép vào repo.
 ## Ngoài kế hoạch
 - Sửa `tests/home-page-boundary.test.ts` (luật cache-control mới thêm `/ban-do-cua-toi`, `/en/my-map`); `src/lib/return-to.ts` thêm `/my-map` vào trang riêng tư; `docs/features/README.*` đổi dòng "Planner map" thành "Trip route map".
+- Sau sec-check của contract (PR #200): chép contract mới; ADR 0029 thêm rủi ro cache (nginx/CDN/router) và ghi `MemberMapPoint` chỉ riêng tư; thêm test đăng xuất = điều hướng đầy đủ.
 ## Checks (đã chạy)
-- typecheck PASS · lint PASS · test PASS (114 files, 1412 tests, 95 skipped; gồm docs.test.ts) · build PASS (route `/[locale]/my-map` dynamic).
+- typecheck PASS · lint PASS · test PASS (114 files, 1413 tests, 95 skipped; gồm docs.test.ts) · build PASS (route `/[locale]/my-map` dynamic).
 - `/qc-check` NOT RUN. `/sec-check` NOT RUN — **khuyến nghị** (danh tính phiên, cô lập ownerId).
 - Chưa chạy trình duyệt thật.
 ## Rủi ro / quyết định mở
