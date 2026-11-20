@@ -1,7 +1,7 @@
 # Task Contract: MEMBER-MAP — Bản đồ riêng theo thành viên đăng nhập
 - Class: **XL**, tách 2 PR. **Lát 1 = L** (bản đồ riêng tư `/my-map`, không API/schema/migration). **Lát 2 = XL** (chia sẻ qua token: cột/bảng + migration + API + route công khai; bắt buộc `/sec-check` trên mã). Các mục "không API/migration" bên dưới chỉ áp dụng cho **Lát 1**; phần Lát 2 nằm ở các mục đánh dấu **[Lát 2]**.
 - Desired outcome / user impact: thành viên đã đăng nhập có một bản đồ Việt Nam của **riêng mình** — nơi mình đã đi / đã lên kế hoạch đi — tách biệt hoàn toàn với `/map` (hành trình của hai vợ chồng chủ site). Khách chưa đăng nhập không thấy dữ liệu của ai.
-- Trạng thái: **ĐÃ DUYỆT (chủ) — Lát 1 đang thực thi ở session riêng; Lát 2 chưa viết mã, chờ ADR 0029.** Thứ tự ưu tiên khi các mục mâu thuẫn: khối "QUYẾT ĐỊNH ĐÃ CHỐT" ở cuối, rồi "SEC-CHECK", rồi phần còn lại; các khuyến nghị Q0–Q7 ban đầu chỉ giữ để tham khảo.
+- Trạng thái: **ĐÃ DUYỆT (chủ) — Lát 1 đang thực thi ở session riêng; Lát 2 chưa viết mã, chờ ADR 0030 (đã duyệt, PR #202).** Thứ tự ưu tiên khi các mục mâu thuẫn: khối "QUYẾT ĐỊNH ĐÃ CHỐT" ở cuối, rồi "SEC-CHECK", rồi phần còn lại; các khuyến nghị Q0–Q7 ban đầu chỉ giữ để tham khảo.
 
 ## Scope IN / OUT
 IN **Lát 1**:
@@ -14,7 +14,7 @@ OUT:
 - Không sửa `src/content/destinations.ts` (seed của chủ site) và không trộn dữ liệu thành viên vào `/map`.
 - Không đổi `/map` theo trạng thái đăng nhập (đã chốt Q2: trang riêng).
 - **[Lát 1]** Không chia sẻ công khai, không API `/api/planner/...` mới, không cột/bảng/migration (Lát 2 làm các việc này, xem mục [Lát 2] bên dưới).
-- **[Lát 2] IN (PR riêng, sau Lát 1 và sau ADR 0029):** cài đặt chia sẻ theo user (cột/bảng + migration đảo ngược được), `PUT/DELETE /api/planner/map/share` (+ rotate), route công khai `/shared-map/[token]` (tên route chốt trong ADR), `deleteUser` cascade, audit, rate limit, export/import an toàn.
+- **[Lát 2] IN (PR riêng, sau Lát 1 và sau ADR 0030):** cài đặt chia sẻ theo user (cột/bảng + migration đảo ngược được), `PUT/DELETE /api/planner/map/share` (+ rotate), route công khai `/shared-map/[token]` (tên route chốt trong ADR), `deleteUser` cascade, audit, rate limit, export/import an toàn.
 - Không bản đồ **tuyến đường theo từng chuyến** (pin hoạt động theo ngày, vẽ đường, trình soạn thảo chuyến) — đó vẫn là "Planner map" bị hoãn.
 - Không dữ liệu giả lập của thành viên; không tile/thư viện bản đồ/API key.
 
@@ -88,16 +88,16 @@ Cho `userId` của phiên, mỗi `destinationSlug` biết đến (có trong seed
 - Rò rỉ chéo thành viên / lộ danh tính qua cache: trang đọc cookie ⇒ dynamic, `Cache-Control: private/no-store`, không đặt vào layout dùng chung (ADR 0022 đã tránh layout đọc request). Không `generateStaticParams`.
 - Lộ nội dung riêng (tiêu đề, ghi chú, ngân sách, nội dung review) qua prop client: chỉ gửi `{slug, visits}` + tra seed.
 - Suy luận "đã đi" từ review `visitedOn` do người dùng tự khai ⇒ không dùng cho điều gì ngoài hiển thị riêng tư của chính họ.
-- Chia sẻ công khai là **Lát 2** (đã chốt): xem mục SEC-CHECK và Acceptance [Lát 2]. Lớp trung gian (nginx VM, CDN) và router cache phía client của Next phải được nêu trong ADR 0029 cho cả `/my-map` lẫn `/shared-map/*`.
+- Chia sẻ công khai là **Lát 2** (đã chốt): xem mục SEC-CHECK và Acceptance [Lát 2]. Lớp trung gian (nginx VM, CDN) và router cache phía client của Next phải được nêu trong ADR 0029 (`/my-map`) và ADR 0030 (`/shared-map/*`).
 - Migration: **Lát 1 không**; **Lát 2 có** (đảo ngược được, mặc định private/token null). Dữ liệu cũ
 
 ## Rollback approach
 **Lát 1:** thuần cộng thêm: revert PR gỡ route, module, chuỗi i18n và ADR; không có dữ liệu để khôi phục; kiểu prop `VietnamMap` thu hẹp tương thích ngược. **[Lát 2]:** revert code + migration đảo ngược xoá cột/bảng cài đặt chia sẻ; trước khi rollback phải **thu hồi mọi token đã phát hành** (hoặc tắt route công khai bằng cờ) để link cũ trả 404; không áp dụng migration production bằng agent.
 
 ## Budget: max agent invocations; stop condition
-Subagent: **0** cho việc thực thi (`security` chỉ chạy khi chủ gọi). Điều kiện dừng: `tests/docs.test.ts`/typecheck đỏ >2 vòng sửa; Lát 1 phát hiện cần migration hoặc API ⇒ quay lại contract; Lát 2 không bắt đầu trước khi ADR 0029 (kèm các yêu cầu SEC-CHECK) được chủ duyệt.
+Subagent: **0** cho việc thực thi (`security` chỉ chạy khi chủ gọi). Điều kiện dừng: `tests/docs.test.ts`/typecheck đỏ >2 vòng sửa; Lát 1 phát hiện cần migration hoặc API ⇒ quay lại contract; Lát 2 không bắt đầu trước khi ADR 0030 (kèm các yêu cầu SEC-CHECK) được chủ duyệt.
 
-## State: Lát 1 IMPLEMENTED (PR #201); Lát 2 chưa làm
+## State: DESIGNED (Lát 1: IN_PROGRESS ở session riêng; Lát 2: chờ ADR)
 
 ## Feature document owner (`docs/features/member-map.md` + `.vi.md`, CLAUDE.md rules 11–12)
 FE role viết; BE role góp mục Data/How it works phần server; đăng ký ở `docs/features/README.*`.
@@ -120,23 +120,23 @@ FE role viết; BE role góp mục Data/How it works phần server; đăng ký �
 - Q1: hiện **cả hai**: đã đi (chuyến `completed`, đặc) và đã lên kế hoạch chưa đi (`draft|planned`, rỗng).
 - Q2: trang riêng **`/my-map`**; `/map` giữ nguyên.
 - Q3: khách thấy **bản đồ trống (không pin)** + câu mời: "Hãy lên kế hoạch và thực hiện chuyến đi của bạn để lắp đầy bản đồ" (+ nút tới `/sign-in`). Không có dữ liệu của ai.
-- Q4: **có chia sẻ qua token** → Lát 2 (XL). Token riêng của bản đồ (không dùng lại token chuyến), mặc định `private`, thu hồi/đổi được; trang công khai chỉ trả allow-list `PublicMemberMapPoint` (xem Interface [Lát 2]) + tên theo `shareName` (ẩn danh mặc định), `noindex`. Cần: cột/bảng cài đặt theo user, migration + export/import, `PUT/POST/DELETE /api/planner/map/share`, route công khai, `deleteUser` cascade, rate limit, test không lộ. Chi tiết chốt trong ADR 0029 trước khi viết mã Lát 2.
+- Q4: **có chia sẻ qua token** → Lát 2 (XL). Token riêng của bản đồ (không dùng lại token chuyến), mặc định `private`, thu hồi/đổi được; trang công khai chỉ trả allow-list `PublicMemberMapPoint` (xem Interface [Lát 2]) + tên theo `shareName` (ẩn danh mặc định), `noindex`. Cần: cột/bảng cài đặt theo user, migration + export/import, `PUT/POST/DELETE /api/planner/map/share`, route công khai, `deleteUser` cascade, rate limit, test không lộ. Chi tiết chốt trong ADR 0030 trước khi viết mã Lát 2.
 - Q5: lưu trữ (`archived`) chỉ là cất gọn; chuyến chưa `completed` mà archive **không** lên bản đồ; chuyến `completed` rồi archive **vẫn tính đã đi** (chốt bên dưới).
 - Q6/Q7: đã giải thích lại cho chủ; mặc định giữ nhãn chỉ `featured`; Q7 = không cần chủ cung cấp gì.
 - (Đã đóng) Hai câu mở: chuyến completed-đã-archive vẫn tính; tên khi chia sẻ ẩn danh mặc định.
 - **CHỐT (chủ, sau Q5):** chuyến `completed` đã archive **vẫn tính "đã đi"** (chấm đặc) ở cả bản riêng tư lẫn công khai; **xoá hẳn** chuyến thì điểm biến mất. Archive chưa `completed` thì không lên bản đồ.
 
-## SEC-CHECK thiết kế Lát 2 (chủ gọi; PASS_WITH_WARNINGS, chưa BLOCKED) — yêu cầu bắt buộc đưa vào ADR 0029 + test trước khi viết mã Lát 2
+## SEC-CHECK thiết kế Lát 2 (chủ gọi; PASS_WITH_WARNINGS, chưa BLOCKED) — yêu cầu bắt buộc đưa vào ADR 0030 + test trước khi viết mã Lát 2
 Nếu thiếu mục 1–4, review mã sẽ BLOCKED. Chưa xác minh: ADR 0004/0005/0007/0014/0024/0025 nội dung, CSRF của cookie phiên, `rate-limit.ts`, adapter Postgres/export-import, nginx. Phải chạy lại `/sec-check` trên mã Lát 2.
-1. **Danh tính:** mặc định `anonymous`; hiện tên chỉ khi chủ chọn `name` riêng cho bản đồ (không thừa hưởng từ chuyến/review); `displayName` đọc mới lúc render, không snapshot; không đưa tên vào title/OG/URL/metadata. `displayName` chỉ `trim().min(2).max(80)` nên có thể chứa email/SĐT: ADR 0029 phải chọn hành động (ví dụ lọc mẫu email/SĐT khi bật `name`, hoặc dùng tên bản đồ riêng có giới hạn độ dài/ký tự) — không đẩy hết sang ADR 0025.
-2. **Suy luận riêng tư:** bản công khai chỉ gồm điểm **đã đi** (chốt: không có điểm kế hoạch), `visitsBucket` thô (bậc chốt trong ADR), không timestamp/thứ tự (sắp alphabet), nguồn chỉ chuyến `completed` (không dùng review `visitedOn` tự khai). Ngưỡng tối thiểu số điểm đã đi để bật chia sẻ (chống nhận diện thành viên chỉ có 1 điểm) và việc thành viên được xem trước bản công khai: ADR 0029 quyết định (đề xuất: cho xem trước, cảnh báo khi < 2 điểm).
+1. **Danh tính:** mặc định `anonymous`; hiện tên chỉ khi chủ chọn `name` riêng cho bản đồ (không thừa hưởng từ chuyến/review); `displayName` đọc mới lúc render, không snapshot; không đưa tên vào title/OG/URL/metadata. `displayName` chỉ `trim().min(2).max(80)` nên có thể chứa email/SĐT: ADR 0030 phải chọn hành động (ví dụ lọc mẫu email/SĐT khi bật `name`, hoặc dùng tên bản đồ riêng có giới hạn độ dài/ký tự) — không đẩy hết sang ADR 0025.
+2. **Suy luận riêng tư:** bản công khai chỉ gồm điểm **đã đi** (chốt: không có điểm kế hoạch), `visitsBucket` thô (bậc chốt trong ADR), không timestamp/thứ tự (sắp alphabet), nguồn chỉ chuyến `completed` (không dùng review `visitedOn` tự khai). Ngưỡng tối thiểu số điểm đã đi để bật chia sẻ (chống nhận diện thành viên chỉ có 1 điểm) và việc thành viên được xem trước bản công khai: ADR 0030 quyết định (đề xuất: cho xem trước, cảnh báo khi < 2 điểm).
 3. **Hình chiếu động:** xoá chuyến `completed` → điểm biến mất khỏi bản công khai ngay, không cache; archive chuyến `completed` vẫn hiện (khớp CHỐT Q5); có test.
 4. **Token riêng:** 43 ký tự/`randomBytes(32)`, lưu **digest SHA-256** (token chuyến hiện lưu thô — bản đồ nên tốt hơn; nếu cần hiển thị lại thì ghi rõ đánh đổi).
 5. **404 đồng nhất** cho: sai định dạng, token lạ, thu hồi, private, chủ bị ban/disable/soft-delete/xoá; thứ tự: định dạng → rate limit → tra index → đọc mới → `timingSafeEqual` → chủ còn hoạt động (`isDisabled`) → dựng view.
-6. **Cache:** `force-dynamic`, `no-store`, `noindex,nofollow`, `referrer: no-referrer`, không alternates/sitemap/JSON-LD/OG có tên; kiểm tra nginx VM không cache `/shared-map/*`; token nằm trong URL nên log truy cập nginx có thể ghi token thô: ADR 0029 ghi nhận/giảm thiểu (ví dụ loại đường dẫn này khỏi access log hoặc che token).
+6. **Cache:** `force-dynamic`, `no-store`, `noindex,nofollow`, `referrer: no-referrer`, không alternates/sitemap/JSON-LD/OG có tên; kiểm tra nginx VM không cache `/shared-map/*`; token nằm trong URL nên log truy cập nginx có thể ghi token thô: ADR 0030 ghi nhận/giảm thiểu (ví dụ loại đường dẫn này khỏi access log hoặc che token).
 7. **API:** phiên của chính user, không nhận userId từ body, `.strict()`; CSRF/same-origin mirror ADR 0004 + test origin khác bị từ chối; PUT/DELETE idempotent, có rotate; rate limit mutation riêng và bucket đọc riêng (không dùng chung với chuyến).
 8. **Migration/export-import:** mặc định private/token null, migration đảo ngược được; export không chứa token thô; **import không bật chia sẻ**; `deleteUser` xoá cài đặt cùng transaction; ban/soft-delete tắt bản công khai; không áp dụng migration production bằng agent.
 9. **Audit:** event bật/tắt/rotate; không ghi token/tên vào log; có test.
 Test bắt buộc thêm: enumerating allow-list JSON/HTML công khai; cô lập hai user (token A không trả B; PUT/DELETE của B không đổi A); 404 đồng nhất mọi nhánh; 429 không lộ trạng thái token.
 - **CHỐT (chủ, sau sec-check):** bản chia sẻ công khai (Lát 2) **chỉ hiện điểm đã đi**; không hiện điểm đã lên kế hoạch. Bản riêng tư của chính thành viên (Lát 1) vẫn hiện cả hai.
-- **CHỐT (chủ):** tên khi chia sẻ = **ẩn danh mặc định**; chỉ hiện tên khi thành viên chọn riêng `name` cho bản đồ (không thừa hưởng từ chuyến/review). Câu mở (b) đã đóng. Không còn câu hỏi mở cho chủ trước khi viết ADR 0029.
+- **CHỐT (chủ):** tên khi chia sẻ = **ẩn danh mặc định**; chỉ hiện tên khi thành viên chọn riêng `name` cho bản đồ (không thừa hưởng từ chuyến/review). Câu mở (b) đã đóng. Không còn câu hỏi mở cho chủ trước khi viết ADR 0030.
