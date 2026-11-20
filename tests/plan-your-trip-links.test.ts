@@ -15,14 +15,14 @@ const keys = [
 
 describe('/plan-your-trip Planner entry points', () => {
   it('links to targets that exist in the pathname map', () => {
-    for (const target of ['/stories', '/my-trips/new']) {
+    for (const target of ['/trip-templates', '/my-trips/new']) {
       expect(pathnames, target).toHaveProperty([target]);
     }
   });
 
   it('renders both targets as ButtonLink hrefs on the page', () => {
     const page = readFileSync('src/app/[locale]/plan-your-trip/page.tsx', 'utf8');
-    expect(page).toContain('href="/stories"');
+    expect(page).toContain('href="/trip-templates"');
     expect(page).toContain('href="/my-trips/new"');
     expect(page).not.toContain('href="#"');
   });

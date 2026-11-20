@@ -22,7 +22,8 @@
     "signingOut": "Signing out…",
     "signOutFailed": "Couldn't sign out. Please try again.",
     "communityTrips": "Community trips",
-    "places": "Places"
+    "places": "Places",
+    "tripTemplates": "Trip templates"
   },
   "locale": {
     "label": "Language",
@@ -182,8 +183,8 @@
     "intro": "You can design your own trip right in the Planner, or ask us to suggest an itinerary by email and message — and then you're talking to an actual person.",
     "startTitle": "Start designing now",
     "startLead": "Pick whichever way of starting suits you, then arrange each day your own way.",
-    "startTemplatesCta": "Pick from a story we travelled",
-    "startTemplatesHint": "Read one of our stories, then use its real itinerary section to copy it as your own trip and adjust it to fit.",
+    "startTemplatesCta": "Pick a trip template",
+    "startTemplatesHint": "Browse our real itineraries, pick a template to copy as your own trip, and adjust it to fit.",
     "startBlankCta": "Start a blank trip",
     "startBlankHint": "Add each day and activity yourself from scratch. You may need to sign in to save the trip.",
     "stepsTitle": "Or ask us to suggest a plan",
@@ -1738,5 +1739,24 @@
     "next": "Next page",
     "pageOf": "Page {page} of {pageCount}",
     "browseAll": "Browse all places"
+  },
+  "tripTemplates": {
+    "metaTitle": "Trip templates",
+    "title": "Trip templates",
+    "description": "Real itineraries from Hung's family, boiled down into templates. Pick one to copy as your own trip, then adjust it to fit.",
+    "resultsHeading": "Trip template list",
+    "count": "{count, plural, one {# trip template} other {# trip templates}}",
+    "useCta": "Use this template",
+    "paceLabel": "Pace",
+    "groupLabel": "Travelling as",
+    "costLabel": "Cost",
+    "estimated": "Estimated",
+    "emptyTitle": "No trip templates are public yet",
+    "emptyBody": "When we open a template it will show up here. Meanwhile you can read the stories we travelled or start a new trip of your own.",
+    "emptyStories": "Read our stories",
+    "emptyNewTrip": "Start a new trip",
+    "errorTitle": "Could not load the trip templates",
+    "errorBody": "Something went wrong reading the data. The list is not empty, it just did not load. Please try again in a few minutes.",
+    "retry": "Try again"
   }
 }

@@ -19,6 +19,7 @@ const columns: Column[] = [
       { key: 'places', href: '/places' },
       { key: 'map', href: '/map' },
       { key: 'itineraries', href: '/itineraries' },
+      { key: 'tripTemplates', href: '/trip-templates' },
     ],
   },
   {

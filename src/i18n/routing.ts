@@ -24,6 +24,7 @@ export const pathnames = {
   '/itineraries': { vi: '/len-lich-trinh', en: '/itineraries' },
   '/itineraries/[slug]': { vi: '/len-lich-trinh/[slug]', en: '/itineraries/[slug]' },
   '/plan-your-trip': { vi: '/thiet-ke-chuyen-di', en: '/plan-your-trip' },
+  '/trip-templates': { vi: '/lich-trinh-mau', en: '/trip-templates' },
   '/trip-setup/[template]': { vi: '/tao-chuyen-di/[template]', en: '/trip-setup/[template]' },
   '/sign-in': { vi: '/dang-nhap', en: '/sign-in' },
   '/account/password': { vi: '/doi-mat-khau', en: '/account/password' },
