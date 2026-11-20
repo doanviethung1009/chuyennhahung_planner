@@ -71,8 +71,9 @@ có trước khi chạy nhiều instance.
 |---|---|---|---|
 | ~~P04-1~~ | ~~Editor ngày/hoạt động/chi phí trong `/my-trips/[id]` dùng API sẵn có~~ — xong (`docs/features/trip-editor.md`; còn thiếu test component) | frontend-engineer | — |
 | ~~P04-2~~ | ~~Nối `/plan-your-trip` vào Planner~~ — xong (PR #172, #173; hai lối vào `/stories` và `/my-trips/new`, giữ đường liên hệ) | system-architect → FE | P04-1 |
-| P04-4 | **(owner duyệt ID 2026-11-18)** Danh sách template phía người dùng (chỉ template public, chưa bị rút), dẫn vào `/trip-setup/[template]`; không trùng P07-6 (CMS admin) | frontend-engineer | P04-1 |
+| ~~P04-4~~ | **(owner duyệt ID 2026-11-18)** Danh sách template phía người dùng (chỉ template public, chưa bị rút), dẫn vào `/trip-setup/[template]`; không trùng P07-6 (CMS admin) | frontend-engineer | P04-1 | — **xong ở PR #203 (WEB-2, 2026-11-20; sửa nhỏ #205)** |
 | P04-3 | Planner map — cần ADR riêng | system-architect | P04-1 |
+| _(ID do owner gán)_ | **Member map** — bản đồ riêng `/my-map` và chia sẻ qua token đã merge (ADR 0029, 0030; PR #201, #204, #206, #208; migration 0016); owner quyết có thuộc P04-3 không. Việc còn mở: `/sec-check` cho phần chia sẻ (XL), quy tắc nginx và kiểm dev VM, Postgres round trip trên VM | system-architect → owner | P04-1 |
 
 ## Phase 08 — Media Library & Analytics (P3)
 

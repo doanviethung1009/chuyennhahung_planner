@@ -34,7 +34,7 @@ Trạng thái: `Done` · `Partial` · `In progress` · `Designed` (có ADR/contr
 | 01 | Branding & UX | Done (còn dữ liệu chủ nhà) | — | 00 |
 | 02 | Travel Content System | Done | — | 00 |
 | 03 | Travel Planner Core | Done | — | 02 |
-| 04 | Interactive Planner UI | Partial (editor Done; `/plan-your-trip` nối vào Planner P04-2 Done, PR #172; còn Planner map — cần ADR) | P2 | 03 |
+| 04 | Interactive Planner UI | Partial (editor Done; `/plan-your-trip` nối vào Planner P04-2 Done, PR #172; P04-4 Done, PR #203; bản đồ riêng theo thành viên có (ADR 0029/0030); còn Planner map theo nghĩa P04-3 — owner xác nhận) | P2 | 03 |
 | 05 | Story → Planner, My Trips & Sharing | **Done** (2026-11-16; đóng với cảnh báo, xem `CURRENT.md`) | — | 02, 03 |
 | 06 | AI Planner, Affiliate & Optimization | **Deferred** (2026-11-18, core-first) | P2 | 05, 04 (editor), 07 (phần affiliate) |
 | 07 | Admin Portal, CMS & RBAC | In progress — Done: RBAC, CMS story/place/review, shell P07-10, dashboard P07-11, create/archive P07-16, UX P07-19, audit log (qua P10-1). Audit viewer P07-13 (#157), users/roles P07-12 (#165), moderation P07-14 (#166), collections + integrity P07-15 (#168), system status P07-17 (#162), template CMS P07-6 (#169), Slug UX P07-22 (#171). Còn: MFA (hoãn), P07-20/21; P07-18 hoãn cùng media (Phase 08). Smoke trình duyệt các màn hình mới: NOT RUN | **P1** | 05 |
@@ -122,6 +122,7 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
   (`src/components/planner/trip-editor/`, `docs/features/trip-editor.md`; kiểm tay, chưa có
   test component) — P04-1 xong.
 - **Đã có thêm (2026-11-19, PR #172):** `/plan-your-trip` nối vào Planner qua `/stories` và `/my-trips/new`, vẫn giữ đường liên hệ — P04-2 xong.
+- **Đã có thêm (2026-11-20):** `/trip-templates` danh sách template cho người dùng — P04-4 xong (PR #203, #205); bản đồ riêng theo thành viên `/my-map` và chia sẻ qua token (ADR 0029, 0030; PR #201, #204, #206, #208) — chưa có ID, owner quyết có thuộc P04-3 hay không; `/sec-check` NOT RUN cho phần chia sẻ.
 - **Chưa có (kiểm source 2026-11-16):** Planner map (cần ADR riêng). Xem
   `docs/features/follow-hung-footsteps.md` → *Limits and open questions*.
 - **Ràng buộc:** Planner map cần ADR riêng (CLAUDE.md quy tắc 6).

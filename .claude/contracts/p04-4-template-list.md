@@ -68,7 +68,7 @@
 - Rủi ro còn lại, cần nói rõ: (a) P07-21 — template còn `public` khi story nguồn đã `draft` hoặc đã bị xóa vẫn được liệt kê và bấm vào được; đây là hành vi hiện tại của `/trip-setup`, không phải hồi quy; (b) API công khai vẫn trả nguyên bản template (mục 2); (c) `/trip-setup/[template]` là `noindex` nhưng danh sách thì index, nên slug template sẽ lộ ra công cụ tìm kiếm qua link — chấp nhận được vì template công khai là chủ ý.
 - Migration: không có (không đổi schema, không có file dữ liệu). Rollback: revert PR (xóa route, sitemap, footer, key messages; không có dữ liệu để khôi phục).
 - Ngân sách: **sub-agents 0**, một session, một nhánh, một PR, single agent, handoff ≤25 dòng. Điều kiện dừng: nếu thêm một template công khai vào seed hay đổi API là cần thiết để hoàn thành, dừng và hỏi chủ dự án.
-- State: **READY** — chủ dự án duyệt Q1–Q7 theo khuyến nghị (2026-11-20, xem mục "Quyết định của chủ dự án"). Chưa có mã.
+- State: **DONE** (merged PR #203, 2026-11-20; follow-up #205 dedupes the list read and translates the link tail; qc and sec-check: NOT RUN by this sync)
 - Feature document owner: frontend-engineer (main session đảm nhiệm cả hai vai theo thứ tự backend nhỏ → frontend): `docs/features/trip-template-list.md` + `.vi.md`; backend phần đọc/projection viết mục Data/How it works.
 - Architecture/usage doc updates needed: `docs/architecture.md` + `.vi.md` (bảng route + ghi chú index/noindex); `docs/usage.*` không cần.
 
