@@ -43,6 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry('/community-trips', { priority: 0.6, changeFrequency: 'weekly' }),
     entry('/map', { priority: 0.7, changeFrequency: 'monthly' }),
     entry('/itineraries', { priority: 0.9, changeFrequency: 'monthly' }),
+    entry('/trip-templates', { priority: 0.7, changeFrequency: 'weekly' }),
     entry('/plan-your-trip', { priority: 0.8, changeFrequency: 'yearly' }),
     entry('/reviews', { priority: 0.7, changeFrequency: 'weekly' }),
     entry('/about', { priority: 0.6, changeFrequency: 'yearly' }),

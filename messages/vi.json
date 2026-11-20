@@ -22,7 +22,8 @@
     "signingOut": "Đang đăng xuất…",
     "signOutFailed": "Chưa đăng xuất được. Hãy thử lại.",
     "communityTrips": "Chuyến đi cộng đồng",
-    "places": "Địa điểm"
+    "places": "Địa điểm",
+    "tripTemplates": "Lịch trình mẫu"
   },
   "locale": {
     "label": "Ngôn ngữ",
@@ -182,8 +183,8 @@
     "intro": "Bạn có thể tự thiết kế chuyến đi ngay trong Planner của nhà Hưng, hoặc nhờ mình gợi ý lịch trình qua email và tin nhắn — lúc đó bạn nói chuyện với người thật.",
     "startTitle": "Bắt đầu thiết kế ngay",
     "startLead": "Chọn cách bắt đầu bạn thấy tiện nhất, rồi tự sắp xếp từng ngày theo ý mình.",
-    "startTemplatesCta": "Chọn từ một chuyện đã đi",
-    "startTemplatesHint": "Đọc một chuyện của nhà Hưng, rồi bấm vào phần lịch trình thật để chép về làm chuyến của bạn và chỉnh lại cho vừa.",
+    "startTemplatesCta": "Chọn một lịch trình mẫu",
+    "startTemplatesHint": "Xem các lịch trình thật của nhà Hưng, chọn một mẫu để chép về làm chuyến của bạn và chỉnh lại cho vừa.",
     "startBlankCta": "Bắt đầu một chuyến trống",
     "startBlankHint": "Tự thêm từng ngày và từng hoạt động từ đầu. Bạn có thể cần đăng nhập để lưu chuyến.",
     "stepsTitle": "Hoặc nhờ nhà Hưng gợi ý",
@@ -1738,5 +1739,24 @@
     "next": "Trang sau",
     "pageOf": "Trang {page} / {pageCount}",
     "browseAll": "Xem tất cả địa điểm"
+  },
+  "tripTemplates": {
+    "metaTitle": "Lịch trình mẫu",
+    "title": "Lịch trình mẫu",
+    "description": "Những lịch trình thật của nhà Hưng, đã gọn thành mẫu. Chọn một mẫu để chép về làm chuyến đi của riêng bạn rồi chỉnh lại cho vừa.",
+    "resultsHeading": "Danh sách lịch trình mẫu",
+    "count": "{count} lịch trình mẫu",
+    "useCta": "Dùng mẫu này",
+    "paceLabel": "Nhịp độ",
+    "groupLabel": "Đi cùng",
+    "costLabel": "Chi phí",
+    "estimated": "Ước tính",
+    "emptyTitle": "Chưa có lịch trình mẫu nào được mở công khai",
+    "emptyBody": "Khi nhà Hưng mở một lịch trình mẫu, nó sẽ hiện ở đây. Trong lúc chờ, bạn có thể đọc các chuyện đã đi hoặc tự bắt đầu một chuyến mới.",
+    "emptyStories": "Đọc chuyện đã đi",
+    "emptyNewTrip": "Tạo chuyến đi mới",
+    "errorTitle": "Chưa tải được danh sách lịch trình mẫu",
+    "errorBody": "Có trục trặc khi đọc dữ liệu. Danh sách không rỗng, chỉ là chưa tải được. Hãy thử lại sau ít phút.",
+    "retry": "Thử lại"
   }
 }
