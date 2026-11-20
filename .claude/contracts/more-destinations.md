@@ -14,6 +14,6 @@
 - Security and migration risks: Thấp. Không đổi auth/DB. Store có sẵn không tự nhận địa điểm mới (xem "Rollback" và handoff); cách bổ sung là script create-only, chạy tay.
 - Rollback approach: revert PR; địa điểm đã bổ sung vào store thật có thể ẩn/xóa qua admin CMS.
 - Budget: 0 subagent; dừng nếu cần ADR hoặc đụng file của PR #176 quá mức.
-- State: REVIEW
+- State: DONE (merged PR #178, 2026-11-19; hero count fixed to visited destinations only)
 - Feature document owner (`docs/features/<slug>.md` + `.vi.md`, CLAUDE.md rules 11–12): `docs/features/more-destinations.md` + `.vi.md`, đăng ký trong `docs/features/README.*`.
 - Architecture/usage doc updates needed (`docs/architecture.*`, `docs/usage.*`, rule 10): kiểm tra phần mô tả `Destination` ở architecture/usage; sửa nếu nói "chỉ nơi đã đến".

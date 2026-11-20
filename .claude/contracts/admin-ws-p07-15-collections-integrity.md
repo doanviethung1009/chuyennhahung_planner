@@ -8,7 +8,7 @@
 - Files allowed: `src/app/[locale]/admin/content/{collections,integrity}/**`, `src/components/admin/content/**`, routing, `return-to`, messages, tests, `docs/features/admin-content-collections.*`, `docs/features/README.*`; handlers only after the amendment above.
 - Acceptance: editor can open both screens and edit a collection with `If-Match` conflicts shown (412 message); planner integrity visible to admin only; findings link to the owning record; empty/error states; VI/EN.
 - Tests: role matrix for both pages, 412 handling, list search/sort pure helper, i18n.
-- Security: integrity output may name user ids — shown only to `user:provision`; no secrets. Rollback: revert PR. Docs: frontend writes. Budget: sub-agents 0. State: READY (amended 2026-11-18; owner approved W11)
+- Security: integrity output may name user ids — shown only to `user:provision`; no secrets. Rollback: revert PR. Docs: frontend writes. Budget: sub-agents 0. State: DONE (merged PR #168, 2026-11-18; collection DELETE stays token-only by owner decision; qc PASS, sec PASS; browser smoke NOT RUN)
 
 ## Amendment 2026-11-18 (W11) — handlers move to session access
 - **Handlers changed (access guard only, bodies untouched):** `src/app/api/admin/travel/collections/route.ts` (GET, POST), `collections/[slug]/route.ts` (GET, PUT/PATCH, DELETE as present), `collections/[slug]/status/route.ts`, `src/app/api/admin/travel/integrity/route.ts`: replace `adminRoute(request, …)` with `adminContentRoute(request, { action: 'content:write', session: true }, …)` (same pattern as `stories/route.ts`, ADR 0011 §1). The service token keeps working (`resolveAdminPrincipal` still accepts it for the same action).

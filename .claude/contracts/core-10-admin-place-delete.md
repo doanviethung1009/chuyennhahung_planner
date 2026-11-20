@@ -1,7 +1,7 @@
 # Task Contract: CORE-10 — Nút "Xóa" place trong UI admin (chỉ admin / super admin)
 - ID: **CORE-10** (nối tiếp [CORE-9](core-9-place-in-use.md), phần "nút xóa place trong UI admin" mà CORE-9 để OUT of scope).
 - Class: **L** (đổi quyền + route + UI + tài liệu) · Branch: `feat/admin-place-delete` · One contract = one session = one branch = one PR, single agent (sub-agents 0).
-- State: **ĐÃ DUYỆT 2026-11-19 → ĐÃ CODE, chờ chủ dự án cho phép commit/push/PR** (nhánh `feat/admin-place-delete` cắt từ `fix/place-in-use`; chưa commit). Không thêm dòng vào `core-completion-index.md` (chưa có hàng CORE-9 ở nhánh này).
+- State: DONE (merged PR #184, 2026-11-19)
 - Desired outcome: admin và super admin xóa được một place từ `/admin/content/places/[slug]` bằng trình duyệt (có hộp xác nhận, thấy số đếm khi 409 `place_in_use`); editor/member không thấy nút và server trả 403 nếu gọi thẳng.
 
 ## Base branch (nêu rõ)

@@ -2,7 +2,7 @@
 - Class: S (một giá trị seed + 1–2 test); thêm bước vận hành nếu chọn phương án B
 - Desired outcome / user impact: trang `/stories/ba-ngay-lang-man-o-da-lat` hiện khối template + CTA vào `da-lat-3-ngay-lang-man`, nhất quán với `di-da-lat-lan-thu-sau`.
 - Scope IN: quyết định phương án; (nếu duyệt) đổi seed + test + docs liên quan. OUT: đổi nghĩa `sourceStorySlug`/`plannerTemplateSlug` (ADR 0012 giữ nguyên), migration dữ liệu, code route.
-- State: DESIGNED — **chờ chủ dự án chọn phương án, chưa sửa mã/seed**
+- State: DONE (merged PR #192, 2026-11-19; seed only: the dev VM and any Postgres already seeded do NOT gain the CTA; option B (PATCH on real data) needs the owner)
 
 ## Evidence (file:line)
 - Story gốc: `src/content/travel/seed.ts:264-266` (`daLatRomanticStory`, `plannerTemplateSlug: null`). Template: `seed.ts:451-453` (`sourceStorySlug: 'ba-ngay-lang-man-o-da-lat'`, `visibility: 'public'` ~463).

@@ -5,4 +5,4 @@
 - Scope OUT: API routes, admin, schemas, story page markup.
 - Evidence: consumers of `story.places` are `story-blocks.tsx` (reads slug, name, location, suggestedMinutes, estimatedCostVnd) and `PlaceCard`; `[locale]/stories/[slug]/page.tsx:82,159,170` only slug/PlaceCard; no `'use client'` component receives a place. All used fields are in `PublicPlace`.
 - Risks: none functional; type change only. Rollback: revert.
-- Budget: subagents 0. State: IMPLEMENTED, awaiting owner OK to commit/PR. Feature doc: `docs/features/places.*` (note).
+- Budget: subagents 0. State: DONE (merged PR #187, 2026-11-19)

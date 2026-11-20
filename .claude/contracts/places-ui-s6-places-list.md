@@ -15,5 +15,5 @@
 - Acceptance: as in Tests; plus browser check at 375/768/1280 in VI and EN (search a Vietnamese term with and without diacritics, e.g. "da lat" and "Đà Lạt", both find the same places; filter + paging keep `q`; empty state; keyboard order); `typecheck`, `lint`, `test`, `build` output stated.
 - Security/privacy: `q` input bound and data-only; no new auth surface (public read); performance: the substring scan over the catalogue is acceptable for the current seed size — state the size and note a store-side search as a future change if the catalogue grows beyond a few thousand. `/sec-check` recommended (input handling on a public endpoint); `/qc-check` recommended. Rollback: revert the PR (optional parameter and an added route).
 - Budget: sub-agents 0. Stop and ask the owner if `q` cannot be added without changing the response shape or other list endpoints' behaviour.
-- State: READY (owner approved 2026-11-18 decisions 7 and 8; contract written 2026-11-19)
+- State: DONE (merged PR #176, 2026-11-19; sec PASS_WITH_WARNINGS)
 - Feature document owner: backend writes the API section, frontend the page section of `docs/features/places.md` + `.vi.md`.

@@ -65,6 +65,6 @@ Architect (contract này, đã xong) → Backend (1–4) → Frontend (6, nhỏ)
 ## Quyết định của chủ dự án (2026-11-19)
 Duyệt theo khuyến nghị: câu 1 thêm chuỗi UI + `KNOWN_ERRORS`; câu 2 thêm `countPlaceReferences` ở content; câu 3 lỗi Planner → 503.
 
-## State: REVIEW — mã xong, chưa commit; qc/sec NOT RUN
+## State: DONE (merged PR #179, 2026-11-19; fixes CORE-8 D-1; qc PASS; PostgreSQL tests added)
 - Feature document owner: none (sửa lỗi; không tính là tính năng mới). Cập nhật `docs/travel-content-api.*`, `docs/runbook.*`, `docs/features/follow-hung-footsteps.*`.
 - Architecture/usage doc updates needed: `docs/architecture.*` nếu có đoạn mô tả DELETE places/`invalid_state` cho place (kiểm bằng grep khi sửa); `docs/usage.*` không đổi.

@@ -34,10 +34,10 @@ Trạng thái: `Done` · `Partial` · `In progress` · `Designed` (có ADR/contr
 | 01 | Branding & UX | Done (còn dữ liệu chủ nhà) | — | 00 |
 | 02 | Travel Content System | Done | — | 00 |
 | 03 | Travel Planner Core | Done | — | 02 |
-| 04 | Interactive Planner UI | Partial (editor Done; còn Planner map, `/plan-your-trip`) | P2 | 03 |
+| 04 | Interactive Planner UI | Partial (editor Done; `/plan-your-trip` nối vào Planner P04-2 Done, PR #172; còn Planner map — cần ADR) | P2 | 03 |
 | 05 | Story → Planner, My Trips & Sharing | **Done** (2026-11-16; đóng với cảnh báo, xem `CURRENT.md`) | — | 02, 03 |
 | 06 | AI Planner, Affiliate & Optimization | **Deferred** (2026-11-18, core-first) | P2 | 05, 04 (editor), 07 (phần affiliate) |
-| 07 | Admin Portal, CMS & RBAC | In progress — Done: RBAC, CMS story/place/review, shell P07-10, dashboard P07-11, create/archive P07-16, UX P07-19, audit log (qua P10-1). Audit viewer P07-13 (PR #157). Còn: P07-12/14/15/17 (P07-17 có PR #162), MFA (hoãn), template CMS; P07-18 chặn bởi Phase 08 | **P1** | 05 |
+| 07 | Admin Portal, CMS & RBAC | In progress — Done: RBAC, CMS story/place/review, shell P07-10, dashboard P07-11, create/archive P07-16, UX P07-19, audit log (qua P10-1). Audit viewer P07-13 (#157), users/roles P07-12 (#165), moderation P07-14 (#166), collections + integrity P07-15 (#168), system status P07-17 (#162), template CMS P07-6 (#169), Slug UX P07-22 (#171). Còn: MFA (hoãn), P07-20/21; P07-18 hoãn cùng media (Phase 08). Smoke trình duyệt các màn hình mới: NOT RUN | **P1** | 05 |
 | 08 | Media Library & Analytics | Not started — Analytics (P08-4) **Deferred**, media (P08-1..3) hoãn tới khi có ảnh thật (2026-11-18) | P3 | 07 |
 | 09 | Production Readiness & Launch | Partial — dev VM + Postgres đã chạy; production Not started | P4 | 07, 08 (hoặc loại trừ có ghi lại) |
 | 10 | Community Foundations | **Gần đóng** — batch 10.1–10.7 DONE (2026-11-17); `/sec-check` và `/qc-check` PASS_WITH_WARNINGS; việc còn mở chuyển sang Phase 11/backlog (10.8 bị bỏ, 2026-11-18) | **P1** | 07 |
@@ -121,8 +121,8 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
 - **Đã có thêm (kiểm 2026-11-16):** trip editor ngày/hoạt động/chi phí trên `/my-trips/[id]`
   (`src/components/planner/trip-editor/`, `docs/features/trip-editor.md`; kiểm tay, chưa có
   test component) — P04-1 xong.
-- **Chưa có (kiểm source 2026-11-16):** `/plan-your-trip` vẫn là
-  trang liên hệ (mailto/Zalo/Messenger); Planner map. Xem
+- **Đã có thêm (2026-11-19, PR #172):** `/plan-your-trip` nối vào Planner qua `/stories` và `/my-trips/new`, vẫn giữ đường liên hệ — P04-2 xong.
+- **Chưa có (kiểm source 2026-11-16):** Planner map (cần ADR riêng). Xem
   `docs/features/follow-hung-footsteps.md` → *Limits and open questions*.
 - **Ràng buộc:** Planner map cần ADR riêng (CLAUDE.md quy tắc 6).
 
@@ -153,7 +153,7 @@ danh tính, ai là admin), không để đội đứng chờ: làm phần của 
   Phần Optimization không phụ thuộc 07.
 
 ## Phase 07 — Admin Portal, CMS & RBAC
-- **Trạng thái:** In progress — phần lớn Done về code (cập nhật 2026-11-17; thêm P07-10, 11, 16, 19 merged; contract `admin-workspace-index.md`): ADR 0006 *Accepted* 2026-11-11, ADR 0010 (portal user), 0011 (CMS story/place/review), 0012 (public đọc từ content repo), 0017 (`super_admin`). **Còn thiếu:** MFA (hoãn; audit log đã có từ P10-1), CMS create/delete/template (vẫn token-only), store rate-limit dùng chung (chưa xác minh). Admin trên trình duyệt chưa có bằng chứng chạy trên dev VM. Thiết kế gốc ở `docs/adr/0006-unified-identity-and-roles.md`
+- **Trạng thái:** In progress — phần lớn Done về code (cập nhật 2026-11-17; thêm P07-10, 11, 16, 19 merged; contract `admin-workspace-index.md`): ADR 0006 *Accepted* 2026-11-11, ADR 0010 (portal user), 0011 (CMS story/place/review), 0012 (public đọc từ content repo), 0017 (`super_admin`). **Cập nhật 2026-11-19:** audit viewer, users/roles, moderation workspace, collections + integrity, system status, template CMS, Slug UX đã merge (PR #157, #165, #166, #168, #162, #169, #171). **Còn thiếu:** MFA (hoãn), tạo mới và xóa template/collection trên UI (token-only theo quyết định của owner; mô hình Archive → Restore → Permanent Delete ở backlog), store rate-limit dùng chung (chưa xác minh), smoke trình duyệt các màn hình mới (NOT RUN). Admin trên trình duyệt chưa có bằng chứng chạy trên dev VM. Thiết kế gốc ở `docs/adr/0006-unified-identity-and-roles.md`
   (+ `.vi.md`). Nhãn cũ "Phase 06 (Admin Portal & CMS)" đã
   đổi thành Phase 07 (P07-R0). Còn chờ chủ nhà quyết định P07-D1.
 - **Phạm vi:** một user model với `role: member|editor|admin`; `can(identity, action)`

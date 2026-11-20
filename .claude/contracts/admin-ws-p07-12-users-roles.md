@@ -9,4 +9,4 @@
 - Tests: matrix-vs-source, role gating of both actions (403/409 reasons mapped to messages), pagination bounds (`limit` cap, bad cursor → 422), existing `admin-portal` and `planner-roles` suites green.
 - Security: one-time secrets only in state and `no-store`; no new route accepts an unvalidated cursor; `limit` capped server-side. `/sec-check` recommended (credential handling surface) — NOT RUN until called.
 - Rollback: revert PR; API additions are optional parameters.
-- Docs: frontend writes the feature doc; backend edits only the API section. Budget: sub-agents 0. State: READY (owner approved 2026-11-17)
+- Docs: frontend writes the feature doc; backend edits only the API section. Budget: sub-agents 0. State: DONE (merged PR #165, 2026-11-18; qc PASS, sec PASS_WITH_WARNINGS; browser smoke NOT RUN)

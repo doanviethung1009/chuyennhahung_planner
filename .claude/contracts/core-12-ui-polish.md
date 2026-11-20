@@ -1,5 +1,5 @@
 # Task Contract: CORE-12 Trải nghiệm & a11y còn lại của CORE-8 (S-5, P-1, P-2, P-5)
-- Class: **M/L** (chạm header/chân trang dùng chung, `messages/*.json`). Branch đề xuất: `fix/core-ui-polish` cắt từ `origin/main` @ `d154d96`. Single agent (vai frontend). **State: IMPLEMENTED, chờ review/PR (P-2 chọn C: giữ 401, ghi tài liệu)** Không chạy song song với CORE-11 nếu cả hai sửa `messages/*.json` (khác khóa, nhưng gộp theo thứ tự).
+- Class: **M/L** (chạm header/chân trang dùng chung, `messages/*.json`). Branch đề xuất: `fix/core-ui-polish` cắt từ `origin/main` @ `d154d96`. Single agent (vai frontend). **State: DONE (merged PR #190, 2026-11-19; P-2 kept as 401, documented)
 - Nguồn: báo cáo CORE-8 mục 7.
 
 ## Bằng chứng

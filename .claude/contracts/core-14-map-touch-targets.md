@@ -29,6 +29,6 @@
 - Risks: (a) dense clusters (e.g. central-coast pins) may have overlapping 44px boxes at the 340px preview width — WCAG 2.5.8 tolerates overlap only if spacing is adequate; I will measure overlaps and report them rather than shrink targets; if pins overlap, a follow-up (zoom/clustering list) is a separate decision. (b) The dot shifting to its true coordinate is a small visual change on `/map`.
 - Rollback approach: revert the single PR; no data or config touched.
 - Budget: 0 subagents; stop condition = acceptance criteria met or an overlap finding that needs an owner decision.
-- State: REVIEW — owner approved; implemented, checks PASS, not committed.
+- State: DONE (merged PR #191, tests #193 and #194, 2026-11-19)
 - Feature document owner (`docs/features/<slug>.md` + `.vi.md`): none planned — accessibility fix to an existing feature; if `docs/features/` map/design-system docs state the touch-target behaviour, update both twins in the same change.
 - Architecture/usage doc updates needed: none expected.

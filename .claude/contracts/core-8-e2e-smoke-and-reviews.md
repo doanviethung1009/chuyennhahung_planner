@@ -20,5 +20,5 @@
 - Constraints: single agent plus the two on-demand review agents (the only subagents allowed); keep the app's local state out of git; leave no background server running at the end (stop it and say so).
 - Security/privacy: test data only; no screenshots containing secrets; the report must not include tokens, cookies or password values.
 - Rollback: not applicable (a report). Budget: sub-agents only the two reviews. Stop and ask the owner if a flow cannot be reached without touching a shared environment.
-- State: READY (owner approved running CORE-8 now and calling both reviews, 2026-11-19)
+- State: DONE as a report (PR #177, 2026-11-19): Core Product Complete = NOT complete (qc BLOCKED on D-1); D-1 and most findings fixed afterwards (PR #179, #189, #190, #192); a re-run is still needed
 - Feature document owner: none. Architecture/usage doc updates: none.

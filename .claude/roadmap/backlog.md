@@ -25,7 +25,7 @@ lại; mục bỏ đi được gạch và ghi lý do, không xóa. Sắp theo th
 
 ## Phase 07 — Admin Portal, CMS & RBAC (P1, ngay sau 05)
 
-> Core-first (2026-11-18): thứ tự và contract các session ở [`core-completion-index.md`](../contracts/core-completion-index.md). P07-10, 11, 13 (PR #157), 16, 19 Done; P07-12, 14, 15, 17 còn lại (P07-17: PR #162); P07-18 hoãn cùng media (Phase 08). Template CMS (P07-6): W4 chốt không lưu lịch sử, chỉ `If-Match`; W11 duyệt chuyển handler collections/integrity/templates sang session.
+> Core-first (2026-11-18): thứ tự và contract các session ở [`core-completion-index.md`](../contracts/core-completion-index.md). P07-10, 11, 12 (PR #165), 13 (#157), 14 (#166), 15 (#168), 16, 17 (#162), 19, 22 (#171) Done; template CMS P07-6 Done (#169, W4: không lưu lịch sử, chỉ `If-Match`; W11 đã chuyển handler sang session; DELETE/POST template và DELETE collection vẫn token-only theo quyết định của owner); P07-18 hoãn cùng media (Phase 08). Smoke trình duyệt các màn hình admin mới: NOT RUN.
 
 Nguồn: ADR 0006 (PR #25) và mục Phases trong `docs/architecture.md`. Chép lại ở đây,
 không sửa ý.
@@ -40,13 +40,13 @@ không sửa ý.
 | ~~P07-3~~ | ~~Session admin: thời hạn ngắn theo role; `requireSameOrigin` bắt buộc cho mutation admin~~ — xong (ADR 0010) | backend-engineer | P07-1 |
 | ~~P07-4~~ | ~~Audit log (`auditEvents`)~~ — **trùng P10-1, xong ở batch 10.2 (PR #115)**; còn mở: sự kiện đổi template/role/support read → xem P07-13 | backend-engineer | P07-1 |
 | P07-5 | Test còn thiếu: ma trận `can`; service principal bị từ chối `trip:*`; admin nhận `not_found` trên trip người khác; thiếu role = `member`; member không vào route admin | backend-engineer | P07-1..3 |
-| ~~P07-6~~ | ~~CMS sửa template/story qua content store; quyết định có lưu lịch sử bản template hay không ~~ — story/place/review xong (ADR 0011); **create/delete/template còn token-only, versioning template chưa quyết** | system-architect → BE/FE | P07-1 |
+| ~~P07-6~~ | ~~CMS sửa template/story qua content store; quyết định có lưu lịch sử bản template hay không ~~ — story/place/review xong (ADR 0011); create/delete story/place xong ở P07-16; **template CMS xong ở PR #169 (2026-11-19; W4: không lưu lịch sử, chỉ `If-Match`); tạo mới/xóa template và xóa collection vẫn token-only theo quyết định của owner** | system-architect → BE/FE | P07-1 |
 | ~~P07-7~~ | ~~UI Admin Portal (chỉ qua session + role, token không tới client)~~ — xong (ADR 0010/0011) | frontend-engineer | P07-3, P07-5 |
 | P07-8 | Rate-limit store chung cho đăng nhập admin khi > 1 process | backend-engineer | liên quan P09-1 |
 | P07-9 | Gỡ dùng token trong trình duyệt; token chỉ còn cho CI | backend-engineer | P07-7 |
 | P07-19 | Admin UX refinement: root layout riêng cho admin (route group `(admin)`), thanh trên, `AdminPageHeader`, sidebar sticky/active state — contract `.claude/contracts/admin-ws-p07-19-ux-refinement.md`, ADR 0023 (Đề xuất); **làm trước P07-11**; state DONE (PR #124 merged 2026-11-17) | system-architect → frontend | P07-10 |
 | _(ID do owner gán)_ | Mô hình xoá dài hạn cho nội dung CMS: Lưu trữ → Khôi phục → Xoá vĩnh viễn, xoá vĩnh viễn chỉ `super_admin` (quyết định bảo vệ dữ liệu 2026-11-19, từ P07-15: `DELETE collections/[slug]` giữ chỉ token). Chưa có contract; không thêm Phase mới | system-architect | P07-15 |
-| P07-20 | Template: bắt buộc `If-Match` (428 khi thiếu header) cho `PATCH`, `reorder`, `move-activity`; hiện tùy chọn nên token hoặc client khác vẫn ghi đè được (cảnh báo W1 `/sec-check` P07-6, 2026-11-19). Chưa có contract | backend-engineer | P07-6 |
+| ~~P07-20~~ | Template: bắt buộc `If-Match` (428 khi thiếu header) cho `PATCH`, `reorder`, `move-activity`; hiện tùy chọn nên token hoặc client khác vẫn ghi đè được (cảnh báo W1 `/sec-check` P07-6, 2026-11-19). Chưa có contract | backend-engineer | P07-6 | — **xong ở PR #189 (CORE-11, 2026-11-19)**: `If-Match` bắt buộc cho cả token (428); `/sec-check` NOT RUN sau thay đổi |
 | P07-21 | Template công khai còn nguyên khi story nguồn bị unpublish/archive: hiện chỉ kiểm story nguồn `published` lúc đặt `public` (cảnh báo W2 `/sec-check` P07-6, 2026-11-19); cần quy tắc (chặn hoặc hạ về private) và test. Chưa có contract | system-architect → backend-engineer | P07-6 |
 | P07-22 | Slug UX cho form tạo story/place: tự sinh slug từ tiêu đề VI (`slugify`, hỗ trợ `đ`), preview URL VI/EN, báo trùng debounce; contract `.claude/contracts/admin-content-slug-ux.md` (owner duyệt 2026-11-19) | frontend-engineer | — |
 
@@ -70,7 +70,7 @@ có trước khi chạy nhiều instance.
 | ID | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
 | ~~P04-1~~ | ~~Editor ngày/hoạt động/chi phí trong `/my-trips/[id]` dùng API sẵn có~~ — xong (`docs/features/trip-editor.md`; còn thiếu test component) | frontend-engineer | — |
-| P04-2 | Nối `/plan-your-trip` vào Planner (thay hay giữ trang liên hệ — cần quyết định) | system-architect → FE | P04-1 |
+| ~~P04-2~~ | ~~Nối `/plan-your-trip` vào Planner~~ — xong (PR #172, #173; hai lối vào `/stories` và `/my-trips/new`, giữ đường liên hệ) | system-architect → FE | P04-1 |
 | P04-4 | **(owner duyệt ID 2026-11-18)** Danh sách template phía người dùng (chỉ template public, chưa bị rút), dẫn vào `/trip-setup/[template]`; không trùng P07-6 (CMS admin) | frontend-engineer | P04-1 |
 | P04-3 | Planner map — cần ADR riêng | system-architect | P04-1 |
 
@@ -191,4 +191,4 @@ Việc còn mở — chưa có ID backlog riêng, chờ chủ dự án xếp:
 | PLACES-UI-S3 | Thêm địa điểm vào chuyến từ trang địa điểm: chọn chuyến cùng điểm đến và ngày, khách dẫn tới đăng nhập, không đổi API. Contract: `.claude/contracts/places-ui-s3-add-to-trip.md` — **DONE (PR #155)** | main session (FE) | S1, S2 |
 | PLACES-UI-S4 | Audit log UI trong admin = **P07-13** (đã Done, PR #157); không phải dòng riêng | main session (FE) | — |
 | PLACES-UI-S5 | Admin Places polish: liên kết "Xem trên site" (tab mới) trong danh sách và trang sửa địa điểm; bỏ liên kết review theo địa điểm và số review vì cần đổi API. Contract: `.claude/contracts/places-ui-s5-admin-places-polish.md` | main session (FE) | S1, S4 (= P07-13) |
-| PLACES-UI-S6 | Danh sách `/places` (VI `/dia-diem`): tìm theo `q` phía server (tùy chọn, tương thích ngược, tìm trước phân trang), lọc điểm đến và danh mục. **Owner duyệt 2026-11-18**; contract chưa viết; không sửa contract S1 | main session (FE+BE) | S1, CORE-5 (chung `routing.ts`, `messages`) |
+| ~~PLACES-UI-S6~~ | Danh sách `/places` (VI `/dia-diem`): tìm theo `q` phía server (tùy chọn, tương thích ngược, tìm trước phân trang), lọc điểm đến và danh mục. **Owner duyệt 2026-11-18**; contract chưa viết; không sửa contract S1 | main session (FE+BE) | S1, CORE-5 (chung `routing.ts`, `messages`) | — **xong ở PR #176 (2026-11-19)** |

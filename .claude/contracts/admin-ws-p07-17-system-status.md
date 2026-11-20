@@ -8,4 +8,4 @@
 - Acceptance: admin and editor get 404 on the page and 403 on the API; response contains no env value, URL, host, token or path; works when DB is unreachable (reports "unreachable", no 500); never claims a backup exists.
 - Tests: role matrix, a "no secret ever serialised" test that sets sentinel env values and asserts they are absent from the response, DB-down path, `runbook.test.ts` sync.
 - Security: highest-risk part is leakage; allow-list the fields explicitly; `/sec-check` recommended — NOT RUN until called.
-- Rollback: revert PR. Docs: backend writes. Budget: sub-agents 0. State: READY (owner approved 2026-11-17)
+- Rollback: revert PR. Docs: backend writes. Budget: sub-agents 0. State: DONE (merged PR #162, 2026-11-18; qc PASS, sec PASS_WITH_WARNINGS; W1 open: GET has no rate limit or cache; browser smoke NOT RUN)

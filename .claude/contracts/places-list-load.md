@@ -16,6 +16,6 @@
 - Risks: staleness ≤ 10 s across instances (accepted, documented); memory = one projected catalogue (a few KB per 100 places; fine to a few thousand places, same bound as the existing substring scan). No auth, secret or migration change.
 - Rollback: revert the commit; no data touched.
 - Budget: 0 subagents; stop after typecheck/lint/test/build and docs.
-- State: READY (chờ phép commit)
+- State: DONE (merged PR #186, 2026-11-19)
 - Feature document owner: main session — `docs/features/places.md` + `.vi.md` (How it works, Limits). No ADR to add; ADR 0026 does not specify the read path. `docs/architecture.*`: not affected (no new route or store).
 - Recommended, NOT RUN: `/sec-check` (read-path cache), `/qc-check`.

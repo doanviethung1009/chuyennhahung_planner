@@ -37,6 +37,6 @@ Architect: this contract + ADR 0026 amendment. BE: shared projection module, two
 - Overlap: `gh pr list --state open` (2026-11-19) shows only #175 (docs roadmap sync), touching no places route or `public-places.ts`. The parallel session `places-load-hardening` works around `public-places.ts`; if it edits that file, moving `toPublicPlace` out conflicts — to be coordinated with the owner before implementing (alternative: export `toPublicPlace` from `public-places.ts` without moving it, zero conflict, recommended).
 - Security: `/sec-check` recommended after implementation (public data exposure); `/qc-check` optional. Both NOT RUN.
 - Budget: subagents 0.
-- State: IN_PROGRESS — owner approved option A (drop coords) 2026-11-19; implemented; `toPublicPlace` exported from `public-places.ts` (not moved) to avoid conflict with places-load-hardening.
+- State: DONE (merged PR #185, 2026-11-19)
 - Feature document owner: backend (updates `docs/features/places.md` + `.vi.md`).
 - Architecture/usage docs: `docs/architecture.*` only if it describes the public places payload (check at implementation).

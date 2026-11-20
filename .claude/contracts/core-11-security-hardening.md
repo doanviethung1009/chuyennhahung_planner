@@ -1,6 +1,6 @@
 # Task Contract: CORE-11 Củng cố bảo mật còn lại của CORE-8 (S-3, S-4, S-6, P-3)
 - Class: **L** (đổi hành vi ranh giới tin cậy: S-3, S-6). Branch đề xuất: `fix/core-security-followups` cắt từ `origin/main` @ `d154d96`. Một contract = một session = một nhánh = một PR, single agent. `/sec-check` khuyến nghị, chỉ chạy khi chủ dự án gọi.
-- Nguồn: `.claude/reports/core-8-smoke-2026-11-19.md` mục 7 (S-3, S-4, S-6, P-3). **State: IMPLEMENTED, chờ review/PR (APPROVED 2026-11-19; câu hỏi mở 1-3 theo khuyến nghị: bắt buộc If-Match cho mọi người gọi, S-3 hạ xuống khách, S-4 chỉ tài liệu).**
+- Nguồn: `.claude/reports/core-8-smoke-2026-11-19.md` mục 7 (S-3, S-4, S-6, P-3). **State: DONE (merged PR #189, 2026-11-19; If-Match now required for token callers too (428), same-origin check on reports, safer error log; sec-check NOT RUN)
 
 ## Bằng chứng đã xác minh trên `main` @ `d154d96`
 - **S-3** `src/app/api/community/reports/route.ts:24-33`: chỉ nhận diện thành viên khi `Sec-Fetch-Site` vắng hoặc `same-origin`; khi vắng (client cũ/không phải trình duyệt) **không kiểm tra `Origin`**, trong khi Planner (`src/server/planner/http.ts` `requireSameOrigin`, ~116-146) có kiểm tra `Origin` qua `ownOrigins`. Tác động: một trang khác (trình duyệt không gửi Sec-Fetch-Site) có thể nộp báo cáo mang danh thành viên; chặn bởi 10 báo cáo/ngày.
