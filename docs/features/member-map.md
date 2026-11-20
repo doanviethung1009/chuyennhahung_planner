@@ -44,6 +44,7 @@ A signed-in member sees their own map of Vietnam: solid dots where they have bee
 ## Limits and open questions
 
 - Reads up to 1,000 trips per status on each request; a very large account would need an index.
+- Each request makes about 21 snapshot reads on the JSON store (active and archived trips paged by 100, plus reviews and places), uncached; fine at today's size, but a busy site or a large account would need a short per-user cache or one scoped query (security check, warning 2).
 - `visitedOn` is self-declared; it only draws the member's own map.
 - No sharing yet: a token-shared map is slice 2 (ADR 0029, item 7), which needs a security check.
 - No trip route map: that stays deferred.

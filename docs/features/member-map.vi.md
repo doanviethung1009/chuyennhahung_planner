@@ -44,6 +44,7 @@ Thành viên đã đăng nhập thấy bản đồ Việt Nam của riêng mình
 ## Limits and open questions
 
 - Mỗi request đọc tới 1.000 chuyến mỗi trạng thái; tài khoản rất lớn sẽ cần chỉ mục.
+- Mỗi request thực hiện khoảng 21 lần đọc snapshot trên kho JSON (chuyến đang dùng và đã lưu trữ, mỗi lần 100, cộng đánh giá và địa điểm), không cache; ổn ở quy mô hiện tại, nhưng site đông hoặc tài khoản lớn sẽ cần cache ngắn theo người dùng hoặc một truy vấn có phạm vi (kiểm tra bảo mật, cảnh báo 2).
 - `visitedOn` do người dùng tự khai; chỉ dùng để vẽ bản đồ của chính họ.
 - Chưa chia sẻ: bản đồ chia sẻ qua token là lát 2 (ADR 0029, mục 7), cần kiểm tra bảo mật.
 - Chưa có bản đồ tuyến theo chuyến: phần đó vẫn hoãn.
