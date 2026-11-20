@@ -294,3 +294,80 @@ describe('selection by PLANNER_DATABASE_URL', () => {
     expect(text).not.toContain('127.0.0.1');
   });
 });
+
+describe('readSharedMapSource (ADR 0030 hardening M1)', () => {
+  async function shared() {
+    const mem = createMemoryPlannerStore();
+    const planner = makePlanner({ store: mem });
+    const { user } = await planner.createUser({ handle: 'pg-owner', displayName: 'Chủ bản đồ', role: 'member' });
+    const issued = await planner.setMemberMapShare(user.id, { enabled: true, shareName: 'anonymous' });
+    return { data: await mem.read(), token: issued.token ?? '', ownerId: user.id };
+  }
+
+  /** Answers the three indexed queries from `rowsFor`, and records every statement. */
+  function indexedPool(data: PlannerData) {
+    const tables = rowsFor(data);
+    const log: Array<{ text: string; values: unknown[] }> = [];
+    const client: PgClientLike = {
+      async query(text, values = []) {
+        log.push({ text, values });
+        if (text.startsWith('SELECT * FROM member_map_shares WHERE token_digest')) {
+          return { rows: (tables.get('member_map_shares') ?? []).filter((r) => r.token_digest === values[0]) };
+        }
+        if (text.startsWith('SELECT * FROM planner_users WHERE id')) {
+          return { rows: (tables.get('planner_users') ?? []).filter((r) => r.id === values[0]) };
+        }
+        if (text.startsWith('SELECT * FROM trips WHERE owner_id')) {
+          return { rows: (tables.get('trips') ?? []).filter((r) => r.owner_id === values[0] && r.planning_status === 'completed') };
+        }
+        return { rows: [] };
+      },
+      release: () => undefined,
+    };
+    return { pool: { connect: async () => client } as PgPoolLike, log };
+  }
+
+  it('looks up by digest with three bound, indexed queries and never loads the tables', async () => {
+    const { data, token, ownerId } = await shared();
+    const { mapShareDigest } = await import('../src/server/planner/member-map-share');
+    const { pool, log } = indexedPool(data);
+    const source = await createPostgresPlannerStore(pool).readSharedMapSource!(mapShareDigest(token));
+    expect(source?.owner.id).toBe(ownerId);
+    expect(log[0]?.text).toBe('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+    expect(log.at(-1)?.text).toBe('COMMIT');
+    const selects = log.filter((entry) => entry.text.startsWith('SELECT'));
+    expect(selects).toHaveLength(3);
+    expect(selects.every((entry) => entry.text.includes('$1') && !entry.text.includes('ORDER BY "seq"'))).toBe(true);
+    expect(log.some((entry) => entry.text.includes('planner_revision'))).toBe(false);
+  });
+
+  it('an unknown digest stops after one query and answers null', async () => {
+    const { data } = await shared();
+    const { mapShareDigest, newMapShareToken } = await import('../src/server/planner/member-map-share');
+    const { pool, log } = indexedPool(data);
+    const source = await createPostgresPlannerStore(pool).readSharedMapSource!(mapShareDigest(newMapShareToken()));
+    expect(source).toBeNull();
+    expect(log.filter((entry) => entry.text.startsWith('SELECT'))).toHaveLength(1);
+    expect(log.at(-1)?.text).toBe('COMMIT');
+  });
+
+  it('a driver failure rolls back, releases, and surfaces as 503 with no driver text', async () => {
+    const released: unknown[] = [];
+    const log: string[] = [];
+    const client: PgClientLike = {
+      async query(text) {
+        log.push(text);
+        if (text.startsWith('SELECT')) throw Object.assign(new Error('host db.internal refused'), { code: '08006' });
+        return { rows: [] };
+      },
+      release: (destroy) => released.push(destroy),
+    };
+    const store = createPostgresPlannerStore({ connect: async () => client });
+    const error = await store.readSharedMapSource!('a'.repeat(64)).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ContentError);
+    expect((error as ContentError).code).toBe('service_unavailable');
+    expect(String((error as Error).message)).not.toContain('db.internal');
+    expect(log.at(-1)).toBe('ROLLBACK');
+    expect(released).toEqual([true]);
+  });
+});

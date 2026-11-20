@@ -80,3 +80,15 @@ export function safeReturnTo(value: string | null | undefined, fallback = '/my-t
   if (publicPatterns.some((pattern) => pattern.test(path))) return path;
   return fallback;
 }
+
+/**
+ * The header's sign-in link target. On the sign-in page itself the link keeps
+ * the `returnTo` already in the URL instead of nesting it inside a new one
+ * (`/sign-in?returnTo=%2Fsign-in%3FreturnTo…`). The path is the localized
+ * sign-in path; `here` is the current `pathname + search`.
+ */
+export function signInLinkFor(signInPath: string, here: string): string {
+  const current = here.split(/[?#]/, 1)[0] ?? '';
+  if (current === signInPath || current === `${signInPath}/`) return here;
+  return `${signInPath}?returnTo=${encodeURIComponent(here)}`;
+}

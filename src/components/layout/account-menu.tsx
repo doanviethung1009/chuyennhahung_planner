@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { getPathname, Link } from '@/i18n/navigation';
+import { signInLinkFor } from '@/lib/return-to';
 import type { Locale } from '@/i18n/routing';
 import { buttonClass } from '@/components/ui/button';
 
@@ -60,7 +61,7 @@ export function useAccount(): AccountState {
 function signInHref(locale: Locale): string {
   const base = getPathname({ href: '/sign-in', locale });
   const here = window.location.pathname + window.location.search;
-  return `${base}?returnTo=${encodeURIComponent(here)}`;
+  return signInLinkFor(base, here);
 }
 
 /** Signs out, then lands on the home page with fresh server state. */

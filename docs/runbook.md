@@ -165,3 +165,8 @@ adding or removing a route means editing this table in both languages.
 - Sign-in limiters (`signInLimiter`, `signInAccountLimiter`) count per process and key on the first `X-Forwarded-For` value, so with several instances the limit multiplies and nginx **must overwrite** `X-Forwarded-For` (CORE-11 / S-4; sharing them through PostgreSQL is not done).
 - `429 rate_limited` carries `Retry-After`. Limits are per process and the client key is spoofable ([ADR 0005](adr/0005-trip-sharing-and-story-cloning.md)).
 - Admin responses are `no-store`.
+- **Shared member map (ADR 0030) — operator notes.**
+  - *Client key (L1).* The public page's read limiter keys on the first `X-Forwarded-For` hop (`src/server/rate-limit.ts`, `clientKey`). That is only safe when the app port is reachable **only** through nginx, which overwrites the header; a client that can reach the port directly can pick its own bucket. `TRUST_PROXY_HEADERS=true` governs the cookie `Secure` flag and the scheme only, it does not change the limiter.
+  - *JSON to PostgreSQL (L3).* Export drops every share digest and import writes none, so moving the Planner from the JSON file to PostgreSQL **kills every running map link**. Tell members beforehand; each must turn sharing on again (a new link).
+  - *nginx `error.log` (L5).* `access_log` is off for `/shared-map/*` and `/ban-do-chia-se/*`, but nginx can still write the request line, token included, into `error.log` (an upstream error or a timeout). Restrict who can read it, keep it short (rotation in `deploy/logrotate/chuyennhahung`), and never paste it into a ticket or chat without masking `/shared-map/<token>`.
+  - *Disabled accounts.* Banning or soft-deleting a member switches their link off permanently; restoring does not bring it back.

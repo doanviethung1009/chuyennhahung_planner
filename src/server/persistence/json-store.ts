@@ -36,6 +36,13 @@ export interface DocumentStore<T> {
    * repository more than once.
    */
   revision?(): Promise<string | number>;
+  /**
+   * Optional read-only projection over the store's own copy, without the
+   * `structuredClone` of `read()`. `select` must not mutate its argument and must
+   * return a fresh small value (never a reference into the document). Stores that
+   * cannot do this cheaply omit it.
+   */
+  view?<R>(select: (data: T) => R): Promise<R>;
 }
 
 /**
@@ -66,6 +73,9 @@ export function createMemoryDocumentStore<T>(initial: T): DocumentStore<T> {
     },
     async write(next) {
       current = structuredClone(next);
+    },
+    view(select) {
+      return enqueue(async () => select(current));
     },
     transact(mutate) {
       return enqueue(async () => {
@@ -159,6 +169,12 @@ export function createJsonDocumentStore<T>(
     },
     write(next) {
       return enqueue(() => writeUnlocked(next));
+    },
+    view(select) {
+      return enqueue(async () => {
+        if (shared.cached === undefined) shared.cached = await readFromDisk();
+        return select(shared.cached as T);
+      });
     },
     transact(mutate) {
       return enqueue(async () => {
