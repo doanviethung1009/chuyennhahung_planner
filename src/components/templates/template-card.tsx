@@ -13,6 +13,8 @@ export interface TemplateCardLabels {
   cost: string;
   destination: string | null;
   useCta: string;
+  /** Screen-reader-only tail of the link name, e.g. "for <title>"; translated by the page. */
+  useCtaFor: string;
   paceLabel: string;
   groupLabel: string;
   costLabel: string;
@@ -42,7 +44,7 @@ export function TemplateCard({ slug, labels }: { slug: string; labels: TemplateC
           className={buttonClass({ size: 'md' })}
         >
           {labels.useCta}
-          <span className="sr-only">: {labels.title}</span>
+          <span className="sr-only"> {labels.useCtaFor}</span>
         </Link>
       </div>
     </article>

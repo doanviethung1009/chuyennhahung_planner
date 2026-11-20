@@ -15,6 +15,7 @@ const labels = {
   cost: 'Ước tính 4,4 triệu đ',
   destination: 'Đà Lạt',
   useCta: 'Dùng mẫu này',
+  useCtaFor: 'cho Đà Lạt 3 ngày lãng mạn',
   paceLabel: 'Nhịp độ',
   groupLabel: 'Đi cùng',
   costLabel: 'Chi phí',
@@ -37,7 +38,7 @@ describe('TemplateCard', () => {
     const { container } = renderWithIntl(<TemplateCard slug="da-lat-3-ngay" labels={labels} />, 'en');
     const link = container.querySelector('a')!;
     expect(link.textContent).toContain(labels.useCta);
-    expect(link.querySelector('.sr-only')?.textContent).toContain(labels.title);
+    expect(link.querySelector('.sr-only')?.textContent).toContain(labels.useCtaFor);
     expect(link.getAttribute('href')).toBe('/en/trip-setup/da-lat-3-ngay');
   });
 });

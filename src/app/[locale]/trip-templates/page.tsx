@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
@@ -17,7 +18,8 @@ type Params = { params: Promise<{ locale: Locale }> };
 
 type Load = { ok: true; templates: PublicTemplateCard[] } | { ok: false };
 
-async function load(): Promise<Load> {
+/** `cache` dedupes the read between generateMetadata and the page within one request; each request still reads fresh. */
+const load = cache(async (): Promise<Load> => {
   try {
     return { ok: true, templates: await listPublicTemplates() };
   } catch (error) {
@@ -25,7 +27,7 @@ async function load(): Promise<Load> {
     console.error('trip-templates: could not read public templates', error instanceof Error ? error.name : 'error');
     return { ok: false };
   }
-}
+});
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { locale } = await params;
@@ -87,6 +89,7 @@ export default async function TripTemplatesPage({ params }: Params) {
                           ? (getDestination(template.destinationSlug)?.name[locale] ?? null)
                           : null,
                         useCta: t('useCta'),
+                        useCtaFor: t('useCtaFor', { title: template.title[locale] }),
                         paceLabel: t('paceLabel'),
                         groupLabel: t('groupLabel'),
                         costLabel: t('costLabel'),
