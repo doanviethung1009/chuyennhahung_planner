@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { safeReturnTo } from '../src/lib/return-to';
+import { safeReturnTo, signInLinkFor } from '../src/lib/return-to';
 
 describe('safeReturnTo (open-redirect guard)', () => {
   it('accepts known private routes in both locales', () => {
@@ -91,5 +91,20 @@ describe('safeReturnTo (open-redirect guard)', () => {
     ]) {
       expect(safeReturnTo(path)).toBe(path);
     }
+  });
+});
+
+describe('signInLinkFor (header sign-in link)', () => {
+  it('returns to the page being read', () => {
+    expect(signInLinkFor('/dang-nhap', '/chuyen-di-cua-toi?tab=archived')).toBe(
+      '/dang-nhap?returnTo=%2Fchuyen-di-cua-toi%3Ftab%3Darchived',
+    );
+  });
+
+  it('does not nest a returnTo on the sign-in page itself', () => {
+    expect(signInLinkFor('/dang-nhap', '/dang-nhap?returnTo=%2Fchuyen-di-cua-toi')).toBe(
+      '/dang-nhap?returnTo=%2Fchuyen-di-cua-toi',
+    );
+    expect(signInLinkFor('/en/sign-in', '/en/sign-in')).toBe('/en/sign-in');
   });
 });
