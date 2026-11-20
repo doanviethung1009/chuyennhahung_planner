@@ -1,19 +1,13 @@
-# Handoff — MEMBER-MAP (thiết kế, chưa có mã)
-- Cập nhật: chủ đã trả lời Q0–Q5 (cuối contract); nâng XL, tách 2 lát (riêng tư L, chia sẻ token XL). Nhánh: `docs/member-map-contract` (từ `origin/main` @ 0c794f8). Chưa commit/push/PR. Chỉ thêm 2 file dưới `.claude/` (contract + handoff này).
+# Handoff — MEMBER-MAP (thiết kế đã duyệt; Lát 1 đang thực thi)
+- Nhánh `docs/member-map-contract` · PR [#200](https://github.com/doanviethung1009/chuyennhahung_planner/pull/200) (chỉ contract + handoff, không mã).
 ## Đã làm
-- Triage: **L** (XL nếu chia sẻ công khai). Contract: `.claude/contracts/member-map.md`, state DESIGNED, **chờ chủ duyệt**.
-- Khảo sát thật: phiên (ADR 0004/0007, `home-page.ts`), `listTrips(ownerId)`, `Trip.destinationSlug` = `Destination.slug`, `planningStatus`, `listOwnReviews` (`visitedOn`), `VietnamMap`, `lib/map.ts`.
-## Đề xuất
-- Trang riêng `/my-map` (VI `/ban-do-cua-toi`), server component đọc phiên; không API, không migration, private-only v1.
-- Đã đi = chuyến `completed` (+ review `visitedOn`) → chấm đặc; `draft|planned` → chấm rỗng. Toạ độ/nhãn từ seed `destinations` (chỉ đọc); nhãn cố định vẫn chỉ `featured`.
-- Tái dùng `VietnamMap` (chỉ thu hẹp kiểu prop). Không sửa `destinations.ts`, không đụng `/map`.
-- ADR 0029 (VI+EN, đăng ký `docs/adr/README.*`); tách "Planner map" thành bản đồ thành viên (cho phép) vs bản đồ tuyến theo chuyến (vẫn hoãn); sửa quy tắc 6 chỉ khi chủ đồng ý.
-## Cần chủ trả lời (Q0–Q7 trong contract)
-- Q0 nghĩa "Planner map"; Q1 nguồn đã đi; Q2 `/my-map` hay `/map` đổi theo đăng nhập; Q3 khách thấy gì; Q4 chia sẻ; Q5 archive; Q6 nhãn.
+- Contract `.claude/contracts/member-map.md`: XL tách 2 lát. Lát 1 (L) `/my-map` riêng tư; Lát 2 (XL) chia sẻ qua token.
+- Chủ đã chốt: trang riêng `/my-map`; đã đi (đặc) + đã lên kế hoạch (rỗng) ở bản riêng; khách thấy bản đồ trống + lời mời; completed-đã-archive vẫn tính; chia sẻ công khai chỉ điểm đã đi, ẩn danh mặc định.
+- `/sec-check` thiết kế Lát 2 và diff PR: PASS_WITH_WARNINGS; contract đã sửa các mâu thuẫn (kiểu công khai riêng, Interface/AC/Rollback tách theo lát, archive, `displayName`, ngưỡng điểm, log nginx).
+## Phụ thuộc / rủi ro
+- Lát 1 chạy ở session `member-map-slice1` (có bản contract chép trước các sửa này; có thể trùng file khi merge).
+- PR #198 (`travel-map.*`) không được sửa chồng. Số ADR 0029 kiểm tra lại lúc viết.
 ## Checks
-- typecheck/lint/test/build: NOT RUN (không có mã). `npm ci`: không cần ở bước này. `/qc-check`: NOT RUN. `/sec-check`: NOT RUN — **khuyến nghị** trước merge (danh tính + dữ liệu thành viên).
-## Rủi ro/Phụ thuộc
-- PR #198 (docs `travel-map.*`) đang mở: không sửa chồng; feature doc mới đợi/rebase sau #198.
-- Số ADR 0029 có thể bị chiếm bởi PR khác: kiểm tra lúc viết.
+- typecheck/lint/test/build: NOT RUN (chỉ file `.claude/`). `/qc-check`: NOT RUN. `/sec-check`: đã chạy cho thiết kế và diff; phải chạy lại trên mã Lát 1 và Lát 2.
 ## Next
-- Chủ duyệt/chỉnh contract → mở session thực thi bằng `UNIVERSAL_TASK_EXECUTION.md`.
+- Lát 1: xong thì review PR. Lát 2: viết ADR 0029 (kèm yêu cầu SEC-CHECK) → chủ duyệt → mới viết mã.
