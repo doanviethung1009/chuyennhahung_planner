@@ -38,7 +38,7 @@ The `coords` field on every `Destination` — real WGS84 latitude/longitude — 
 The component is a **server** component. The silhouette `<path>` is
 `aria-hidden`, and the pins are a `<ul>` of real `next-intl` `Link` anchors
 absolutely positioned over it. That is the whole accessibility and SEO story: a
-crawler sees links to eight destination pages, and a keyboard user tabs through
+crawler sees links to all sixteen destination pages, and a keyboard user tabs through
 them in order.
 
 On the full map (`/map`) only **featured** destinations (`featured: true` in
@@ -49,6 +49,21 @@ accessible name either way. This keeps dense clusters (Hà Nội / Ninh Bình /
 Hạ Long, Huế / Hội An / Đà Nẵng) readable at 375px. A featured destination may set `labelSide` to override the default side (left, right or top) where
 its neighbour's label would collide (Hà Nội above its dot, TP. Hồ Chí Minh to the right). On touch there is no hover,
 so a tap opens the destination page, whose heading carries the name.
+
+**Current pin and label rules** (the one place they are written down together):
+
+| Aspect | Rule |
+|---|---|
+| Position | `project(lat, lng)` from the destination's real `coords`; the dot is centred on that point |
+| Dot size | radius `min(5 + visits × 1.4, 11)` CSS px (`pinRadius`; no `visits` counts as 0): 10px across with no visits, 12.8px at 1 visit, 22px from 5 visits up (the cap is reached at 5, so Ninh Bình and Đà Lạt look the same). Fixed CSS px, not scaled with the map |
+| Dot style | filled = we have been there (`isVisited`); hollow ring = not visited yet |
+| Touch target | the `<a>` is a `MAP_TARGET_PX` = 44px square centred on the dot, independent of dot size |
+| Permanent label | `full` variant and `featured: true` only; today **Hà Nội** and **TP. Hồ Chí Minh** |
+| Label side | `labelSide(x)` (left half → right, right half → left) unless the destination sets `labelSide` (`left` / `right` / `top`) |
+| Other pins | name as `sr-only` text plus a hover/focus tooltip; `preview` never shows permanent labels |
+| Legend | the `/map` page's "Ký hiệu" box explains dot size, hollow rings and how names appear (`legendVisits`, `legendNotVisited`, `legendNames` in `messages/*.json`) |
+| Who decides | the featured list and any `labelSide` override are **owner data** (CLAUDE.md rule 8): add or remove a featured destination only on the owner's say-so |
+| Before changing | open `/map` at 375px and 768px: no two permanent labels overlap, no label sits over another pin, nothing is clipped, every pin box is ≥44px, and Tab shows the tooltip on a non-featured pin |
 
 The simplification is deliberate and stated: the coastline is stylised, the pins
 are not. A pin's position is always computed from the destination's real
@@ -77,5 +92,6 @@ labels beyond the destination names, and no zoom or pan. The bounds are hard-cod
 to mainland Vietnam: a destination outside them (Côn Đảo far south, or anywhere
 abroad) would be clamped visually and `tests/map.test.ts` would catch it.
 
-Pins can overlap where two destinations are close together; at eight items they
-do not, and a real solution means either collision handling or clustering.
+Pins can overlap where two destinations are close together; with sixteen pins a few pairs
+do (e.g. Hội An and Đà Nẵng; see the label rules above), and a real solution means either collision handling
+or clustering. Today only two labels are permanent so labels do not collide.
