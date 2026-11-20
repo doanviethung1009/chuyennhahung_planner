@@ -2,7 +2,7 @@
 
 Roadmap: [`PHASES.md`](PHASES.md) · Tồn đọng: [`backlog.md`](backlog.md) · Deploy: [`DEPLOY-STATUS.md`](DEPLOY-STATUS.md)
 
-Cập nhật: 2026-11-18, `main` @ `6b35c8d` (sau PR #161); đồng bộ theo quyết định core-first.
+Cập nhật: 2026-11-20, `main` @ `b23e3eb` (sau PR #196); đồng bộ theo quyết định core-first.
 
 ## Nguồn chính cho từng loại trạng thái
 | Cần biết | Xem |
@@ -18,7 +18,7 @@ Cập nhật: 2026-11-18, `main` @ `6b35c8d` (sau PR #161); đồng bộ theo qu
 - **Ưu tiên (chủ dự án chốt 2026-11-18): hoàn thiện chức năng lõi trước** — UI, API, Database, CMS, Data và các luồng end-to-end. **DEFERRED:** Phase 06 (AI Planner, Affiliate), P08-4 (Analytics), Phase 12, 13 (Vlog), 14 (Social Engagement), 15; media P08-1..3/P07-18 hoãn tới khi có ảnh thật. Phase ID và phạm vi giữ nguyên. P10-7 (sao lưu) và D5 Terms vẫn thuộc Phase 09.
 - **Phase đang làm:** Phase 07 (admin workspace: phần code xong, còn MFA hoãn và các việc nhỏ P07-20/21) + Phase 10 gần đóng, chưa đóng; Phase 11 được giữ; chuẩn bị CORE-8.
 - **Batch hiện tại (Phase 10):** không có batch code nào đang chạy; 10.1–10.7 DONE (`.claude/contracts/phase10-index.md`). **Batch 10.8 bị bỏ** (2026-11-18).
-- **Thứ tự lõi và hợp đồng từng session:** [`core-completion-index.md`](../contracts/core-completion-index.md). **Đã xong trên `main` (2026-11-19):** CORE-0 roadmap (PR #163); CORE-1 = P07-17 (PR #162); CORE-2 = P07-12 (PR #165); CORE-3 = P07-14 (PR #166); CORE-6 test UI cộng đồng (PR #167, ADR 0027); CORE-4 = P07-15 (PR #168; DELETE collection token-only theo quyết định của owner); CORE-5 = P07-6 template CMS (PR #169, #170); CORE-7 = P04-2 `/plan-your-trip` (PR #172, #173; hai lối vào `/stories` và `/my-trips/new`); P07-22 Slug UX (PR #171). P07-13 Done (PR #157). Smoke trình duyệt có đăng nhập của các màn hình admin mới: **NOT RUN**. **Kế tiếp: CORE-8** — smoke end-to-end + `/qc-check` + `/sec-check` toàn phần lõi (chưa có contract chốt). Việc nhỏ còn mở: P07-20, P07-21, dòng "ID do owner gán" (Archive → Restore → Permanent Delete).
+- **Thứ tự lõi và hợp đồng từng session:** [`core-completion-index.md`](../contracts/core-completion-index.md). **Đã xong trên `main` (đến 2026-11-20):** CORE-0 đến CORE-7, P07-22 (PR #162–#173); WEB-1 `/places` (#176); báo cáo CORE-8 (#177); CORE-9 `place_in_use` (#179); CORE-10 nút xóa place (#184); CORE-11 bảo mật (#189, = P07-20); CORE-12 UI/a11y (#190); CORE-14, 16 bản đồ (#191, #195, #196); CORE-15 CTA story (#192, chỉ seed); DEST-1 điểm đến mới (#178); places API/projection/load (#185, #186, #187). **Kết luận CORE-8 (2026-11-19):** Core Product Complete **chưa đạt** (qc BLOCKED vì D-1); D-1 và hầu hết phát hiện đã sửa sau đó. **Chưa xong:** WEB-2 (P04-4, danh sách template cho người dùng), WEB-3 (Playwright E2E), smoke trình duyệt lại (admin 768/1280, EN, member qua giao diện), `/qc-check` và `/sec-check` chạy lại trên `main` mới. Việc nhỏ còn mở: P07-21, dòng "ID do owner gán" (Archive → Restore → Permanent Delete), CTA của story gốc trên môi trường đã seed (CORE-15 phương án B), nội dung seed DEST-1 cần owner xem lại.
 - **Phase 11:** ADR 0025 đã merge (PR #141) nhưng còn **Proposed**; chặn bởi P11-D1 và P11-D2.
 
 Chi tiết Phase 10, điều kiện đóng và lịch sử Phase 05 ở bên dưới.

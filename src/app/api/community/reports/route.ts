@@ -5,10 +5,29 @@ import { parseJsonBody, toErrorResponse } from '@/server/content/http';
 import { getPlannerRepository, getWriteLimiters } from '@/server/planner/instance';
 import { createReportSchema } from '@/server/planner/schemas';
 import { clientKey } from '@/server/rate-limit';
+import { ownOrigins } from '@/server/request-scheme';
 
 export const dynamic = 'force-dynamic';
 
 const HEADERS = { 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } as const;
+
+/**
+ * False only when the request says it came from another site: `Sec-Fetch-Site`
+ * other than same-origin, or (when that header is missing) an `Origin` that is
+ * not ours or not parseable. A request that states neither is not a browser
+ * form post and is identified as before (CORE-11 / S-3).
+ */
+function statesOwnOrigin(request: Request): boolean {
+  const site = request.headers.get('sec-fetch-site');
+  if (site !== null) return site === 'same-origin';
+  const origin = request.headers.get('origin');
+  if (origin === null) return true;
+  try {
+    return ownOrigins(request).has(new URL(origin).origin);
+  } catch {
+    return false;
+  }
+}
 
 /**
  * A reader's report of a community trip or review (batch 10.5). Open to guests
@@ -21,9 +40,8 @@ const HEADERS = { 'cache-control': 'no-store', 'x-content-type-options': 'nosnif
 export async function POST(request: Request) {
   try {
     const repository = await getPlannerRepository();
-    const site = request.headers.get('sec-fetch-site');
     let userId: string | null = null;
-    if (site === null || site === 'same-origin') {
+    if (statesOwnOrigin(request)) {
       try {
         userId = (await repository.identify(request)).userId;
       } catch (error) {

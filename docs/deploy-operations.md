@@ -177,6 +177,100 @@ du -sh /opt/chuyennhahung/data/* /opt/chuyennhahung/logs /opt/chuyennhahung/back
 - **Backups** older than 14 days are removed by the script; the copy off the VM is yours to
   prune.
 
+## One-off scripts on the VM (the `tools` container)
+
+Some jobs are not part of a release: topping up the content store (`content:seed-places`,
+`content:seed-static`), importing a trip file (`planner:import`), creating the first admin
+(`admin:create`). They run as a one-shot container from the `tools` image. CI builds it on
+GitHub's runner and pushes it to ghcr next to the `app` image (`deploy-dev.yml`); the deploy
+never starts it. The VM only **pulls** it, because its build runs `next build`, which does not
+fit a 1.9 GB VM.
+
+### 0. Pick your layout
+
+There are two cases; define **one** of the two `dc` functions in your shell (it is lost on a new SSH login, so define it again). The wrong one fails with *the Travel Content database is unavailable*.
+
+```bash
+cd /opt/chuyennhahung/src/deploy
+# local-db: PostgreSQL in the same Compose stack as the app (the single-VM layout)
+dc() { docker compose --project-directory . --env-file /opt/chuyennhahung/.env --profile local-db -f compose.yml -f compose.app.yml -f compose.app.local-db.yml "$@"; }
+# external-db: PostgreSQL on another VM (needs pg-ca.crt, see deploy-runbook)
+dc() { docker compose --project-directory . --env-file /opt/chuyennhahung/.env -f compose.yml -f compose.app.yml -f compose.app.external-db.yml "$@"; }
+```
+
+### 1. Pull the image (once per code version)
+```bash
+cd /opt/chuyennhahung/src && git pull --ff-only          # compose files of the same commit
+cd deploy
+export TOOLS_IMAGE=ghcr.io/<owner>/chuyennhahung-tools APP_IMAGE_TAG=dev
+docker login ghcr.io -u <github-user>                    # a token with read:packages; once per VM
+dc --profile tools pull tools
+```
+`dev` is the tag CI moves on every merge to `main`; `sha-<commit>` pins one build. The image
+holds the scripts of the commit it was built from: a script added in a later PR needs a newer
+image.
+
+### 2. Run the script (dry-run first, then for real)
+```bash
+dc run --rm tools npm run content:seed-places -- --dry-run
+```
+Drop `--dry-run` to write.
+
+### What each part means
+| Part | Why it is there |
+|---|---|
+| `cd /opt/chuyennhahung/src/deploy` | Compose files live here; the commands are relative to it |
+| `--project-directory .` | Use this directory's files and project name, the same as `deploy.sh`, so the script reaches the same volume and network as the app |
+| `--env-file /opt/chuyennhahung/.env` | The secrets and URLs live outside the repository. Without it Compose reads only `deploy/.env` and fails with *required variable CNH_APP_PASSWORD is missing*, because `compose.yml` also defines the `postgres` service |
+| `--profile local-db` | Loads the `postgres` service of the same stack. `deploy.sh` passes it for this layout; without it the `tools` container has no database to reach |
+| `-f compose.yml -f compose.app.yml -f compose.app.<overlay>.yml` | Base stack, the `app`/`tools` services, and the database overlay. `local-db` puts `tools` on the private `backend` network where the host `postgres` lives; `external-db` mounts the DB CA certificate `pg-ca.crt` instead. Always pass the same set that `deploy.sh` uses |
+| `TOOLS_IMAGE`, `APP_IMAGE_TAG=dev` | Which image `tools` uses: the ghcr image CI built, at the `dev` tag. Without `TOOLS_IMAGE` Compose looks for a local `chuyennhahung/app-tools` and builds it |
+| `--profile tools` | The `tools` service is behind a profile so `up` never starts it. `pull` needs the profile to see it |
+| `run --rm tools` | Starts one container from that image and deletes it afterwards |
+| `npm run <script> -- --dry-run` | The `--` passes `--dry-run` to the script instead of npm. A dry run lists what would be created and writes nothing |
+
+### Fallback: build the image on the VM
+When CI has not published the image (a fork, an old tag), unset `TOOLS_IMAGE` and build it:
+`APP_SRC=.. docker compose ... --profile tools build tools` (`NEXT_PUBLIC_SITE_URL` must be set
+in `.env`). It runs `next build`, so watch for the build being killed on a small VM.
+
+### Things to check
+- `CONTENT_DATABASE_URL` must be in `.env` (check with `grep -c '^CONTENT_DATABASE_URL=' /opt/chuyennhahung/.env`, never print the value); without it the script writes to a JSON file in the `app-data` volume, not to PostgreSQL.
+- Stop the app while a script writes to the store, as [usage](usage.md) says for each script; the dry run is safe at any time.
+- The image bakes in the **dev** `NEXT_PUBLIC_SITE_URL`. For prod, build a separate image with the prod URL.
+- Never put real values from `.env` in a chat or a ticket.
+- `docker login` stores the token in `~/.docker/config.json` on the VM: use a token with `read:packages` only. Keep the `chuyennhahung-tools` package private (it holds the full source).
+
+### Production
+
+Everything above is written for the dev VM. Production is **not automated**: ADR 0016 covers dev
+only and leaves the prod workflow open, so no prod `tools` image exists until you make one.
+
+- **A separate image.** `NEXT_PUBLIC_SITE_URL` is baked in at build time, so the dev image cannot
+  be promoted to prod; build one with the prod URL.
+- **How to get it is not decided.** The `Dockerfile` accepts the build argument, so on a machine
+  with enough RAM: `docker build --target tools --build-arg NEXT_PUBLIC_SITE_URL=<prod-url> -t <name> .`,
+  then move it to the prod VM through a registry or `docker save | docker load`. This path has not
+  been exercised; a prod workflow would replace it and needs its own ADR or an amendment to 0016.
+- **Same layout rules.** Use the `dc` function of the prod layout (`local-db` or `external-db`),
+  with the prod `.env`.
+
+Order for a content top-up such as `content:seed-places` (the DEST-1 landmark places):
+
+1. Deploy the code first (the new destinations are static content and arrive with the release).
+2. Check the store. If the prod store is still **empty** and `TRAVEL_CONTENT_AUTOSEED` is `true`
+   (the default), the first request seeds all demo content, places included, and the script then
+   finds everything present. On an existing store the script is what adds them.
+3. Run the script with `--dry-run`. Expect the slugs that are missing; `skipped` lists any place
+   that already exists under the same slug, which is left untouched.
+4. Run it for real, then once more: the second run must print `created (0)`.
+5. Open the public pages and the admin places page and check the new records appear.
+6. Costs and durations in seeded places are estimates and `rating` / `personalNote` are empty:
+   confirm or fill them in the CMS. A later run of the script never overwrites those edits.
+
+There is no undo script. A wrongly created place is hidden or deleted from the admin CMS; take a
+backup first ([Backups and restore](#backups-and-restore)).
+
 ## Upgrades
 
 - **The app** is released by merging into `main` ([deploy-runbook](deploy-runbook.md)).

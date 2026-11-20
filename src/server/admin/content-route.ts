@@ -1,5 +1,5 @@
 import type { NextResponse } from "next/server";
-import { ContentError } from "@/server/content/errors";
+import { ContentError, preconditionRequired } from "@/server/content/errors";
 import { invalidateOverviewCacheAfter } from "@/server/overview-cache";
 import { toErrorResponse } from "@/server/content/http";
 import {
@@ -33,13 +33,17 @@ export async function adminContentRoute(
 }
 
 /**
- * Reads the optional `If-Match: "<updatedAt>"` header. Absent -> undefined
- * (last write wins). Quotes and a weak `W/` prefix are stripped; a present but
+ * Reads the required `If-Match: "<updatedAt>"` header (CORE-11 / S-6). Absent
+ * -> 428 `precondition_required`, so no PATCH silently overwrites a newer record. Quotes and a weak `W/` prefix are stripped; a present but
  * empty value is a 400 so a broken client cannot silently skip the check.
  */
-export function ifMatchStamp(request: Request): string | undefined {
+export function ifMatchStamp(request: Request): string {
   const raw = request.headers.get("if-match");
-  if (raw === null) return undefined;
+  if (raw === null) {
+    throw preconditionRequired(
+      "If-Match is required: send the quoted updatedAt of the record you read",
+    );
+  }
   const value = raw
     .trim()
     .replace(/^W\//, "")

@@ -6,7 +6,7 @@ import { ContentError, payloadTooLarge, type FieldIssue } from './errors';
 import { listQuerySchema } from './schemas';
 
 export interface ApiErrorBody {
-  error: { code: string; message: string; issues: FieldIssue[]; reason?: string };
+  error: { code: string; message: string; issues: FieldIssue[]; reason?: string; details?: Record<string, unknown> };
 }
 
 /**
@@ -46,6 +46,7 @@ export function toErrorResponse(error: unknown): NextResponse {
         message: error.message,
         issues: error.issues,
         ...(error.reason ? { reason: error.reason } : {}),
+        ...(error.details ? { details: error.details } : {}),
       },
     };
     const headers: Record<string, string> = { ...NO_STORE };
@@ -66,7 +67,10 @@ export function toErrorResponse(error: unknown): NextResponse {
     return NextResponse.json(body, { status: 422, headers: NO_STORE });
   }
 
-  console.error('[travel-content] unhandled error', error);
+  // Name and a bounded message only: a driver error can carry query parameters.
+  const name = error instanceof Error ? error.name : typeof error;
+  const detail = error instanceof Error ? error.message.slice(0, 200) : '';
+  console.error('[travel-content] unhandled error', name, detail);
   const body: ApiErrorBody = {
     error: { code: 'internal_error', message: 'internal error', issues: [] },
   };
@@ -188,6 +192,7 @@ export function parseListQuery(request: Request): z.infer<typeof listQuerySchema
     'category',
     'travelStyle',
     'visibility',
+    'q',
     'limit',
     'offset',
   ]) {

@@ -43,6 +43,32 @@ describe('deploy-dev workflow', () => {
     expect(wf).toContain('group: deploy-dev');
     expect(wf).toContain('cancel-in-progress: false');
   });
+
+  it('builds and pushes the tools image on the hosted runner, never deploys it', () => {
+    const build = wf.slice(wf.indexOf('  build:'), wf.indexOf('  deploy:'));
+    expect(build).toContain('target: tools');
+    expect(build).toContain('needs.plan.outputs.tools_image');
+    const deploy = wf.slice(wf.indexOf('  deploy:'));
+    expect(deploy).not.toContain('tools');
+  });
+});
+
+describe('Dockerfile tools stage', () => {
+  it('lets the non-root user write next to vitest.config.ts (vite-node temp bundle)', () => {
+    const tools = read('Dockerfile').split('FROM builder AS tools')[1]!.split('FROM node:')[0]!;
+    expect(tools).toMatch(/chown node:node [^\n]*\/app\b/);
+    expect(tools).toContain('USER node');
+  });
+});
+
+describe('deploy/compose.app.yml tools service', () => {
+  const compose = read('deploy/compose.app.yml');
+
+  it('can pull a prebuilt image (TOOLS_IMAGE) and still builds locally by default', () => {
+    expect(compose).toContain('image: ${TOOLS_IMAGE:-chuyennhahung/app-tools}:${APP_IMAGE_TAG:-latest}');
+    expect(compose).toContain('target: tools');
+    expect(compose).toContain('profiles: ["tools"]');
+  });
 });
 
 describe('deploy/deploy.sh', () => {
@@ -228,6 +254,69 @@ exit 0
     const { r, state } = run(false);
     expect(r.status).toBe(1);
     expect(state).toBe('sha-old');
+  });
+});
+
+describe('deploy/deploy.sh nginx sync (fake docker)', () => {
+  // After a healthy deploy the script copies deploy/nginx/* over the checkout the
+  // running nginx has mounted, validates it inside the container and reloads.
+  function run(opts: { nginxTestFails?: boolean; writable?: boolean }) {
+    const dir = mkdtempSync(join(tmpdir(), 'cnh-nginx-'));
+    const bin = join(dir, 'bin');
+    const stack = join(dir, 'stack');
+    const live = join(dir, 'live');
+    spawnSync('mkdir', ['-p', bin, stack, live]);
+    writeFileSync(join(stack, '.deployed-tag'), 'sha-old\n');
+    writeFileSync(join(live, 'default.conf'), 'OLD CONF\n');
+    writeFileSync(join(live, 'maintenance.html'), read('deploy/nginx/maintenance.html'));
+    if (opts.writable === false) chmodSync(join(live, 'default.conf'), 0o444);
+    const calls = join(dir, 'calls.log');
+    const fake = `#!/usr/bin/env bash
+echo "$*" >>"${calls}"
+case " $* " in
+  *" ps "*) echo cid ;;
+  *" inspect "*) echo "ghcr.io/x/y:sha-new" ;;
+  *" nginx -t"*) ${opts.nginxTestFails ? 'exit 1' : 'exit 0'} ;;
+esac
+exit 0
+`;
+    writeFileSync(join(bin, 'docker'), fake);
+    chmodSync(join(bin, 'docker'), 0o755);
+    const r = spawnSync('bash', [join(root, 'deploy/deploy.sh'), 'sha-new'], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        PATH: `${bin}:${process.env.PATH}`,
+        APP_IMAGE: 'ghcr.io/x/y',
+        STACK_DIR: stack,
+        NGINX_CONF_DIR: live,
+        WAIT_SECONDS: '0',
+      },
+    });
+    return { r, conf: readFileSync(join(live, 'default.conf'), 'utf8'), calls: readFileSync(calls, 'utf8') };
+  }
+
+  it('copies the commit config, validates it and reloads nginx', () => {
+    const { r, conf, calls } = run({});
+    expect(r.status).toBe(0);
+    expect(conf).toBe(read('deploy/nginx/default.conf'));
+    expect(calls).toContain('exec cid nginx -t');
+    expect(calls).toContain('exec cid nginx -s reload');
+  });
+
+  it('restores the previous config and fails when nginx rejects the new one', () => {
+    const { r, conf } = run({ nginxTestFails: true });
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('nginx rejected the new config');
+    expect(conf).toBe('OLD CONF\n');
+  });
+
+  it('warns and still succeeds when the target is not writable by the runner', () => {
+    const { r, conf } = run({ writable: false });
+    if (process.getuid?.() === 0) return; // root ignores the mode bits
+    expect(r.status).toBe(0);
+    expect(r.stderr).toContain('nginx sync skipped');
+    expect(conf).toBe('OLD CONF\n');
   });
 });
 

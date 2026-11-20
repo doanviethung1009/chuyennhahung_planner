@@ -536,6 +536,8 @@ export const listQuerySchema = z.object({
   category: placeCategorySchema.optional(),
   travelStyle: travelStyleSchema.optional(),
   visibility: visibilitySchema.optional(),
+  /** Places search (PLACES-UI-S6): trimmed, 1–80 characters; other list endpoints ignore it. */
+  q: z.string().trim().min(1).max(80).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
   offset: z.coerce.number().int().min(0).max(10_000).default(0),
 });

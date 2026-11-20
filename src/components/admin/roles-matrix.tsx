@@ -16,7 +16,7 @@ export function allActions(roleActions: RoleActions): string[] {
 
 /** `user:provision` -> `user_provision`: a message key may not hold a colon. */
 export const actionKey = (action: string) => action.replace(':', '_') as ActionKey;
-type ActionKey = 'user_provision' | 'user_promote' | 'template_write' | 'story_publish' | 'content_write' | 'community_moderate' | 'community_restrict' | 'community_erase' | 'runbook_read' | 'audit_read';
+type ActionKey = 'user_provision' | 'user_promote' | 'template_write' | 'story_publish' | 'content_write' | 'content_delete' | 'community_moderate' | 'community_restrict' | 'community_erase' | 'runbook_read' | 'audit_read';
 
 export async function RolesMatrix({
   roleActions,

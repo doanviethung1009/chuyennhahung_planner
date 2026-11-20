@@ -44,6 +44,7 @@ jobs:
       sha: ${{ steps.p.outputs.sha }}
       tag: ${{ steps.p.outputs.tag }}
       image: ${{ steps.p.outputs.image }}
+      tools_image: ${{ steps.p.outputs.tools_image }}
       build: ${{ steps.p.outputs.build }}
     steps:
       - id: p
@@ -66,6 +67,7 @@ jobs:
             echo "tag=$tag"
             echo "build=$build"
             echo "image=ghcr.io/$owner/chuyennhahung-app"
+            echo "tools_image=ghcr.io/$owner/chuyennhahung-tools"
           } >> "$GITHUB_OUTPUT"
 
   # Built on GitHub's runner: `next build` does not fit the 1.9 GB VM.
@@ -98,8 +100,24 @@ jobs:
           tags: |
             ${{ needs.plan.outputs.image }}:${{ needs.plan.outputs.tag }}
             ${{ needs.plan.outputs.image }}:dev
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=app
+          cache-to: type=gha,mode=max,scope=app
+      # The one-off scripts image (`npm run content:seed-places`, `admin:create`, ...).
+      # Built here because its `builder` stage runs `next build`, which does not fit
+      # the VM. Never started by the deploy: it is only pulled by hand when a script
+      # is needed (docs/deploy-operations.md). Same DEV URL baked in as above.
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: tools
+          push: true
+          build-args: |
+            NEXT_PUBLIC_SITE_URL=${{ vars.DEV_SITE_URL || 'http://192.168.100.140' }}
+          tags: |
+            ${{ needs.plan.outputs.tools_image }}:${{ needs.plan.outputs.tag }}
+            ${{ needs.plan.outputs.tools_image }}:dev
+          cache-from: type=gha,scope=tools
+          cache-to: type=gha,mode=max,scope=tools
 
   deploy:
     needs: [plan, build]

@@ -21,7 +21,8 @@
     "signOut": "Đăng xuất",
     "signingOut": "Đang đăng xuất…",
     "signOutFailed": "Chưa đăng xuất được. Hãy thử lại.",
-    "communityTrips": "Chuyến đi cộng đồng"
+    "communityTrips": "Chuyến đi cộng đồng",
+    "places": "Địa điểm"
   },
   "locale": {
     "label": "Ngôn ngữ",
@@ -43,6 +44,7 @@
     "dayCount": "{days} ngày",
     "nightCount": "{nights} đêm",
     "visitCount": "Đã đi {count} lần",
+    "notVisited": "Chưa đi",
     "firstVisited": "Lần đầu đến {date}",
     "firstVisitedLabel": "Lần đầu đến",
     "visitsLabel": "Số lần quay lại",
@@ -146,7 +148,7 @@
   },
   "destinations": {
     "title": "Khám phá",
-    "description": "Những nơi hai đứa đã đặt chân tới, kèm mùa nên đi và lý do nên đi.",
+    "description": "Những nơi hai đứa đã đặt chân tới và những nơi hai đứa muốn đi, kèm mùa nên đi. Nơi chưa đi chỉ có thông tin chung.",
     "count": "{count} điểm đến",
     "filterLabel": "Lọc theo vùng",
     "empty": "Chưa có điểm đến nào trong vùng này."
@@ -157,6 +159,7 @@
     "mapLabel": "Bản đồ các điểm đến tại Việt Nam",
     "legend": "Ký hiệu",
     "legendVisits": "Điểm càng lớn là đi càng nhiều lần",
+    "legendNotVisited": "Vòng rỗng là nơi hai đứa chưa đi",
     "listTitle": "Danh sách điểm đến",
     "selectHint": "Chọn một điểm trên bản đồ hoặc trong danh sách."
   },
@@ -696,7 +699,9 @@
     "overview": {
       "heading": "Chào mừng đến khu quản trị",
       "signedInAs": "Đang đăng nhập là {handle}.",
-      "body": "Với vai trò biên tập viên, bạn có thể sửa chuyến đi, địa điểm và đánh giá. Phần quản lý người dùng chỉ dành cho quản trị viên.",
+      "bodyEditor": "Với vai trò biên tập viên, bạn có thể sửa chuyến đi, địa điểm và đánh giá. Phần quản lý người dùng chỉ dành cho quản trị viên.",
+      "bodyAdmin": "Với vai trò quản trị viên, bạn sửa được nội dung, quản lý thành viên và biên tập viên, và xử lý kiểm duyệt. Tài khoản quản trị và trạng thái hệ thống chỉ dành cho Quản trị cấp cao.",
+      "bodySuperAdmin": "Với vai trò Quản trị cấp cao, bạn quản lý được nội dung, mọi tài khoản và trạng thái hệ thống.",
       "goStories": "Mở danh sách chuyến đi",
       "title": "Quản trị",
       "metaTitle": "Quản trị",
@@ -755,7 +760,15 @@
       "invalid_state": "Thao tác bị từ chối vì trạng thái hiện tại của nội dung, ví dụ chuyến đi còn liên kết đến đánh giá chưa xuất bản hoặc còn mẫu công khai dùng đến.",
       "not_found": "Không tìm thấy bản ghi này. Có thể nó đã bị xoá.",
       "bad_request": "Yêu cầu không hợp lệ. Hãy tải lại trang rồi thử lại.",
-      "slug_conflict": "Đã có bản ghi dùng slug này. Không có gì bị ghi đè; hãy chọn slug khác."
+      "slug_conflict": "Đã có bản ghi dùng slug này. Không có gì bị ghi đè; hãy chọn slug khác.",
+      "place_in_use_counts": "Đang được dùng bởi: {list}.",
+      "usage_stories": "bài viết {count}",
+      "usage_collections": "bộ sưu tập {count}",
+      "usage_templates": "mẫu lịch trình {count}",
+      "usage_contentReviews": "đánh giá nội dung {count}",
+      "usage_tripActivities": "hoạt động trong chuyến đi {count}",
+      "usage_communityReviews": "đánh giá cộng đồng {count}",
+      "place_in_use": "Không thể xoá địa điểm này vì vẫn còn nội dung hoặc dữ liệu người dùng tham chiếu đến nó. Hãy lưu trữ hoặc thay các tham chiếu trước."
     },
     "form": {
       "loading": "Đang tải…",
@@ -859,6 +872,16 @@
       "newButton": "Chuyến đi mới"
     },
     "places": {
+      "delete": {
+        "dangerTitle": "Vùng nguy hiểm",
+        "dangerHint": "Xóa vĩnh viễn địa điểm này. Không thể hoàn tác.",
+        "button": "Xóa địa điểm",
+        "confirmTitle": "Xóa địa điểm này?",
+        "confirmBody": "Địa điểm “{name}” sẽ bị xóa vĩnh viễn và không thể khôi phục. Nếu còn nội dung hoặc chuyến đi tham chiếu đến nó, việc xóa sẽ bị từ chối.",
+        "confirm": "Xóa vĩnh viễn",
+        "cancel": "Hủy",
+        "deleting": "Đang xóa…"
+      },
       "viewOnSite": "Xem trên site",
       "newTab": "(mở trong tab mới)",
       "metaTitle": "Quản lý địa điểm",
@@ -1682,6 +1705,7 @@
       "user_promote": "Đổi vai trò tài khoản",
       "template_write": "Soạn mẫu chuyến đi",
       "story_publish": "Xuất bản bài viết",
+      "content_delete": "Xóa vĩnh viễn địa điểm",
       "content_write": "Sửa địa điểm, bài viết và đánh giá",
       "community_moderate": "Kiểm duyệt đánh giá cộng đồng",
       "community_restrict": "Hạn chế thành viên cộng đồng",
@@ -1689,5 +1713,29 @@
       "runbook_read": "Xem runbook và trạng thái hệ thống",
       "audit_read": "Xem nhật ký kiểm toán"
     }
+  },
+  "placesList": {
+    "title": "Tất cả địa điểm",
+    "metaTitle": "Địa điểm",
+    "description": "Quán, chỗ ăn, điểm ngắm cảnh và nơi ở hai đứa đã ghé. Tìm theo tên hoặc khu vực, lọc theo điểm đến và loại địa điểm.",
+    "searchLabel": "Tìm theo tên hoặc khu vực",
+    "searchPlaceholder": "Ví dụ: Đà Lạt, cà phê, chợ đêm",
+    "searchButton": "Tìm",
+    "destinationLabel": "Điểm đến",
+    "categoryLabel": "Loại địa điểm",
+    "allDestinations": "Tất cả điểm đến",
+    "allCategories": "Tất cả loại",
+    "filtersLabel": "Tìm kiếm và bộ lọc",
+    "resultsHeading": "Kết quả",
+    "resultCount": "{count} địa điểm",
+    "resultCountFor": "{count} địa điểm cho “{q}”",
+    "clearFilters": "Xóa bộ lọc",
+    "emptyTitle": "Chưa tìm thấy địa điểm phù hợp",
+    "emptyBody": "Thử bớt từ khóa, kiểm tra chính tả hoặc xóa bộ lọc để xem tất cả địa điểm.",
+    "paginationLabel": "Phân trang",
+    "previous": "Trang trước",
+    "next": "Trang sau",
+    "pageOf": "Trang {page} / {pageCount}",
+    "browseAll": "Xem tất cả địa điểm"
   }
 }

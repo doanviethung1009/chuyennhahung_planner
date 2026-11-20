@@ -1,6 +1,18 @@
-import { describe, expect, it } from 'vitest';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it, vi } from 'vitest';
+
+// The localized Link needs a Next request; a plain anchor stand-in keeps the markup.
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({ href, className, style, children }: { href: { params: { slug: string } }; className?: string; style?: React.CSSProperties; children: React.ReactNode }) =>
+    createElement('a', { href: `/destinations/${href.params.slug}`, className, style }, children),
+}));
+
+const { VietnamMap } = await import('../src/components/map/vietnam-map');
 import {
   MAP_HEIGHT,
+  MAP_TARGET_PX,
+  labelSide,
   MAP_WIDTH,
   VIETNAM_OUTLINE_PATH,
   pinRadius,
@@ -52,5 +64,83 @@ describe('travel map', () => {
   it('caps pin growth so a frequent destination cannot dominate', () => {
     expect(pinRadius(1)).toBeLessThan(pinRadius(4));
     expect(pinRadius(100)).toBeLessThanOrEqual(11);
+  });
+});
+
+describe('map pin touch targets', () => {
+  it('declares a 44px minimum target', () => {
+    expect(MAP_TARGET_PX).toBeGreaterThanOrEqual(44);
+  });
+
+  it('flips the label left only for pins in the right half', () => {
+    expect(labelSide(MAP_WIDTH / 2)).toBe('right');
+    expect(labelSide(MAP_WIDTH / 2 + 0.1)).toBe('left');
+    expect(labelSide(0)).toBe('right');
+  });
+
+  for (const variant of ['full', 'preview'] as const) {
+    it(`renders every ${variant} pin as a real anchor sized to the target`, () => {
+      const html = renderToStaticMarkup(
+        createElement(VietnamMap, { destinations, locale: 'vi', mapLabel: 'Bản đồ', variant }),
+      );
+      const anchors = [...html.matchAll(/<a [^>]*>/g)].map((m) => m[0]);
+
+      expect(anchors).toHaveLength(destinations.length);
+      for (const a of anchors) {
+        expect(a).toContain(`width:${MAP_TARGET_PX}px`);
+        expect(a).toContain(`height:${MAP_TARGET_PX}px`);
+        expect(a).not.toContain('href="#"');
+      }
+      expect(html).not.toContain('href="#"');
+    });
+  }
+
+  const FEATURED = ['ha-noi', 'tp-ho-chi-minh'];
+  const esc = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const render = (variant: 'full' | 'preview') =>
+    renderToStaticMarkup(
+      createElement(VietnamMap, { destinations, locale: 'vi', mapLabel: 'Bản đồ', variant }),
+    );
+
+  it('keeps the owner-approved featured set', () => {
+    expect(destinations.filter((d) => d.featured).map((d) => d.slug).sort()).toEqual([...FEATURED].sort());
+  });
+
+  it('shows a permanent label only for featured pins, beside the box on the side labelSide picks', () => {
+    const html = render('full');
+    for (const d of destinations) {
+      const { x } = project(d.coords.lat, d.coords.lng);
+      const visible = html.match(new RegExp(`<span class="([^"]*)">${esc(d.name.vi)}</span>`));
+      const permanent = visible && !visible[1]!.includes('sr-only') ? visible : null;
+      if (d.featured) {
+        expect(permanent, d.slug).not.toBeNull();
+        const side = d.labelSide ?? labelSide(x);
+        expect(permanent![1], d.slug).toContain(
+          side === 'top' ? 'bottom-full' : side === 'left' ? 'right-full' : 'left-full',
+        );
+        expect(permanent![1], d.slug).toContain('absolute');
+      } else {
+        expect(permanent, `${d.slug} must not have a permanent label`).toBeNull();
+      }
+    }
+  });
+
+  it('keeps every name in the anchor and a tooltip for non-featured pins', () => {
+    const html = render('full');
+    const anchors = [...html.matchAll(/<a [^>]*>[\s\S]*?<\/a>/g)].map((m) => m[0]);
+    expect(anchors).toHaveLength(destinations.length);
+    anchors.forEach((a, i) => {
+      const d = destinations[i]!;
+      expect(a, d.slug).toContain(d.name.vi);
+      if (!d.featured) {
+        expect(a, d.slug).toContain('sr-only');
+        expect(a, d.slug).toContain('group-focus-visible:opacity-100');
+      }
+    });
+  });
+
+  it('preview variant has no permanent labels at all', () => {
+    const html = render('preview');
+    expect(html).not.toContain('bg-cream-50/90');
   });
 });

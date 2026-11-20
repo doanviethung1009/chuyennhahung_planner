@@ -44,9 +44,9 @@ Authorization: Bearer <ADMIN_API_TOKEN>
 Compared with `timingSafeEqual`. A token shorter than 32 characters is treated
 as a misconfiguration, not a weak secret.
 
-**Session access (ADR 0011).** Some routes also accept a browser session cookie (same-origin proof required on mutations): list `GET` of `stories`, `places`, `reviews`, and `GET` / `PATCH` of `stories/[slug]`, `places/[slug]`, `reviews/[id]` and `PATCH stories/[slug]/places` and, since P07-16, `POST stories` and `POST places` need the `content:write` action (`editor`, `admin`); `POST stories/[slug]/status` and `reviews/[id]/status` need `story:publish`. Since P07-15 (W11) `collections` (`GET`, `POST`), `collections/[slug]` (`GET`, `PATCH`; `DELETE` stays token-only), `collections/[slug]/status` and `integrity` also accept a session on `content:write` (same-origin proof on mutations, 30 per minute per user), and the Planner `GET /api/admin/planner/integrity` accepts an admin session on `user:provision` (editors are refused). Collection `PATCH` takes the same optional `If-Match: "<updatedAt>"` as places (stale -> 412 `version_conflict`; absent -> last write wins). Since P07-6 `templates` (`GET`), `templates/[slug]` (`GET`, `PATCH`), `templates/[slug]/reorder` and `templates/[slug]/move-activity` accept a session on `template:write` (an editor action); `PATCH`, `reorder` and `move-activity` take the optional `If-Match: "<updatedAt>"` (stale -> 412 `version_conflict`; absent -> last write wins). `POST templates` and `DELETE templates/[slug]` stay token-only (owner decision 2026-11-19). Everything else (`DELETE` of stories/places/reviews) stays token-only.
+**Session access (ADR 0011).** Some routes also accept a browser session cookie (same-origin proof required on mutations): list `GET` of `stories`, `places`, `reviews`, and `GET` / `PATCH` of `stories/[slug]`, `places/[slug]`, `reviews/[id]` and `PATCH stories/[slug]/places` and, since P07-16, `POST stories` and `POST places` need the `content:write` action (`editor`, `admin`); `POST stories/[slug]/status` and `reviews/[id]/status` need `story:publish`. Since P07-15 (W11) `collections` (`GET`, `POST`), `collections/[slug]` (`GET`, `PATCH`; `DELETE` stays token-only), `collections/[slug]/status` and `integrity` also accept a session on `content:write` (same-origin proof on mutations, 30 per minute per user), and the Planner `GET /api/admin/planner/integrity` accepts an admin session on `user:provision` (editors are refused). Collection `PATCH` takes the same required `If-Match: "<updatedAt>"` as places (stale -> 412 `version_conflict`; absent -> 428). Since P07-6 `templates` (`GET`), `templates/[slug]` (`GET`, `PATCH`), `templates/[slug]/reorder` and `templates/[slug]/move-activity` accept a session on `template:write` (an editor action); `PATCH`, `reorder` and `move-activity` take the required `If-Match: "<updatedAt>"` (stale -> 412 `version_conflict`; absent -> 428). `POST templates` and `DELETE templates/[slug]` stay token-only (owner decision 2026-11-19). Since CORE-10 (ADR 0028) `DELETE places/[slug]` accepts an admin or super admin session on the new `content:delete` action (same-origin proof, 30 per minute per user; editors and members get 403), besides the token; the 409 `place_in_use` and 503 rules below apply to both. Everything else (`DELETE` of stories/reviews) stays token-only.
 
-**Optimistic concurrency.** `PATCH` on those routes accepts an optional `If-Match: "<updatedAt>"` header (the record's last `updatedAt`, quoted). If the record changed since, the answer is **412** `version_conflict` and nothing is written. No header keeps last-write-wins; an empty header is `400`.
+**Optimistic concurrency.** `PATCH` on those routes requires an `If-Match: "<updatedAt>"` header (the record's last `updatedAt`, quoted) since CORE-11, for sessions and the token alike. If the record changed since, the answer is **412** `version_conflict` and nothing is written. A missing header is **428** `precondition_required` (it used to be last-write-wins); an empty header is `400`.
 
 ### Error shape
 
@@ -62,6 +62,7 @@ as a misconfiguration, not a weak secret.
 | `not_found` | 404 | No such record — also what an unpublished record returns publicly |
 | `slug_conflict` | 409 | Slug or id already taken |
 | `invalid_state` | 409 | Refused by a lifecycle rule (see *Invariants*) |
+| `place_in_use` | 409 | A place cannot be deleted while content or Planner data references it; `error.details.counts` gives counts per kind |
 | `validation_failed` | 422 | Schema rejected the payload; `issues` lists field paths |
 | `invalid_reference` | 422 | Structurally valid but points at something absent |
 | `admin_auth_unconfigured` | 503 | `ADMIN_API_TOKEN` unset or too short |
@@ -88,6 +89,9 @@ only; a draft is a 404.
 | `GET` | `/api/travel/templates` · `/api/travel/templates/[slug]` |
 
 List query: `?destinationSlug=&category=&travelStyle=&limit=50&offset=0`.
+
+`GET /api/travel/places` also takes an optional `q` (PLACES-UI-S6): free text, trimmed, 1–80 characters (longer or blank → 422 `validation_failed`). It matches `name` and `location` (Vietnamese and English) by a plain case- and diacritic-insensitive substring test (`đ` = `d`); the category label is not matched (use `category`). The term is data only — no regex, wildcard or `LIKE` pattern is built from it. Search runs before `limit`/`offset`. Omitting `q` changes nothing; the response shape (`places`, `count`) is unchanged; the other list endpoints ignore `q`. The match is an in-memory scan of the catalogue (6 seed places today); a store-side search is a future change if the catalogue grows past a few thousand places.
+**Public shape (PLACES-API-PROJ).** Both places endpoints return the ADR 0026 allow-list, not the stored record: `slug`, `name`, `destinationSlug`, `location`, `category`, `images`, `description`, `suggestedMinutes`, `estimatedCostVnd`, `rating`, `personalNote`. `affiliateLinks`, `createdAt`, `updatedAt` and `coords` are **no longer returned** (breaking only for a client that read them; `/api/admin/travel/places*` still returns the full record). Envelope (`places`, `count`), `q`, `destinationSlug`, `category`, `limit`/`offset` and the 404 are unchanged.
 Places carry no publish status — a place exists or it does not.
 
 ## Admin endpoints
@@ -130,8 +134,17 @@ unless its source story is published.
 **Taking things down** — a published story or collection cannot be deleted
 (unpublish or archive first) so a live URL cannot start 404-ing. A review cannot
 be unpublished while a published story links it. A public template cannot be
-deleted. A place cannot be deleted while anything references it, and the refusal
-**names every referrer**. A place cannot be unlinked from a story while still
+deleted. A place cannot be deleted while anything references it: `DELETE
+/api/admin/travel/places/[slug]` answers **409 `place_in_use`** with
+`error.details.counts` = `{ stories, collections, templates, contentReviews,
+tripActivities, communityReviews }` (counts only: no user, trip or review id). The
+Planner counts cover every activity (archived trips too) and every community
+review whatever its status. Nothing is cascaded or rewritten; archive or replace
+the references, or keep the place. If the Planner store cannot be read the answer
+is 503 `service_unavailable` and nothing is deleted. The content and Planner
+checks are not one transaction when the stores are separate, so a trip adding the
+place in between is possible; `GET /api/admin/planner/integrity` ("unknown place")
+is the backstop. A place cannot be unlinked from a story while still
 embedded in its body.
 
 **Templates** — days are numbered `1..n` and activity `order` runs `0..m` by
@@ -166,9 +179,9 @@ curl -X POST localhost:3000/api/admin/travel/places -H "$T" -H "$J" -d '{
 curl -X POST localhost:3000/api/admin/travel/stories/my-story/status \
   -H "$T" -H "$J" -d '{"action":"publish"}'
 
-# 3. Reorder day 2
+# 3. Reorder day 2 (If-Match is required: the template's current updatedAt, quoted)
 curl -X POST localhost:3000/api/admin/travel/templates/my-template/reorder \
-  -H "$T" -H "$J" -d '{"day":2,"activityIds":["act_b","act_a"]}'
+  -H "$T" -H "$J" -H 'If-Match: "<updatedAt>"' -d '{"day":2,"activityIds":["act_b","act_a"]}'
 
 # 4. Check referential health
 curl localhost:3000/api/admin/travel/integrity -H "$T"

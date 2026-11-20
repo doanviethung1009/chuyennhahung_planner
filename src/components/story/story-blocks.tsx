@@ -1,7 +1,8 @@
 import { getTranslations } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
 import { formatVnd } from '@/lib/format';
-import type { Place, StoryBlock } from '@/server/content/schemas';
+import type { PublicPlace } from '@/server/content/public-places';
+import type { StoryBlock } from '@/server/content/schemas';
 import { CoverImage } from '@/components/ui/cover-image';
 
 const bodyClass = 'text-lg leading-relaxed text-ink-800 md:text-[1.1875rem] md:leading-[1.75]';
@@ -36,7 +37,7 @@ export async function StoryBlocks({
   locale,
 }: {
   blocks: StoryBlock[];
-  places: Place[];
+  places: PublicPlace[];
   locale: Locale;
 }) {
   const t = await getTranslations('storyPage');
@@ -151,7 +152,7 @@ export function PlaceCard({
   locale,
   t,
 }: {
-  place: Place;
+  place: PublicPlace;
   note: string | null;
   locale: Locale;
   t: StoryPageT;

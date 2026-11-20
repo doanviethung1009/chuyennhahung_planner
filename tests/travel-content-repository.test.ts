@@ -93,12 +93,23 @@ describe('places CRUD', () => {
     expect(page.map((p) => p.slug)).toEqual(['place-2', 'place-3']);
   });
 
-  it('refuses to delete a place a story still references, and names the referrer', async () => {
+  it('refuses to delete a place a story still references, with counts and no referrer id', async () => {
     await repo.createPlace(placeFixture({ slug: 'ho-tuyen-lam' }));
     await repo.createStory(storyFixture({ placeSlugs: ['ho-tuyen-lam'] }));
 
-    const error = await expectRejection(repo.deletePlace('ho-tuyen-lam'), 'invalid_state');
-    expect(error.message).toContain('story:test-story');
+    const error = (await expectRejection(repo.deletePlace('ho-tuyen-lam'), 'place_in_use')) as unknown as {
+      message: string;
+      details: { counts: Record<string, number> };
+    };
+    expect(error.details.counts).toEqual({
+      stories: 1,
+      collections: 0,
+      templates: 0,
+      contentReviews: 0,
+      tripActivities: 0,
+      communityReviews: 0,
+    });
+    expect(error.message).not.toContain('test-story');
   });
 });
 

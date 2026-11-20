@@ -95,6 +95,32 @@ describe.skipIf(!url)('Travel Content on PostgreSQL (TEST_DATABASE_URL)', () => 
     expect(await store.read()).toEqual(await memory.read());
   });
 
+  it('refuses to delete a referenced place with place_in_use and counts, like the memory store', async () => {
+    const run = async (target: ContentStore) => {
+      const repository = make(target);
+      await repository.createPlace(placeFixture({ slug: 'cho-dang-dung' }));
+      await repository.createStory(storyFixture({ slug: 'chuyen-dung-cho', placeSlugs: ['cho-dang-dung'] }));
+      const usage = await repository.countPlaceReferences('cho-dang-dung');
+      let code = '';
+      let details: unknown = null;
+      try {
+        await repository.deletePlace('cho-dang-dung');
+      } catch (error) {
+        const e = error as { code: string; details: unknown };
+        code = e.code;
+        details = e.details;
+      }
+      await repository.deleteStory('chuyen-dung-cho');
+      await repository.deletePlace('cho-dang-dung');
+      return { usage, code, details };
+    };
+    const memory = await run(createMemoryStore());
+    const onPg = await run(store);
+    expect(onPg).toEqual(memory);
+    expect(onPg.usage).toEqual({ stories: 1, collections: 0, templates: 0, contentReviews: 0 });
+    expect(onPg.code).toBe('place_in_use');
+  });
+
   it('keeps slug lists, dates, enums and nullable fields intact in the tables', async () => {
     await seedTravelContent(repo());
     const story = (await store.read()).stories[0]!;

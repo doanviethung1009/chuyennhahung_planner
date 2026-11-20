@@ -4,6 +4,7 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
 import { destinations } from '@/content/destinations';
+import { isVisited } from '@/content/types';
 import { Container } from '@/components/ui/container';
 import { PageHeader } from '@/components/layout/page-header';
 import { VietnamMap } from '@/components/map/vietnam-map';
@@ -57,6 +58,13 @@ export default async function MapPage({ params }: Params) {
                 />
                 {t('legendVisits')}
               </p>
+              <p className="mt-2 flex items-center gap-2 text-sm text-foreground-muted">
+                <span
+                  aria-hidden="true"
+                  className="inline-block size-3 shrink-0 rounded-pill border-2 border-primary bg-cream-50"
+                />
+                {t('legendNotVisited')}
+              </p>
             </div>
           </div>
 
@@ -87,7 +95,9 @@ export default async function MapPage({ params }: Params) {
                       </span>
                     </span>
                     <span className="shrink-0 text-sm text-foreground-muted">
-                      {tCommon('visitCount', { count: destination.visits })}
+                      {isVisited(destination)
+                        ? tCommon('visitCount', { count: destination.visits })
+                        : tCommon('notVisited')}
                     </span>
                   </Link>
                 </li>

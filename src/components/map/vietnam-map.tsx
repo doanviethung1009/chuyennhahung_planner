@@ -1,9 +1,11 @@
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
-import type { Destination } from '@/content/types';
+import { isVisited, type Destination } from '@/content/types';
 import {
   MAP_HEIGHT,
+  MAP_TARGET_PX,
   MAP_WIDTH,
+  labelSide,
   VIETNAM_OUTLINE_PATH,
   pinRadius,
   project,
@@ -26,7 +28,7 @@ export function VietnamMap({
   mapLabel: string;
   variant?: 'full' | 'preview';
 }) {
-  const showLabels = variant === 'full';
+  const fixedLabels = variant === 'full';
 
   return (
     <div
@@ -63,6 +65,15 @@ export function VietnamMap({
               destination.coords.lng,
             );
             const r = pinRadius(destination.visits);
+            // Pins in the right half put the label on their left so it never leaves the frame.
+            const side = destination.labelSide ?? labelSide(x);
+            const sideClass =
+              side === 'top'
+                ? 'bottom-full left-1/2 -translate-x-1/2'
+                : `top-1/2 -translate-y-1/2 ${side === 'left' ? 'right-full' : 'left-full'}`;
+            // Only featured pins keep a permanent label on the full map; the rest
+            // reveal their name as a tooltip, which keeps dense clusters readable.
+            const showLabel = fixedLabels && destination.featured === true;
 
             return (
               <li
@@ -78,28 +89,29 @@ export function VietnamMap({
                     pathname: '/destinations/[slug]',
                     params: { slug: destination.slug },
                   }}
-                  className="group absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-2"
+                  className="group absolute flex -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+                  style={{ width: MAP_TARGET_PX, height: MAP_TARGET_PX }}
                 >
-                  {/* 44px hit area around a small visual dot. */}
+                  {/* The anchor box itself is the 44px target; the dot is centred on the projected point. */}
                   <span
                     aria-hidden="true"
-                    className="absolute top-1/2 left-1/2 size-11 -translate-x-1/2 -translate-y-1/2 rounded-pill"
-                  />
-                  <span
-                    aria-hidden="true"
-                    className="relative block rounded-pill border-2 border-cream-50 bg-primary shadow-soft transition-transform duration-200 ease-gentle group-hover:scale-125 group-focus-visible:scale-125"
+                    className={`relative block rounded-pill border-2 shadow-soft transition-transform duration-200 ease-gentle group-hover:scale-125 group-focus-visible:scale-125 ${
+                      isVisited(destination)
+                        ? 'border-cream-50 bg-primary'
+                        : 'border-primary bg-cream-50'
+                    }`}
                     style={{ width: r * 2, height: r * 2 }}
                   />
                   <span
                     className={
-                      showLabels
-                        ? 'relative whitespace-nowrap rounded-pill bg-cream-50/90 px-2 py-0.5 text-xs font-semibold text-ink-800 shadow-soft'
+                      showLabel
+                        ? `absolute whitespace-nowrap ${sideClass} rounded-pill bg-cream-50/90 px-2 py-0.5 text-xs font-semibold text-ink-800 shadow-soft`
                         : 'sr-only'
                     }
                   >
                     {destination.name[locale]}
                   </span>
-                  {showLabels ? null : (
+                  {showLabel ? null : (
                     <span
                       aria-hidden="true"
                       className="pointer-events-none absolute left-1/2 bottom-full mb-2 -translate-x-1/2 whitespace-nowrap rounded-pill bg-ink-900 px-2.5 py-1 text-xs font-medium text-cream-50 opacity-0 transition-opacity duration-200 ease-gentle group-hover:opacity-100 group-focus-visible:opacity-100"

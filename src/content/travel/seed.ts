@@ -1,3 +1,4 @@
+import { landmarkPlaces } from '@/content/travel/seed-places';
 import { seedStaticStories } from '@/content/travel/static-stories';
 import type { TravelContentRepository } from '@/server/content/repository';
 import type {
@@ -28,7 +29,7 @@ import type {
 
 export const DA_LAT = 'da-lat';
 
-export const demoPlaces: PlaceCreateInput[] = [
+const daLatPlaces: PlaceCreateInput[] = [
   {
     slug: 'ho-xuan-huong',
     name: { vi: 'Hồ Xuân Hương', en: 'Xuân Hương Lake' },
@@ -193,6 +194,9 @@ export const demoPlaces: PlaceCreateInput[] = [
   },
 ];
 
+/** Đà Lạt places (first-hand notes) plus the public-landmark places (DEST-1). */
+export const demoPlaces: PlaceCreateInput[] = [...daLatPlaces, ...landmarkPlaces];
+
 export const demoReviews: ReviewCreateInput[] = [
   {
     id: 'review-me-linh-ca-phe',
@@ -258,7 +262,7 @@ export const demoReviews: ReviewCreateInput[] = [
 
 /** The acceptance-test story: three romantic days in Đà Lạt. */
 export const daLatRomanticStory: StoryCreateInput = {
-  plannerTemplateSlug: null,
+  plannerTemplateSlug: 'da-lat-3-ngay-lang-man',
   slug: 'ba-ngay-lang-man-o-da-lat',
   title: {
     vi: 'Ba ngày lãng mạn ở Đà Lạt, không cần kín lịch',

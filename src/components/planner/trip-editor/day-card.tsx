@@ -14,7 +14,7 @@ import { ACTIVITIES_PER_DAY_LIMIT, formatDong, type Mutate } from './shared';
 type Day = TripView['days'][number];
 
 /** The small outline button used for every row action. */
-const rowButton = buttonClass({ size: 'sm', variant: 'secondary' });
+const rowButton = buttonClass({ size: 'sm', variant: 'secondary', className: 'min-h-11 min-w-11' });
 
 const MOVE_ORDER = { up: ['up', 'down', 'day'], down: ['down', 'up', 'day'], day: ['day', 'up', 'down'] } as const;
 

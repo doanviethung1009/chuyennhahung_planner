@@ -41,6 +41,15 @@ absolutely positioned over it. That is the whole accessibility and SEO story: a
 crawler sees links to eight destination pages, and a keyboard user tabs through
 them in order.
 
+On the full map (`/map`) only **featured** destinations (`featured: true` in
+`src/content/destinations.ts`, owner-curated, independent of `visits`) keep a
+permanent name label; every other pin shows its name as a tooltip on hover or
+keyboard focus, as the home preview does. The name stays in the anchor's
+accessible name either way. This keeps dense clusters (Hà Nội / Ninh Bình /
+Hạ Long, Huế / Hội An / Đà Nẵng) readable at 375px. A featured destination may set `labelSide` to override the default side (left, right or top) where
+its neighbour's label would collide (Hà Nội above its dot, TP. Hồ Chí Minh to the right). On touch there is no hover,
+so a tap opens the destination page, whose heading carries the name.
+
 The simplification is deliberate and stated: the coastline is stylised, the pins
 are not. A pin's position is always computed from the destination's real
 coordinates.
@@ -59,7 +68,7 @@ coordinates.
 `tests/map.test.ts` asserts every destination projects inside the visible frame,
 that north stays above south and east right of west (the projection is not
 flipped), that every destination has coordinates within Vietnam, that the outline
-path is closed, and that pin growth is capped.
+path is closed, that pin growth is capped, that only featured pins render a permanent label (the rest keep the name as `sr-only` text plus a focus tooltip), and that the featured set matches the owner-approved list.
 
 ## Limits and open questions
 

@@ -44,9 +44,9 @@ Authorization: Bearer <ADMIN_API_TOKEN>
 So sánh bằng `timingSafeEqual`. Một token ngắn hơn 32 ký tự được coi là cấu hình
 sai, không phải là một secret yếu.
 
-**Truy cập bằng session (ADR 0011).** Một số route còn nhận cookie session của trình duyệt (mutation cần chứng minh same-origin): `GET` danh sách `stories`, `places`, `reviews`, và `GET` / `PATCH` của `stories/[slug]`, `places/[slug]`, `reviews/[id]` cùng `PATCH stories/[slug]/places` và, từ P07-16, `POST stories` và `POST places` cần action `content:write` (`editor`, `admin`); `POST stories/[slug]/status` và `reviews/[id]/status` cần `story:publish`. Từ P07-15 (W11), `collections` (`GET`, `POST`), `collections/[slug]` (`GET`, `PATCH`; `DELETE` vẫn chỉ token), `collections/[slug]/status` và `integrity` cũng nhận session với `content:write` (mutation cần chứng minh same-origin, 30 lần/phút/người), và `GET /api/admin/planner/integrity` của Planner nhận session admin với `user:provision` (editor bị từ chối). `PATCH` collection nhận `If-Match: "<updatedAt>"` tuỳ chọn như places (cũ -> 412 `version_conflict`; không có header -> last write wins). Từ P07-6, `templates` (`GET`), `templates/[slug]` (`GET`, `PATCH`), `templates/[slug]/reorder` và `templates/[slug]/move-activity` nhận session với `template:write` (hành động của editor); `PATCH`, `reorder` và `move-activity` nhận `If-Match: "<updatedAt>"` tuỳ chọn (cũ -> 412 `version_conflict`; không có header -> last write wins). `POST templates` và `DELETE templates/[slug]` vẫn chỉ dùng token (quyết định của chủ dự án 2026-11-19). Phần còn lại (`DELETE` story/place/review) vẫn chỉ dùng token.
+**Truy cập bằng session (ADR 0011).** Một số route còn nhận cookie session của trình duyệt (mutation cần chứng minh same-origin): `GET` danh sách `stories`, `places`, `reviews`, và `GET` / `PATCH` của `stories/[slug]`, `places/[slug]`, `reviews/[id]` cùng `PATCH stories/[slug]/places` và, từ P07-16, `POST stories` và `POST places` cần action `content:write` (`editor`, `admin`); `POST stories/[slug]/status` và `reviews/[id]/status` cần `story:publish`. Từ P07-15 (W11), `collections` (`GET`, `POST`), `collections/[slug]` (`GET`, `PATCH`; `DELETE` vẫn chỉ token), `collections/[slug]/status` và `integrity` cũng nhận session với `content:write` (mutation cần chứng minh same-origin, 30 lần/phút/người), và `GET /api/admin/planner/integrity` của Planner nhận session admin với `user:provision` (editor bị từ chối). `PATCH` collection nhận `If-Match: "<updatedAt>"` bắt buộc như places (cũ -> 412 `version_conflict`; không có header -> 428). Từ P07-6, `templates` (`GET`), `templates/[slug]` (`GET`, `PATCH`), `templates/[slug]/reorder` và `templates/[slug]/move-activity` nhận session với `template:write` (hành động của editor); `PATCH`, `reorder` và `move-activity` nhận `If-Match: "<updatedAt>"` bắt buộc (cũ -> 412 `version_conflict`; không có header -> 428). `POST templates` và `DELETE templates/[slug]` vẫn chỉ dùng token (quyết định của chủ dự án 2026-11-19). Từ CORE-10 (ADR 0028), `DELETE places/[slug]` nhận thêm session của admin hoặc super admin với action mới `content:delete` (cần chứng minh same-origin, 30 lần mỗi phút mỗi người; editor và member nhận 403), ngoài token; các quy tắc 409 `place_in_use` và 503 bên dưới áp dụng cho cả hai. Phần còn lại (`DELETE` story/review) vẫn chỉ dùng token.
 
-**Kiểm soát đồng thời lạc quan.** `PATCH` trên các route đó nhận header tuỳ chọn `If-Match: "<updatedAt>"` (`updatedAt` cuối của bản ghi, có ngoặc kép). Nếu bản ghi đã đổi, phản hồi là **412** `version_conflict` và không ghi gì. Không có header thì giữ nguyên ghi sau thắng; header rỗng là `400`.
+**Kiểm soát đồng thời lạc quan.** `PATCH` trên các route đó yêu cầu header `If-Match: "<updatedAt>"` (`updatedAt` cuối của bản ghi, có ngoặc kép) từ CORE-11, cho cả phiên lẫn token. Nếu bản ghi đã đổi, phản hồi là **412** `version_conflict` và không ghi gì. Thiếu header là **428** `precondition_required` (trước đây ghi sau thắng); header rỗng là `400`.
 
 ### Hình dạng lỗi
 
@@ -62,6 +62,7 @@ sai, không phải là một secret yếu.
 | `not_found` | 404 | Không có bản ghi nào — cũng là thứ mà một bản ghi chưa xuất bản trả về khi gọi công khai |
 | `slug_conflict` | 409 | Slug hoặc id đã bị dùng |
 | `invalid_state` | 409 | Bị một quy tắc vòng đời từ chối (xem *Các bất biến*) |
+| `place_in_use` | 409 | Không xóa được địa điểm khi nội dung hoặc dữ liệu Planner còn tham chiếu; `error.details.counts` cho số đếm theo loại |
 | `validation_failed` | 422 | Schema từ chối payload; `issues` liệt kê đường dẫn từng trường |
 | `invalid_reference` | 422 | Đúng cấu trúc nhưng trỏ tới thứ không tồn tại |
 | `admin_auth_unconfigured` | 503 | `ADMIN_API_TOKEN` chưa đặt hoặc quá ngắn |
@@ -88,6 +89,9 @@ bản nháp là 404.
 | `GET` | `/api/travel/templates` · `/api/travel/templates/[slug]` |
 
 Query khi lấy danh sách: `?destinationSlug=&category=&travelStyle=&limit=50&offset=0`.
+
+`GET /api/travel/places` còn nhận `q` tuỳ chọn (PLACES-UI-S6): chữ tự do, đã cắt khoảng trắng, 1–80 ký tự (dài hơn hoặc rỗng → 422 `validation_failed`). `q` so khớp `name` và `location` (tiếng Việt và tiếng Anh) bằng phép tìm chuỗi con thuần, không phân biệt hoa thường và dấu (`đ` = `d`); nhãn danh mục không được so khớp (dùng `category`). Giá trị chỉ là dữ liệu — không dựng regex, wildcard hay mẫu `LIKE` từ nó. Tìm kiếm chạy trước `limit`/`offset`. Bỏ `q` thì không đổi gì; hình dạng phản hồi (`places`, `count`) giữ nguyên; các endpoint danh sách khác bỏ qua `q`. Việc khớp là quét trong bộ nhớ toàn catalogue (hiện 6 địa điểm seed); tìm phía store là thay đổi sau nếu catalogue vượt vài nghìn địa điểm.
+**Hình dạng công khai (PLACES-API-PROJ).** Cả hai endpoint places trả về allow-list của ADR 0026, không phải bản ghi đã lưu: `slug`, `name`, `destinationSlug`, `location`, `category`, `images`, `description`, `suggestedMinutes`, `estimatedCostVnd`, `rating`, `personalNote`. `affiliateLinks`, `createdAt`, `updatedAt` và `coords` **không còn được trả về** (chỉ breaking với client từng đọc chúng; `/api/admin/travel/places*` vẫn trả đủ bản ghi). Vỏ phản hồi (`places`, `count`), `q`, `destinationSlug`, `category`, `limit`/`offset` và mã 404 không đổi.
 Place không có trạng thái xuất bản — một place thì tồn tại hoặc không.
 
 ## Endpoint quản trị
@@ -133,7 +137,16 @@ template không thể ở trạng thái công khai nếu story nguồn của nó
 (phải bỏ xuất bản hoặc lưu trữ trước) để một URL đang sống không bắt đầu trả 404.
 Một review không thể bỏ xuất bản khi còn một story đã xuất bản link tới nó. Một
 template công khai thì không thể xoá. Một place không thể xoá khi còn thứ gì tham
-chiếu tới nó, và lời từ chối **nêu tên mọi chỗ đang tham chiếu**. Một place không
+chiếu tới nó: `DELETE /api/admin/travel/places/[slug]` trả **409 `place_in_use`** kèm
+`error.details.counts` = `{ stories, collections, templates, contentReviews,
+tripActivities, communityReviews }` (chỉ số đếm: không có id người dùng, chuyến hay
+review). Số đếm phía Planner gồm mọi hoạt động (kể cả chuyến đã lưu trữ) và mọi
+đánh giá cộng đồng, bất kể trạng thái. Không cascade, không sửa dữ liệu; hãy lưu trữ
+hoặc thay các tham chiếu, hoặc giữ lại địa điểm. Nếu không đọc được store Planner thì
+trả 503 `service_unavailable` và không xoá gì. Kiểm tra phía content và Planner không
+phải một transaction khi hai store tách rời, nên một chuyến có thể thêm địa điểm này
+vào giữa hai bước; `GET /api/admin/planner/integrity` ("unknown place") là lưới đỡ.
+Một place không
 thể bị tách khỏi một story khi còn đang được nhúng trong phần nội dung của story đó.
 
 **Template** — các ngày được đánh số `1..n` và `order` của hoạt động chạy `0..m`
@@ -170,9 +183,9 @@ curl -X POST localhost:3000/api/admin/travel/places -H "$T" -H "$J" -d '{
 curl -X POST localhost:3000/api/admin/travel/stories/my-story/status \
   -H "$T" -H "$J" -d '{"action":"publish"}'
 
-# 3. Sắp xếp lại ngày 2
+# 3. Sắp xếp lại ngày 2 (bắt buộc If-Match: updatedAt hiện tại, có ngoặc kép)
 curl -X POST localhost:3000/api/admin/travel/templates/my-template/reorder \
-  -H "$T" -H "$J" -d '{"day":2,"activityIds":["act_b","act_a"]}'
+  -H "$T" -H "$J" -H 'If-Match: "<updatedAt>"' -d '{"day":2,"activityIds":["act_b","act_a"]}'
 
 # 4. Kiểm tra sức khoẻ tham chiếu
 curl localhost:3000/api/admin/travel/integrity -H "$T"

@@ -28,7 +28,7 @@ async function makeUser(role: 'member' | 'editor') {
   const issued = await repo.createUser({ handle: `rr-${role}-${(n += 1)}`, displayName: 'Người dùng', role });
   return { id: issued.user.id, cookie: (await repo.signIn(issued.accessToken)).token };
 }
-const post = (body: unknown, o: { ip?: string; cookie?: string; site?: string } = {}) =>
+const post = (body: unknown, o: { ip?: string; cookie?: string; site?: string; origin?: string } = {}) =>
   publicRoute.POST(
     new Request(`${ORIGIN}/api/community/reports`, {
       method: 'POST',
@@ -37,6 +37,7 @@ const post = (body: unknown, o: { ip?: string; cookie?: string; site?: string } 
         'x-forwarded-for': o.ip ?? '203.0.113.10',
         ...(o.cookie ? { cookie: `${SESSION_COOKIE}=${o.cookie}` } : {}),
         ...(o.site ? { 'sec-fetch-site': o.site } : {}),
+        ...(o.origin ? { origin: o.origin } : {}),
       },
       body: JSON.stringify(body),
     }),
@@ -105,6 +106,20 @@ describe('POST /api/community/reports', () => {
     expect((await post({ targetKind: 'review', targetId: reviewId, reason: 'other' }, { cookie: member.cookie, site: 'cross-site', ip: '203.0.113.31' })).status).toBe(201);
     const row = (await (await planner.getPlannerRepository()).listReports('open')).find((r) => r.reason === 'other');
     expect(row?.signedIn).toBe(false);
+  });
+
+  it('without Sec-Fetch-Site, a foreign or malformed Origin is a guest and our own Origin is the member (S-3)', async () => {
+    const guests = async () => (await (await planner.getPlannerRepository()).listReports('open')).filter((r) => !r.signedIn).length;
+    const base = await guests();
+    const a = await makeUser('member');
+    expect((await post({ targetKind: 'review', targetId: reviewId, reason: 'harassment' }, { cookie: a.cookie, origin: 'https://evil.test', ip: '203.0.113.61' })).status).toBe(201);
+    expect(await guests()).toBe(base + 1);
+    const b = await makeUser('member');
+    expect((await post({ targetKind: 'review', targetId: reviewId, reason: 'harassment' }, { cookie: b.cookie, origin: 'not a url', ip: '203.0.113.62' })).status).toBe(201);
+    expect(await guests()).toBe(base + 2);
+    const c = await makeUser('member');
+    expect((await post({ targetKind: 'review', targetId: reviewId, reason: 'harassment' }, { cookie: c.cookie, origin: ORIGIN, ip: '203.0.113.63' })).status).toBe(201);
+    expect(await guests()).toBe(base + 2);
   });
 
   it('404 for an unknown and for a non-public target, the same body', async () => {

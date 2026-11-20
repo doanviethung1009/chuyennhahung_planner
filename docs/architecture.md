@@ -70,6 +70,7 @@ folders. The visible URL per locale is defined once, in
 | `/stories/[slug]` | `/chuyen-di-choi/[slug]` | `/en/stories/[slug]` |
 | `/destinations` | `/kham-pha` | `/en/destinations` |
 | `/destinations/[slug]` | `/kham-pha/[slug]` | `/en/destinations/[slug]` |
+| `/places` | `/dia-diem` | `/en/places` |
 | `/places/[slug]` | `/dia-diem/[slug]` | `/en/places/[slug]` |
 | `/map` | `/ban-do` | `/en/map` |
 | `/itineraries` | `/len-lich-trinh` | `/en/itineraries` |
@@ -119,7 +120,7 @@ missing translation.
 
 | Collection | File | Count |
 |---|---|---|
-| Destinations | [`destinations.ts`](../src/content/destinations.ts) | 8 |
+| Destinations (8 visited, 8 not visited yet — those carry no `firstVisited`/`visits`) | [`destinations.ts`](../src/content/destinations.ts) | 16 |
 | Stories (seed source / `static` adapter / test fixture; live stories come from the content repository) | [`stories.ts`](../src/content/stories.ts) | 6 |
 | Itineraries | [`itineraries.ts`](../src/content/itineraries.ts) | 4 |
 | Video reviews | [`video-reviews.ts`](../src/content/video-reviews.ts) | 6 |
@@ -229,6 +230,8 @@ Server components by default; `'use client'` needs a stated reason. Today the
 client bundle exists for exactly two things: the mobile navigation drawer
 (focus trap, Escape, close-on-navigate) in
 [`main-nav.tsx`](../src/components/layout/main-nav.tsx), and the locale switcher.
+
+The locale switcher builds each link with `getPathname`, so Vietnamese stays unprefixed (no `/vi/...` redirect). The header account menu asks `GET /api/planner/session` after load; for a guest that is a `401`, which the browser logs in the console. This is deliberate (CORE-12 / P-2): several components read the same `401` as "guest", and the session cookie is `HttpOnly`, so the page cannot know in advance.
 
 The travel map is deliberately **not** a client component: an SVG silhouette
 with real `<a>` anchors positioned by [`lib/map.ts`](../src/lib/map.ts), so it is
@@ -360,7 +363,7 @@ The admin audit log (P07-13, [feature](features/admin-audit-viewer.md)): `/admin
 | `planner/integrity` (via `adminPlannerRoute`) | GET | `user:provision`, `session: true` (P07-15; editors refused) |
 | DELETE of stories/places/collections/reviews/templates, `POST templates` | any | token-only (`adminRoute`) |
 
-PATCH (stories, places, reviews and, since P07-15, collections and, since P07-6, templates via `PATCH`, `reorder` and `move-activity`) accepts an optional `If-Match: "<updatedAt>"` (`ifMatchStamp`); the repository compares inside the transaction and a stale write answers **412** `version_conflict`. No header means last write wins.
+PATCH (stories, places, reviews and, since P07-15, collections and, since P07-6, templates via `PATCH`, `reorder` and `move-activity`) requires `If-Match: "<updatedAt>"` (`ifMatchStamp`); the repository compares inside the transaction and a stale write answers **412** `version_conflict`. No header is **428** `precondition_required` (CORE-11; it was last write wins).
 
 ### Community trips (ADR 0014, PR 1)
 

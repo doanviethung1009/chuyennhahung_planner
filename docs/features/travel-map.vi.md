@@ -40,6 +40,15 @@ Component này là **server** component. Thẻ `<path>` silhouette được
 đặt tuyệt đối lên trên. Toàn bộ chuyện accessibility và SEO nằm ở đó: bot thấy
 link tới tám trang điểm đến, và người dùng bàn phím tab qua chúng theo thứ tự.
 
+Trên bản đồ đầy đủ (`/map`) chỉ các điểm đến **featured** (`featured: true` trong
+`src/content/destinations.ts`, do chủ dự án chọn, không phụ thuộc `visits`) giữ
+nhãn tên cố định; mọi ghim còn lại hiện tên qua tooltip khi hover hoặc focus bàn
+phím, giống bản xem trước ở trang chủ. Tên vẫn nằm trong accessible name của thẻ
+liên kết ở cả hai trường hợp. Nhờ vậy các cụm dày (Hà Nội / Ninh Bình / Hạ Long,
+Huế / Hội An / Đà Nẵng) vẫn đọc được ở 375px. Một điểm featured có thể đặt `labelSide` để ghi đè phía nhãn mặc định (trái, phải hoặc trên) khi nhãn
+lân cận va chạm (Hà Nội phía trên chấm, TP. Hồ Chí Minh bên phải). Trên cảm ứng không có hover, nên
+chạm vào sẽ mở trang điểm đến, nơi tiêu đề có tên.
+
 Việc đơn giản hoá là có chủ đích và được nói rõ: đường bờ biển là cách điệu, còn
 các ghim thì không. Vị trí một cái ghim luôn được tính từ toạ độ thật của điểm đến.
 
@@ -56,7 +65,7 @@ các ghim thì không. Vị trí một cái ghim luôn được tính từ toạ
 
 `tests/map.test.ts` kiểm tra mọi điểm đến chiếu vào trong khung nhìn, bắc luôn ở
 trên nam và đông ở bên phải tây (phép chiếu không bị lật), mọi điểm đến có toạ độ
-nằm trong Việt Nam, đường viền là đường khép kín, và độ lớn của ghim có chặn trần.
+nằm trong Việt Nam, đường viền là đường khép kín, độ lớn của ghim có chặn trần, chỉ ghim featured mới có nhãn cố định (các ghim còn lại giữ tên dạng `sr-only` cùng tooltip khi focus), và tập featured khớp danh sách chủ dự án đã duyệt.
 
 ## Giới hạn và câu hỏi còn mở
 

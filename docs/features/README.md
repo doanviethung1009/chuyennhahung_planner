@@ -30,8 +30,10 @@ New features start from [`_template.md`](_template.md) /
 | Admin dashboard | [admin-dashboard.md](admin-dashboard.md) | `/admin` cards per role: pending listings and reviews, story/review drafts, accounts, runtime; `GET /api/admin/overview` (P07-11) |
 | Admin portal | [admin-portal.md](admin-portal.md) | `/quan-tri` — admin-only user list, create, role change and password reset in the browser (ADR 0010) |
 | Admin user filter | [admin-user-filter.md](admin-user-filter.md) | Search (name, handle, email) and role filter on the `/quan-tri` users table, client-side |
+| Admin place delete | [admin-place-delete.md](admin-place-delete.md) | "Delete place" on `/admin/content/places/[slug]` for admin and super admin only; `content:delete`, confirm dialog, 409 `place_in_use` with counts (CORE-10) |
 | Auto deploy to dev | [auto-deploy-dev.md](auto-deploy-dev.md) | `deploy-dev` workflow: green `main` builds an image, the VM's self-hosted runner deploys it, health probe and rollback (ADR 0016) |
 | Community reviews | [community-reviews.md](community-reviews.md) | Traveller place reviews: Planner-written ones are moderated, home-page guest ones go live and staff can remove them; self-reported, plain text (ADR 0014, PR 2) |
+| More destinations | [more-destinations.md](more-destinations.md) | Eight destinations we have not visited yet (objective text only), landmark places for them and for four older destinations, `content:seed-places` top-up |
 | Public places | [places.md](places.md) | Place pages at `/dia-diem/[slug]` (`/en/places/[slug]`) and a Places section on each destination; every catalogue place is public; read-only reviews (ADR 0026) |
 | Community trips | [community-trips.md](community-trips.md) | Public trips shown on the home page and `/community-trips` after owner opt-in and staff approval; any edit re-queues; author by name or anonymous (ADR 0014, PR 1) |
 | Moderation events | [moderation-events.md](moderation-events.md) | Append-only audit log of every community action (listing, review, restriction), written in the same transaction; staff read route; 1-year retention; includes the moderation state machine (ADR 0019) |

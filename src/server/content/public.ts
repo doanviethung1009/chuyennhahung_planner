@@ -3,9 +3,9 @@ import { stories as staticStories } from "@/content/stories";
 import type { Story } from "@/content/types";
 import { getRepository } from "./instance";
 import { isContentError, type TravelContentRepository } from "./repository";
+import { toPublicPlace, type PublicPlace } from "./public-places";
 import type {
   LocalizedText,
-  Place,
   StoryBlock,
   TravelReview,
   TravelStory,
@@ -34,7 +34,8 @@ export interface PublicStory {
   updatedAt: string;
   destinationSlugs: string[];
   plannerTemplateSlug: string | null;
-  places: Place[];
+  /** Allow-list projection (ADR 0026): no affiliate links, timestamps or coordinates reach a page or its RSC payload. */
+  places: PublicPlace[];
   /** Published reviews only. */
   reviews: TravelReview[];
   gallery: string[];
@@ -112,10 +113,10 @@ async function toPublicStory(
   for (const block of story.content) {
     if (block.type === "place") slugs.add(block.placeSlug);
   }
-  const places: Place[] = [];
+  const places: PublicPlace[] = [];
   for (const slug of slugs) {
     const place = await optional(() => repository.getPlace(slug));
-    if (place) places.push(place);
+    if (place) places.push(toPublicPlace(place));
     else
       console.warn(
         `public content: story "${story.slug}" references missing place "${slug}"`,

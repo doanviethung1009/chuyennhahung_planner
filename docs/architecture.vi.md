@@ -72,6 +72,7 @@ trong [`src/i18n/routing.ts`](../src/i18n/routing.ts):
 | `/stories/[slug]` | `/chuyen-di-choi/[slug]` | `/en/stories/[slug]` |
 | `/destinations` | `/kham-pha` | `/en/destinations` |
 | `/destinations/[slug]` | `/kham-pha/[slug]` | `/en/destinations/[slug]` |
+| `/places` | `/dia-diem` | `/en/places` |
 | `/places/[slug]` | `/dia-diem/[slug]` | `/en/places/[slug]` |
 | `/map` | `/ban-do` | `/en/map` |
 | `/itineraries` | `/len-lich-trinh` | `/en/itineraries` |
@@ -122,7 +123,7 @@ thiếu bản dịch.
 
 | Bộ dữ liệu | File | Số lượng |
 |---|---|---|
-| Điểm đến | [`destinations.ts`](../src/content/destinations.ts) | 8 |
+| Điểm đến (8 đã đi, 8 chưa đi — không có `firstVisited`/`visits`) | [`destinations.ts`](../src/content/destinations.ts) | 16 |
 | Chuyện đi chơi (nguồn seed / adapter `static` / fixture test; story đang chạy đọc từ repository nội dung) | [`stories.ts`](../src/content/stories.ts) | 6 |
 | Lịch trình | [`itineraries.ts`](../src/content/itineraries.ts) | 4 |
 | Review video | [`video-reviews.ts`](../src/content/video-reviews.ts) | 6 |
@@ -229,6 +230,8 @@ Mặc định là server component; `'use client'` phải có lý do nêu rõ. H
 client tồn tại cho đúng hai thứ: drawer điều hướng trên mobile (bẫy focus, Escape,
 tự đóng khi chuyển trang) trong
 [`main-nav.tsx`](../src/components/layout/main-nav.tsx), và bộ đổi ngôn ngữ.
+
+Bộ đổi ngôn ngữ tạo từng liên kết bằng `getPathname`, nên tiếng Việt giữ URL không tiền tố (không còn chuyển hướng `/vi/...`). Menu tài khoản ở header gọi `GET /api/planner/session` sau khi tải trang; với khách đó là `401` và trình duyệt ghi vào console. Đây là chủ đích (CORE-12 / P-2): nhiều thành phần dùng chính `401` này để biết là khách, và cookie phiên là `HttpOnly` nên trang không thể biết trước.
 
 Bản đồ hành trình **không** phải client component, có chủ đích: đó là một SVG
 silhouette với các thẻ `<a>` thật, vị trí tính bởi [`lib/map.ts`](../src/lib/map.ts),
@@ -359,7 +362,7 @@ Nhật ký kiểm toán admin (P07-13, [feature](features/admin-audit-viewer.vi.
 | `planner/integrity` (qua `adminPlannerRoute`) | GET | `user:provision`, `session: true` (P07-15; editor bị từ chối) |
 | DELETE story/place/collection/review/template, `POST templates` | mọi method | chỉ token (`adminRoute`) |
 
-PATCH (story, place, review và, từ P07-15, collection và, từ P07-6, template qua `PATCH`, `reorder`, `move-activity`) nhận header tuỳ chọn `If-Match: "<updatedAt>"` (`ifMatchStamp`); repository so sánh trong transaction và ghi cũ trả **412** `version_conflict`. Không có header nghĩa là ghi sau thắng.
+PATCH (story, place, review và, từ P07-15, collection và, từ P07-6, template qua `PATCH`, `reorder`, `move-activity`) yêu cầu header `If-Match: "<updatedAt>"` (`ifMatchStamp`); repository so sánh trong transaction và ghi cũ trả **412** `version_conflict`. Thiếu header là **428** `precondition_required` (CORE-11; trước đây ghi sau thắng).
 
 ### Chuyến đi cộng đồng (ADR 0014, PR 1)
 

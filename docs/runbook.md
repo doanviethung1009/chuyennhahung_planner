@@ -123,18 +123,18 @@ adding or removing a route means editing this table in both languages.
 | GET | `/api/admin/travel/places` | Admin token or staff session | List places (all statuses) |
 | POST | `/api/admin/travel/places` | Admin token or staff session | Create a place |
 | GET | `/api/admin/travel/places/[slug]` | Admin token or staff session | One place |
-| PATCH | `/api/admin/travel/places/[slug]` | Admin token or staff session | Edit a place (optional If-Match) |
-| DELETE | `/api/admin/travel/places/[slug]` | Admin token or staff session | Delete a place |
+| PATCH | `/api/admin/travel/places/[slug]` | Admin token or staff session | Edit a place (If-Match required) |
+| DELETE | `/api/admin/travel/places/[slug]` | Admin token or admin session (`content:delete`; editors refused) | Delete a place (409 `place_in_use` while referenced) |
 | GET | `/api/admin/travel/stories` | Admin token or staff session | List stories (all statuses) |
 | POST | `/api/admin/travel/stories` | Admin token or staff session | Create a story |
 | GET | `/api/admin/travel/stories/[slug]` | Admin token or staff session | One story |
-| PATCH | `/api/admin/travel/stories/[slug]` | Admin token or staff session | Edit a story (optional If-Match) |
+| PATCH | `/api/admin/travel/stories/[slug]` | Admin token or staff session | Edit a story (If-Match required) |
 | DELETE | `/api/admin/travel/stories/[slug]` | Admin token or staff session | Delete a story |
 | POST | `/api/admin/travel/stories/[slug]/status` | Admin token or staff session | Change story status |
 | GET | `/api/admin/travel/reviews` | Admin token or staff session | List reviews (all statuses) |
 | POST | `/api/admin/travel/reviews` | Admin token or staff session | Create a review |
 | GET | `/api/admin/travel/reviews/[id]` | Admin token or staff session | One review |
-| PATCH | `/api/admin/travel/reviews/[id]` | Admin token or staff session | Edit a review (optional If-Match) |
+| PATCH | `/api/admin/travel/reviews/[id]` | Admin token or staff session | Edit a review (If-Match required) |
 | DELETE | `/api/admin/travel/reviews/[id]` | Admin token or staff session | Delete a review |
 | POST | `/api/admin/travel/reviews/[id]/status` | Admin token or staff session | Change review status |
 | PATCH | `/api/admin/travel/stories/[slug]/places` | Admin token or staff session | Set the places a story links to |
@@ -157,5 +157,7 @@ adding or removing a route means editing this table in both languages.
 
 - Errors share one envelope with a stable `code`; the codes are listed in [travel-content-api.md](travel-content-api.md).
 - Planner writes use optimistic concurrency: send the `ETag` from the read back as `If-Match`; a mismatch is `412 version_conflict`.
+- Travel Content admin `PATCH`/`reorder`/`move-activity` require `If-Match: "<updatedAt>"` too (session and token alike): missing is `428 precondition_required`, stale is `412 version_conflict`.
+- Sign-in limiters (`signInLimiter`, `signInAccountLimiter`) count per process and key on the first `X-Forwarded-For` value, so with several instances the limit multiplies and nginx **must overwrite** `X-Forwarded-For` (CORE-11 / S-4; sharing them through PostgreSQL is not done).
 - `429 rate_limited` carries `Retry-After`. Limits are per process and the client key is spoofable ([ADR 0005](adr/0005-trip-sharing-and-story-cloning.md)).
 - Admin responses are `no-store`.

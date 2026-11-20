@@ -11,6 +11,8 @@ export class ApiError extends Error {
     readonly issuePaths: string[] = [],
     /** Stable sub-reason of a 409 refusal, when the server names one. */
     readonly reason: string | null = null,
+    /** Non-identifying numbers a refusal may carry (e.g. `place_in_use` counts). */
+    readonly details: Record<string, number> | null = null,
   ) {
     super(code);
     this.name = 'ApiError';
@@ -48,10 +50,17 @@ export async function api<T = undefined>(path: string, options: Options = {}): P
     let code = 'error';
     let issuePaths: string[] = [];
     let reason: string | null = null;
+    let details: Record<string, number> | null = null;
     try {
-      const data = (await response.json()) as { error?: { code?: string; reason?: string; issues?: { path?: string }[] } };
+      const data = (await response.json()) as { error?: { code?: string; reason?: string; details?: { counts?: Record<string, unknown> }; issues?: { path?: string }[] } };
       code = data.error?.code ?? code;
       reason = typeof data.error?.reason === 'string' ? data.error.reason : null;
+      const counts = data.error?.details?.counts;
+      if (counts && typeof counts === 'object') {
+        details = Object.fromEntries(
+          Object.entries(counts).filter((entry): entry is [string, number] => typeof entry[1] === 'number'),
+        );
+      }
       issuePaths = (data.error?.issues ?? []).flatMap((issue) => (typeof issue.path === 'string' ? [issue.path] : []));
     } catch {
       // Non-JSON error body: keep the generic code.
@@ -62,7 +71,7 @@ export async function api<T = undefined>(path: string, options: Options = {}): P
       goToChangePassword();
     }
     const retry = Number(response.headers.get('retry-after'));
-    throw new ApiError(response.status, code, Number.isFinite(retry) && retry > 0 ? retry : null, issuePaths, reason);
+    throw new ApiError(response.status, code, Number.isFinite(retry) && retry > 0 ? retry : null, issuePaths, reason, details);
   }
 
   return (await response.json()) as T;

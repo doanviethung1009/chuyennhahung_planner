@@ -11,6 +11,9 @@
 export const MAP_WIDTH = 420;
 export const MAP_HEIGHT = 820;
 
+/** Minimum touch target for a pin, in CSS px (CLAUDE.md rule 5). Matches `size-11`. */
+export const MAP_TARGET_PX = 44;
+
 /** Bounds generous enough to keep every pin and the outline inside the frame. */
 const BOUNDS = { latMin: 8.2, latMax: 23.6, lngMin: 101.9, lngMax: 110.0 };
 
@@ -42,8 +45,9 @@ function round(n: number): number {
  * border to Cà Mau, then back up the western border.
  */
 const OUTLINE: Array<[lat: number, lng: number]> = [
-  [21.6, 107.9],
-  [20.9, 106.8],
+  [21.6, 107.95],
+  [21.1, 107.45],
+  [20.8, 106.95],
   [20.2, 106.5],
   [19.8, 105.9],
   [18.9, 105.8],
@@ -110,7 +114,12 @@ export const VIETNAM_OUTLINE_PATH = smoothClosedPath(
   OUTLINE.map(([lat, lng]) => project(lat, lng)),
 );
 
+/** Which side of a pin its label sits on: right-half pins flip left so the label stays in the frame. */
+export function labelSide(x: number): 'left' | 'right' {
+  return x > MAP_WIDTH / 2 ? 'left' : 'right';
+}
+
 /** Pin radius grows with repeat visits, capped so it never dominates. */
-export function pinRadius(visits: number): number {
-  return Math.min(5 + visits * 1.4, 11);
+export function pinRadius(visits: number | undefined): number {
+  return Math.min(5 + (visits ?? 0) * 1.4, 11);
 }

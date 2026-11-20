@@ -22,7 +22,7 @@ export async function SiteHeader() {
         <div className="flex h-(--header-h) items-center justify-between gap-4">
           <Link
             href="/"
-            className="group flex shrink-0 flex-col justify-center leading-none"
+            className="group flex min-h-11 shrink-0 flex-col justify-center leading-none"
           >
             <span className="font-display text-lg font-semibold tracking-tight text-ink-900 md:text-xl">
               {siteConfig.name}

@@ -1,0 +1,14 @@
+# Handoff — places-list-load: giảm chi phí mỗi request của `/places`
+- Nhánh: `fix/places-list-load` (cắt từ `origin/main` abd54ef) · PR: chưa mở (chưa được phép commit/push). Chưa có commit nào.
+- PR mở khác: chỉ #175 (docs roadmap, sửa `admin-content-slug-ux.md`) — không đụng `public-places.ts` hay trang places.
+- Phương án chọn: (b) cache catalogue đã chiếu trong bộ nhớ, TTL 10 giây, kèm (a) đọc store một lần (`limit` lớn) thay vì vòng 100. Bỏ (c) ISR (trang dùng `searchParams`) và (d) rate limit (limiter của repo theo từng tiến trình, khoá bằng header giả được, chỉ dùng cho endpoint ghi).
+- Code: `src/server/public-catalogue-cache.ts` (mới), `src/server/content/public-places.ts` (đọc một lần, lọc `q`/điểm đến/loại trong bộ nhớ bằng cùng phép fold với `listPlaces`), `src/server/overview-cache.ts` (xoá cache sau request đổi trạng thái).
+- Độ mới: tiến trình sửa/xoá thấy ngay; instance khác tối đa 10 giây. Lần đọc lỗi không cache nên store sập vẫn reject (sitemap, trang).
+- Không đổi: hình dạng JSON của API, `GET /api/travel/places` (session khác), noindex/canonical, allow-list `PublicPlace`, markup trang.
+- Test: `tests/places-list-load.test.ts` (6 ca: 1 lần đọc cho nhiều tìm kiếm, kết quả bằng `listPlaces({q})`, hết TTL, invalidate sau POST/DELETE nhưng không sau GET, lỗi không cache, allow-list); `places-page`/`places-search` thêm reset cache trong `beforeEach`.
+- Docs: `docs/features/places.md` + `.vi.md` (How it works "Load and caching", Files, Limits). Không cần ADR mới (ADR 0026 không quy định đường đọc); `architecture.*` không đổi.
+- Kiểm tra: typecheck PASS · lint PASS · test PASS (108 file, 1348 test, 91 skipped) · build PASS. Không chạy trình duyệt (không đổi giao diện): NOT RUN.
+- Ngoài kế hoạch: `npm ci` trong worktree (node_modules thiếu jsdom/@testing-library nên typecheck/test/build lỗi môi trường trước đó).
+- `/qc-check`: NOT RUN (khuyến nghị) · `/sec-check`: NOT RUN (khuyến nghị — cache trên đường đọc công khai).
+- Rủi ro: thấp; rollback = revert. Chạm chung `src/server/content/`? Không sửa `repository.ts` hay route API; session kia (projection API) không trùng file.
+- Mở: chờ chủ dự án cho phép commit (đề xuất 1 commit `fix(places): cache the public catalogue and read it once`), push, mở PR.

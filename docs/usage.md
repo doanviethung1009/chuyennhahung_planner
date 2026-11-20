@@ -371,6 +371,19 @@ Sign in as in the section above (an `editor` account has the role `editor`; an a
 
 A published edit shows on the public site on the next request: the story pages, home, destination pages and sitemap render per request from the content store ([ADR 0012](adr/0012-public-travel-from-content-repository.md)). Drafts and archived stories are not public (404). The browser sends `If-Match` with the record's `updatedAt`; if someone else saved first the save is refused with **412** `version_conflict` — reload and re-apply your change. Edits are not attributed in an audit log yet.
 
+### Seed the landmark places into an existing content store
+
+`seedTravelContent` only runs on an empty store, so an existing store does not receive the landmark places added by DEST-1 (`src/content/travel/seed-places.ts`). Top it up the same way as the static stories, with the app stopped:
+
+```bash
+npm run content:seed-places -- --dry-run   # list what would be created, write nothing
+npm run content:seed-places                # create them
+```
+
+On the VM the script runs in the `tools` container, built by hand; the full commands and what each flag means are in [deploy-operations → One-off scripts on the VM](deploy-operations.md#one-off-scripts-on-the-vm-the-tools-container).
+
+Create-only per slug, same store as the app, never overwrites a CMS edit. Costs and durations in those places are estimates to confirm; `rating` and `personalNote` stay empty for the owner. Not run against any real store by this change.
+
 ### Seed the static stories into the content store
 
 A fresh content store already gets the typed-seed stories from `src/content/stories.ts` when it is first seeded. An **existing** store skips that step (it already has content), so add them by hand:

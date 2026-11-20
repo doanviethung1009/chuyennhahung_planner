@@ -3108,6 +3108,28 @@ export class PlannerRepository {
   }
 
   // -------------------------------------------------------------------------
+  // Place usage (CORE-9) — read-only, counts only
+  // -------------------------------------------------------------------------
+
+  /**
+   * How many Planner rows name a place, for the admin place DELETE guard.
+   *
+   * Counts **every** activity (archived trips included) and **every** community
+   * review whatever its status — a pending or removed review still names the
+   * place. Returns bare numbers: no user, trip or review identifier leaves here.
+   */
+  async countPlaceReferences(
+    placeSlug: string,
+  ): Promise<{ tripActivities: number; communityReviews: number }> {
+    const data = await this.snapshot();
+    return {
+      tripActivities: data.tripActivities.filter((row) => row.placeSlug === placeSlug).length,
+      communityReviews: (data.communityReviews ?? []).filter((row) => row.placeSlug === placeSlug)
+        .length,
+    };
+  }
+
+  // -------------------------------------------------------------------------
   // Integrity sweep — catches a hand-edited JSON file
   // -------------------------------------------------------------------------
 

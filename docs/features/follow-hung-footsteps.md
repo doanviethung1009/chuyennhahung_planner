@@ -120,8 +120,9 @@ API used (all same-origin, cookie-authenticated; bodies are `.strict()`):
 
 - Sign-in is still the operator-issued access code ([ADR 0004](../adr/0004-planner-identity.md));
   there is no public signup.
-- My Trips detail is view plus status, duplicate, archive and share. Editing days,
-  activities and expenses in the browser is not built.
+- My Trips detail has status, duplicate, archive and share, and the browser trip
+  editor ([trip-editor.md](trip-editor.md)) edits days, activities and expenses of an
+  active trip; an archived trip stays read-only.
 - No public gallery of public trips; `public` only allows indexing of the one page.
 - The rate limiter is per-process and trusts `x-forwarded-for` (see ADR 0005).
 - The story page is ISR (60 s), so a withdrawn template can linger up to a minute.

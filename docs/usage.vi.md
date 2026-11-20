@@ -371,6 +371,19 @@ Bản sửa đã publish hiện trên site công khai ngay ở request kế ti�
 
 Mọi địa điểm trong catalogue nội dung đều công khai: trang của nó là `/dia-diem/<slug>` (`/en/places/<slug>`) và nó nằm trong mục "Địa điểm" của trang điểm đến (khớp theo `destinationSlug`). Thêm hay bỏ một địa điểm qua `/quan-tri/noi-dung/dia-diem` hoặc token API; không có trạng thái nháp nên địa điểm vừa lưu hiện ngay. Ảnh lấy từ `images` của địa điểm (ảnh đầu là ảnh bìa). 20 review đã duyệt mới nhất của địa điểm hiện trên trang, kèm form để thêm review: khách viết với tư cách khách, thành viên đã đăng nhập viết (và sửa, xóa) review của mình ngay tại đó, và địa điểm không cần nằm trong chuyến nào. Thành viên đã đăng nhập còn thấy nút "Thêm vào chuyến đi" dưới địa chỉ: chọn một chuyến đang hoạt động tới điểm đến đó và một ngày, địa điểm được thêm vào cuối ngày với thời lượng và chi phí gợi ý (trùng thì cảnh báo, không chặn; ngày đã đầy không chọn được). Khách thấy liên kết đăng nhập quay lại trang; nếu chưa có chuyến tới điểm đến đó, khung dẫn tới trang tạo chuyến. Chi tiết: [features/places.vi.md](features/places.vi.md), [ADR 0026](adr/0026-public-places-routes.vi.md).
 
+### Bổ sung địa điểm nổi tiếng vào content store có sẵn
+
+`seedTravelContent` chỉ chạy khi store rỗng, nên store có sẵn không nhận các địa điểm DEST-1 thêm (`src/content/travel/seed-places.ts`). Bổ sung giống cách với story tĩnh, khi đã dừng app:
+
+```bash
+npm run content:seed-places -- --dry-run   # liệt kê những gì sẽ tạo, không ghi gì
+npm run content:seed-places                # tạo chúng
+```
+
+Trên VM, script chạy trong container `tools` build bằng tay; lệnh đầy đủ và ý nghĩa từng cờ nằm ở [deploy-operations → Chạy script một lần trên VM](deploy-operations.vi.md#chạy-script-một-lần-trên-vm-container-tools).
+
+Chỉ tạo slug chưa có, dùng cùng store với app, không bao giờ ghi đè chỉnh sửa trong CMS. Chi phí và thời lượng trong các địa điểm đó là ước tính cần xác nhận; `rating` và `personalNote` để trống cho chủ dự án. Thay đổi này không chạy lệnh trên store thật nào.
+
 ### Nạp các bài viết tĩnh vào content store
 
 Content store mới tinh đã có sẵn các bài viết từ `src/content/stories.ts` ngay lần seed đầu tiên. Store **đã tồn tại** thì bỏ qua bước đó (vì đã có nội dung), nên hãy nạp thủ công:

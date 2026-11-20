@@ -172,6 +172,98 @@ du -sh /opt/chuyennhahung/data/* /opt/chuyennhahung/logs /opt/chuyennhahung/back
   `POSTGRES_MEM_LIMIT`) trong các file compose. `limit_req` tính theo địa chỉ client: sau proxy hay tunnel khác phải thêm `set_real_ip_from` trước, nếu không mọi client dùng chung một bucket. Hãy xoay vòng hoặc xoá `access.log` được ghi trước khi áp dụng định dạng này (dòng cũ chứa nguyên dòng request). Stack có nginx riêng (`deploy/nginx-app.conf`) giữ định dạng log của nó: repo này không kiểm soát. Chưa kiểm chứng trên VM.
 - **Bản sao lưu** cũ hơn 14 ngày được script xoá; bản chép ra khỏi VM do bạn tự dọn.
 
+## Chạy script một lần trên VM (container `tools`)
+
+Có những việc không thuộc một lần release: bổ sung content store (`content:seed-places`,
+`content:seed-static`), nhập file chuyến đi (`planner:import`), tạo admin đầu tiên
+(`admin:create`). Chúng chạy bằng một container dùng một lần từ image `tools`. CI build nó trên
+runner của GitHub và đẩy lên ghcr cạnh image `app` (`deploy-dev.yml`); deploy không bao giờ khởi
+động nó. VM chỉ **pull** về, vì bước build chạy `next build`, không vừa VM 1,9 GB.
+
+### 0. Chọn layout
+
+Có hai trường hợp; định nghĩa **một** trong hai hàm `dc` trong shell (mất khi SSH phiên mới, nên định nghĩa lại). Dùng sai sẽ báo *the Travel Content database is unavailable*.
+
+```bash
+cd /opt/chuyennhahung/src/deploy
+# local-db: PostgreSQL cùng stack Compose với app (layout một VM)
+dc() { docker compose --project-directory . --env-file /opt/chuyennhahung/.env --profile local-db -f compose.yml -f compose.app.yml -f compose.app.local-db.yml "$@"; }
+# external-db: PostgreSQL ở VM khác (cần pg-ca.crt, xem deploy-runbook)
+dc() { docker compose --project-directory . --env-file /opt/chuyennhahung/.env -f compose.yml -f compose.app.yml -f compose.app.external-db.yml "$@"; }
+```
+
+### 1. Pull image (một lần cho mỗi phiên bản mã)
+```bash
+cd /opt/chuyennhahung/src && git pull --ff-only          # file compose cùng commit
+cd deploy
+export TOOLS_IMAGE=ghcr.io/<owner>/chuyennhahung-tools APP_IMAGE_TAG=dev
+docker login ghcr.io -u <github-user>                    # token có read:packages; một lần cho mỗi VM
+dc --profile tools pull tools
+```
+`dev` là tag CI dời đi sau mỗi lần merge vào `main`; `sha-<commit>` ghim đúng một bản build.
+Image chứa các script của commit nó được build: script thêm ở PR sau cần image mới hơn.
+
+### 2. Chạy script (dry-run trước, rồi mới chạy thật)
+```bash
+dc run --rm tools npm run content:seed-places -- --dry-run
+```
+Bỏ `--dry-run` để ghi thật.
+
+### Từng phần có nghĩa gì
+| Phần | Vì sao có |
+|---|---|
+| `cd /opt/chuyennhahung/src/deploy` | Các file compose nằm ở đây; lệnh dùng đường dẫn tương đối từ đây |
+| `--project-directory .` | Dùng file và tên project của thư mục này, giống `deploy.sh`, để script dùng cùng volume và network với app |
+| `--env-file /opt/chuyennhahung/.env` | Secret và URL nằm ngoài repository. Thiếu cờ này Compose chỉ đọc `deploy/.env` và báo *required variable CNH_APP_PASSWORD is missing*, vì `compose.yml` còn định nghĩa service `postgres` |
+| `--profile local-db` | Nạp service `postgres` của cùng stack. `deploy.sh` truyền nó cho layout này; thiếu nó, container `tools` không có database để nối tới |
+| `-f compose.yml -f compose.app.yml -f compose.app.<overlay>.yml` | Stack nền, các service `app`/`tools`, và overlay database. `local-db` đưa `tools` vào network `backend` riêng, nơi có host `postgres`; `external-db` thì mount chứng chỉ CA `pg-ca.crt`. Luôn dùng đúng bộ file mà `deploy.sh` dùng |
+| `TOOLS_IMAGE`, `APP_IMAGE_TAG=dev` | Service `tools` dùng image nào: image ghcr CI đã build, tag `dev`. Thiếu `TOOLS_IMAGE`, Compose tìm `chuyennhahung/app-tools` cục bộ và tự build |
+| `--profile tools` | Service `tools` nằm sau một profile để `up` không bao giờ khởi động nó. `pull` cần profile để thấy nó |
+| `run --rm tools` | Khởi động một container từ image đó và xoá nó sau khi chạy xong |
+| `npm run <script> -- --dry-run` | Dấu `--` chuyển `--dry-run` cho script thay vì npm. Dry-run chỉ liệt kê những gì sẽ tạo và không ghi gì |
+
+### Phương án dự phòng: build image trên VM
+Khi CI chưa publish image (fork, tag cũ), bỏ `TOOLS_IMAGE` rồi build:
+`APP_SRC=.. docker compose ... --profile tools build tools` (cần `NEXT_PUBLIC_SITE_URL` trong
+`.env`). Bước này chạy `next build`, nên để ý việc build bị kill trên VM nhỏ.
+
+### Cần kiểm tra
+- `CONTENT_DATABASE_URL` phải có trong `.env` (kiểm bằng `grep -c '^CONTENT_DATABASE_URL=' /opt/chuyennhahung/.env`, không in giá trị); thiếu nó, script ghi vào file JSON trong volume `app-data` chứ không vào PostgreSQL.
+- Dừng app khi script ghi vào store, như [usage](usage.vi.md) nói với từng script; dry-run an toàn mọi lúc.
+- Image nhúng sẵn `NEXT_PUBLIC_SITE_URL` của **dev**. Với prod, build một image riêng với URL prod.
+- Không dán giá trị thật từ `.env` vào chat hay ticket.
+- `docker login` lưu token trong `~/.docker/config.json` trên VM: dùng token chỉ có `read:packages`. Giữ gói `chuyennhahung-tools` ở chế độ private (nó chứa toàn bộ mã nguồn).
+
+### Production
+
+Mọi thứ ở trên viết cho VM dev. Production **chưa được tự động hoá**: ADR 0016 chỉ phủ dev và
+để ngỏ workflow cho prod, nên chưa có image `tools` cho prod cho tới khi bạn tạo ra nó.
+
+- **Một image riêng.** `NEXT_PUBLIC_SITE_URL` được nhúng lúc build, nên không thể đưa image dev
+  lên prod; phải build một image với URL của prod.
+- **Cách tạo chưa được quyết định.** `Dockerfile` nhận build argument, nên trên máy đủ RAM:
+  `docker build --target tools --build-arg NEXT_PUBLIC_SITE_URL=<prod-url> -t <name> .`, rồi
+  chuyển sang VM prod qua registry hoặc `docker save | docker load`. Đường này chưa được chạy
+  thử; một workflow cho prod sẽ thay nó và cần ADR riêng hoặc một bản sửa cho ADR 0016.
+- **Cùng quy tắc layout.** Dùng hàm `dc` của layout prod (`local-db` hoặc `external-db`), với
+  `.env` của prod.
+
+Thứ tự khi bổ sung nội dung như `content:seed-places` (các địa điểm DEST-1):
+
+1. Deploy mã trước (các điểm đến mới là nội dung tĩnh, đến cùng bản release).
+2. Kiểm tra store. Nếu store prod vẫn **trống** và `TRAVEL_CONTENT_AUTOSEED` là `true` (mặc
+   định), request đầu tiên sẽ tự nạp toàn bộ nội dung mẫu, gồm cả địa điểm, và script sau đó thấy
+   mọi thứ đã có. Với store đã có dữ liệu, chính script là thứ thêm chúng.
+3. Chạy script với `--dry-run`. Kỳ vọng thấy những slug còn thiếu; `skipped` liệt kê địa điểm đã
+   tồn tại với cùng slug, và chúng được để nguyên.
+4. Chạy thật, rồi chạy thêm một lần: lần hai phải in `created (0)`.
+5. Mở các trang công khai và trang địa điểm trong admin, kiểm bản ghi mới có xuất hiện.
+6. Chi phí và thời lượng trong địa điểm seed là ước lượng, còn `rating` / `personalNote` để
+   trống: hãy xác nhận hoặc điền trong CMS. Lần chạy script sau không bao giờ ghi đè các chỉnh sửa đó.
+
+Không có script hoàn tác. Một địa điểm tạo nhầm được ẩn hoặc xoá từ CMS admin; hãy sao lưu trước
+([Sao lưu và khôi phục](#sao-lưu-và-khôi-phục)).
+
 ## Nâng cấp
 
 - **App** được phát hành bằng cách merge vào `main` ([deploy-runbook](deploy-runbook.vi.md)).

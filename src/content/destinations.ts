@@ -1,7 +1,8 @@
 import type { Destination } from './types';
 
 /**
- * Places we have actually been. Ordered roughly north → south.
+ * Places we have actually been come first; destinations we have NOT visited yet
+ * (no `visits`/`firstVisited`) are appended after them. Home shows the first four.
  * Coordinates are real WGS84 and drive the travel map projection.
  */
 export const destinations: Destination[] = [
@@ -284,6 +285,229 @@ export const destinations: Destination[] = [
       en: ['Tea hills', 'Winter blossom', 'Weekend', 'Dairy farm'],
     },
     cover: '/images/covers/moc-chau.svg',
+  },
+  // --- Not visited yet (DEST-1). Objective descriptions only: no first-person
+  // account, visit date or visit count (CLAUDE.md rule 8). `firstVisited` and
+  // `visits` are deliberately absent. ---
+  {
+    slug: 'ha-noi',
+    name: { vi: 'Hà Nội', en: 'Hà Nội' },
+    area: { vi: 'Đồng bằng sông Hồng', en: 'Red River Delta' },
+    region: 'north',
+    terrain: 'city',
+    coords: { lat: 21.0285, lng: 105.8542 },
+    summary: {
+      vi: 'Thủ đô nghìn năm tuổi với phố cổ, hồ Hoàn Kiếm và nền ẩm thực đường phố nổi tiếng.',
+      en: 'A thousand-year-old capital of old streets, Hoàn Kiếm Lake and a celebrated street-food culture.',
+    },
+    body: {
+      vi: [
+        'Hà Nội là thủ đô của Việt Nam, nằm bên sông Hồng. Khu phố cổ gồm các phố nghề, quanh hồ Hoàn Kiếm là trung tâm đi bộ và là nơi tập trung nhiều di tích như Văn Miếu – Quốc Tử Giám.',
+        'Mùa thu (tháng 9 – 11) và đầu xuân thường dễ chịu nhất; mùa hè nóng ẩm, có mưa lớn.',
+        'Hai đứa chưa đến đây. Trang này chỉ là thông tin chung và sẽ được viết lại bằng trải nghiệm thật sau khi đi.',
+      ],
+      en: [
+        'Hà Nội is the capital of Vietnam, on the Red River. The Old Quarter is a grid of trade streets, and the area around Hoàn Kiếm Lake is a pedestrian hub with sites such as the Temple of Literature.',
+        'Autumn (September–November) and early spring are usually the most comfortable; summer is hot, humid and prone to heavy rain.',
+        'We have not been here yet. This page is general information and will be rewritten from first-hand experience after a visit.',
+      ],
+    },
+    bestSeason: { vi: 'Tháng 9 – 11 và tháng 3 – 4', en: 'September–November and March–April' },
+    tags: { vi: ['Thủ đô', 'Phố cổ', 'Ẩm thực đường phố'], en: ['Capital', 'Old Quarter', 'Street food'] },
+    cover: '/images/covers/ha-noi.svg',
+    featured: true,
+    labelSide: 'top',
+  },
+  {
+    slug: 'quang-ninh',
+    name: { vi: 'Quảng Ninh (Hạ Long)', en: 'Quảng Ninh (Hạ Long)' },
+    area: { vi: 'Vịnh Bắc Bộ', en: 'Gulf of Tonkin coast' },
+    region: 'north',
+    terrain: 'coast',
+    coords: { lat: 20.9101, lng: 107.1839 },
+    summary: {
+      vi: 'Tỉnh ven vịnh Bắc Bộ, nổi tiếng với vịnh Hạ Long và hàng nghìn đảo đá vôi.',
+      en: 'A province on the Gulf of Tonkin, known for Hạ Long Bay and its thousands of limestone islands.',
+    },
+    body: {
+      vi: [
+        'Quảng Ninh là tỉnh ven biển phía đông bắc, có thành phố Hạ Long làm trung tâm du lịch. Vịnh Hạ Long được UNESCO công nhận là Di sản thế giới, với tàu tham quan trong ngày và du thuyền qua đêm.',
+        'Tháng 4 – 6 và tháng 9 – 11 thường thuận lợi nhất; bão và mưa lớn có thể làm hoãn tàu vào mùa hè.',
+        'Hai đứa chưa đến đây. Trang này chỉ là thông tin chung và sẽ được viết lại bằng trải nghiệm thật sau khi đi.',
+      ],
+      en: [
+        'Quảng Ninh is a coastal province in the northeast, with Hạ Long city as its tourism centre. Hạ Long Bay is a UNESCO World Heritage Site, visited by day boats and overnight cruises.',
+        'April–June and September–November are generally the most favourable; storms and heavy rain can cancel boats in summer.',
+        'We have not been here yet. This page is general information and will be rewritten from first-hand experience after a visit.',
+      ],
+    },
+    bestSeason: { vi: 'Tháng 4 – 6 và tháng 9 – 11', en: 'April–June and September–November' },
+    tags: { vi: ['Vịnh biển', 'Đảo đá vôi', 'Du thuyền'], en: ['Bay', 'Limestone islands', 'Cruise'] },
+    cover: '/images/covers/quang-ninh.svg',
+  },
+  {
+    slug: 'quang-binh',
+    name: { vi: 'Quảng Bình (Phong Nha)', en: 'Quảng Bình (Phong Nha)' },
+    area: { vi: 'Phong Nha – Kẻ Bàng', en: 'Phong Nha – Kẻ Bàng' },
+    region: 'central',
+    terrain: 'mountain',
+    coords: { lat: 17.5911, lng: 106.2831 },
+    summary: {
+      vi: 'Vùng núi đá vôi với hệ thống hang động đồ sộ, thuộc Di sản thế giới Phong Nha – Kẻ Bàng.',
+      en: 'A limestone region with vast cave systems, part of the Phong Nha – Kẻ Bàng World Heritage Site.',
+    },
+    body: {
+      vi: [
+        'Phong Nha – Kẻ Bàng là vườn quốc gia ở Quảng Bình, được UNESCO công nhận nhờ địa chất karst và hệ thống hang động, trong đó có Động Phong Nha và Động Thiên Đường.',
+        'Mùa khô từ tháng 3 đến tháng 8 thuận lợi cho vào hang; mùa mưa cuối năm có thể làm đóng một số hang vì nước dâng.',
+        'Hai đứa chưa đến đây. Trang này chỉ là thông tin chung và sẽ được viết lại bằng trải nghiệm thật sau khi đi.',
+      ],
+      en: [
+        'Phong Nha – Kẻ Bàng is a national park in Quảng Bình, recognised by UNESCO for its karst geology and cave systems, including Phong Nha Cave and Paradise Cave.',
+        'The dry season from March to August suits cave visits; the late-year rains can close some caves when the water rises.',
+        'We have not been here yet. This page is general information and will be rewritten from first-hand experience after a visit.',
+      ],
+    },
+    bestSeason: { vi: 'Tháng 3 – 8', en: 'March–August' },
+    tags: { vi: ['Hang động', 'Núi đá vôi', 'Vườn quốc gia'], en: ['Caves', 'Karst', 'National park'] },
+    cover: '/images/covers/quang-binh.svg',
+  },
+  {
+    slug: 'da-nang',
+    name: { vi: 'Đà Nẵng', en: 'Đà Nẵng' },
+    area: { vi: 'Duyên hải miền Trung', en: 'Central coast' },
+    region: 'central',
+    terrain: 'coast',
+    coords: { lat: 16.0544, lng: 108.2022 },
+    summary: {
+      vi: 'Thành phố biển ở miền Trung với bãi cát dài, cầu sông Hàn và núi Bà Nà phía tây.',
+      en: 'A central coastal city with a long sand beach, the Hàn River bridges and the Bà Nà hills to the west.',
+    },
+    body: {
+      vi: [
+        'Đà Nẵng là thành phố trực thuộc trung ương, nằm giữa Huế và Hội An. Thành phố có bãi biển Mỹ Khê, bán đảo Sơn Trà và khu du lịch Bà Nà Hills trên núi.',
+        'Tháng 2 – 5 thường nắng ráo, phù hợp đi biển; từ tháng 9 đến tháng 12 hay có mưa và bão.',
+        'Hai đứa chưa đến đây. Trang này chỉ là thông tin chung và sẽ được viết lại bằng trải nghiệm thật sau khi đi.',
+      ],
+      en: [
+        'Đà Nẵng is a centrally governed city between Huế and Hội An. It has Mỹ Khê Beach, the Sơn Trà peninsula and the Bà Nà Hills mountain resort.',
+        'February–May is usually dry and good for the beach; September–December often brings rain and storms.',
+        'We have not been here yet. This page is general information and will be rewritten from first-hand experience after a visit.',
+      ],
+    },
+    bestSeason: { vi: 'Tháng 2 – 5', en: 'February–May' },
+    tags: { vi: ['Biển', 'Thành phố', 'Bà Nà'], en: ['Beach', 'City', 'Bà Nà'] },
+    cover: '/images/covers/da-nang.svg',
+  },
+  {
+    slug: 'quy-nhon',
+    name: { vi: 'Quy Nhơn', en: 'Quy Nhơn' },
+    area: { vi: 'Duyên hải Nam Trung Bộ', en: 'South-central coast' },
+    region: 'central',
+    terrain: 'coast',
+    coords: { lat: 13.7765, lng: 109.2237 },
+    summary: {
+      vi: 'Thành phố biển yên tĩnh với vịnh nhỏ, mũi đá và những bãi tắm hoang sơ quanh Nhơn Lý – Kỳ Co.',
+      en: 'A quieter seaside city of small bays, rocky headlands and beaches around Nhơn Lý and Kỳ Co.',
+    },
+    body: {
+      vi: [
+        'Quy Nhơn là thành phố ven biển miền Trung, có các điểm như Eo Gió, bãi Kỳ Co và tháp Chăm Dương Long. Tên đơn vị hành chính có thể thay đổi, nên kiểm tra khi đặt chỗ.',
+        'Tháng 3 – 8 thường ít mưa, biển lặng hơn.',
+        'Hai đứa chưa đến đây. Trang này chỉ là thông tin chung và sẽ được viết lại bằng trải nghiệm thật sau khi đi.',
+      ],
+      en: [
+        'Quy Nhơn is a coastal city in central Vietnam with sights such as Eo Gió, Kỳ Co beach and the Dương Long Cham towers. Administrative names can change, so check when booking.',
+        'March–August usually has less rain and calmer seas.',
+        'We have not been here yet. This page is general information and will be rewritten from first-hand experience after a visit.',
+      ],
+    },
+    bestSeason: { vi: 'Tháng 3 – 8', en: 'March–August' },
+    tags: { vi: ['Biển', 'Vịnh nhỏ', 'Tháp Chăm'], en: ['Beach', 'Small bays', 'Cham towers'] },
+    cover: '/images/covers/quy-nhon.svg',
+  },
+  {
+    slug: 'nha-trang',
+    name: { vi: 'Nha Trang', en: 'Nha Trang' },
+    area: { vi: 'Duyên hải Nam Trung Bộ', en: 'South-central coast' },
+    region: 'central',
+    terrain: 'coast',
+    coords: { lat: 12.2388, lng: 109.1967 },
+    summary: {
+      vi: 'Thành phố biển có vịnh nhiều đảo, tháp Chăm Ponagar và các bãi tắm nắng quanh năm.',
+      en: 'A resort city on a bay of islands, with the Po Nagar Cham towers and sunny beaches most of the year.',
+    },
+    body: {
+      vi: [
+        'Nha Trang là thành phố ven biển ở Khánh Hòa, nổi tiếng với vịnh có nhiều đảo, hoạt động lặn biển và Tháp Bà Ponagar.',
+        'Tháng 1 – 8 thường nắng nhiều; mưa tập trung vào cuối năm.',
+        'Hai đứa chưa đến đây. Trang này chỉ là thông tin chung và sẽ được viết lại bằng trải nghiệm thật sau khi đi.',
+      ],
+      en: [
+        'Nha Trang is a coastal city in Khánh Hòa, known for its bay of islands, diving and the Po Nagar Cham Towers.',
+        'January–August is usually sunny; rain is concentrated late in the year.',
+        'We have not been here yet. This page is general information and will be rewritten from first-hand experience after a visit.',
+      ],
+    },
+    bestSeason: { vi: 'Tháng 1 – 8', en: 'January–August' },
+    tags: { vi: ['Biển', 'Lặn biển', 'Tháp Chăm'], en: ['Beach', 'Diving', 'Cham towers'] },
+    cover: '/images/covers/nha-trang.svg',
+  },
+  {
+    slug: 'tp-ho-chi-minh',
+    name: { vi: 'TP. Hồ Chí Minh', en: 'Hồ Chí Minh City' },
+    area: { vi: 'Đông Nam Bộ', en: 'Southeast' },
+    region: 'south',
+    terrain: 'city',
+    coords: { lat: 10.7769, lng: 106.7009 },
+    summary: {
+      vi: 'Thành phố lớn nhất cả nước, nhộn nhịp ngày đêm, với nhiều di tích lịch sử, chợ và quán cà phê.',
+      en: 'Vietnam’s largest city, busy day and night, with historic sites, markets and cafés.',
+    },
+    body: {
+      vi: [
+        'TP. Hồ Chí Minh là trung tâm kinh tế của Việt Nam. Khu trung tâm có Dinh Độc Lập, Nhà thờ Đức Bà, Bưu điện Thành phố và chợ Bến Thành.',
+        'Mùa khô từ tháng 12 đến tháng 4 dễ đi lại; mùa mưa thường có mưa chiều ngắn.',
+        'Hai đứa chưa đến đây. Trang này chỉ là thông tin chung và sẽ được viết lại bằng trải nghiệm thật sau khi đi.',
+      ],
+      en: [
+        'Hồ Chí Minh City is Vietnam’s economic centre. The central district has the Independence Palace, Notre-Dame Cathedral, the Central Post Office and Bến Thành Market.',
+        'The dry season from December to April is easiest for getting around; the rainy season brings short afternoon showers.',
+        'We have not been here yet. This page is general information and will be rewritten from first-hand experience after a visit.',
+      ],
+    },
+    bestSeason: { vi: 'Tháng 12 – 4', en: 'December–April' },
+    tags: { vi: ['Thành phố', 'Lịch sử', 'Ẩm thực'], en: ['City', 'History', 'Food'] },
+    cover: '/images/covers/tp-ho-chi-minh.svg',
+    featured: true,
+    labelSide: 'right',
+  },
+  {
+    slug: 'can-tho',
+    name: { vi: 'Cần Thơ', en: 'Cần Thơ' },
+    area: { vi: 'Đồng bằng sông Cửu Long', en: 'Mekong Delta' },
+    region: 'south',
+    terrain: 'countryside',
+    coords: { lat: 10.0452, lng: 105.7469 },
+    summary: {
+      vi: 'Trung tâm của miền Tây sông nước, nổi tiếng với chợ nổi, vườn trái cây và kênh rạch.',
+      en: 'The hub of the Mekong Delta, known for floating markets, fruit orchards and canals.',
+    },
+    body: {
+      vi: [
+        'Cần Thơ nằm bên sông Hậu ở đồng bằng sông Cửu Long. Du khách thường đi chợ nổi Cái Răng vào sáng sớm và ghé vườn trái cây hoặc bến Ninh Kiều.',
+        'Mùa nước nổi (tháng 9 – 11) có cảnh đồng ngập nước; mùa khô từ tháng 12 đến tháng 4 thuận lợi cho đi lại.',
+        'Hai đứa chưa đến đây. Trang này chỉ là thông tin chung và sẽ được viết lại bằng trải nghiệm thật sau khi đi.',
+      ],
+      en: [
+        'Cần Thơ sits on the Hậu river in the Mekong Delta. Visitors usually go to Cái Răng floating market at dawn and add fruit orchards or Ninh Kiều Wharf.',
+        'The flood season (September–November) brings flooded fields; the dry season from December to April is easiest for travel.',
+        'We have not been here yet. This page is general information and will be rewritten from first-hand experience after a visit.',
+      ],
+    },
+    bestSeason: { vi: 'Tháng 12 – 4', en: 'December–April' },
+    tags: { vi: ['Chợ nổi', 'Miền Tây', 'Vườn trái cây'], en: ['Floating market', 'Mekong Delta', 'Orchards'] },
+    cover: '/images/covers/can-tho.svg',
   },
 ];
 
