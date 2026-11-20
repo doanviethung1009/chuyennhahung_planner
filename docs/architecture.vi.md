@@ -94,6 +94,7 @@ trong [`src/i18n/routing.ts`](../src/i18n/routing.ts):
 | `/admin/content/places/[slug]` | `/quan-tri/noi-dung/dia-diem/[slug]` | `/en/admin/content/places/[slug]` |
 | `/admin/content/reviews` | `/quan-tri/noi-dung/danh-gia` | `/en/admin/content/reviews` |
 | `/my-trips` | `/chuyen-di-cua-toi` | `/en/my-trips` |
+| `/my-map` | `/ban-do-cua-toi` | `/en/my-map` |
 | `/my-trips/new` | `/chuyen-di-cua-toi/moi` | `/en/my-trips/new` |
 | `/my-trips/[id]` | `/chuyen-di-cua-toi/[id]` | `/en/my-trips/[id]` |
 | `/shared/[token]` | `/chia-se/[token]` | `/en/shared/[token]` |
@@ -316,7 +317,7 @@ flowchart LR
   container và không đọc store nào. Merge vào `main` sẽ deploy VM dev qua runner tự host
   ([ADR 0016](adr/0016-auto-deploy-dev.vi.md)); image dev và prod khác nhau vì
   `NEXT_PUBLIC_SITE_URL` bị đóng lúc build.
-- **Trang riêng tư** (`/sign-in`, `/account/password`, `/my-trips`, `/my-trips/new`, `/my-trips/[id]`,
+- **Trang riêng tư** (`/sign-in`, `/account/password`, `/my-map`, `/my-trips`, `/my-trips/new`, `/my-trips/[id]`,
   `/trip-setup/[template]`) là `noindex` và không có trong sitemap; `/shared/[token]` là
   `noindex` trừ khi trip là `public`, và gửi `Referrer-Policy: no-referrer`.
 - **Mọi response đều có security header** từ `next.config.ts` (`securityHeaders`):
@@ -399,13 +400,13 @@ Log kiểm toán ([ADR 0019](adr/0019-community-foundation.vi.md), [features/mod
 
 Những thứ vắng mặt có chủ đích, và không được dựng sớm:
 
-- **Giao diện Planner** — được mở một phần bởi [ADR 0005](adr/0005-trip-sharing-and-story-cloning.vi.md): gồm nhân bản story thành trip, My Trips, đăng nhập và trang chia sẻ chỉ-đọc, rồi form tạo trip trống và trình sửa trip ở `/my-trips/[id]` ([features/trip-editor.vi.md](features/trip-editor.vi.md)). Bản đồ Planner và gợi ý AI thì chưa. Phần lõi *backend* của Planner đã ship dưới
+- **Giao diện Planner** — được mở một phần bởi [ADR 0005](adr/0005-trip-sharing-and-story-cloning.vi.md): gồm nhân bản story thành trip, My Trips, đăng nhập và trang chia sẻ chỉ-đọc, rồi form tạo trip trống và trình sửa trip ở `/my-trips/[id]` ([features/trip-editor.vi.md](features/trip-editor.vi.md)). Bản đồ thành viên `/my-map` đã mở ([ADR 0029](adr/0029-member-map.vi.md), [features/member-map.vi.md](features/member-map.vi.md)); bản đồ tuyến theo chuyến và gợi ý AI thì chưa. Phần lõi *backend* của Planner đã ship dưới
   `/api/planner` ([ADR 0002](adr/0002-planner-core.vi.md),
   [features/travel-planner-core.vi.md](features/travel-planner-core.vi.md)):
   trip, ngày sinh tự động, activity, chi phí, ngân sách, lưu trữ/khôi phục và
   clone template. `/thiet-ke-chuyen-di` vẫn là trang nội dung chỉ có liên hệ —
   nối nó vào API là việc của frontend và chưa bắt đầu.
-- **Map và gợi ý AI cho Planner.** Cố ý hoãn lại theo đề bài đã mở phase Planner.
+- **Bản đồ tuyến theo chuyến và gợi ý AI.** (Bản đồ thành viên cấp quốc gia `/my-map` không thuộc phần này: [ADR 0029](adr/0029-member-map.vi.md) tách đôi. Đó là trang server động — `src/server/planner/member-map.ts` đọc cookie phiên, chuyến và review của thành viên, chỉ đưa `{ slug, visits }` xuống component; `private, no-store`, không API, không migration. Chia sẻ bằng token là lát sau.) Cố ý hoãn lại theo đề bài đã mở phase Planner.
 - **Một nhà cung cấp danh tính hosted.** Đăng nhập Planner do ta tự quản: access
   token do người vận hành cấp, email kèm mật khẩu hash bằng scrypt, hoặc Google
   qua OIDC + PKCE tự viết, tạo tài khoản ở lần đăng nhập đầu, hoặc chỉ được liên

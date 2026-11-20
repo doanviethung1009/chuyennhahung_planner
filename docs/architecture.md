@@ -92,6 +92,7 @@ folders. The visible URL per locale is defined once, in
 | `/admin/content/places/[slug]` | `/quan-tri/noi-dung/dia-diem/[slug]` | `/en/admin/content/places/[slug]` |
 | `/admin/content/reviews` | `/quan-tri/noi-dung/danh-gia` | `/en/admin/content/reviews` |
 | `/my-trips` | `/chuyen-di-cua-toi` | `/en/my-trips` |
+| `/my-map` | `/ban-do-cua-toi` | `/en/my-map` |
 | `/my-trips/new` | `/chuyen-di-cua-toi/moi` | `/en/my-trips/new` |
 | `/my-trips/[id]` | `/chuyen-di-cua-toi/[id]` | `/en/my-trips/[id]` |
 | `/shared/[token]` | `/chia-se/[token]` | `/en/shared/[token]` |
@@ -316,7 +317,7 @@ flowchart LR
   probe and reads no store. Merging into `main` deploys the dev VM through a
   self-hosted runner ([ADR 0016](adr/0016-auto-deploy-dev.md)); dev and prod images differ
   because `NEXT_PUBLIC_SITE_URL` is baked at build.
-- **Private pages** (`/sign-in`, `/account/password`, `/my-trips`, `/my-trips/new`, `/my-trips/[id]`, `/trip-setup/[template]`)
+- **Private pages** (`/sign-in`, `/account/password`, `/my-map`, `/my-trips`, `/my-trips/new`, `/my-trips/[id]`, `/trip-setup/[template]`)
   are `noindex` and excluded from the sitemap; `/shared/[token]` is `noindex` unless
   the trip is `public`, and sends `Referrer-Policy: no-referrer`.
 - **Every response carries security headers** from `next.config.ts`
@@ -399,13 +400,13 @@ Audit log ([ADR 0019](adr/0019-community-foundation.md), [features/moderation-ev
 
 Deliberately absent, and not to be scaffolded early:
 
-- **Planner UI** — partly opened by [ADR 0005](adr/0005-trip-sharing-and-story-cloning.md): story-to-trip cloning, My Trips, sign-in and the read-only share page, then the blank-trip form and the trip editor on `/my-trips/[id]` ([features/trip-editor.md](features/trip-editor.md)). The Planner map and AI suggestions are not. The Planner *backend* core shipped under `/api/planner`
+- **Planner UI** — partly opened by [ADR 0005](adr/0005-trip-sharing-and-story-cloning.md): story-to-trip cloning, My Trips, sign-in and the read-only share page, then the blank-trip form and the trip editor on `/my-trips/[id]` ([features/trip-editor.md](features/trip-editor.md)). The member map `/my-map` is open ([ADR 0029](adr/0029-member-map.md), [features/member-map.md](features/member-map.md)); the trip route map and AI suggestions are not. The Planner *backend* core shipped under `/api/planner`
   ([ADR 0002](adr/0002-planner-core.md),
   [features/travel-planner-core.md](features/travel-planner-core.md)):
   trips, generated days, activities, expenses, budgeting, archive/restore and
   template cloning. `/plan-your-trip` is still the contact-only content page —
   wiring it to the API is frontend-owned work and has not started.
-- **Planner map and AI suggestions.** Deliberately deferred by the brief that
+- **Trip route map and AI suggestions.** (The country-level member map `/my-map` is not part of this: [ADR 0029](adr/0029-member-map.md) splits the two. It is a dynamic server page — `src/server/planner/member-map.ts` reads the session cookie, the member's trips and reviews, and hands the component only `{ slug, visits }`; `private, no-store`, no API, no migration. Sharing by token is a later slice.) Deliberately deferred by the brief that
   opened the Planner phase.
 - **A hosted identity provider.** Planner sign-in is self-managed: an
   operator-issued access token, an email and scrypt-hashed password, or Google

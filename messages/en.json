@@ -13,6 +13,7 @@
     "primary": "Primary navigation",
     "skipToContent": "Skip to main content",
     "myTrips": "My trips",
+    "myMap": "My map",
     "signIn": "Sign in",
     "accountMenu": "Account for {name}",
     "signedInAs": "Signed in as {name}",
@@ -378,7 +379,24 @@
       "unlinkFailed": "We could not unlink Google. Please try again in a moment."
     }
   },
+  "memberMap": {
+    "title": "My map",
+    "description": "The places you have been and the places you plan to go, visible only to you.",
+    "mapLabel": "Map of Vietnam with the places you have visited and planned",
+    "legend": "Legend",
+    "legendVisited": "Solid points: places you have been (bigger points are places you've returned to)",
+    "legendPlanned": "Hollow points: places you have planned but not been to yet",
+    "listTitle": "Points on your map",
+    "visited": "Visited",
+    "planned": "Planned",
+    "guestPrompt": "Plan and take your trips to fill in your map.",
+    "guestCta": "Sign in",
+    "emptyPrompt": "Your map is still empty. Plan and take your trips to fill it in.",
+    "emptyCta": "Plan a trip",
+    "privateNote": "Only you can see this map. A trip appears on it while it is active or once completed; an archived trip that was never completed is not counted."
+  },
   "myTrips": {
+    "mapLink": "See my map",
     "title": "My trips",
     "description": "The trips you saved: change status, duplicate, share or put away.",
     "tabsLabel": "Filter trips",

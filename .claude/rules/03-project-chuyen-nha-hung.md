@@ -86,7 +86,7 @@ cloning. Designed in `docs/adr/0002-planner-core.md`.
 | Absent | Note |
 |---|---|
 | Planner **UI** (beyond ADR 0005) | ADR 0005 shipped story-to-trip cloning, `/sign-in`, `/my-trips`, read-only `/my-trips/[id]` and `/shared/[token]`. Still absent: an in-browser editor for days/activities/expenses, and `/plan-your-trip` is still the contact-only content page (mailto, Zalo, Messenger). A submit button with nothing behind it is a dead control — rule 4. |
-| Planner map, AI suggestions | Deliberately deferred by the brief that opened the phase |
+| Trip route map (activity pins, day routes in the trip editor), AI suggestions | Deliberately deferred by the brief that opened the phase. The country-level **member map** `/my-map` is *not* part of this: it ships under ADR 0029 |
 | A hosted identity provider | Sign-in is self-managed: access token, email + scrypt password, or Google OIDC + PKCE (signup on first Google sign-in), all issuing the ADR 0004 session (ADR 0007). No self-service password reset, no password signup, no MFA, no Auth.js. Roles are designed in ADR 0006 (Proposed, Phase 07). |
 | Foreign keys between content entities | Both stores have a PostgreSQL adapter on one shared table engine: Planner when `PLANNER_DATABASE_URL` is set (ADR 0008/0009), Travel Content when `CONTENT_DATABASE_URL` is set (ADR 0013). Content has no FKs and no "still referenced" rule yet; adding them is its own decision. |
 

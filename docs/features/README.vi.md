@@ -16,6 +16,7 @@ Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
 | Chuyện đi chơi | [stories.vi.md](stories.vi.md) | `/chuyen-di-choi` danh sách và chi tiết, phần kể chuyện cốt lõi |
 | Điểm đến | [destinations.vi.md](destinations.vi.md) | `/kham-pha` danh sách và chi tiết, trung tâm tham chiếu chéo |
 | Bản đồ hành trình | [travel-map.vi.md](travel-map.vi.md) | `/ban-do` — silhouette SVG, toạ độ thật, không cần JS |
+| Bản đồ thành viên | [member-map.vi.md](member-map.vi.md) | `/ban-do-cua-toi` — bản đồ riêng của thành viên đăng nhập: chấm đặc đã đi, chấm rỗng đã lên kế hoạch (ADR 0029) |
 | Lịch trình | [itineraries.vi.md](itineraries.vi.md) | `/len-lich-trinh` cùng các redirect tour vĩnh viễn |
 | Góc review video | [video-reviews.vi.md](video-reviews.vi.md) | `/goc-review` — card cố ý không link, nút kênh |
 | Thiết kế chuyến đi | [plan-your-trip.vi.md](plan-your-trip.vi.md) | `/thiet-ke-chuyen-di` — điểm vào Planner, chủ đích không form |
@@ -65,6 +66,6 @@ Không phải tính năng, và không được dựng sớm. Xem
 
 | Phase | Đang chờ |
 |---|---|
-| Map và gợi ý AI cho Planner | Cố ý hoãn lại theo đề bài đã mở phase Planner |
+| Bản đồ tuyến theo chuyến (pin và tuyến trong một chuyến) và gợi ý AI | Cố ý hoãn lại theo đề bài đã mở phase Planner |
 | Card video bấm được | URL của từng video mà ta chưa có |
 | Ảnh thật | Ảnh của chủ nhà |

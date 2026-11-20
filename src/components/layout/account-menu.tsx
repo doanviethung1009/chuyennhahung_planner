@@ -266,6 +266,11 @@ function AccountLinks({
           {t('myTrips')}
         </Link>
       </li>
+      <li>
+        <Link href="/my-map" onClick={onNavigate} className={className}>
+          {t('myMap')}
+        </Link>
+      </li>
       {/* Always shown: the page also hosts Google linking, and explains itself
           for an account that has no password yet. */}
       <li>
