@@ -117,6 +117,20 @@ describe('owner operations', () => {
     expect(await planner.getSharedMemberMap(first.token ?? '')).toEqual({ displayName: null, points: [] });
   });
 
+  it('two concurrent first PUTs leave one row and exactly one issued token', async () => {
+    const { planner, store } = setup();
+    const id = await member(planner, 'ms-race');
+    const results = await Promise.all([
+      planner.setMemberMapShare(id, { enabled: true, shareName: 'anonymous' }),
+      planner.setMemberMapShare(id, { enabled: true, shareName: 'anonymous' }),
+      planner.setMemberMapShare(id, { enabled: true, shareName: 'anonymous' }),
+    ]);
+    expect((await store.read()).memberMapShares).toHaveLength(1);
+    const tokens = results.flatMap((result) => (result.token ? [result.token] : []));
+    expect(tokens).toHaveLength(1);
+    expect(await planner.getSharedMemberMap(tokens[0] ?? '')).not.toBeNull();
+  });
+
   it('rotates: the old link dies in the same step, the new one works and is returned once', async () => {
     const { planner } = setup();
     const id = await member(planner, 'ms-c');

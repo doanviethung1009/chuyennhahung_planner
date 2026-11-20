@@ -1715,6 +1715,10 @@ export class PlannerRepository {
       }
 
       const at = this.timestamp();
+      // Two concurrent first PUTs cannot both insert: every store serialises
+      // `transaction` (in-process queue; on PostgreSQL a global advisory lock), so
+      // the second one finds the first one's row. A stray unique violation would
+      // still surface as a 409, never a raw driver error (`translateDatabaseError`).
       let row = data.memberMapShares.find((candidate) => candidate.userId === userId);
       if (!row) {
         row = {
@@ -1795,12 +1799,15 @@ export class PlannerRepository {
     if (typeof token !== 'string' || !SHARE_TOKEN_PATTERN.test(token)) return null;
     const presented = Buffer.from(mapShareDigest(token), 'hex');
     const data = await this.snapshot();
-    const row = data.memberMapShares.find(
-      (candidate) => candidate.tokenDigest !== null && candidate.tokenDigest === mapShareDigest(token),
-    );
-    if (!row || row.tokenDigest === null) return null;
-    const stored = Buffer.from(row.tokenDigest, 'hex');
-    if (stored.length !== presented.length || !timingSafeEqual(stored, presented)) return null;
+    // Every stored digest is compared in constant time and the scan never stops
+    // early, so the time taken does not depend on which row (if any) matches.
+    let row: (typeof data.memberMapShares)[number] | null = null;
+    for (const candidate of data.memberMapShares) {
+      if (candidate.tokenDigest === null) continue;
+      const stored = Buffer.from(candidate.tokenDigest, 'hex');
+      if (stored.length === presented.length && timingSafeEqual(stored, presented)) row = candidate;
+    }
+    if (!row) return null;
     const owner = data.users.find((candidate) => candidate.id === row.userId);
     if (!owner || isDisabled(owner)) return null;
     const showName =
