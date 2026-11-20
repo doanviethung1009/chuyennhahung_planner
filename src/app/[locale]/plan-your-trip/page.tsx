@@ -73,7 +73,7 @@ export default async function PlanYourTripPage({ params }: Params) {
 
             <div className="mt-7 grid gap-8 sm:grid-cols-2">
               <div>
-                <ButtonLink href="/stories" size="lg">
+                <ButtonLink href="/trip-templates" size="lg">
                   {t('startTemplatesCta')}
                 </ButtonLink>
                 <p className="mt-3 text-base leading-relaxed text-foreground-muted">

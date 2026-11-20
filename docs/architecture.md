@@ -81,6 +81,7 @@ folders. The visible URL per locale is defined once, in
 | `/admin/community` | `/quan-tri/cong-dong` | `/en/admin/community` |
 | `/admin/runbook` | `/quan-tri/runbook` | `/en/admin/runbook` |
 | `/about` | `/ve-nha-hung` | `/en/about` |
+| `/trip-templates` | `/lich-trinh-mau` | `/en/trip-templates` |
 | `/trip-setup/[template]` | `/tao-chuyen-di/[template]` | `/en/trip-setup/[template]` |
 | `/sign-in` | `/dang-nhap` | `/en/sign-in` |
 | `/account/password` | `/doi-mat-khau` | `/en/account/password` |
@@ -96,6 +97,10 @@ folders. The visible URL per locale is defined once, in
 | `/my-trips/new` | `/chuyen-di-cua-toi/moi` | `/en/my-trips/new` |
 | `/my-trips/[id]` | `/chuyen-di-cua-toi/[id]` | `/en/my-trips/[id]` |
 | `/shared/[token]` | `/chia-se/[token]` | `/en/shared/[token]` |
+
+`/trip-templates` is a public, indexable list (in the sitemap) of the templates whose
+`visibility` is `public`; each card leads to `/trip-setup/[template]`, which stays
+`noindex`. Details: [features/trip-template-list.md](features/trip-template-list.md).
 
 Two types keep navigation honest: `AppPathname` is every internal route, and
 `StaticPathname` excludes `[slug]` routes so a dynamic route can never be listed

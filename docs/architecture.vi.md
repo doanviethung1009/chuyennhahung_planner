@@ -83,6 +83,7 @@ trong [`src/i18n/routing.ts`](../src/i18n/routing.ts):
 | `/admin/community` | `/quan-tri/cong-dong` | `/en/admin/community` |
 | `/admin/runbook` | `/quan-tri/runbook` | `/en/admin/runbook` |
 | `/about` | `/ve-nha-hung` | `/en/about` |
+| `/trip-templates` | `/lich-trinh-mau` | `/en/trip-templates` |
 | `/trip-setup/[template]` | `/tao-chuyen-di/[template]` | `/en/trip-setup/[template]` |
 | `/sign-in` | `/dang-nhap` | `/en/sign-in` |
 | `/account/password` | `/doi-mat-khau` | `/en/account/password` |
@@ -98,6 +99,10 @@ trong [`src/i18n/routing.ts`](../src/i18n/routing.ts):
 | `/my-trips/new` | `/chuyen-di-cua-toi/moi` | `/en/my-trips/new` |
 | `/my-trips/[id]` | `/chuyen-di-cua-toi/[id]` | `/en/my-trips/[id]` |
 | `/shared/[token]` | `/chia-se/[token]` | `/en/shared/[token]` |
+
+`/trip-templates` là danh sách công khai, được index (có trong sitemap), của các
+template có `visibility` là `public`; mỗi thẻ dẫn tới `/trip-setup/[template]`, trang
+này vẫn `noindex`. Chi tiết: [features/trip-template-list.vi.md](features/trip-template-list.vi.md).
 
 Hai type giữ cho điều hướng không sai: `AppPathname` là mọi route nội bộ, còn
 `StaticPathname` loại bỏ các route `[slug]` để một route động không bao giờ bị
