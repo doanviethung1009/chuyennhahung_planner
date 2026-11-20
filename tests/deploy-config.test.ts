@@ -516,11 +516,11 @@ describe('nginx logging policy', () => {
       expect(fmt).not.toContain(v);
     }
     expect(fmt).toContain('$log_uri');
-    expect(conf).toMatch(/access_log\s+\/var\/log\/nginx\/access\.log\s+cnh\s*;/);
+    expect(conf).toMatch(/access_log\s+\/var\/log\/nginx\/access\.log\s+cnh(?:\s+if=\$cnh_loggable)?\s*;/);
     // Inside `server {}` so it REPLACES the image's http-level `access_log main`
     // (full request line with query); at http level both would be written.
     const serverBody = conf.slice(conf.indexOf('server {'));
-    expect(serverBody).toMatch(/access_log\s+\/var\/log\/nginx\/access\.log\s+cnh\s*;/);
+    expect(serverBody).toMatch(/access_log\s+\/var\/log\/nginx\/access\.log\s+cnh(?:\s+if=\$cnh_loggable)?\s*;/);
     expect(conf.slice(0, conf.indexOf('server {'))).not.toMatch(/access_log\s+\/var\/log/);
     expect(conf).toMatch(/error_log\s+\/var\/log\/nginx\/error\.log\s+warn\s*;/);
   });
@@ -533,11 +533,26 @@ describe('nginx logging policy', () => {
     for (const uri of [
       '/chia-se/TOKEN', '/vi/chia-se/TOKEN', '/en/chia-se/TOKEN',
       '/shared/TOKEN', '/vi/shared/TOKEN', '/en/shared/TOKEN', '/api/shared/TOKEN',
+      '/ban-do-chia-se/TOKEN', '/vi/ban-do-chia-se/TOKEN', '/en/shared-map/TOKEN',
     ]) expect(masked.test(uri), uri).toBe(true);
     for (const uri of ['/vi/stories', '/en/stories/shared-things', '/api/planner/abc/share/rotate', '/api/health']) {
       expect(masked.test(uri), uri).toBe(false);
     }
     expect(conf).toContain('[redacted]');
+  });
+
+  it('does not log the shared member-map paths at all and configures no cache (ADR 0030 §5)', () => {
+    const m = conf.match(/map \$uri \$cnh_loggable \{([^}]*)\}/)?.[1] ?? '';
+    const rx = m.match(/~(\^\/[^\s]+)\s+0;/)?.[1];
+    expect(rx).toBeTruthy();
+    const off = new RegExp(rx!);
+    for (const uri of ['/ban-do-chia-se/TOKEN', '/vi/ban-do-chia-se/TOKEN', '/en/shared-map/TOKEN']) {
+      expect(off.test(uri), uri).toBe(true);
+    }
+    for (const uri of ['/ban-do', '/en/map', '/chia-se/TOKEN', '/shared/TOKEN']) expect(off.test(uri), uri).toBe(false);
+    expect(m).toMatch(/default\s+1;/);
+    expect(conf).toMatch(/access_log\s+\S+\s+cnh\s+if=\$cnh_loggable\s*;/);
+    expect(conf).not.toMatch(/proxy_cache|fastcgi_cache|proxy_store/);
   });
 
   it('never references the image\'s `main` or `combined` access-log formats', () => {

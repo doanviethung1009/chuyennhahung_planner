@@ -62,13 +62,19 @@ export function buildPublicMemberMapPoints(
 
 /**
  * Whether a display name is safe to show publicly (ADR 0030 §3): it must not
- * look like an email address (`@`) or a phone number (7 or more digits). A guard
- * against accidents, not proof of identity safety.
+ * look like an email address (`@`), a web address, or a phone number (7 or more
+ * digits). The text is NFKC-normalised first, so full-width forms (`＠`, `０９１２`)
+ * are judged as their ASCII equivalents, and every Unicode decimal digit counts,
+ * not only ASCII. A guard against accidents, not proof of identity safety.
  */
 export function isDisplayNameSuitable(displayName: string): boolean {
-  if (displayName.includes('@')) return false;
-  const digits = displayName.replace(/\D/g, '');
-  return digits.length < 7;
+  const text = displayName.normalize('NFKC');
+  if (text.includes('@')) return false;
+  if (/https?:|www\.|\b[\p{L}\p{N}-]+\.(?:com|net|org|vn|io|me|info|biz|app|dev|xyz)\b/iu.test(text)) {
+    return false;
+  }
+  const digits = text.match(/\p{Nd}/gu)?.length ?? 0;
+  return digits < 7;
 }
 
 /** What the owner sees (never the token). */

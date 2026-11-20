@@ -1776,5 +1776,20 @@
     "errorTitle": "Could not load the trip templates",
     "errorBody": "Something went wrong reading the data. The list is not empty, it just did not load. Please try again in a few minutes.",
     "retry": "Try again"
+  },
+  "sharedMap": {
+    "metaTitle": "Shared map",
+    "title": "A traveller's map",
+    "titleNamed": "{name}'s map",
+    "description": "The places this person has been, shared by link. Visited places only: no plans and no dates.",
+    "mapLabel": "Map of visited places in Vietnam",
+    "legend": "Key",
+    "legendVisited": "A solid dot is a place visited",
+    "legendBuckets": "A larger dot means more visits: 1, 2–3, or 4 or more.",
+    "listTitle": "Places visited",
+    "empty": "This map has no places yet.",
+    "bucket1": "1 visit",
+    "bucket2": "2–3 visits",
+    "bucket3": "4 or more visits"
   }
 }
