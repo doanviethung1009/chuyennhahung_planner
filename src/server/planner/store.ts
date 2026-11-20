@@ -3,6 +3,7 @@ import {
   createMemoryDocumentStore,
   type DocumentStore,
 } from '@/server/persistence/json-store';
+import type { SharedMapSource } from './member-map-share';
 import type {
   OAuthAttempt,
   PlannerSession,
@@ -58,7 +59,14 @@ export interface PlannerData {
   memberMapShares: MemberMapShare[];
 }
 
-export type PlannerStore = DocumentStore<PlannerData>;
+export type PlannerStore = DocumentStore<PlannerData> & {
+  /**
+   * Indexed lookup for the public shared map (ADR 0030, hardening M1): the share
+   * whose digest matches, its owner and the owner's completed trips, read fresh,
+   * or null. Optional: a store without it is served through `view`, then `read`.
+   */
+  readSharedMapSource?(digest: string): Promise<SharedMapSource | null>;
+};
 
 export function emptyPlannerData(): PlannerData {
   return {

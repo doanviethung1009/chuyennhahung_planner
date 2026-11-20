@@ -5,6 +5,8 @@ import {
   isDisplayNameSuitable,
   mapShareDigest,
   newMapShareToken,
+  pickSharedMapSource,
+  type SharedMapSource,
   visitsBucket,
 } from '../src/server/planner/member-map-share';
 import { PlannerRepository } from '../src/server/planner/repository';
@@ -264,8 +266,8 @@ describe('the public view', () => {
     expect((await planner.getMemberMapShare(a)).enabled).toBe(true);
   });
 
-  it('answers null for a banned or soft-deleted owner; a restore revives the same link', async () => {
-    const { planner } = setup();
+  it('answers null for a banned or soft-deleted owner; the link stays off after unban or restore (L2)', async () => {
+    const { planner, store } = setup();
     const admin = (await planner.createUser({ handle: 'pv-admin', displayName: 'Quản trị', role: 'super_admin' })).user.id;
     const other = (await planner.createUser({ handle: 'pv-admin2', displayName: 'Quản trị 2', role: 'super_admin' })).user.id;
     expect(other).not.toBe(admin);
@@ -274,9 +276,49 @@ describe('the public view', () => {
     for (const [off, on] of [['ban', 'unban'], ['delete', 'restore']] as const) {
       await planner.changeAccountState(id, off, { userId: admin });
       expect(await planner.getSharedMemberMap(token)).toBeNull();
+      // L2: the digest was cleared in the disabling transaction, so re-enabling
+      // the account does not bring the old link back.
       await planner.changeAccountState(id, on, { userId: admin });
-      expect(await planner.getSharedMemberMap(token)).not.toBeNull();
+      expect(await planner.getSharedMemberMap(token)).toBeNull();
+      expect((await planner.getMemberMapShare(id)).enabled).toBe(false);
+      const data = await store.read();
+      expect(data.memberMapShares.find((row) => row.userId === id)?.tokenDigest).toBeNull();
+      // The owner can turn sharing on again and gets a NEW token.
+      const again = (await planner.setMemberMapShare(id, { enabled: true, shareName: 'anonymous' })).token ?? '';
+      expect(again).not.toBe(token);
+      expect(await planner.getSharedMemberMap(again)).not.toBeNull();
+      await planner.revokeMemberMapShare(id);
     }
+  });
+
+  it('an account disabled before the rule (digest still stored) loses it on unban/restore', async () => {
+    const { planner, store } = setup();
+    const admin = (await planner.createUser({ handle: 'l2-old-admin', displayName: 'Quản trị', role: 'super_admin' })).user.id;
+    const id = await member(planner, 'l2-old');
+    const token = (await planner.setMemberMapShare(id, { enabled: true, shareName: 'anonymous' })).token ?? '';
+    // Simulate the old behaviour: disabled with the digest left in place.
+    await store.transact((data) => {
+      data.users.find((u) => u.id === id)!.bannedAt = FROZEN_NOW;
+    });
+    expect(await planner.getSharedMemberMap(token)).toBeNull();
+    await planner.changeAccountState(id, 'unban', { userId: admin });
+    expect(await planner.getSharedMemberMap(token)).toBeNull();
+    expect((await store.read()).memberMapShares[0]?.tokenDigest).toBeNull();
+  });
+
+  it('audits the forced switch-off with the actor, and writes nothing when there was no link', async () => {
+    const { planner } = setup();
+    const admin = (await planner.createUser({ handle: 'l2-admin', displayName: 'Quản trị', role: 'super_admin' })).user.id;
+    const shared = await member(planner, 'l2-shared');
+    const plain = await member(planner, 'l2-plain');
+    await planner.setMemberMapShare(shared, { enabled: true, shareName: 'anonymous' });
+    await planner.changeAccountState(shared, 'ban', { userId: admin });
+    await planner.changeAccountState(plain, 'ban', { userId: admin });
+    const offs = (id: string) => planner.listEvents(id).then((rows) => rows.filter((e) => e.action === 'map_share_off'));
+    const sharedOffs = await offs(shared);
+    expect(sharedOffs).toHaveLength(1);
+    expect(sharedOffs[0]?.actorId).toBe(admin);
+    expect(await offs(plain)).toHaveLength(0);
   });
 });
 
@@ -335,5 +377,119 @@ describe('lifecycle, audit and transfer', () => {
     const target = createMemoryPlannerStore();
     await importPlannerDocument(target, old, { catalog: fakeCatalog(), now: () => new Date(FROZEN_NOW) });
     expect((await target.read()).memberMapShares).toEqual([]);
+  });
+});
+
+describe('M1: the public lookup does not read the whole document', () => {
+  /** A store whose full-document reads are counted and can be made to fail. */
+  function spied(store: PlannerStore) {
+    const calls = { read: 0, view: 0 };
+    const wrapped: PlannerStore = {
+      ...store,
+      read: () => {
+        calls.read += 1;
+        return store.read();
+      },
+      view: <R,>(select: Parameters<NonNullable<PlannerStore['view']>>[0] extends (d: infer D) => unknown ? (d: D) => R : never) => {
+        calls.view += 1;
+        return store.view!(select);
+      },
+      transact: (mutate) => store.transact(mutate),
+      write: (next) => store.write(next),
+    };
+    return { wrapped, calls };
+  }
+
+  function build(store: PlannerStore) {
+    return new PlannerRepository({
+      store,
+      catalog: fakeCatalog(),
+      now: () => new Date(FROZEN_NOW),
+      scryptCostLog2: 10,
+    });
+  }
+
+  it('uses the indexed store method when there is one, and never reads the whole document', async () => {
+    const { planner, store } = setup();
+    const id = await member(planner, 'm1-a');
+    await completedTrip(planner, id, 'da-lat');
+    const token = (await planner.setMemberMapShare(id, { enabled: true, shareName: 'anonymous' })).token ?? '';
+    const digest = mapShareDigest(token);
+    const lookups: string[] = [];
+    const indexed: PlannerStore = {
+      ...store,
+      read: () => Promise.reject(new Error('whole-document read is forbidden')),
+      view: undefined,
+      readSharedMapSource: async (d) => {
+        lookups.push(d);
+        return store.view!((data) => pickSharedMapSource(data, d));
+      },
+    };
+    const view = await build(indexed).getSharedMemberMap(token);
+    expect(lookups).toEqual([digest]);
+    expect(view?.points).toEqual([{ slug: 'da-lat', visitsBucket: 1 }]);
+    // An unknown token is the same null and still reads nothing else.
+    expect(await build(indexed).getSharedMemberMap(newMapShareToken())).toBeNull();
+  });
+
+  it('memory and JSON-style stores answer through `view`, without `read`', async () => {
+    const { planner, store } = setup();
+    const id = await member(planner, 'm1-b');
+    await completedTrip(planner, id, 'da-lat');
+    const token = (await planner.setMemberMapShare(id, { enabled: true, shareName: 'anonymous' })).token ?? '';
+    const { wrapped, calls } = spied(store);
+    const view = await build(wrapped).getSharedMemberMap(token);
+    expect(view?.points).toHaveLength(1);
+    expect(calls.read).toBe(0);
+    expect(calls.view).toBe(1);
+  });
+
+  it('a malformed token reaches no store call at all', async () => {
+    const { store } = setup();
+    const { wrapped, calls } = spied(store);
+    expect(await build(wrapped).getSharedMemberMap('short')).toBeNull();
+    expect(calls).toEqual({ read: 0, view: 0 });
+  });
+
+  it('a store failure is the same null as an unknown token, never an error', async () => {
+    const { store } = setup();
+    const broken: PlannerStore = {
+      ...store,
+      readSharedMapSource: () => Promise.reject(new ContentError('service_unavailable', 'down')),
+    };
+    expect(await build(broken).getSharedMemberMap(newMapShareToken())).toBeNull();
+  });
+
+  it('re-checks the digest and the account on what the store returned', async () => {
+    const { planner, store } = setup();
+    const id = await member(planner, 'm1-c');
+    const token = (await planner.setMemberMapShare(id, { enabled: true, shareName: 'anonymous' })).token ?? '';
+    const data = await store.read();
+    const share = data.memberMapShares[0]!;
+    const owner = data.users.find((u) => u.id === id)!;
+    const lying = (over: Partial<SharedMapSource>): PlannerStore => ({
+      ...store,
+      readSharedMapSource: async () => ({ share, owner, trips: [], ...over }),
+    });
+    expect((await build(lying({})).getSharedMemberMap(token))?.points).toEqual([]);
+    // a row whose digest differs from the presented one, a null digest, a disabled owner: all null
+    expect(await build(lying({ share: { ...share, tokenDigest: mapShareDigest(newMapShareToken()) } })).getSharedMemberMap(token)).toBeNull();
+    expect(await build(lying({ share: { ...share, tokenDigest: null } })).getSharedMemberMap(token)).toBeNull();
+    expect(await build(lying({ owner: { ...owner, bannedAt: FROZEN_NOW } })).getSharedMemberMap(token)).toBeNull();
+  });
+
+  it('the picker scopes trips to the owner: another member’s completed trips never appear', async () => {
+    const { planner, store } = setup();
+    const a = await member(planner, 'm1-d');
+    const b = await member(planner, 'm1-e');
+    await completedTrip(planner, a, 'da-lat');
+    await completedTrip(planner, b, 'da-lat');
+    await planner.createTrip(a, daLatTripInput({ destinationSlug: 'da-lat' })); // draft, not completed
+    const tokenA = (await planner.setMemberMapShare(a, { enabled: true, shareName: 'anonymous' })).token ?? '';
+    const picked = pickSharedMapSource(await store.read(), mapShareDigest(tokenA));
+    expect(picked?.owner.id).toBe(a);
+    expect(picked?.trips).toEqual([{ ownerId: a, destinationSlug: 'da-lat', planningStatus: 'completed' }]);
+    expect(Object.keys(picked?.trips[0] ?? {}).sort()).toEqual(['destinationSlug', 'ownerId', 'planningStatus']);
+    expect(pickSharedMapSource(await store.read(), mapShareDigest(newMapShareToken()))).toBeNull();
   });
 });
