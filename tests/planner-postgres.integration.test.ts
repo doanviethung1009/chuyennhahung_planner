@@ -618,11 +618,17 @@ describe.skipIf(!url)('Planner on PostgreSQL (TEST_DATABASE_URL)', () => {
       const document = await source.read();
 
       await importPlannerDocument(store, JSON.parse(JSON.stringify(document)), options);
-      expect(JSON.parse(await exportPlannerDocument(store))).toEqual(document);
+      // ADR 0030 §6: export drops every share digest and import never publishes, so
+      // the round trip returns the same document with `tokenDigest` null.
+      const withoutDigests = {
+        ...document,
+        memberMapShares: document.memberMapShares.map((row) => ({ ...row, tokenDigest: null })),
+      };
+      expect(JSON.parse(await exportPlannerDocument(store))).toEqual(withoutDigests);
 
       const again = await importPlannerDocument(store, document, options).catch((e: unknown) => e);
       expect((again as ContentError).code).toBe('invalid_state');
-      expect(JSON.parse(await exportPlannerDocument(store))).toEqual(document);
+      expect(JSON.parse(await exportPlannerDocument(store))).toEqual(withoutDigests);
     });
 
     it('an import with an invalid file writes nothing', async () => {

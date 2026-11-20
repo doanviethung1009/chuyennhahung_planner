@@ -11,6 +11,9 @@ import {
   project,
 } from '@/lib/map';
 
+/** The fields a pin needs; `/map` passes whole destinations, `/my-map` a per-member projection. */
+export type MapPin = Pick<Destination, 'slug' | 'name' | 'coords' | 'visits' | 'featured' | 'labelSide'>;
+
 /**
  * The outline is a decorative SVG; the pins are real HTML anchors positioned
  * over it as percentages of the projected coordinate space. That keeps the map
@@ -23,7 +26,7 @@ export function VietnamMap({
   mapLabel,
   variant = 'full',
 }: {
-  destinations: Destination[];
+  destinations: readonly MapPin[];
   locale: Locale;
   mapLabel: string;
   variant?: 'full' | 'preview';

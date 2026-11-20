@@ -70,6 +70,15 @@ describe('pure helpers', () => {
     expect(isDisplayNameSuitable('hung@example.com')).toBe(false);
     expect(isDisplayNameSuitable('0912 345 678')).toBe(false);
     expect(isDisplayNameSuitable('+84-912-345-678')).toBe(false);
+    // Full-width and other Unicode forms are judged as their ASCII equivalents.
+    expect(isDisplayNameSuitable('０９１２３４５６７８')).toBe(false);
+    expect(isDisplayNameSuitable('hung＠example.com')).toBe(false);
+    expect(isDisplayNameSuitable('٠٩١٢٣٤٥٦٧٨')).toBe(false);
+    // A web address is personal text too; an initial with a dot is not.
+    expect(isDisplayNameSuitable('https://facebook.com/hung')).toBe(false);
+    expect(isDisplayNameSuitable('www.hung.vn')).toBe(false);
+    expect(isDisplayNameSuitable('hung.nguyen.com')).toBe(false);
+    expect(isDisplayNameSuitable('Anh B. Nguyễn')).toBe(true);
   });
 
   it('projects only completed trips of the owner, sorted by slug, with exactly the allow-listed keys', () => {

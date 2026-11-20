@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import nextConfig, { homePaths, sessionCookieName } from '../next.config';
+import nextConfig, { homePaths, mapSharePaths, memberMapPaths, sessionCookieName } from '../next.config';
 import { SESSION_COOKIE } from '../src/server/planner/auth';
 
 /**
@@ -81,9 +81,13 @@ describe('home page request-data boundary (ADR 0022)', () => {
 
   it('adds no cache rule that would reach guests or other pages', async () => {
     const rules = (await nextConfig.headers?.()) ?? [];
+    // The member map (ADR 0029) is private for every request; the home page only with the cookie.
+    // The shared member map (ADR 0030) is a third, deliberate, cookie-free no-store rule.
     const cacheRules = rules.filter((r) => r.headers.some((h) => h.key.toLowerCase() === 'cache-control'));
-    expect(cacheRules.map((r) => r.source).sort()).toEqual([...homePaths].sort());
-    for (const rule of cacheRules) expect(rule.has?.length).toBe(1);
+    expect(cacheRules.map((r) => r.source).sort()).toEqual(
+      [...homePaths, ...memberMapPaths, ...mapSharePaths].sort(),
+    );
+    for (const rule of cacheRules.filter((r) => homePaths.includes(r.source))) expect(rule.has?.length).toBe(1);
   });
 
   it('is not used by the shared chrome', () => {
