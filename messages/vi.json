@@ -13,6 +13,7 @@
     "primary": "Điều hướng chính",
     "skipToContent": "Bỏ qua, vào nội dung chính",
     "myTrips": "Chuyến đi của tôi",
+    "myMap": "Bản đồ của tôi",
     "signIn": "Đăng nhập",
     "accountMenu": "Tài khoản của {name}",
     "signedInAs": "Đang đăng nhập: {name}",
@@ -380,7 +381,24 @@
       "unlinkFailed": "Chưa gỡ được liên kết Google. Bạn thử lại sau một lát nhé."
     }
   },
+  "memberMap": {
+    "title": "Bản đồ của tôi",
+    "description": "Những nơi bạn đã đi và những nơi bạn đang định đi, chỉ mình bạn nhìn thấy.",
+    "mapLabel": "Bản đồ Việt Nam với các điểm bạn đã đi và đã lên kế hoạch",
+    "legend": "Chú giải",
+    "legendVisited": "Chấm đặc: nơi bạn đã đi (chấm to hơn là nơi bạn đã quay lại)",
+    "legendPlanned": "Chấm rỗng: nơi bạn đã lên kế hoạch nhưng chưa đi",
+    "listTitle": "Các điểm trên bản đồ",
+    "visited": "Đã đi",
+    "planned": "Đã lên kế hoạch",
+    "guestPrompt": "Hãy lên kế hoạch và thực hiện chuyến đi của bạn để lắp đầy bản đồ.",
+    "guestCta": "Đăng nhập",
+    "emptyPrompt": "Bản đồ của bạn còn trống. Hãy lên kế hoạch và thực hiện chuyến đi của bạn để lắp đầy bản đồ.",
+    "emptyCta": "Lên kế hoạch chuyến đi",
+    "privateNote": "Bản đồ này chỉ mình bạn thấy. Một chuyến đi chỉ lên bản đồ khi đang dùng hoặc đã hoàn thành; chuyến đã lưu trữ mà chưa hoàn thành thì không được tính."
+  },
   "myTrips": {
+    "mapLink": "Xem bản đồ của tôi",
     "title": "Chuyến đi của tôi",
     "description": "Các chuyến đi bạn đã lưu: đổi tình trạng, nhân bản, chia sẻ hoặc cất đi.",
     "tabsLabel": "Lọc chuyến đi",
