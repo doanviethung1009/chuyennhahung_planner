@@ -122,14 +122,14 @@ export function MyTrips() {
             const destination = getDestination(trip.destinationSlug)?.name[locale] ?? trip.destinationSlug;
             return (
               <li key={trip.id} className="rounded-xl border border-border-subtle bg-surface p-5">
-                <h2 className="font-display text-xl font-semibold">
+                <h3 className="font-display text-xl font-semibold">
                   <Link
                     href={{ pathname: '/my-trips/[id]', params: { id: trip.id } }}
                     className="inline-flex min-h-11 items-center text-foreground hover:text-primary-strong"
                   >
                     {trip.title}
                   </Link>
-                </h2>
+                </h3>
                 <p className="mt-1 text-sm text-foreground-muted">
                   {destination} ·{' '}
                   {trip.startDate ? formatDate(trip.startDate, locale) : t('datesOpen')} ·{' '}
