@@ -2,7 +2,7 @@
 
 🇻🇳 English: [0031-member-home-merge.md](0031-member-home-merge.md)
 
-- **Trạng thái:** Proposed (chờ chủ dự án)
+- **Trạng thái:** Accepted
 - **Ngày:** 2026-11-20
 - **Chủ sở hữu:** system-architect
 - **Ảnh hưởng:** `src/app/[locale]/my-trips/page.tsx`, xóa `src/app/[locale]/my-map/page.tsx`, `src/components/map/member-map-view.tsx`, `src/i18n/routing.ts`, `src/lib/return-to.ts`, `src/components/layout/account-menu.tsx`, `messages/*.json`, `next.config.ts` (redirect và các đường dẫn private). Task Contract `member-home-merge`. Sửa đổi [ADR 0029](0029-member-map.vi.md) (vị trí trang) và [ADR 0030](0030-member-map-sharing.vi.md) (chỗ đặt điều khiển chia sẻ).

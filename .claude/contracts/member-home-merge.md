@@ -1,6 +1,6 @@
 # Task Contract: MEMBER-HOME-MERGE — gộp `/my-map` vào `/my-trips`
 - Class: **L** (đổi IA/route → có ADR 0031). Không API, không schema, không migration. Chủ dự án muốn một trang thành viên thay vì hai.
-- Trạng thái: **CHỜ CHỦ DUYỆT ADR 0031**. Không commit/push/PR khi chưa được phép. `qc`/`security`: NOT RUN (chỉ khi chủ gọi).
+- Trạng thái: **ĐÃ DUYỆT (chủ) — ADR 0031 Accepted**. Không commit/push/PR khi chưa được phép. `qc`/`security`: NOT RUN (chỉ khi chủ gọi).
 
 ## Quyết định thiết kế
 - `/my-trips` (VI `/chuyen-di-cua-toi`) là **trang chủ của thành viên**: bản đồ ở trên, danh sách chuyến bên dưới (không toggle: không ẩn thông tin, không thêm trạng thái client).

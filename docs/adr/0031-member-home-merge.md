@@ -2,7 +2,7 @@
 
 🇻🇳 Bản tiếng Việt: [0031-member-home-merge.vi.md](0031-member-home-merge.vi.md)
 
-- **Status:** Proposed (awaiting the owner)
+- **Status:** Accepted
 - **Date:** 2026-11-20
 - **Owner:** system-architect
 - **Affects:** `src/app/[locale]/my-trips/page.tsx`, removal of `src/app/[locale]/my-map/page.tsx`, `src/components/map/member-map-view.tsx`, `src/i18n/routing.ts`, `src/lib/return-to.ts`, `src/components/layout/account-menu.tsx`, `messages/*.json`, `next.config.ts` (redirects and the private header paths). Task Contract `member-home-merge`. Amends [ADR 0029](0029-member-map.md) (the page location) and [ADR 0030](0030-member-map-sharing.md) (where the share controls live).
