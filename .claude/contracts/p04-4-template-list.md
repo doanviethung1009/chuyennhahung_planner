@@ -68,7 +68,7 @@
 - Rủi ro còn lại, cần nói rõ: (a) P07-21 — template còn `public` khi story nguồn đã `draft` hoặc đã bị xóa vẫn được liệt kê và bấm vào được; đây là hành vi hiện tại của `/trip-setup`, không phải hồi quy; (b) API công khai vẫn trả nguyên bản template (mục 2); (c) `/trip-setup/[template]` là `noindex` nhưng danh sách thì index, nên slug template sẽ lộ ra công cụ tìm kiếm qua link — chấp nhận được vì template công khai là chủ ý.
 - Migration: không có (không đổi schema, không có file dữ liệu). Rollback: revert PR (xóa route, sitemap, footer, key messages; không có dữ liệu để khôi phục).
 - Ngân sách: **sub-agents 0**, một session, một nhánh, một PR, single agent, handoff ≤25 dòng. Điều kiện dừng: nếu thêm một template công khai vào seed hay đổi API là cần thiết để hoàn thành, dừng và hỏi chủ dự án.
-- State: **DESIGNED — chờ chủ dự án duyệt** (chưa có mã, chưa commit).
+- State: **READY** — chủ dự án duyệt Q1–Q7 theo khuyến nghị (2026-11-20, xem mục "Quyết định của chủ dự án"). Chưa có mã.
 - Feature document owner: frontend-engineer (main session đảm nhiệm cả hai vai theo thứ tự backend nhỏ → frontend): `docs/features/trip-template-list.md` + `.vi.md`; backend phần đọc/projection viết mục Data/How it works.
 - Architecture/usage doc updates needed: `docs/architecture.md` + `.vi.md` (bảng route + ghi chú index/noindex); `docs/usage.*` không cần.
 
@@ -78,7 +78,10 @@
 - FE: `src/app/[locale]/trip-templates/page.tsx`, `src/components/templates/template-card.tsx` (+ khối rỗng/lỗi), `routing.ts`, `sitemap.ts`, footer/`nav-items.ts`, `messages/*.json`, test jsdom, docs.
 - QC/Security/Git: **on demand**, NOT RUN mặc định.
 
-## Câu hỏi mở cho chủ dự án (kèm khuyến nghị)
+## Quyết định của chủ dự án (2026-11-20)
+Chủ dự án chọn **đúng khuyến nghị cho cả Q1–Q7**: Q1 hiện cả template có story nguồn `draft`/bị xóa (sửa gốc ở P07-21); Q2 VI `/lich-trinh-mau`, EN `/trip-templates`; Q3 đổi nút trên `/plan-your-trip` sang `/trip-templates` (kèm `startTemplatesHint` và `follow-hung-footsteps.*`); Q4 thẻ chỉ có chữ; Q5 tạo việc riêng cho projection API sau WEB-2 (chưa tạo ID); Q6 không lọc/tìm kiếm/phân trang; Q7 không bịa mẫu giả.
+
+## Câu hỏi mở cho chủ dự án (kèm khuyến nghị) — đã trả lời
 - **Q1. Template public nhưng story nguồn đã `draft`/bị xóa có hiện trong danh sách không?** Khuyến nghị: **có** (cùng luật với `/trip-setup`), ghi giới hạn; sửa gốc ở P07-21 (chặn `unpublish` khi còn template public, hoặc hạ template về private) để mọi nơi đổi cùng lúc. Nếu chủ dự án muốn lọc ngay trong danh sách thì cần thêm đọc story nguồn và nên đưa luật đó vào `getPublicTemplate` (đổi API, ngoài phạm vi, cần contract P07-21 trước).
 - **Q2. Tên route.** Khuyến nghị VI `/lich-trinh-mau`, EN `/trip-templates`, internal `/trip-templates`. Phương án khác: EN `/templates`. Chọn cuối cùng thuộc chủ dự án vì URL công khai khó đổi sau này (không có redirect cũ cần giữ).
 - **Q3. Đổi nút "bắt đầu từ lịch trình mẫu" trên `/plan-your-trip` từ `/stories` sang `/trip-templates`?** Khuyến nghị: **đổi** (đích đúng hơn, hiện đang vòng qua story), kèm sửa `startTemplatesHint` và doc `follow-hung-footsteps`. Đây sửa quyết định 3/PR #172 nên cần đồng ý rõ. Nếu "không", danh sách chỉ nối qua footer.
