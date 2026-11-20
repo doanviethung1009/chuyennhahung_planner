@@ -171,3 +171,38 @@ export async function getMemberMap(knownSlugs: ReadonlySet<string>): Promise<Mem
     return GUEST;
   }
 }
+
+/**
+ * Whether the cookie names a live member session (ADR 0032): `identify` only, no
+ * trips or reviews. The Trips tab needs to tell a guest from a member and
+ * nothing more. Same guest rules as `resolveMemberMap`.
+ */
+export async function resolveMemberSession(
+  repository: Pick<PlannerRepository, 'identify'>,
+  sessionToken: string | null,
+): Promise<boolean> {
+  if (!sessionToken || !SESSION_TOKEN_SHAPE.test(sessionToken)) return false;
+  try {
+    const request = new Request('http://member-map.internal/', {
+      headers: { cookie: `${SESSION_COOKIE}=${sessionToken}` },
+    });
+    const identity = await repository.identify(request);
+    return identity.source === 'cookie' && !identity.passwordChangeRequired;
+  } catch (error) {
+    if (!(error instanceof ContentError && error.code === 'unauthorized')) {
+      console.error('[member-map] could not read the session', error instanceof Error ? error.name : 'error');
+    }
+    return false;
+  }
+}
+
+/** The visitor's signed-in state, read from the session cookie. */
+export async function getMemberSession(): Promise<boolean> {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  if (!token || !SESSION_TOKEN_SHAPE.test(token)) return false;
+  try {
+    return await resolveMemberSession(await getPlannerRepository(), token);
+  } catch {
+    return false;
+  }
+}

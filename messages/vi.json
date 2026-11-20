@@ -387,6 +387,7 @@
     "legend": "Chú giải",
     "legendVisited": "Chấm đặc: nơi bạn đã đi (chấm to hơn là nơi bạn đã quay lại)",
     "legendPlanned": "Chấm rỗng: nơi bạn đã lên kế hoạch nhưng chưa đi",
+    "legendNotShared": "Chấm rỗng không lên bản đồ chia sẻ; chỉ chuyến \"Đã đi xong\" mới lên.",
     "listTitle": "Các điểm trên bản đồ",
     "visited": "Đã đi",
     "planned": "Đã lên kế hoạch",
@@ -443,13 +444,19 @@
     "previewMapLabel": "Xem trước bản đồ công khai: các nơi bạn đã đi tại Việt Nam",
     "previewEmpty": "Chưa có nơi nào để hiển thị. Chỉ chuyến đã hoàn thành mới lên bản đồ chia sẻ.",
     "previewNote": "Chỉ tính chuyến đã hoàn thành. Điểm càng lớn là đi càng nhiều lần (1, 2–3, từ 4). Không có kế hoạch, đánh giá hay ngày tháng.",
-    "sparseWarning": "Bản đồ này có dưới 2 nơi đã đi. Một bản đồ quá ít điểm dễ bị nhận ra là của bạn bởi người đã biết bạn."
+    "sparseWarning": "Bản đồ này có dưới 2 nơi đã đi. Một bản đồ quá ít điểm dễ bị nhận ra là của bạn bởi người đã biết bạn.",
+    "unfinishedNote": "Chỉ chuyến \"Đã đi xong\" mới lên bản đồ chia sẻ. Bạn có {count} chuyến chưa hoàn thành, nên chưa hiện.",
+    "unfinishedLink": "Xem các chuyến đi"
   },
   "myTrips": {
     "listTitle": "Các chuyến đi",
     "title": "Chuyến đi của tôi",
     "description": "Bản đồ những nơi bạn đã đi và các chuyến đi bạn đã lưu: đổi tình trạng, nhân bản, chia sẻ hoặc cất đi.",
     "tabsLabel": "Lọc chuyến đi",
+    "sections": "Các mục của trang chuyến đi",
+    "sectionMap": "Bản đồ",
+    "sectionTrips": "Chuyến đi",
+    "sectionShare": "Chia sẻ",
     "tabActive": "Đang dùng",
     "tabArchived": "Đã lưu trữ",
     "loading": "Đang tải chuyến đi…",
@@ -1836,7 +1843,7 @@
     "legendVisited": "Chấm đặc là nơi đã đi",
     "legendBuckets": "Điểm càng lớn là đi càng nhiều lần: 1 lần, 2–3 lần, hoặc từ 4 lần trở lên.",
     "listTitle": "Những nơi đã đi",
-    "empty": "Bản đồ này chưa có điểm nào.",
+    "empty": "Người này chưa có điểm nào để hiển thị.",
     "bucket1": "1 lần",
     "bucket2": "2–3 lần",
     "bucket3": "Từ 4 lần"

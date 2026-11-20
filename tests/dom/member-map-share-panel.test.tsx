@@ -1,12 +1,14 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemberMapSharePanel } from '../../src/components/map/member-map-share-panel';
 import { json, messages, renderWithIntl, stubFetch, useDomCleanup, type FetchCall } from './helpers';
 
 vi.mock('@/i18n/navigation', () => ({
-  Link: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={String(href)}>{children}</a>,
+  Link: ({ children, href }: { children: React.ReactNode; href: string | { pathname: string; query?: Record<string, string> } }) => (
+    <a href={typeof href === 'string' ? href : `${href.pathname}?${new URLSearchParams(href.query).toString()}`}>{children}</a>
+  ),
   getPathname: ({ href }: { href: string | { pathname: string; params: Record<string, string> } }) =>
     typeof href === 'string' ? href : href.pathname.replace(/\[(\w+)\]/g, (_m, k: string) => href.params[k] ?? ''),
 }));
@@ -161,5 +163,21 @@ describe('memberMapShare catalogue', () => {
     for (const lang of ['vi', 'en'] as const) {
       for (const value of Object.values(messages[lang].memberMapShare)) expect(String(value).trim()).not.toBe('');
     }
+  });
+
+  it('says why unfinished trips are not on the shared map, with a link to the trips tab (ADR 0032)', async () => {
+    stub(() => json(200, off));
+    renderWithIntl(<MemberMapSharePanel preview={PREVIEW} unfinishedTrips={2} />);
+    const note = await screen.findByTestId('share-unfinished');
+    expect(note.textContent).toContain('2 chuyến');
+    expect(screen.getByRole('link', { name: t.unfinishedLink }).getAttribute('href')).toBe('/my-trips?tab=trips');
+  });
+
+  it('shows no unfinished-trips note when there is none, and warns about a sparse map before enabling', async () => {
+    stub(() => json(200, off));
+    const { container } = renderWithIntl(<MemberMapSharePanel preview={PREVIEW} />);
+    await within(container).findByTestId('share-state');
+    expect(within(container).queryByTestId('share-unfinished')).toBeNull();
+    expect(within(container).getByText(t.sparseWarning)).toBeTruthy();
   });
 });

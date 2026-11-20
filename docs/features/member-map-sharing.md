@@ -61,6 +61,10 @@ UI only; the API, store and migration of 2a are unchanged. On `/my-trips` (VI `/
 - **Errors**, announced in a `role="alert"` region (successes in `role="status"`): 401 (with a sign-in button), 403, 422, 429 (with the wait in minutes), 409 `not_shared` (status refreshed), anything else generic. Copy is in `messages/*.json` under `memberMapShare`, VI and EN.
 - **Preview** (`MemberMapSharePreview`, server): exactly the public projection, built by `resolveMemberMapSharePreview` through the same pure `buildPublicMemberMapPoints` and `sharedMapDestinations` the public page uses, so it cannot drift: completed trips only (archived or not), buckets 1 / 2–3 / 4+, no planned place, no review, no date, and the name viewers would see (none: anonymous). Under 2 places a warning says a sparse map is easier to recognise (a warning, not a block). It reuses `VietnamMap` and its pin rules; `src/content/destinations.ts` is not touched. The preview does not depend on whether sharing is on.
 
+### Explaining the shared map ([ADR 0032](../adr/0032-member-home-tabs.md))
+
+The controls now live in the **Sharing** tab of `/my-trips?tab=share`. Only completed trips reach the public map; to say so, the tab shows the owner a note with the number of active trips not yet completed (owner-only, a count, with a link to the Trips tab) and the sparse (<2 places) warning before the enable button. The Map tab legend says hollow points are not shared. The public page's empty text is neutral ("This person has no places to show yet") and reveals nothing. The public projection, buckets, token and 404 rule are unchanged.
+
 ## Files
 
 | Path | Role |
