@@ -45,8 +45,9 @@ function round(n: number): number {
  * border to Cà Mau, then back up the western border.
  */
 const OUTLINE: Array<[lat: number, lng: number]> = [
-  [21.6, 107.9],
-  [20.9, 106.8],
+  [21.6, 107.95],
+  [21.1, 107.45],
+  [20.8, 106.95],
   [20.2, 106.5],
   [19.8, 105.9],
   [18.9, 105.8],

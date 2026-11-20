@@ -35,6 +35,6 @@
 - Risks: (a) tooltip is not available on touch without hover; tap navigates to the destination page whose `<h1>` shows the name — accepted, flagged in the PR. (b) A tooltip near the map edge could be clipped; verify at 375. (c) Featured list is owner data; if not confirmed the work is blocked.
 - Rollback approach: revert the single PR; flag is optional, nothing persisted.
 - Budget: 0 subagents; stop condition = acceptance criteria met, or the owner changes the list/approach.
-- State: REVIEW — owner approved; implemented, checks PASS; open question: 2 label overlaps at 375px (Hà Giang/Sa Pa, Phú Quốc/TP.HCM), see handoff.
+- State: REVIEW — owner approved; implemented. Featured list narrowed by owner after review to `ha-noi` + `tp-ho-chi-minh` (the 7-item proposal above overlapped at 375px); `labelSide` override (left/right/top) added; Hạ Long coast outline fixed. See handoff.
 - Feature document owner (`docs/features/<slug>.md` + `.vi.md`): update `docs/features/travel-map.md` / `.vi.md` (label rule) — no new feature doc, as this refines the existing travel map.
 - Architecture/usage doc updates needed: none expected (`docs/architecture.*` lists destination counts only); re-check at implementation.

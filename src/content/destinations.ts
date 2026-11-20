@@ -40,7 +40,6 @@ export const destinations: Destination[] = [
       en: ['Motorbike', 'Karst mountains', 'Village homestay', 'Mountain pass'],
     },
     cover: '/images/covers/ha-giang.svg',
-    featured: true,
   },
   {
     slug: 'sa-pa',
@@ -76,8 +75,6 @@ export const destinations: Destination[] = [
       en: ['Trekking', 'Rice terraces', 'Homestay', 'Cloud hunting'],
     },
     cover: '/images/covers/sa-pa.svg',
-    featured: true,
-    labelSide: 'left',
   },
   {
     slug: 'ninh-binh',
@@ -218,7 +215,6 @@ export const destinations: Destination[] = [
       en: ['Coffee', 'Tea hills', 'Cool climate', 'Restful'],
     },
     cover: '/images/covers/da-lat.svg',
-    featured: true,
   },
   {
     slug: 'phu-quoc',
@@ -254,8 +250,6 @@ export const destinations: Destination[] = [
       en: ['Beach', 'Snorkelling', 'Seafood', 'Island'],
     },
     cover: '/images/covers/phu-quoc.svg',
-    featured: true,
-    labelSide: 'left',
   },
   {
     slug: 'moc-chau',
@@ -322,6 +316,7 @@ export const destinations: Destination[] = [
     tags: { vi: ['Thủ đô', 'Phố cổ', 'Ẩm thực đường phố'], en: ['Capital', 'Old Quarter', 'Street food'] },
     cover: '/images/covers/ha-noi.svg',
     featured: true,
+    labelSide: 'top',
   },
   {
     slug: 'quang-ninh',
@@ -403,7 +398,6 @@ export const destinations: Destination[] = [
     bestSeason: { vi: 'Tháng 2 – 5', en: 'February–May' },
     tags: { vi: ['Biển', 'Thành phố', 'Bà Nà'], en: ['Beach', 'City', 'Bà Nà'] },
     cover: '/images/covers/da-nang.svg',
-    featured: true,
   },
   {
     slug: 'quy-nhon',
