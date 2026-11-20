@@ -53,8 +53,9 @@ export function assertThrowawayDatabase(name: string, url: string): void {
     throw new E2ESafetyError(`${name} points at host "${parsed.hostname}", which is not local`);
   }
   const database = decodeURIComponent(parsed.pathname.replace(/^\//, '')).toLowerCase();
-  if (!database || !/(e2e|test)/.test(database)) {
-    throw new E2ESafetyError(`${name} database name must contain "e2e" or "test"`);
+  // `e2e` or `test` as a whole word (separated by `_` or `-`), not a substring: "latest" or "contest" do not qualify.
+  if (!database || !/(^|[_-])(e2e|test)([_-]|$)/.test(database)) {
+    throw new E2ESafetyError(`${name} database name must contain "e2e" or "test" as a whole word (e.g. planner_e2e)`);
   }
 }
 

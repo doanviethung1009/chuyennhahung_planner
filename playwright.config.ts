@@ -72,6 +72,12 @@ export default defineConfig({
       // Blank on purpose: a developer's `.env.local` must never route the app to a real database.
       PLANNER_DATABASE_URL: usePostgres ? e2eDatabaseUrl : '',
       CONTENT_DATABASE_URL: usePostgres ? e2eDatabaseUrl : '',
+      // Also pinned: they would otherwise come from the developer's shell or `.env.local` and
+      // change what the app does. The site URL cannot be blank (`src/content/site.ts` uses `??`,
+      // so an empty string breaks `new URL`); it is this run's own origin.
+      PUBLIC_CONTENT_SOURCE: '',
+      NEXT_PUBLIC_SITE_URL: run.baseURL,
+      TRUST_PROXY_HEADERS: '',
       GOOGLE_CLIENT_ID: '',
       GOOGLE_CLIENT_SECRET: '',
     },

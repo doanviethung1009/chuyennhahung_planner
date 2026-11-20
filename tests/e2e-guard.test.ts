@@ -42,6 +42,10 @@ describe('E2E safety guard (WEB-3)', () => {
   it('refuses a database name that is not marked e2e or test', () => {
     expect(() => assertThrowawayDatabase('X', 'postgres://u:p@localhost:5432/planner')).toThrow(/e2e/);
     expect(() => assertThrowawayDatabase('X', 'postgres://u:p@localhost:5432/')).toThrow(/e2e/);
+    // A substring is not enough: these only happen to contain the letters.
+    for (const name of ['latest', 'contest', 'prod_tested', 'e2eprod']) {
+      expect(() => assertThrowawayDatabase('X', `postgres://u:p@localhost:5432/${name}`)).toThrow(/whole word/);
+    }
   });
 
   it('checks every database variable in the environment', () => {
