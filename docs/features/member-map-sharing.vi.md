@@ -61,6 +61,10 @@ Chỉ UI; API, store và migration của 2a không đổi. Trên `/my-trips` (VI
 - **Lỗi** được thông báo trong vùng `role="alert"` (thành công ở `role="status"`): 401 (có nút đăng nhập), 403, 422, 429 (kèm số phút chờ), 409 `not_shared` (làm mới trạng thái), còn lại là thông báo chung. Chữ nằm ở `messages/*.json` mục `memberMapShare`, VI và EN.
 - **Xem trước** (`MemberMapSharePreview`, server): đúng hình chiếu công khai, dựng bởi `resolveMemberMapSharePreview` qua cùng hàm thuần `buildPublicMemberMapPoints` và `sharedMapDestinations` mà trang công khai dùng, nên không thể lệch: chỉ chuyến hoàn thành (đã lưu trữ hay chưa), bậc 1 / 2–3 / 4+, không điểm kế hoạch, không đánh giá, không ngày tháng, và tên người xem sẽ thấy (không có: ẩn danh). Dưới 2 điểm có cảnh báo bản đồ thưa dễ bị nhận ra (cảnh báo, không chặn). Tái dùng `VietnamMap` và quy tắc pin; không sửa `src/content/destinations.ts`. Bản xem trước không phụ thuộc việc chia sẻ đang bật hay tắt.
 
+### Giải thích bản đồ chia sẻ ([ADR 0032](../adr/0032-member-home-tabs.vi.md))
+
+Điều khiển giờ nằm ở tab **Chia sẻ** của `/my-trips?tab=share`. Chỉ chuyến đã hoàn thành mới lên bản đồ công khai; để nói rõ điều đó, tab hiện cho chủ một ghi chú kèm số chuyến đang dùng chưa hoàn thành (chỉ chủ thấy, một con số, kèm liên kết sang tab Chuyến đi) và cảnh báo <2 điểm trước nút bật. Chú giải tab Bản đồ nói chấm rỗng không được chia sẻ. Chữ trống ở trang công khai trung tính ("Người này chưa có điểm nào để hiển thị") và không tiết lộ gì. Hình chiếu công khai, các nhóm, token và quy tắc 404 không đổi.
+
 ## Files
 
 | Đường dẫn | Vai trò |

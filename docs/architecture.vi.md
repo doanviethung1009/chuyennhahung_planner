@@ -407,7 +407,7 @@ Chia sẻ bản đồ thành viên ([ADR 0030](adr/0030-member-map-sharing.vi.md
 
 Những thứ vắng mặt có chủ đích, và không được dựng sớm:
 
-- **Giao diện Planner** — được mở một phần bởi [ADR 0005](adr/0005-trip-sharing-and-story-cloning.vi.md): gồm nhân bản story thành trip, My Trips, đăng nhập và trang chia sẻ chỉ-đọc, rồi form tạo trip trống và trình sửa trip ở `/my-trips/[id]` ([features/trip-editor.vi.md](features/trip-editor.vi.md)). Bản đồ thành viên, nay nằm trên trang chủ thành viên `/my-trips` (ADR 0031: `/my-map` redirect 308), đã mở ([ADR 0029](adr/0029-member-map.vi.md), [features/member-map.vi.md](features/member-map.vi.md)); bản đồ tuyến theo chuyến và gợi ý AI thì chưa. Phần lõi *backend* của Planner đã ship dưới
+- **Giao diện Planner** — được mở một phần bởi [ADR 0005](adr/0005-trip-sharing-and-story-cloning.vi.md): gồm nhân bản story thành trip, My Trips, đăng nhập và trang chia sẻ chỉ-đọc, rồi form tạo trip trống và trình sửa trip ở `/my-trips/[id]` ([features/trip-editor.vi.md](features/trip-editor.vi.md)). Bản đồ thành viên, nay nằm trên trang chủ thành viên `/my-trips` (ADR 0031: `/my-map` redirect 308; ADR 0032: mỗi lần một mục qua `?tab=map|trips|share` đọc phía server, liên kết thật với `aria-current`, không thêm route), đã mở ([ADR 0029](adr/0029-member-map.vi.md), [features/member-map.vi.md](features/member-map.vi.md)); bản đồ tuyến theo chuyến và gợi ý AI thì chưa. Phần lõi *backend* của Planner đã ship dưới
   `/api/planner` ([ADR 0002](adr/0002-planner-core.vi.md),
   [features/travel-planner-core.vi.md](features/travel-planner-core.vi.md)):
   trip, ngày sinh tự động, activity, chi phí, ngân sách, lưu trữ/khôi phục và

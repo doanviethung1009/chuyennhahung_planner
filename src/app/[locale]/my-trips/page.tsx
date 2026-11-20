@@ -6,21 +6,27 @@ import { destinations } from '@/content/destinations';
 import { Container } from '@/components/ui/container';
 import { PageHeader } from '@/components/layout/page-header';
 import { MemberMapView } from '@/components/map/member-map-view';
+import { MemberHomeTabs } from '@/components/planner/member-home-tabs';
 import { MemberMapSharePanel } from '@/components/map/member-map-share-panel';
 import { MemberMapSharePreview } from '@/components/map/member-map-share-preview';
 import { MyTrips } from '@/components/planner/my-trips';
-import { getMemberMap } from '@/server/planner/member-map';
-import { getMemberMapSharePreview } from '@/server/planner/member-map-share-preview';
+import { parseMemberHomeTab } from '@/lib/member-home-tab';
+import { getMemberMap, getMemberSession } from '@/server/planner/member-map';
+import { getMemberMapShareOverview } from '@/server/planner/member-map-share-preview';
 
-type Params = { params: Promise<{ locale: Locale }> };
+type Params = {
+  params: Promise<{ locale: Locale }>;
+  searchParams: Promise<{ tab?: string | string[] }>;
+};
 
 /**
- * The member's home (ADR 0031): the map above the trip list. It reads the
- * session cookie, so every request is dynamic and answered private (ADR 0029).
+ * The member's home (ADR 0031, tabs by ADR 0032): one section at a time, chosen
+ * by `?tab=`. It reads the session cookie, so every request is dynamic and
+ * answered private (ADR 0029). Each section reads only its own data.
  */
 export const dynamic = 'force-dynamic';
 
-export async function generateMetadata({ params }: Params): Promise<Metadata> {
+export async function generateMetadata({ params }: Pick<Params, 'params'>): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'myTrips' });
   return {
@@ -34,32 +40,46 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   };
 }
 
-export default async function MyTripsPage({ params }: Params) {
+export default async function MyTripsPage({ params, searchParams }: Params) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('myTrips');
+  const tab = parseMemberHomeTab((await searchParams).tab);
   const knownSlugs = new Set(destinations.map((destination) => destination.slug));
-  const state = await getMemberMap(knownSlugs);
-  // Only a signed-in member gets the sharing controls and the public preview.
-  const sharePoints = state.status === 'guest' ? null : await getMemberMapSharePreview(knownSlugs);
+
+  // A guest, on any tab, gets the empty map and the sign-in prompt: MyTrips would
+  // redirect to sign-in on its 401, and the sharing controls are owner-only.
+  const guest = tab === 'map' ? false : !(await getMemberSession());
+  const overview = tab === 'share' && !guest ? await getMemberMapShareOverview(knownSlugs) : null;
+  if (tab === 'map' || guest || (tab === 'share' && !overview)) {
+    const state = await getMemberMap(knownSlugs);
+    return (
+      <>
+        <PageHeader title={t('title')} description={t('description')} />
+        <Container width="wide">
+          {state.status === 'guest' ? null : <MemberHomeTabs active="map" />}
+          <MemberMapView state={state} locale={locale} />
+        </Container>
+      </>
+    );
+  }
 
   return (
     <>
       <PageHeader title={t('title')} description={t('description')} />
       <Container width="wide">
-        <MemberMapView state={state} locale={locale} />
-        {sharePoints ? (
-          <div className="pb-12 md:pb-16">
-            <MemberMapSharePanel
-              preview={<MemberMapSharePreview points={sharePoints} locale={locale} />}
-            />
-          </div>
-        ) : null}
-      </Container>
-      {/* A guest gets the map's sign-in prompt only: MyTrips would redirect to sign-in on its 401. */}
-      {state.status === 'guest' ? null : (
-        <Container width="default">
-          <section aria-labelledby="my-trips-list" className="pb-10 md:pb-14">
+        <MemberHomeTabs active={tab} />
+        {tab === 'share' ? (
+          overview ? (
+            <div className="py-10 md:py-12">
+              <MemberMapSharePanel
+                unfinishedTrips={overview.unfinishedTrips}
+                preview={<MemberMapSharePreview points={overview.points} locale={locale} />}
+              />
+            </div>
+          ) : null
+        ) : (
+          <section aria-labelledby="my-trips-list" className="py-10 md:py-12">
             <h2 id="my-trips-list" className="font-display text-2xl font-semibold md:text-3xl">
               {t('listTitle')}
             </h2>
@@ -67,8 +87,8 @@ export default async function MyTripsPage({ params }: Params) {
               <MyTrips />
             </div>
           </section>
-        </Container>
-      )}
+        )}
+      </Container>
     </>
   );
 }

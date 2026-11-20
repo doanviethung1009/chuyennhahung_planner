@@ -407,7 +407,7 @@ Member map sharing ([ADR 0030](adr/0030-member-map-sharing.md), slice 2a, [featu
 
 Deliberately absent, and not to be scaffolded early:
 
-- **Planner UI** — partly opened by [ADR 0005](adr/0005-trip-sharing-and-story-cloning.md): story-to-trip cloning, My Trips, sign-in and the read-only share page, then the blank-trip form and the trip editor on `/my-trips/[id]` ([features/trip-editor.md](features/trip-editor.md)). The member map, now on the member home `/my-trips` (ADR 0031: `/my-map` redirects 308), is open ([ADR 0029](adr/0029-member-map.md), [features/member-map.md](features/member-map.md)); the trip route map and AI suggestions are not. The Planner *backend* core shipped under `/api/planner`
+- **Planner UI** — partly opened by [ADR 0005](adr/0005-trip-sharing-and-story-cloning.md): story-to-trip cloning, My Trips, sign-in and the read-only share page, then the blank-trip form and the trip editor on `/my-trips/[id]` ([features/trip-editor.md](features/trip-editor.md)). The member map, now on the member home `/my-trips` (ADR 0031: `/my-map` redirects 308; ADR 0032: one section at a time via a server-read `?tab=map|trips|share`, real links with `aria-current`, no extra route), is open ([ADR 0029](adr/0029-member-map.md), [features/member-map.md](features/member-map.md)); the trip route map and AI suggestions are not. The Planner *backend* core shipped under `/api/planner`
   ([ADR 0002](adr/0002-planner-core.md),
   [features/travel-planner-core.md](features/travel-planner-core.md)):
   trips, generated days, activities, expenses, budgeting, archive/restore and
