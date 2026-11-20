@@ -1747,6 +1747,7 @@
     "resultsHeading": "Danh sách lịch trình mẫu",
     "count": "{count} lịch trình mẫu",
     "useCta": "Dùng mẫu này",
+    "useCtaFor": "cho {title}",
     "paceLabel": "Nhịp độ",
     "groupLabel": "Đi cùng",
     "costLabel": "Chi phí",

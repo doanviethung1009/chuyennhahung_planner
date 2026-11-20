@@ -1747,6 +1747,7 @@
     "resultsHeading": "Trip template list",
     "count": "{count, plural, one {# trip template} other {# trip templates}}",
     "useCta": "Use this template",
+    "useCtaFor": "for {title}",
     "paceLabel": "Pace",
     "groupLabel": "Travelling as",
     "costLabel": "Cost",

@@ -44,6 +44,7 @@ slug (như `listTemplates` trả về).
 - **Thẻ:** `TemplateCard` là component thuần nhận nhãn đã dịch qua props. Một `<h2>`, một link; chữ của
   link là "Dùng mẫu này" cộng tiêu đề mẫu chỉ dành cho trình đọc màn hình. Không ảnh vì template không có
   trường ảnh.
+- **Một lần đọc mỗi request:** `load()` được bọc bằng `cache()` của React, nên `generateMetadata` và trang dùng chung một lần đọc store; mỗi request mới vẫn đọc lại.
 - **Rỗng:** thông báo kèm link thật tới `/stories` và `/my-trips/new`; trang `noindex`.
 - **Lỗi:** lỗi đọc store được bắt trong trang, chỉ ghi log tên lỗi, và hiện khối `role="alert"` kèm link thử
   lại về chính trang. Không bao giờ hiện như "rỗng".

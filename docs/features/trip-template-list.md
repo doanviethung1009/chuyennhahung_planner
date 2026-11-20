@@ -47,6 +47,7 @@ function, not at the call site. Order is by slug (as `listTemplates` returns it)
 - **Cards:** `TemplateCard` is a pure component receiving translated labels as props. One `<h2>`,
   one link; the link text is "Use this template" plus a screen-reader-only template title.
   No image: templates have no image field.
+- **One read per request:** `load()` is wrapped in React `cache()`, so `generateMetadata` and the page share one store read; each new request still reads fresh.
 - **Empty:** a message with real links to `/stories` and `/my-trips/new`; page is `noindex`.
 - **Error:** a store failure is caught in the page, logged with the error name only, and shown
   as a `role="alert"` block with a retry link to the same page. It is never shown as "empty".
