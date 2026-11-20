@@ -42,7 +42,9 @@ test.describe('member map @smoke', () => {
       await expect(otherPage.getByRole('link', { name: 'Lên kế hoạch chuyến đi' }).first()).toBeVisible();
       await other.close();
 
-      // Sharing: enable, read signed out, revoke.
+      // Sharing: enable, read signed out, revoke. The controls live on the sharing tab
+      // (`?tab=share`, PR #217); a page without tabs ignores the parameter and shows them anyway.
+      await page.goto('/chuyen-di-cua-toi?tab=share');
       await page.getByRole('button', { name: 'Bật chia sẻ và tạo đường dẫn' }).click();
       await expect(page.getByText('Đã bật chia sẻ. Hãy sao chép đường dẫn ngay bây giờ.')).toBeVisible();
       const link = await page.getByLabel('Đường dẫn', { exact: true }).inputValue();
