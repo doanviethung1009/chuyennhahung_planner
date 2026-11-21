@@ -68,7 +68,7 @@ cố ý thì ghi đè bằng `--no-verify`.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint, flat config |
 | `npm run test` | Vitest, chạy một lượt. Test component (`tests/dom/*.test.tsx`) bật jsdom theo từng file — [ADR 0027](adr/0027-component-test-stack.vi.md) |
-| `npm run e2e` | Smoke trên trình duyệt cho các luồng lõi, chạy trên bản build production và kho dữ liệu dùng một lần ([ADR 0032](adr/0032-playwright-e2e.vi.md)); cần `npm run build` trước và Google Chrome trên máy dev. Xem *End-to-end tests* |
+| `npm run e2e` | Smoke trên trình duyệt cho các luồng lõi, chạy trên bản build production và kho dữ liệu dùng một lần ([ADR 0033](adr/0033-playwright-e2e.vi.md)); cần `npm run build` trước và Google Chrome trên máy dev. Xem *End-to-end tests* |
 | `npm run db:migrate` | Áp dụng `db/migrations/*.sql` vào `PLANNER_DATABASE_URL` và `CONTENT_DATABASE_URL` (cái nào được đặt); idempotent. Tuỳ chọn: app chạy cùng đoạn code đó lúc khởi động |
 | `npm run content:import -- <file>` | Nạp một `travel-content.json` vào các bảng content PostgreSQL đang trống, có kiểm tra, trong một transaction |
 | `npm run content:export -- <file>` | Ghi content PostgreSQL ra `travel-content.json` (sao lưu và rollback) |
@@ -101,7 +101,7 @@ merge — vẫn phải có người xem.
 
 ## End-to-end tests
 
-`npm run e2e` chạy smoke trên trình duyệt cho các luồng lõi ([ADR 0032](adr/0032-playwright-e2e.vi.md)): trang công khai tiếng Việt và tiếng Anh ở 375/768/1280px, các redirect tour, đăng nhập và bước ép đổi mật khẩu, chuyến đi từ template tới đường dẫn chia sẻ, review và thêm địa điểm vào chuyến, kiểm duyệt cộng đồng, ma trận quyền admin và trình sửa nội dung, bản đồ thành viên cùng đường dẫn chia sẻ. 14 test, khoảng nửa phút.
+`npm run e2e` chạy smoke trên trình duyệt cho các luồng lõi ([ADR 0033](adr/0033-playwright-e2e.vi.md)): trang công khai tiếng Việt và tiếng Anh ở 375/768/1280px, các redirect tour, đăng nhập và bước ép đổi mật khẩu, chuyến đi từ template tới đường dẫn chia sẻ, review và thêm địa điểm vào chuyến, kiểm duyệt cộng đồng, ma trận quyền admin và trình sửa nội dung, bản đồ thành viên cùng đường dẫn chia sẻ. 14 test, khoảng nửa phút.
 
 ```bash
 npm run build      # suite kiểm bản build production

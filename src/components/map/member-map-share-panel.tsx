@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { getPathname } from '@/i18n/navigation';
+import { Link, getPathname } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { buttonClass } from '@/components/ui/button';
 import { ApiError, api, goToSignIn } from '@/components/planner/api';
@@ -30,7 +30,14 @@ const SHARE_PATH = '/api/planner/map/share';
  * reloading the page forgets it; the server stores only a digest, so a lost link
  * can only be replaced. `preview` is the server-rendered public projection.
  */
-export function MemberMapSharePanel({ preview }: { preview: ReactNode }) {
+export function MemberMapSharePanel({
+  preview,
+  unfinishedTrips = 0,
+}: {
+  preview: ReactNode;
+  /** Owner-only count of active trips not yet completed (ADR 0032); a number, nothing else. */
+  unfinishedTrips?: number;
+}) {
   const t = useTranslations('memberMapShare');
   const locale = useLocale() as Locale;
 
@@ -167,6 +174,24 @@ export function MemberMapSharePanel({ preview }: { preview: ReactNode }) {
           <p className="mt-6 text-base font-medium" data-testid="share-state">
             {enabled ? t('stateOn') : t('stateOff')}
           </p>
+
+          {unfinishedTrips > 0 ? (
+            <p role="note" className="mt-3 text-sm text-foreground-muted" data-testid="share-unfinished">
+              {t('unfinishedNote', { count: unfinishedTrips })}{' '}
+              <Link
+                href={{ pathname: '/my-trips', query: { tab: 'trips' } }}
+                className="inline-flex min-h-11 items-center font-medium text-primary-strong underline underline-offset-4"
+              >
+                {t('unfinishedLink')}
+              </Link>
+            </p>
+          ) : null}
+
+          {status.sparse && !enabled ? (
+            <p role="note" className="mt-3 rounded-md border border-border-strong bg-surface p-4 text-sm text-foreground">
+              {t('sparseWarning')}
+            </p>
+          ) : null}
 
           {link ? (
             <div role="group" aria-labelledby="map-share-issued" className="mt-4 rounded-xl border border-border-strong bg-surface p-4 md:p-5">

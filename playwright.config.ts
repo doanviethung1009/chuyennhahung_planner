@@ -5,7 +5,7 @@ import { assertSafeE2EEnvironment } from './e2e/support/guard';
 import { resolveRunEnv } from './e2e/support/run-env';
 
 /**
- * End-to-end smoke suite (WEB-3, ADR 0032). It starts the production build on a
+ * End-to-end smoke suite (WEB-3, ADR 0033). It starts the production build on a
  * free local port with a throwaway data store and per-run random secrets, and
  * never touches a real database or the dev VM. See docs/usage.md, "End-to-end tests".
  */

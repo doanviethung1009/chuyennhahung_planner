@@ -279,7 +279,7 @@ and the reason `--color-border-strong` exists. Details:
 | Tests | `npm run test` | content, i18n parity, routing, map, tokens, docs |
 | Build | `npm run build` | static pages prerender; Travel-content pages are `force-dynamic` and need no database at build |
 | UI | `npm run verify:ui` | screenshots at 375/768/1440, fails on overflow |
-| E2E | `npm run e2e` | the core flows in a real browser against the production build and a throwaway store: routing, cookies, same-origin checks, headers, redirects, two sessions on one record ([ADR 0032](adr/0032-playwright-e2e.md)) |
+| E2E | `npm run e2e` | the core flows in a real browser against the production build and a throwaway store: routing, cookies, same-origin checks, headers, redirects, two sessions on one record ([ADR 0033](adr/0033-playwright-e2e.md)) |
 
 Test layers: Vitest `node` for logic and routes (`tests/`), Vitest with jsdom for components ([ADR 0027](adr/0027-component-test-stack.md)), Playwright for end-to-end (`e2e/`, not picked up by Vitest). The E2E layer has a guard that refuses any non-local target or non-throwaway database, and it never reads production data.
 
@@ -410,7 +410,7 @@ Member map sharing ([ADR 0030](adr/0030-member-map-sharing.md), slice 2a, [featu
 
 Deliberately absent, and not to be scaffolded early:
 
-- **Planner UI** — partly opened by [ADR 0005](adr/0005-trip-sharing-and-story-cloning.md): story-to-trip cloning, My Trips, sign-in and the read-only share page, then the blank-trip form and the trip editor on `/my-trips/[id]` ([features/trip-editor.md](features/trip-editor.md)). The member map, now on the member home `/my-trips` (ADR 0031: `/my-map` redirects 308), is open ([ADR 0029](adr/0029-member-map.md), [features/member-map.md](features/member-map.md)); the trip route map and AI suggestions are not. The Planner *backend* core shipped under `/api/planner`
+- **Planner UI** — partly opened by [ADR 0005](adr/0005-trip-sharing-and-story-cloning.md): story-to-trip cloning, My Trips, sign-in and the read-only share page, then the blank-trip form and the trip editor on `/my-trips/[id]` ([features/trip-editor.md](features/trip-editor.md)). The member map, now on the member home `/my-trips` (ADR 0031: `/my-map` redirects 308; ADR 0032: one section at a time via a server-read `?tab=map|trips|share`, real links with `aria-current`, no extra route), is open ([ADR 0029](adr/0029-member-map.md), [features/member-map.md](features/member-map.md)); the trip route map and AI suggestions are not. The Planner *backend* core shipped under `/api/planner`
   ([ADR 0002](adr/0002-planner-core.md),
   [features/travel-planner-core.md](features/travel-planner-core.md)):
   trips, generated days, activities, expenses, budgeting, archive/restore and

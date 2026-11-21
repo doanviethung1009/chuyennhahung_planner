@@ -1,6 +1,6 @@
-# ADR 0032 — Smoke test end-to-end bằng Playwright
+# ADR 0033 — Smoke test end-to-end bằng Playwright
 
-🇬🇧 English version: [0032-playwright-e2e.md](0032-playwright-e2e.md)
+🇬🇧 English version: [0033-playwright-e2e.md](0033-playwright-e2e.md)
 
 - **Status:** Accepted
 - **Date:** 2026-11-21

@@ -387,6 +387,7 @@
     "legend": "Legend",
     "legendVisited": "Solid points: places you have been (bigger points are places you've returned to)",
     "legendPlanned": "Hollow points: places you have planned but not been to yet",
+    "legendNotShared": "Hollow points are not on the shared map; only trips marked \"Completed\" are.",
     "listTitle": "Points on your map",
     "visited": "Visited",
     "planned": "Planned",
@@ -443,13 +444,19 @@
     "previewMapLabel": "Preview of the public map: places you have visited in Vietnam",
     "previewEmpty": "Nothing to show yet. Only completed trips appear on the shared map.",
     "previewNote": "Completed trips only. A bigger point means more visits (1, 2–3, 4 or more). No plans, reviews or dates.",
-    "sparseWarning": "This map has fewer than 2 visited places. A sparse map is easier for people who already know you to recognise as yours."
+    "sparseWarning": "This map has fewer than 2 visited places. A sparse map is easier for people who already know you to recognise as yours.",
+    "unfinishedNote": "Only trips marked \"Completed\" appear on the shared map. You have {count, plural, one {# trip} other {# trips}} not completed yet, so they are not shown.",
+    "unfinishedLink": "See your trips"
   },
   "myTrips": {
     "listTitle": "Your trips",
     "title": "My trips",
     "description": "Your map of places and the trips you saved: change status, duplicate, share or put away.",
     "tabsLabel": "Filter trips",
+    "sections": "Sections of the trips page",
+    "sectionMap": "Map",
+    "sectionTrips": "Trips",
+    "sectionShare": "Sharing",
     "tabActive": "Active",
     "tabArchived": "Archived",
     "loading": "Loading your trips…",
@@ -1836,7 +1843,7 @@
     "legendVisited": "A solid dot is a place visited",
     "legendBuckets": "A larger dot means more visits: 1, 2–3, or 4 or more.",
     "listTitle": "Places visited",
-    "empty": "This map has no places yet.",
+    "empty": "This person has no places to show yet.",
     "bucket1": "1 visit",
     "bucket2": "2–3 visits",
     "bucket3": "4 or more visits"

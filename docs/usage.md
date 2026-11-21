@@ -68,7 +68,7 @@ Override deliberately with `--no-verify` if you ever really mean it.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint, flat config |
 | `npm run test` | Vitest, run-once. Component tests (`tests/dom/*.test.tsx`) opt in to jsdom per file — [ADR 0027](adr/0027-component-test-stack.md) |
-| `npm run e2e` | Browser smoke of the core flows on the production build and a throwaway store ([ADR 0032](adr/0032-playwright-e2e.md)); needs `npm run build` first and Google Chrome locally. See *End-to-end tests* |
+| `npm run e2e` | Browser smoke of the core flows on the production build and a throwaway store ([ADR 0033](adr/0033-playwright-e2e.md)); needs `npm run build` first and Google Chrome locally. See *End-to-end tests* |
 | `npm run db:migrate` | Applies `db/migrations/*.sql` to `PLANNER_DATABASE_URL` and to `CONTENT_DATABASE_URL` (each one that is set); idempotent. Optional: the app runs the same code at startup |
 | `npm run content:import -- <file>` | Loads a `travel-content.json` into empty PostgreSQL content tables, validated, in one transaction |
 | `npm run content:export -- <file>` | Writes the PostgreSQL content out as a `travel-content.json` (backup and rollback) |
@@ -101,7 +101,7 @@ not stop a merge — a human still has to look.
 
 ## End-to-end tests
 
-`npm run e2e` runs the browser smoke of the core flows ([ADR 0032](adr/0032-playwright-e2e.md)): public pages in Vietnamese and English at 375/768/1280px, the tour redirects, sign-in and the forced password change, trip from a template to a shared link, reviews and add-to-trip, community moderation, the admin role matrix and editors, and the member map with its share link. 14 tests, about half a minute.
+`npm run e2e` runs the browser smoke of the core flows ([ADR 0033](adr/0033-playwright-e2e.md)): public pages in Vietnamese and English at 375/768/1280px, the tour redirects, sign-in and the forced password change, trip from a template to a shared link, reviews and add-to-trip, community moderation, the admin role matrix and editors, and the member map with its share link. 14 tests, about half a minute.
 
 ```bash
 npm run build      # the suite tests the production build

@@ -255,8 +255,20 @@ describe('the member home boundary (ADR 0029, ADR 0031)', () => {
 
   it('mounts the trip list only for a signed-in member, so a guest keeps the empty map', () => {
     const page = read('app/[locale]/my-trips/page.tsx');
-    expect(page).toMatch(/state\.status === 'guest' \? null/);
+    expect(page).toMatch(/getMemberSession\(\)/);
     expect(page).toMatch(/<MemberMapView/);
     expect(page).toMatch(/<MyTrips \/>/);
+    // A guest, on any tab, falls through to the map branch and never reaches <MyTrips />.
+    expect(page).toMatch(/tab === 'map' \|\| guest/);
+    expect(page.indexOf('<MyTrips />')).toBeGreaterThan(page.indexOf('tab === \'map\' || guest'));
+  });
+
+  it('reads the tab from ?tab= on the server and shows no tab bar to a guest (ADR 0032)', () => {
+    const page = read('app/[locale]/my-trips/page.tsx');
+    expect(page).toMatch(/parseMemberHomeTab\(\(await searchParams\)\.tab\)/);
+    expect(page).toMatch(/state\.status === 'guest' \? null : <MemberHomeTabs/);
+    const tabs = read('components/planner/member-home-tabs.tsx');
+    expect(tabs).toMatch(/aria-current=\{current \? 'page' : undefined\}/);
+    expect(tabs).not.toMatch(/role="tab/);
   });
 });

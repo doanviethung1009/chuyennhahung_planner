@@ -26,6 +26,12 @@ Thành viên đã đăng nhập thấy bản đồ Việt Nam của riêng mình
 - `buildMemberMapPoints` là quy tắc thuần: chuyến `completed` (đã lưu trữ hay chưa) hoặc review có `visitedOn` cho chấm đặc, với `visits` = số chuyến completed + số ngày đã đi khác nhau chưa nằm trong ngày của một chuyến completed; chuyến `active` ở `draft`/`planned` cho chấm rỗng; chuyến lưu trữ mà chưa completed bị bỏ; điểm đến không có trong seed bị bỏ.
 - `MemberMapView` ghép các điểm với seed theo `slug` rồi vẽ `VietnamMap`. Khách thấy khung trống, một câu mời và nút đăng nhập; thành viên chưa có điểm nào thấy câu đó và link tạo chuyến. Nhãn cố định chỉ ở pin `featured`; pin giữ vùng bấm 44 px; chú giải và danh sách ghi "đã đi" / "đã lên kế hoạch" bằng chữ, không chỉ bằng màu.
 
+### Tab trên trang chủ thành viên ([ADR 0032](../adr/0032-member-home-tabs.vi.md))
+
+`/my-trips` hiện một mục mỗi lần: **Bản đồ** (mặc định), **Chuyến đi**, **Chia sẻ**, chọn bằng `?tab=map|trips|share` đọc phía server (giá trị thiếu hoặc lạ quay về Bản đồ, tham số lặp lấy giá trị đầu; giá trị không bao giờ được phản chiếu ra). Thanh tab là `<nav aria-label>` gồm các liên kết thật với `aria-current="page"` (không dùng ARIA tablist), nên liên kết sâu, Back và trình duyệt tắt JavaScript đều chạy. Mỗi tab chỉ đọc dữ liệu của nó (`getMemberMap`, `getMemberMapShareOverview`, hoặc `getMemberSession` cho Chuyến đi). Khách thấy bản đồ trống và đăng nhập ở mọi tab, không có thanh tab. Bộ lọc Đang dùng / Đã lưu trữ của Chuyến đi là bộ lọc, không phải tab.
+
+Selector ổn định cho spec end-to-end, theo role và tên từ `messages/*.json`: `navigation` "Các mục của trang chuyến đi" / "Sections of the trips page" với các liên kết Bản đồ / Chuyến đi / Chia sẻ (Map / Trips / Sharing); URL `/chuyen-di-cua-toi?tab=share`, `/en/my-trips?tab=trips`; giữ `data-testid="share-state"`, `share-preview`, `share-unfinished`.
+
 ## Files
 
 | Path | Role |

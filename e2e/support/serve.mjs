@@ -1,4 +1,4 @@
-// Starts the production build the way the Dockerfile does (ADR 0032): the repo builds with
+// Starts the production build the way the Dockerfile does (ADR 0033): the repo builds with
 // `output: standalone`, where `next start` is unsupported (it redirect-loops on `/`).
 // The standalone folder lacks `.next/static` and `public`; copy them in (inside the
 // git-ignored `.next/`), then hand over to the standalone server. Host and port come

@@ -58,6 +58,9 @@ export async function MemberMapView({
             />
             {t('legendPlanned')}
           </p>
+          {state.status === 'guest' ? null : (
+            <p className="mt-2 text-sm text-foreground-muted">{t('legendNotShared')}</p>
+          )}
         </div>
       </div>
 

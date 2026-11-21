@@ -1,6 +1,6 @@
 name: E2E
 
-# End-to-end smoke of the core flows (WEB-3, ADR 0032). A separate workflow from
+# End-to-end smoke of the core flows (WEB-3, ADR 0033). A separate workflow from
 # `CI` so a browser failure never hides the unit-test result and the other way
 # round, and so the `paths` filter applies to it alone. Advisory like `CI`: the
 # repository is private on GitHub Free, so no check can be made required (see the
