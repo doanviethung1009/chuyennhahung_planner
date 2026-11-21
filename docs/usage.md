@@ -68,6 +68,7 @@ Override deliberately with `--no-verify` if you ever really mean it.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint, flat config |
 | `npm run test` | Vitest, run-once. Component tests (`tests/dom/*.test.tsx`) opt in to jsdom per file — [ADR 0027](adr/0027-component-test-stack.md) |
+| `npm run e2e` | Browser smoke of the core flows on the production build and a throwaway store ([ADR 0033](adr/0033-playwright-e2e.md)); needs `npm run build` first and Google Chrome locally. See *End-to-end tests* |
 | `npm run db:migrate` | Applies `db/migrations/*.sql` to `PLANNER_DATABASE_URL` and to `CONTENT_DATABASE_URL` (each one that is set); idempotent. Optional: the app runs the same code at startup |
 | `npm run content:import -- <file>` | Loads a `travel-content.json` into empty PostgreSQL content tables, validated, in one transaction |
 | `npm run content:export -- <file>` | Writes the PostgreSQL content out as a `travel-content.json` (backup and rollback) |
@@ -97,6 +98,24 @@ into `main`. Treat it as a second opinion, not as a gate: these checks **cannot
 be made required** while the repository is private on GitHub Free, because
 branch protection and rulesets are unavailable there. A red run therefore does
 not stop a merge — a human still has to look.
+
+## End-to-end tests
+
+`npm run e2e` runs the browser smoke of the core flows ([ADR 0033](adr/0033-playwright-e2e.md)): public pages in Vietnamese and English at 375/768/1280px, the tour redirects, sign-in and the forced password change, trip from a template to a shared link, reviews and add-to-trip, community moderation, the admin role matrix and editors, and the member map with its share link. 14 tests, about half a minute.
+
+```bash
+npm run build      # the suite tests the production build
+npm run e2e        # starts it on a free local port, runs, stops it, deletes its data
+npm run e2e:ui     # Playwright's UI mode, for writing a spec
+```
+
+- **Browser.** Locally the installed Google Chrome (`channel: 'chrome'`) — nothing is downloaded. In CI, Chromium installed by `npx playwright install --with-deps chromium`.
+- **What it never touches.** No production or dev database, no dev VM, no real account. The server runs on `http://localhost:<free port>` with its own stores in `.data/e2e/<run-id>/` (git-ignored, deleted at the end). `ADMIN_API_TOKEN`, `GUEST_KEY_SECRET` and every password are random per run and never printed.
+- **Safety guard.** `e2e/support/guard.ts` stops the run when the base URL is not `localhost`/`127.0.0.1`/`[::1]`, when `PLANNER_DATABASE_URL`, `CONTENT_DATABASE_URL` or `E2E_DATABASE_URL` is set to a non-local host or a database whose name lacks `e2e` or `test` as a whole word (`planner_e2e`, not `latest`), or when an `E2E_*` variable names the dev VM. There is no override. If it stops you, unset the variable.
+- **PostgreSQL (optional).** `E2E_DB=postgres E2E_DATABASE_URL=postgres://…/planner_e2e npm run e2e` runs against a local throwaway database that passes the guard. CI uses the JSON store.
+- **A failure** leaves `test-results/` (a trace per failing test — it can hold session cookies; do not share it) and `playwright-report/`, both git-ignored. Open one with `npx playwright show-trace <trace.zip>`.
+- **CI.** `.github/workflows/e2e.yml` runs on pull requests and pushes to `main` that touch `src/`, `messages/`, `e2e/`, `db/`, `next.config.ts`, the lockfile, the Playwright config or a workflow, and by hand (`workflow_dispatch`). It is advisory, like `CI`.
+- **Writing a spec.** Put it in `e2e/*.spec.ts`, import `test` and `expect` from `e2e/support/test`, take a signed-in context with `test.use({ storageState: storageStatePath('member') })` (roles: `member`, `member2`, `editor`, `admin`, `super_admin`), and select by role or visible label — there is no `data-testid`. Do not rely on state another spec created, and put back anything you change in seeded content.
 
 ## Common tasks
 

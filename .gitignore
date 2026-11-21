@@ -24,3 +24,7 @@ screenshots/
 .claude/worktrees/
 __pycache__/
 *.pyc
+# e2e (WEB-3)
+.data/e2e/
+test-results/
+playwright-report/
