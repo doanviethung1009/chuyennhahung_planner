@@ -70,20 +70,26 @@ describe('MyTrips card', () => {
     expect(cta.getAttribute('href')).toBe('/chuyen-di-cua-toi/trip-1');
   });
 
-  it('active trips offer status, duplicate and archive; archived offer restore and purge', async () => {
+  it('active trips keep a labelled status select and a menu with only duplicate and archive', async () => {
     const user = userEvent.setup();
     mount({ archived: [trip({ id: 'a-1' })] });
+    const select = (await screen.findByLabelText(t.statusLabel)) as HTMLSelectElement;
+    expect(select.value).toBe('draft');
+    expect(select.options).toHaveLength(3);
     await openMenu(user);
     const menu = screen.getByRole('menu');
-    expect(within(menu).getAllByRole('menuitemradio')).toHaveLength(3);
-    expect(within(menu).getByRole('menuitem', { name: t.duplicate })).toBeTruthy();
-    expect(within(menu).getByRole('menuitem', { name: t.archive })).toBeTruthy();
+    expect(within(menu).getAllByRole('menuitem').map((el) => el.textContent)).toEqual([t.duplicate, t.archive]);
+    expect(within(menu).queryAllByRole('menuitemradio')).toHaveLength(0);
+  });
 
-    await user.keyboard('{Escape}');
-    await user.click(screen.getByRole('button', { name: t.tabArchived }));
+  it('archived trips show Restore and Delete permanently directly, with no menu or status select', async () => {
+    const user = userEvent.setup();
+    mount({ archived: [trip({ id: 'a-1' })] });
+    await user.click(await screen.findByRole('button', { name: t.tabArchived }));
     expect(await screen.findByRole('button', { name: t.restore })).toBeTruthy();
-    await openMenu(user);
-    expect(screen.getByRole('menuitem', { name: t.purge })).toBeTruthy();
+    expect(screen.getByRole('button', { name: t.purge })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Thao tác khác/ })).toBeNull();
+    expect(screen.queryByLabelText(t.statusLabel)).toBeNull();
   });
 
   it('menu opens and moves with the keyboard, Escape closes and restores focus, outside press closes', async () => {
@@ -92,8 +98,8 @@ describe('MyTrips card', () => {
     const trigger = await screen.findByRole('button', { name: /Thao tác khác/ });
     trigger.focus();
     await user.keyboard('{ArrowDown}');
-    const items = screen.getAllByRole('menuitemradio');
-    expect(document.activeElement).toBe(items[0]); // draft is checked
+    const items = screen.getAllByRole('menuitem');
+    expect(document.activeElement).toBe(items[0]);
     await user.keyboard('{ArrowDown}');
     expect(document.activeElement).toBe(items[1]);
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
@@ -110,8 +116,7 @@ describe('MyTrips card', () => {
   it('status change PATCHes with If-Match of the current version', async () => {
     const user = userEvent.setup();
     const calls = mount();
-    await openMenu(user);
-    await user.click(screen.getByRole('menuitemradio', { name: messages.vi.planning.planned }));
+    await user.selectOptions(await screen.findByLabelText(t.statusLabel), 'planned');
     await waitFor(() => expect(calls.some((c) => c.method === 'PATCH')).toBe(true));
     const patch = calls.find((c) => c.method === 'PATCH')!;
     expect(patch.path).toBe('/api/planner/trip-1');
@@ -148,8 +153,7 @@ describe('MyTrips card', () => {
     const user = userEvent.setup();
     const calls = mount({ archived: [trip()] });
     await user.click(await screen.findByRole('button', { name: t.tabArchived }));
-    await openMenu(user);
-    await user.click(screen.getByRole('menuitem', { name: t.purge }));
+    await user.click(await screen.findByRole('button', { name: t.purge }));
     expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
     const group = await screen.findByRole('group', { name: /Xác nhận xoá/ });
     await user.click(within(group).getByRole('button', { name: t.purgeYes }));

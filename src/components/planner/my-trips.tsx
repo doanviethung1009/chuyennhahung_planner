@@ -9,10 +9,10 @@ import { Badge, MetaRow } from '@/components/ui/badge';
 import { getDestination } from '@/content/destinations';
 import { formatDate } from '@/lib/format';
 import type { TripView } from '@/server/planner/repository';
-import type { Trip } from '@/server/planner/schemas';
+import type { PlanningStatus, Trip } from '@/server/planner/schemas';
 import { ApiError, api, goToSignIn } from './api';
 import { ActionMenu, type ActionMenuSection } from './action-menu';
-import { PLANNING_STATUSES } from './status-select';
+import { StatusSelect } from './status-select';
 
 type Tab = 'active' | 'archived';
 
@@ -140,46 +140,29 @@ export function MyTrips() {
           {trips.map((trip) => {
             const busy = busyId === trip.id;
             const destination = getDestination(trip.destinationSlug)?.name[locale] ?? trip.destinationSlug;
-            const sections: ActionMenuSection[] =
-              tab === 'active'
-                ? [
-                    {
-                      label: t('statusLabel'),
-                      items: PLANNING_STATUSES.map((status) => ({
-                        key: `status-${status}`,
-                        label: tPlan(status),
-                        checked: trip.planningStatus === status,
-                        onSelect: () => {
-                          if (status === trip.planningStatus) return;
-                          void act(trip, t('statusSaved'), () =>
-                            api<TripView>(path(trip), { method: 'PATCH', body: { planningStatus: status }, version: trip.version }),
-                          );
-                        },
-                      })),
-                    },
-                    {
-                      items: [
-                        {
-                          key: 'duplicate',
-                          label: t('duplicate'),
-                          onSelect: () =>
-                            void act(
-                              trip,
-                              t('duplicated'),
-                              () => api<TripView>(`${path(trip)}/duplicate`, { method: 'POST', body: {} }),
-                              (view) => router.push({ pathname: '/my-trips/[id]', params: { id: (view as TripView).trip.id } }),
-                            ),
-                        },
-                        {
-                          key: 'archive',
-                          label: t('archive'),
-                          onSelect: () =>
-                            void act(trip, t('archived'), () => api<TripView>(path(trip), { method: 'DELETE', version: trip.version })),
-                        },
-                      ],
-                    },
-                  ]
-                : [{ items: [{ key: 'purge', label: t('purge'), tone: 'danger', onSelect: () => setConfirmId(trip.id) }] }];
+            const sections: ActionMenuSection[] = [
+              {
+                items: [
+                  {
+                    key: 'duplicate',
+                    label: t('duplicate'),
+                    onSelect: () =>
+                      void act(
+                        trip,
+                        t('duplicated'),
+                        () => api<TripView>(`${path(trip)}/duplicate`, { method: 'POST', body: {} }),
+                        (view) => router.push({ pathname: '/my-trips/[id]', params: { id: (view as TripView).trip.id } }),
+                      ),
+                  },
+                  {
+                    key: 'archive',
+                    label: t('archive'),
+                    onSelect: () =>
+                      void act(trip, t('archived'), () => api<TripView>(path(trip), { method: 'DELETE', version: trip.version })),
+                  },
+                ],
+              },
+            ];
             return (
               <li key={trip.id} className="rounded-xl border border-border-subtle bg-surface">
                 <div className="flex items-start justify-between gap-3 p-5 pb-3">
@@ -200,7 +183,9 @@ export function MyTrips() {
                       <Badge tone="neutral">{tVis(trip.visibility)}</Badge>
                     </p>
                   </div>
-                  <ActionMenu label={t('menuLabel', { title: trip.title })} sections={sections} disabled={busy} />
+                  {tab === 'active' ? (
+                    <ActionMenu label={t('menuLabel', { title: trip.title })} sections={sections} disabled={busy} />
+                  ) : null}
                 </div>
 
                 <MetaRow
@@ -221,7 +206,23 @@ export function MyTrips() {
                     {t('open')}
                     <span className="sr-only">: {trip.title}</span>
                   </Link>
-                  {tab === 'archived' ? (
+                  {tab === 'active' ? (
+                    <div className="flex flex-col gap-2 sm:ml-auto sm:flex-row sm:items-center sm:gap-3">
+                      <label htmlFor={`status-${trip.id}`} className="text-sm font-medium">
+                        {t('statusLabel')}
+                      </label>
+                      <StatusSelect
+                        id={`status-${trip.id}`}
+                        value={trip.planningStatus}
+                        disabled={busy}
+                        onChange={(next: PlanningStatus) =>
+                          act(trip, t('statusSaved'), () =>
+                            api<TripView>(path(trip), { method: 'PATCH', body: { planningStatus: next }, version: trip.version }),
+                          )
+                        }
+                      />
+                    </div>
+                  ) : (
                     <>
                       <button
                         type="button"
@@ -254,9 +255,18 @@ export function MyTrips() {
                             {t('purgeNo')}
                           </button>
                         </div>
-                      ) : null}
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          className={buttonClass({ size: 'md', variant: 'secondary', className: 'w-full sm:w-auto' })}
+                          onClick={() => setConfirmId(trip.id)}
+                        >
+                          {t('purge')}
+                        </button>
+                      )}
                     </>
-                  ) : null}
+                  )}
                 </div>
               </li>
             );
