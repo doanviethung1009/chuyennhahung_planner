@@ -485,7 +485,10 @@
     "purgeYes": "Xoá vĩnh viễn",
     "purgeNo": "Giữ lại",
     "purged": "Đã xoá vĩnh viễn chuyến đi.",
-    "createCta": "Tạo chuyến đi mới"
+    "createCta": "Tạo chuyến đi mới",
+    "open": "Xem / chỉnh sửa chuyến đi",
+    "menuLabel": "Thao tác khác cho {title}",
+    "retry": "Thử lại"
   },
   "tripDetail": {
     "metaTitle": "Chi tiết chuyến đi",
