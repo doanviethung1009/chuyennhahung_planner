@@ -1,0 +1,46 @@
+# Tính năng — Tỉnh thành Việt Nam
+
+🇬🇧 English version: [vietnam-provinces.md](vietnam-provinces.md)
+
+## Tóm tắt
+
+Danh sách tham chiếu có kiểu cho toàn bộ 34 đơn vị hành chính cấp tỉnh của Việt
+Nam (6 thành phố và 28 tỉnh) sau đợt sáp nhập 2025. Đây là nền dữ liệu cho mọi
+nơi cần nói "tỉnh nào" — chưa hiển thị trên giao diện.
+
+## Đường dẫn
+
+Không có.
+
+## Dữ liệu
+
+`provinces` trong [`src/content/provinces.ts`](../../src/content/provinces.ts), kiểu
+`Province` trong `src/content/types.ts`: `slug`, `name` (vi/en), `kind`, `region`,
+`coords` và `formerNames`. `coords` là điểm đại diện (một thành phố trong tỉnh) làm
+tròn 2 chữ số, không phải ranh giới hay tâm. `formerNames` liệt kê 63 đơn vị cũ
+đã gộp vào.
+
+## Cách hoạt động
+
+Dữ liệu tĩnh có kiểu cùng `getProvince(slug)`. Hiện chưa có nơi nào đọc nên chưa
+ảnh hưởng gì lúc chạy. `Destination.area` vẫn là nhãn địa lý và không liên kết.
+
+## Tệp
+
+| Đường dẫn | Vai trò |
+|---|---|
+| `src/content/types.ts` | kiểu `Province` |
+| `src/content/provinces.ts` | 34 đơn vị và `getProvince` |
+| `tests/provinces.test.ts` | kiểm tra số lượng và tính toàn vẹn |
+
+## Kiểm thử
+
+`tests/provinces.test.ts`: 34 đơn vị (6 thành phố), slug duy nhất, 63 đơn vị cũ
+mỗi cái xuất hiện đúng một lần, tên đủ hai ngôn ngữ, tọa độ nằm trong lãnh thổ.
+
+## Giới hạn và câu hỏi còn mở
+
+Vùng (Bắc/Trung/Nam) theo cách chia truyền thống. Tọa độ và danh sách sáp nhập
+được viết từ kiến thức, không phải bộ dữ liệu chính thức: cần đối chiếu Nghị
+quyết 202/2025/QH15 trước khi dựa vào. Chưa có quận/huyện/xã. Việc nối điểm đến
+hay chuyến đi với tỉnh cần quyết định riêng.

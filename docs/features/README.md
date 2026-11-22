@@ -19,6 +19,7 @@ New features start from [`_template.md`](_template.md) /
 | Member map | [member-map.md](member-map.md) | `/chuyen-di-cua-toi` (My Trips, ADR 0031) — a signed-in member's private map: solid dots visited, hollow dots planned (ADR 0029) |
 | Itineraries | [itineraries.md](itineraries.md) | `/len-lich-trinh` plus the permanent tour redirects |
 | Video reviews | [video-reviews.md](video-reviews.md) | `/goc-review` — deliberately link-free cards, channel buttons |
+| Vietnam provinces | [vietnam-provinces.md](vietnam-provinces.md) | Reference list of the 34 first-level units (2025 merger) with the 63 former units; data only, no UI |
 | Plan your trip | [plan-your-trip.md](plan-your-trip.md) | `/thiet-ke-chuyen-di` — Planner entry point, no form by design |
 | Design system | [design-system.md](design-system.md) | `@theme` tokens, primitives, contrast tests |
 | SEO and metadata | [seo-and-metadata.md](seo-and-metadata.md) | Canonicals, `hreflang`, sitemap, JSON-LD |

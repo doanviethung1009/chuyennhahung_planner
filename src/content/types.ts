@@ -123,3 +123,20 @@ export function isVisited(
 ): destination is Pick<Destination, 'visits'> & { visits: number } {
   return typeof destination.visits === 'number' && destination.visits > 0;
 }
+
+/**
+ * One of Vietnam's first-level administrative units. This is a reference list,
+ * not a destination: it carries no story, visit or cover. `coords` is a
+ * representative point (a well-known city inside the unit), NOT a boundary or a
+ * geometric centre. `formerNames` lists the units merged in on 1 July 2025
+ * (Nghị quyết 202/2025/QH15) so old addresses and trips can still be matched.
+ */
+export interface Province {
+  slug: string;
+  name: Localized<string>;
+  kind: 'province' | 'city';
+  region: 'north' | 'central' | 'south';
+  coords: { lat: number; lng: number };
+  /** Vietnamese names of every pre-2025 unit now inside this one, itself included. */
+  formerNames: string[];
+}
