@@ -32,10 +32,15 @@ catalogues. No content or Planner data changes.
 - `src/app/global-error.tsx` is the last resort when the root layout itself fails.
   It has no provider, so it reads the words from the two catalogue files directly
   and takes the language from the URL (`/en…` is English, anything else Vietnamese).
-- `src/app/[locale]/loading.tsx` covers every dynamic public page (`/`, `/stories`,
-  `/trip-templates`, `/my-trips` and the rest): an `aria-hidden` skeleton, **no
-  heading** (the page that replaces it brings its single `<h1>`), one
-  `role="status"` line, and pulsing only under `motion-safe`.
+- `PageSkeleton` (`src/components/ui/page-skeleton.tsx`) is the loading skeleton: an
+  `aria-hidden` block, **no heading** (the page that replaces it brings its single
+  `<h1>`), one `role="status"` line, pulsing only under `motion-safe`. It is wired
+  through a `loading.tsx` on **leaf routes only**: `/trip-templates`,
+  `/community-trips`, `/reviews` and `/my-trips`. A `loading.tsx` makes Next send the
+  status line before the page runs, so above a route that calls `notFound()` every
+  unknown slug or token would answer 200 instead of 404. A first version at the locale
+  root did exactly that (the e2e smoke caught it); `tests/loading-boundary-guard.test.ts`
+  now forbids it.
 - `StateNotice` (`src/components/ui/state-notice.tsx`) is the one panel for empty
   and error states: an error carries `role="alert"`, an empty state does not.
 - The home page with no published story renders `HomeEmpty` (an `<h1>` and links to
@@ -53,7 +58,7 @@ catalogues. No content or Planner data changes.
 |---|---|
 | `src/app/[locale]/error.tsx` | Public error boundary |
 | `src/app/global-error.tsx` | Root-layout failure |
-| `src/app/[locale]/loading.tsx` | Shared loading skeleton |
+| `src/components/ui/page-skeleton.tsx`, `src/app/[locale]/{trip-templates,community-trips,reviews,my-trips}/loading.tsx` | Loading skeleton on leaf routes |
 | `src/components/ui/state-notice.tsx` | Empty/error panel |
 | `src/components/home/home-empty.tsx` | Home page with no story |
 | `src/app/[locale]/stories/page.tsx`, `community-trips/page.tsx` | Error panel on failed reads |
@@ -67,6 +72,7 @@ catalogues. No content or Planner data changes.
 boundary (one `<h1>`, alert, reset on click, link home, the error message never
 printed, EN copy); the global boundary renders from the catalogue; `TripDetail`
 error shows its own heading and retry reads again, a missing trip has no retry.
+`tests/loading-boundary-guard.test.ts`: no `loading.tsx` at the locale root or above a dynamic segment.
 `tests/community-public-load.test.ts`: failure is `{ ok: false }` for the gallery and
 `[]` for the home contract, only the error class is logged. Key parity is covered by
 `tests/i18n.test.ts`.
@@ -76,8 +82,10 @@ component).
 
 ## Limits and open questions
 
-- The skeleton is one generic shape (masthead plus a card grid) for every route; a
-  route with a different layout shows the same placeholder.
+- No skeleton on `/`, `/stories`, `/places`, `/destinations` or `/itineraries`: each
+  has a `[slug]` child that must answer 404, so they need an in-page `Suspense`
+  instead of `loading.tsx` (not done).
+- The skeleton is one generic shape (masthead plus a card grid) for every route.
 - No page-level `Suspense`: a slow page still waits for its slowest read before
   anything of it appears, only the skeleton arrives sooner.
 - `/my-trips/[id]` loads on the client and keeps its own loading heading (an `<h1>`

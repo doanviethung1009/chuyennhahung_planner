@@ -30,10 +30,14 @@ Không đổi dữ liệu nội dung hay Planner.
 - `src/app/global-error.tsx` là chốt cuối khi chính layout gốc hỏng. Ở tầng này không
   có provider, nên nó đọc chữ trực tiếp từ hai file catalogue và lấy ngôn ngữ từ URL
   (`/en…` là tiếng Anh, còn lại là tiếng Việt).
-- `src/app/[locale]/loading.tsx` phủ mọi trang công khai động (`/`, `/stories`,
-  `/trip-templates`, `/my-trips` và các trang còn lại): khung xương `aria-hidden`,
-  **không có heading** (trang thay thế mang `<h1>` duy nhất), một dòng `role="status"`,
-  chỉ nhấp nháy khi `motion-safe`.
+- `PageSkeleton` (`src/components/ui/page-skeleton.tsx`) là khung xương chờ: khối
+  `aria-hidden`, **không có heading** (trang thay thế mang `<h1>` duy nhất), một dòng
+  `role="status"`, chỉ nhấp nháy khi `motion-safe`. Nó được nối qua `loading.tsx` **chỉ
+  ở các route lá**: `/trip-templates`, `/community-trips`, `/reviews`, `/my-trips`.
+  `loading.tsx` khiến Next gửi dòng trạng thái trước khi trang chạy, nên nếu đặt phía
+  trên route gọi `notFound()` thì mọi slug hoặc token sai đều trả 200 thay vì 404. Bản
+  đầu đặt ở gốc locale đã gây đúng lỗi này (e2e smoke bắt được);
+  `tests/loading-boundary-guard.test.ts` nay cấm việc đó.
 - `StateNotice` (`src/components/ui/state-notice.tsx`) là một khung chung cho trạng
   thái rỗng và lỗi: lỗi có `role="alert"`, rỗng thì không.
 - Trang chủ khi chưa có story nào hiển thị `HomeEmpty` (một `<h1>` và link tới lịch
@@ -50,7 +54,7 @@ Không đổi dữ liệu nội dung hay Planner.
 |---|---|
 | `src/app/[locale]/error.tsx` | Error boundary công khai |
 | `src/app/global-error.tsx` | Hỏng ở layout gốc |
-| `src/app/[locale]/loading.tsx` | Khung xương chờ dùng chung |
+| `src/components/ui/page-skeleton.tsx`, `src/app/[locale]/{trip-templates,community-trips,reviews,my-trips}/loading.tsx` | Khung xương chờ ở route lá |
 | `src/components/ui/state-notice.tsx` | Khung rỗng/lỗi |
 | `src/components/home/home-empty.tsx` | Trang chủ khi chưa có story |
 | `src/app/[locale]/stories/page.tsx`, `community-trips/page.tsx` | Khung lỗi khi đọc thất bại |
@@ -64,6 +68,7 @@ Không đổi dữ liệu nội dung hay Planner.
 (một `<h1>`, alert, gọi reset khi bấm, link về trang chủ, không in nội dung lỗi, bản
 EN); global boundary dựng từ catalogue; `TripDetail` khi lỗi có tiêu đề riêng và thử
 lại sẽ đọc lại, chuyến không tồn tại không có nút thử lại.
+`tests/loading-boundary-guard.test.ts`: không có `loading.tsx` ở gốc locale hay phía trên segment động.
 `tests/community-public-load.test.ts`: lỗi là `{ ok: false }` với thư viện cộng đồng
 và `[]` với hợp đồng của trang chủ, chỉ log tên lớp lỗi. Đủ khóa VI/EN do
 `tests/i18n.test.ts` kiểm.
@@ -72,8 +77,10 @@ và `[]` với hợp đồng của trang chủ, chỉ log tên lớp lỗi. Đ�
 
 ## Limits and open questions
 
-- Khung xương chỉ có một hình dạng chung (đầu trang cộng lưới thẻ) cho mọi route;
-  route có bố cục khác vẫn thấy cùng placeholder.
+- Chưa có khung xương ở `/`, `/stories`, `/places`, `/destinations`, `/itineraries`: mỗi
+  trang có con `[slug]` phải trả 404, nên cần `Suspense` trong trang thay vì
+  `loading.tsx` (chưa làm).
+- Khung xương chỉ có một hình dạng chung (đầu trang cộng lưới thẻ) cho mọi route.
 - Không có `Suspense` ở mức trang: trang chậm vẫn phải đợi lần đọc chậm nhất trước
   khi hiện ra, khung xương chỉ đến sớm hơn.
 - `/my-trips/[id]` tải ở client và giữ tiêu đề chờ riêng (một `<h1>` rồi bị thay);

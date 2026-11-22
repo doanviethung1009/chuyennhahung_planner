@@ -4,12 +4,16 @@ import { Container } from '@/components/ui/container';
 /**
  * What a visitor sees while a dynamic public page is still being read (UXS-1).
  *
+ * Used by `loading.tsx` files only on LEAF routes (see `tests/loading-boundary-guard.test.ts`):
+ * a `loading.tsx` makes Next send the status line before the page runs, so above a route
+ * that calls `notFound()` it would turn every 404 into a 200.
+ *
  * The skeleton is `aria-hidden` and carries no heading: the page that replaces it
  * brings its own single `<h1>`. One `role="status"` line tells assistive tech that
  * something is loading. Pulsing only runs for visitors who have not asked for
  * reduced motion.
  */
-export default async function Loading() {
+export async function PageSkeleton() {
   const t = await getTranslations('states');
   const block = 'rounded-md bg-surface-muted motion-safe:animate-pulse';
 
