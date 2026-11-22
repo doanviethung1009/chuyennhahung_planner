@@ -2,12 +2,12 @@
 
 🇬🇧 English version: [0034-province-destination-link.md](0034-province-destination-link.md)
 
-- **Trạng thái:** Đề xuất
+- **Trạng thái:** Đã chấp nhận
 - **Ngày:** 2026-11-22
 - **Người sở hữu:** system-architect
 - **Ảnh hưởng:** `src/content/types.ts` (`Destination.provinceSlug`), `src/content/destinations.ts`, `src/content/provinces.ts`, `src/server/content/public-places.ts`, `src/app/[locale]/places/page.tsx`, `src/app/[locale]/destinations/page.tsx`, `tests/provinces.test.ts`, `docs/features/vietnam-provinces.*`
 
-ADR này ghi lại một quyết định mà code đã mang sẵn: dữ liệu tham chiếu 34 tỉnh (tài liệu tính năng `vietnam-provinces`) được merge ở PR #222, còn liên kết với destination và hai bộ lọc tỉnh ở `/places` và `/destinations` theo sau ở PR #225 và #228 mà không có ADR. [`vietnam-provinces.vi.md`](../features/vietnam-provinces.vi.md) nói liên kết này "cần một quyết định riêng". ADR giữ trạng thái **Đề xuất** cho tới khi chủ dự án xác nhận.
+ADR này ghi lại một quyết định mà code đã mang sẵn: dữ liệu tham chiếu 34 tỉnh (tài liệu tính năng `vietnam-provinces`) được merge ở PR #222, còn liên kết với destination và hai bộ lọc tỉnh ở `/places` và `/destinations` theo sau ở PR #225 và #228 mà không có ADR. [`vietnam-provinces.vi.md`](../features/vietnam-provinces.vi.md) nói liên kết này "cần một quyết định riêng". Chủ dự án đã chấp nhận ADR này ngày 2026-11-22. Việc chấp nhận chỉ bao gồm thiết kế liên kết; độ chính xác của dữ liệu tỉnh vẫn chưa được kiểm (xem Việc kéo theo).
 
 ## Bối cảnh
 
@@ -58,6 +58,6 @@ Khó hơn:
 
 ## Việc kéo theo
 
-- Chủ dự án: kiểm `provinces.ts` (danh sách sáp nhập, tọa độ, nhóm vùng) với Nghị quyết 202/2025/QH15, và xác nhận ADR này để chuyển sang Đã chấp nhận.
+- Chủ dự án: kiểm `provinces.ts` (danh sách sáp nhập, tọa độ, nhóm vùng) với Nghị quyết 202/2025/QH15. Vẫn còn mở.
 - Tài liệu: thêm một ghi chú ngắn về tỉnh vào phần dữ liệu của `docs/architecture.md` + `.vi.md`. `docs/features/vietnam-provinces.*` nên trỏ về đây thay vì nói liên kết "cần một quyết định riêng".
 - Không thuộc quyết định này, mỗi việc cần ADR riêng: bản đồ thành viên cấp tỉnh (ADR 0029 là cấp quốc gia), đưa destination vào content store, hoặc `provinceSlug` trên chuyến đi.
