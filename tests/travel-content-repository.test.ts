@@ -769,3 +769,82 @@ describe('stories without a destination (ADR 0012)', () => {
     expect((await repo.getStory('test-story')).plannerTemplateSlug).toBe('test-template');
   });
 });
+
+describe('story ↔ collection ↔ template links', () => {
+  const collectionInput = (storySlugs: string[]) => ({
+    slug: 'test-collection',
+    title: { vi: 'Bộ sưu tập', en: 'Collection' },
+    tagline: { vi: 'Khẩu hiệu', en: 'Tagline' },
+    description: { vi: ['Mô tả.'], en: ['Description.'] },
+    cover: '/images/covers/da-lat.svg',
+    destinationSlugs: ['da-lat'],
+    storySlugs,
+    placeSlugs: [],
+    seo: {
+      title: null,
+      description: { vi: 'Mô tả SEO.', en: 'SEO description.' },
+      ogImage: null,
+      canonicalPath: null,
+      noindex: false,
+      keywords: { vi: [], en: [] },
+    },
+  });
+
+  it('refuses to delete a draft story a collection still lists', async () => {
+    await repo.createStory(storyFixture());
+    await repo.createCollection(collectionInput(['test-story']));
+
+    const refusal = await expectRejection(repo.deleteStory('test-story'), 'invalid_state');
+    expect(refusal.message).toContain('test-collection');
+
+    await repo.updateCollection('test-collection', { storySlugs: [] });
+    await expect(repo.deleteStory('test-story')).resolves.toBeUndefined();
+    expect(await repo.validateIntegrity()).toEqual([]);
+  });
+
+  it('refuses to delete a template a story still links through plannerTemplateSlug', async () => {
+    await repo.createStory(storyFixture({ plannerTemplateSlug: 'test-template' }));
+    await repo.createTemplate(templateFixture());
+
+    const refusal = await expectRejection(repo.deleteTemplate('test-template'), 'invalid_state');
+    expect(refusal.message).toContain('test-story');
+
+    await repo.updateStory('test-story', { plannerTemplateSlug: null });
+    await expect(repo.deleteTemplate('test-template')).resolves.toBeUndefined();
+  });
+
+  it('allows a forward link at creation, since a template is cut from its story', async () => {
+    await repo.createStory(storyFixture({ plannerTemplateSlug: 'test-template' }));
+    await repo.createTemplate(templateFixture());
+    expect(await repo.validateIntegrity()).toEqual([]);
+  });
+
+  it('refuses to change plannerTemplateSlug to a template that does not exist', async () => {
+    await repo.createStory(storyFixture());
+
+    const refusal = await expectRejection(
+      repo.updateStory('test-story', { plannerTemplateSlug: 'no-such-template' }),
+      'invalid_reference',
+    );
+    expect(refusal.issues[0]?.path).toBe('plannerTemplateSlug');
+
+    await repo.createTemplate(templateFixture());
+    const updated = await repo.updateStory('test-story', { plannerTemplateSlug: 'test-template' });
+    expect(updated.plannerTemplateSlug).toBe('test-template');
+  });
+
+  it('does not re-check an unchanged link, so an unrelated edit still saves', async () => {
+    await repo.createStory(storyFixture({ plannerTemplateSlug: 'ghost-template' }));
+    await expect(
+      repo.updateStory('test-story', { excerpt: { vi: 'Mới', en: 'New' } }),
+    ).resolves.toBeDefined();
+  });
+
+  it('reports a dangling plannerTemplateSlug in the integrity sweep', async () => {
+    await repo.createStory(storyFixture({ plannerTemplateSlug: 'ghost-template' }));
+    const issues = await repo.validateIntegrity();
+    expect(issues).toEqual([
+      { entity: 'story', id: 'test-story', issue: 'unknown template "ghost-template"' },
+    ]);
+  });
+});

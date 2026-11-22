@@ -151,6 +151,14 @@ vào giữa hai bước; `GET /api/admin/planner/integrity` ("unknown place") l�
 Một place không
 thể bị tách khỏi một story khi còn đang được nhúng trong phần nội dung của story đó.
 
+**Liên kết story, collection và template.** `DELETE /api/admin/travel/stories/[slug]`
+trả 409 `invalid_state` khi còn collection nào (nháp hay đã xuất bản) liệt kê story đó,
+và `DELETE /api/admin/travel/templates/[slug]` khi còn story nào ghi nó trong
+`plannerTemplateSlug`. `plannerTemplateSlug` có thể trỏ tới template chưa tồn tại lúc
+tạo story (template được cắt từ story nên story có trước), nhưng khi cập nhật thì giá trị
+mới phải tồn tại, nếu không trả 422 `invalid_reference`. Phần quét toàn vẹn báo
+`plannerTemplateSlug` treo là `unknown template`.
+
 **Template** — các ngày được đánh số `1..n` và `order` của hoạt động chạy `0..m`
 theo cách dựng, chứ không theo dữ liệu đầu vào. `durationDays`,
 `estimatedTotalVnd` và `placeSlugs` được dẫn xuất lại ở mỗi lượt ghi. `version`
