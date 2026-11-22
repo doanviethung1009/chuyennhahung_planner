@@ -1,10 +1,16 @@
 'use client';
 
+import { useReducer, useSyncExternalStore } from 'react';
 import { useParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import NextLink from 'next/link';
 import { getPathname, usePathname } from '@/i18n/navigation';
 import { locales } from '@/i18n/routing';
+
+function subscribe(onChange: () => void) {
+  window.addEventListener('popstate', onChange);
+  return () => window.removeEventListener('popstate', onChange);
+}
 
 /**
  * Renders one link per locale pointing at the *same* page. Because it is a
@@ -16,6 +22,15 @@ export function LocaleSwitcher({ className = '' }: { className?: string }) {
   const active = useLocale();
   const pathname = usePathname();
   const params = useParams();
+  // The query is kept verbatim (`?tab=`, `?q=`, `?page=`, and `returnTo` on the
+  // sign-in pages): the same page in the other language, not the page without
+  // its state. It is read from the address bar after mount, not with
+  // `useSearchParams`, which would opt every page out of static rendering from
+  // this shared header. Before hydration the link is the query-less page.
+  const search = useSyncExternalStore(subscribe, () => window.location.search, () => '');
+  // A query can change without the path (tabs, filters): re-read it just
+  // before the link is used.
+  const [, refresh] = useReducer((n: number) => n + 1, 0);
 
   return (
     <div
@@ -33,7 +48,9 @@ export function LocaleSwitcher({ className = '' }: { className?: string }) {
             // unprefixed. next-intl's own `Link locale=` always writes the
             // prefix (even `/vi/...`), which costs a 307 back (CORE-12 / P-5).
             // @ts-expect-error -- params are validated at runtime by next-intl
-            href={getPathname({ locale, href: { pathname, params } })}
+            href={`${getPathname({ locale, href: { pathname, params } })}${search}`}
+            onPointerDown={refresh}
+            onFocus={refresh}
             hrefLang={locale}
             aria-current={isActive ? 'true' : undefined}
             className={`inline-flex min-h-11 min-w-11 justify-center items-center rounded-pill px-3 text-sm font-medium transition-colors duration-200 ease-gentle ${

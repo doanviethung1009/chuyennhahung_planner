@@ -114,7 +114,8 @@ None. The control links to existing routes:
   non-secret "signed in" hint cookie, would remove both — a backend change.
 - Each request reads the Planner store; behind heavy traffic this is one store
   read per page view.
-- Desktop shows an icon, not the words "Đăng nhập", for lack of room. Shortening a
-  nav label or moving one entry to the footer would make room for the text.
+- Desktop shows an icon below 1536px and the word "Sign in" from 1536px up, where
+  the header is wider ([header navigation](header-navigation.md)); at 1280px there is
+  still no room for the word.
 - The control appears after the session answer, so it pops in a moment after the
   rest of the header.

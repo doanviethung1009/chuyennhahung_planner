@@ -115,7 +115,7 @@ Không thêm route. Control dẫn tới các route sẵn có:
   đổi phía backend.
 - Mỗi request đọc store của Planner; khi lưu lượng lớn, đó là một lần đọc store cho
   mỗi lượt xem trang.
-- Trên máy tính chỉ có biểu tượng, không có chữ "Đăng nhập", vì thiếu chỗ. Rút gọn
-  một nhãn điều hướng hoặc chuyển một mục xuống footer sẽ đủ chỗ cho chữ.
+- Trên máy tính, dưới 1536px chỉ có biểu tượng; từ 1536px trở lên có chữ "Đăng nhập"
+  vì header rộng hơn ([điều hướng header](header-navigation.vi.md)). Ở 1280px vẫn chưa đủ chỗ cho chữ.
 - Control hiện ra sau khi có câu trả lời phiên, nên xuất hiện chậm hơn phần còn lại
   của header một chút.

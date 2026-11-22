@@ -6,7 +6,7 @@
     "itineraries": "Itineraries",
     "reviews": "Video reviews",
     "about": "About us",
-    "map": "Travel map",
+    "map": "Hưng's map",
     "planTrip": "Plan your trip",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
@@ -23,7 +23,10 @@
     "signOutFailed": "Couldn't sign out. Please try again.",
     "communityTrips": "Community trips",
     "places": "Places",
-    "tripTemplates": "Trip templates"
+    "tripTemplates": "Trip templates",
+    "groupExplore": "Explore",
+    "groupPlan": "Plan a trip",
+    "createTrip": "Create a trip"
   },
   "locale": {
     "label": "Language",
@@ -248,7 +251,8 @@
     "tagline": "Every road has a story.",
     "blurb": "Travel stories, destinations and itineraries from the two of us. Writing since 2021.",
     "rights": "© {year} Chuyện Nhà Hưng. All words and images are our own.",
-    "contact": "Contact"
+    "contact": "Contact",
+    "planHeading": "Plan a trip"
   },
   "notFound": {
     "title": "We're lost",
@@ -464,7 +468,7 @@
     "description": "Your map of places and the trips you saved: change status, duplicate, share or put away.",
     "tabsLabel": "Filter trips",
     "sections": "Sections of the trips page",
-    "sectionMap": "Map",
+    "sectionMap": "Your map",
     "sectionTrips": "Trips",
     "sectionShare": "Sharing",
     "tabActive": "Active",

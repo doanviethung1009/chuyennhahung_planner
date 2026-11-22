@@ -166,17 +166,20 @@ export function AccountMenu({ state }: { state: AccountState }) {
 
   if (state.status === 'guest') {
     return (
-      // Icon-only: the header row is capped at `max-w-7xl`, and the six inline nav
-      // entries already fill it, so a text label wraps them onto two lines.
-      // The label is the accessible name and the hover tooltip; the mobile
-      // drawer shows it in full.
+      // Icon-only below 2xl: at 1280px the row is full, and a text label wraps
+      // the nav onto two lines. From 2xl the header is wider and shows the word.
+      // The label is the accessible name at every width; the mobile drawer
+      // shows it in full.
       <a
         href={signInHref(locale)}
         aria-label={t('signIn')}
         title={t('signIn')}
-        className={buttonClass({ variant: 'secondary', size: 'sm', className: 'size-11 px-0' })}
+        className={buttonClass({ variant: 'secondary', size: 'sm', className: 'size-11 px-0 2xl:w-auto 2xl:gap-2 2xl:px-4' })}
       >
         <PersonIcon />
+        <span aria-hidden="true" className="hidden whitespace-nowrap 2xl:inline">
+          {t('signIn')}
+        </span>
       </a>
     );
   }

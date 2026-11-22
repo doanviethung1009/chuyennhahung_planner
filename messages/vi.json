@@ -2,11 +2,11 @@
   "nav": {
     "home": "Trang chủ",
     "stories": "Chuyện đi chơi",
-    "destinations": "Khám phá",
-    "itineraries": "Lên lịch trình",
+    "destinations": "Điểm đến",
+    "itineraries": "Lịch trình",
     "reviews": "Góc review",
     "about": "Về nhà Hưng",
-    "map": "Bản đồ hành trình",
+    "map": "Bản đồ nhà Hưng",
     "planTrip": "Thiết kế chuyến đi",
     "openMenu": "Mở menu",
     "closeMenu": "Đóng menu",
@@ -23,7 +23,10 @@
     "signOutFailed": "Chưa đăng xuất được. Hãy thử lại.",
     "communityTrips": "Chuyến đi cộng đồng",
     "places": "Địa điểm",
-    "tripTemplates": "Lịch trình mẫu"
+    "tripTemplates": "Lịch trình mẫu",
+    "groupExplore": "Khám phá",
+    "groupPlan": "Lên lịch trình",
+    "createTrip": "Tạo chuyến đi"
   },
   "locale": {
     "label": "Ngôn ngữ",
@@ -248,7 +251,8 @@
     "tagline": "Đi đâu cũng có chuyện.",
     "blurb": "Chuyện đi chơi, điểm đến và lịch trình của hai đứa mình. Viết từ năm 2021.",
     "rights": "© {year} Chuyện Nhà Hưng. Mọi bài viết và hình ảnh là của nhà Hưng.",
-    "contact": "Liên hệ"
+    "contact": "Liên hệ",
+    "planHeading": "Lập chuyến"
   },
   "notFound": {
     "title": "Đi lạc rồi",
@@ -464,7 +468,7 @@
     "description": "Bản đồ những nơi bạn đã đi và các chuyến đi bạn đã lưu: đổi tình trạng, nhân bản, chia sẻ hoặc cất đi.",
     "tabsLabel": "Lọc chuyến đi",
     "sections": "Các mục của trang chuyến đi",
-    "sectionMap": "Bản đồ",
+    "sectionMap": "Bản đồ của bạn",
     "sectionTrips": "Chuyến đi",
     "sectionShare": "Chia sẻ",
     "tabActive": "Đang dùng",
