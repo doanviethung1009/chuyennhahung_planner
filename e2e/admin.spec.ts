@@ -112,12 +112,20 @@ test.describe('Flow D: admin portal @smoke', () => {
     await expect(b.getByText(/Có người khác vừa lưu/)).toBeVisible();
     await b.getByRole('button', { name: 'Tải lại bản mới nhất' }).click();
     await expect(nameB).toHaveValue(/\(A\)$/);
+
+    // Put the seeded name back so this spec leaves the content as it found it.
+    await nameB.fill((await nameB.inputValue()).replace(/ \(A\)$/, ''));
+    await b.getByRole('button', { name: 'Lưu thay đổi' }).click();
+    await expect(b.getByText('Đã lưu thay đổi.')).toBeVisible();
     await first.close();
 
     // Template editor: reordering saves immediately.
     await b.goto('/quan-tri/noi-dung/lich-trinh-mau/da-lat-3-ngay-lang-man');
     await b.getByRole('button', { name: 'Xuống', exact: true }).first().click();
     await expect(b.getByText('Đã lưu thứ tự.')).toBeVisible();
+    // ...and move it back up (the first enabled "Lên" belongs to the item that just moved down).
+    await b.locator('button:enabled', { hasText: /^Lên$/ }).first().click();
+    await expect(b.getByText('Đã lưu thứ tự.').first()).toBeVisible();
     await second.close();
   });
 });

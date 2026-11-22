@@ -56,6 +56,7 @@ test.describe('Flow A: template to trip to shared link @smoke', () => {
     const wrong = '/chia-se/khong-co-token-nay-0000000000000000';
     expect((await guestPage.goto(wrong))?.status()).toBe(404);
     expect((await guestPage.goto('/en/shared/khong-co-token-nay-0000000000000000'))?.status()).toBe(404);
+    expect((await guestPage.request.get('/api/shared/khong-co-token-nay-0000000000000000')).status()).toBe(404);
 
     // 5. Archiving the trip revokes the link.
     await page.getByRole('button', { name: 'Lưu trữ' }).click();

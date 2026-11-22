@@ -2,6 +2,10 @@ import { test, expect } from './support/test';
 import { loadAccounts } from './support/accounts';
 import { signInThroughForm, signOutThroughMenu } from './support/ui';
 
+// The `gate` account's temporary password works exactly once per run: a retry could never pass,
+// so a failure here is reported as it is instead of cascading into a second, misleading failure.
+test.describe.configure({ retries: 0 });
+
 test.describe('sign-in, password and returnTo @smoke', () => {
   test('sign in and out; an off-site returnTo is refused; a guest is sent to sign-in with the path kept', async ({ page }) => {
     const { member } = loadAccounts();

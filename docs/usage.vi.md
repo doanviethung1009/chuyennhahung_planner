@@ -115,7 +115,7 @@ npm run e2e:ui     # chế độ UI của Playwright, để viết spec
 - **PostgreSQL (tùy chọn).** `E2E_DB=postgres E2E_DATABASE_URL=postgres://…/planner_e2e npm run e2e` chạy trên database cục bộ dùng một lần qua được rào chắn. CI dùng JSON store.
 - **Khi lỗi** còn lại `test-results/` (mỗi test lỗi một trace — có thể chứa cookie phiên, đừng chia sẻ) và `playwright-report/`, đều git bỏ qua. Mở bằng `npx playwright show-trace <trace.zip>`.
 - **CI.** `.github/workflows/e2e.yml` chạy trên pull request và push vào `main` có đụng `src/`, `messages/`, `e2e/`, `db/`, `next.config.ts`, lockfile, cấu hình Playwright hoặc một workflow, và chạy tay (`workflow_dispatch`). Chỉ mang tính tham khảo, như `CI`.
-- **Viết một spec.** Đặt ở `e2e/*.spec.ts`, import `test` và `expect` từ `e2e/support/test`, lấy ngữ cảnh đã đăng nhập bằng `test.use({ storageState: storageStatePath('member') })` (vai trò: `member`, `member2`, `editor`, `admin`, `super_admin`), chọn phần tử theo role hoặc nhãn hiển thị — không có `data-testid`. Đừng dựa vào trạng thái spec khác tạo ra, và trả lại mọi thứ bạn đã đổi trong nội dung seed.
+- **Viết một spec.** Đặt ở `e2e/*.spec.ts`, import `test` và `expect` từ `e2e/support/test`, lấy ngữ cảnh đã đăng nhập bằng `test.use({ storageState: storageStatePath('member') })` (vai trò: `member`, `member2`, `editor`, `admin`, `super_admin`), chọn phần tử theo role hoặc nhãn hiển thị — không có `data-testid`. Đừng dựa vào trạng thái spec khác tạo ra, và trả lại mọi thứ bạn đã đổi trong nội dung seed. Các spec chạy lần lượt theo tên file trên một kho dùng chung (`workers: 1`), nên spec nào đổi nội dung seed phải trả lại, và mật khẩu tạm của tài khoản `gate` chỉ dùng được một lần mỗi lần chạy (file đó không retry).
 
 ## Những việc thường làm
 
