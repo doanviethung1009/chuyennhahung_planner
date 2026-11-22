@@ -16,6 +16,8 @@ nó chạy được khi tắt JavaScript — không tile, không thư viện b�
 
 Một biến thể `preview` nhỏ hơn của cùng component xuất hiện ở trang chủ.
 
+`/map` đọc `?province=` (cùng hàng chip và `parseDestinationProvince` với `/destinations`): ghim và danh sách thu hẹp theo một tỉnh ngay trên server. Giá trị lạ thì hiện tất cả; URL đã lọc là `noindex, follow` với canonical về bản đồ gốc. Vì đọc `searchParams` nên `/map` được render theo từng request, không còn prerender.
+
 ## Dữ liệu
 
 Field `coords` của mỗi `Destination` — vĩ độ/kinh độ WGS84 thật — cùng với
@@ -72,6 +74,7 @@ các ghim thì không. Vị trí một cái ghim luôn được tính từ toạ
 | Đường dẫn | Vai trò |
 |---|---|
 | [`src/lib/map.ts`](../../src/lib/map.ts) | Phép chiếu, đường viền, bán kính ghim |
+| [`src/components/ui/province-filter-nav.tsx`](../../src/components/ui/province-filter-nav.tsx) | Hàng chip tỉnh dùng chung với `/destinations` |
 | [`src/components/map/vietnam-map.tsx`](../../src/components/map/vietnam-map.tsx) | SVG + ghim dạng link, biến thể `full` / `preview` |
 | [`src/app/[locale]/map/page.tsx`](../../src/app/[locale]/map/page.tsx) | Trang bản đồ |
 | [`src/components/sections/map-preview.tsx`](../../src/components/sections/map-preview.tsx) | Bản xem trước ở trang chủ |

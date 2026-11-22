@@ -5,44 +5,63 @@ import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
 import { destinations } from '@/content/destinations';
 import { isVisited } from '@/content/types';
+import { parseDestinationProvince } from '@/lib/destinations-filter';
+import { ProvinceFilterNav } from '@/components/ui/province-filter-nav';
 import { Container } from '@/components/ui/container';
 import { PageHeader } from '@/components/layout/page-header';
 import { VietnamMap } from '@/components/map/vietnam-map';
 
-type Params = { params: Promise<{ locale: Locale }> };
+type Params = {
+  params: Promise<{ locale: Locale }>;
+  searchParams: Promise<{ province?: string | string[] }>;
+};
 
-export async function generateMetadata({ params }: Params): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Params): Promise<Metadata> {
   const { locale } = await params;
+  const province = parseDestinationProvince((await searchParams).province);
   const t = await getTranslations({ locale, namespace: 'map' });
 
-  return buildPageMetadata({
+  // The canonical is always the bare map, so a filtered URL never competes with it.
+  const metadata = buildPageMetadata({
     href: '/map',
     locale,
     title: t('title'),
     description: t('description'),
   });
+  return province ? { ...metadata, robots: { index: false, follow: true } } : metadata;
 }
 
-export default async function MapPage({ params }: Params) {
+export default async function MapPage({ params, searchParams }: Params) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const province = parseDestinationProvince((await searchParams).province);
+  const visible = province ? destinations.filter((d) => d.provinceSlug === province) : destinations;
 
-  const [t, tRegion, tCommon] = await Promise.all([
+  const [t, tRegion, tCommon, tDest] = await Promise.all([
     getTranslations('map'),
     getTranslations('region'),
     getTranslations('common'),
+    getTranslations('destinations'),
   ]);
 
   return (
     <>
-      <PageHeader title={t('title')} description={t('description')} />
+      <PageHeader title={t('title')} description={t('description')}>
+        <ProvinceFilterNav
+          basePath="/map"
+          active={province}
+          locale={locale}
+          label={tDest('provinceFilterLabel')}
+          allLabel={tDest('allProvinces')}
+        />
+      </PageHeader>
 
       <Container width="wide">
         <div className="grid gap-12 py-12 md:py-16 lg:grid-cols-12 lg:gap-16">
           <div className="lg:col-span-5">
             <div className="rounded-2xl bg-surface-muted p-6 md:p-8">
               <VietnamMap
-                destinations={destinations}
+                destinations={visible}
                 locale={locale}
                 mapLabel={t('mapLabel')}
               />
@@ -86,7 +105,7 @@ export default async function MapPage({ params }: Params) {
             </p>
 
             <ul className="mt-6 flex list-none flex-col gap-1 p-0">
-              {destinations.map((destination) => (
+              {visible.map((destination) => (
                 <li key={destination.slug}>
                   <Link
                     href={{

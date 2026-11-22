@@ -16,6 +16,8 @@ JavaScript disabled — no tiles, no map library, no API key.
 
 A smaller `preview` variant of the same component appears on the home page.
 
+`/map` reads `?province=` (the same chips and `parseDestinationProvince` as `/destinations`): the pins and the list narrow to one province on the server. An unknown value shows everything; a filtered URL is `noindex, follow` with the canonical on the bare map. Because it reads `searchParams`, `/map` is rendered per request, no longer prerendered.
+
 ## Data
 
 The `coords` field on every `Destination` — real WGS84 latitude/longitude — plus
@@ -74,6 +76,7 @@ coordinates.
 | Path | Role |
 |---|---|
 | [`src/lib/map.ts`](../../src/lib/map.ts) | Projection, outline path, pin radius |
+| [`src/components/ui/province-filter-nav.tsx`](../../src/components/ui/province-filter-nav.tsx) | Province chips shared with `/destinations` |
 | [`src/components/map/vietnam-map.tsx`](../../src/components/map/vietnam-map.tsx) | SVG + anchored pins, `full` / `preview` variants |
 | [`src/app/[locale]/map/page.tsx`](../../src/app/[locale]/map/page.tsx) | Map page |
 | [`src/components/sections/map-preview.tsx`](../../src/components/sections/map-preview.tsx) | Home-page preview |
