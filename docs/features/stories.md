@@ -71,3 +71,5 @@ rich bodies means either a markdown pipeline or a block type in
 incremental patch.
 
 Covers are generated SVG until the owner supplies photographs.
+
+**Story reviews (STORY-REVIEWS-PROJ).** `PublicStory.reviews` holds `PublicReview` (via `toPublicReview` in `src/server/content/public.ts`): only `id`, `title`, `rating`, `visitedOn`, `body`, `pros` and `cons`. A story page and its RSC payload never carry `status`, `publishedAt`, timestamps, `subject`, `costVnd` or `author`. Only published reviews are included. Test: `tests/public-content.test.ts`.

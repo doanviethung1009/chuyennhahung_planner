@@ -20,6 +20,33 @@ import type {
  * the static seed.
  */
 
+/**
+ * Allow-list of the review fields a story page shows (STORY-REVIEWS-PROJ).
+ * No `status`, `publishedAt`, timestamps, `subject`, `costVnd` or `author`:
+ * a new `TravelReview` field stays private until it is added here on purpose.
+ */
+export interface PublicReview {
+  id: string;
+  title: LocalizedText;
+  rating: TravelReview["rating"];
+  visitedOn: string;
+  body: TravelReview["body"];
+  pros: TravelReview["pros"];
+  cons: TravelReview["cons"];
+}
+
+export function toPublicReview(review: TravelReview): PublicReview {
+  return {
+    id: review.id,
+    title: review.title,
+    rating: review.rating,
+    visitedOn: review.visitedOn,
+    body: review.body,
+    pros: review.pros,
+    cons: review.cons,
+  };
+}
+
 export interface PublicStory {
   slug: string;
   title: LocalizedText;
@@ -36,8 +63,8 @@ export interface PublicStory {
   plannerTemplateSlug: string | null;
   /** Allow-list projection (ADR 0026): no affiliate links, timestamps or coordinates reach a page or its RSC payload. */
   places: PublicPlace[];
-  /** Published reviews only. */
-  reviews: TravelReview[];
+  /** Published reviews only, as the allow-list projection. */
+  reviews: PublicReview[];
   gallery: string[];
   travelDates: { start: string; end: string };
   actualCost: TripCost | null;
@@ -123,10 +150,10 @@ async function toPublicStory(
       );
   }
 
-  const reviews: TravelReview[] = [];
+  const reviews: PublicReview[] = [];
   for (const id of story.reviewIds) {
     const review = await optional(() => repository.getReview(id));
-    if (review?.status === "published") reviews.push(review);
+    if (review?.status === "published") reviews.push(toPublicReview(review));
   }
 
   // Old stored documents predate the field, so read it defensively.
