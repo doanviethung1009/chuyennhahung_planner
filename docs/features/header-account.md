@@ -55,7 +55,12 @@ None. The control links to existing routes:
   ordinary links, Tab works as usual, ↓/↑ move between entries, Escape closes and
   returns focus to the button, a click or focus outside closes it.
 - **Mobile.** The drawer in `main-nav.tsx` shows a full-width "Đăng nhập" button
-  for a guest, or the name and the same entries for a member.
+  for a guest, or the name and the same entries for a member. While open it is a
+  modal dialog: focus moves into it, `main`, `footer` and the skip link are
+  `inert`, Tab loops between the menu toggle and the panel, Escape closes it, and
+  growing the viewport to the desktop layout closes it and releases the scroll lock.
+- **Loading.** Until the session is known the header holds an invisible 44px slot
+  where the icon or avatar will appear, so nothing shifts when it arrives.
 - **Sign out** sends `DELETE /api/planner/session` (same origin, so the route's
   same-origin check passes) and then does a full navigation to the home page so
   every client island re-reads the session. A failure shows an inline alert.

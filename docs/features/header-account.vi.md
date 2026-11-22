@@ -54,7 +54,12 @@ Không thêm route. Control dẫn tới các route sẵn có:
   link thường, Tab hoạt động như bình thường, ↓/↑ di chuyển giữa các mục, Escape
   đóng và trả focus về nút, bấm hoặc focus ra ngoài cũng đóng.
 - **Điện thoại.** Menu kéo ra trong `main-nav.tsx` hiện nút "Đăng nhập" rộng hết
-  hàng cho khách, hoặc tên và các mục như trên cho thành viên.
+  hàng cho khách, hoặc tên và các mục như trên cho thành viên. Khi mở nó là hộp
+  thoại modal: focus chuyển vào trong, `main`, `footer` và liên kết bỏ qua đều bị
+  `inert`, Tab xoay vòng giữa nút menu và panel, Escape đóng lại, và khi viewport
+  rộng lên bố cục desktop thì menu tự đóng và nhả khoá cuộn.
+- **Đang tải.** Cho đến khi biết phiên, header giữ sẵn một ô 44px vô hình nơi icon
+  hoặc avatar sẽ hiện ra, nên không có gì bị xê dịch khi nó xuất hiện.
 - **Đăng xuất** gửi `DELETE /api/planner/session` (cùng origin, nên qua được kiểm
   tra same-origin của route) rồi điều hướng hẳn về trang chủ để mọi phần client
   đọc lại phiên. Nếu lỗi, một thông báo hiện ngay tại chỗ.
