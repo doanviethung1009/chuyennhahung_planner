@@ -130,6 +130,7 @@ thiếu bản dịch.
 | Bộ dữ liệu | File | Số lượng |
 |---|---|---|
 | Điểm đến (8 đã đi, 8 chưa đi — không có `firstVisited`/`visits`) | [`destinations.ts`](../src/content/destinations.ts) | 16 |
+| Tỉnh (34 đơn vị cấp một sau đợt sáp nhập 2025; dữ liệu tham chiếu) | [`provinces.ts`](../src/content/provinces.ts) | 34 |
 | Chuyện đi chơi (nguồn seed / adapter `static` / fixture test; story đang chạy đọc từ repository nội dung) | [`stories.ts`](../src/content/stories.ts) | 6 |
 | Lịch trình | [`itineraries.ts`](../src/content/itineraries.ts) | 4 |
 | Review video | [`video-reviews.ts`](../src/content/video-reviews.ts) | 6 |
@@ -141,6 +142,8 @@ Các shape nằm trong [`src/content/types.ts`](../src/content/types.ts). Hai fi
 có ý nghĩa kiến trúc: `coords` của điểm đến là toạ độ WGS84 thật mà bản đồ chiếu
 lên, và `cover` trỏ tới tranh SVG sinh tự động đúng tinh thần thương hiệu
 (`npm run covers`) để site không bao giờ có ảnh lỗi.
+
+Một điểm đến được xếp vào tỉnh đúng một lần, qua `Destination.provinceSlug` bắt buộc; địa điểm và mọi entity khác suy ra tỉnh qua điểm đến của chúng, và không dữ liệu nào được lưu mang tỉnh ([ADR 0034](adr/0034-province-destination-link.vi.md)). `Destination.area` vẫn mang tính địa lý.
 
 `site.ts` được đánh dấu **cần chủ nhà xác nhận** — các handle và email liên hệ là
 giá trị hợp lý nhưng chưa được kiểm chứng.

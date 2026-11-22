@@ -43,5 +43,5 @@ mỗi cái xuất hiện đúng một lần, tên đủ hai ngôn ngữ, tọa �
 
 Vùng (Bắc/Trung/Nam) theo cách chia truyền thống. Tọa độ và danh sách sáp nhập
 được viết từ kiến thức, không phải bộ dữ liệu chính thức: cần đối chiếu Nghị
-quyết 202/2025/QH15 trước khi dựa vào. Chưa có quận/huyện/xã. Việc nối điểm đến
-hay chuyến đi với tỉnh cần quyết định riêng.
+quyết 202/2025/QH15 trước khi dựa vào. Chưa có quận/huyện/xã. Việc nối chuyến đi
+hoặc story với tỉnh, hay đưa tỉnh vào bản đồ thành viên, cần quyết định riêng. Liên kết với điểm đến đã được quyết định trong [ADR 0034](../adr/0034-province-destination-link.vi.md).

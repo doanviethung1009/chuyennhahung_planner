@@ -43,4 +43,4 @@ each appear once, names in both locales, coordinates inside Vietnam's bounds.
 Region (north/central/south) is the traditional grouping. Coordinates and the
 merger lists were written from knowledge, not an official dataset: verify against
 Nghị quyết 202/2025/QH15 before relying on them. No districts or wards. A future
-link from destinations or trips to provinces needs its own decision.
+link from trips or stories to provinces, or a province in the member map, needs its own decision. The destination link is decided in [ADR 0034](../adr/0034-province-destination-link.md).
