@@ -4,11 +4,11 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
 import { destinations } from '@/content/destinations';
-import { provincesWithDestinations } from '@/content/provinces';
 import { parseDestinationProvince } from '@/lib/destinations-filter';
 import type { Destination } from '@/content/types';
 import { Container } from '@/components/ui/container';
 import { PageHeader } from '@/components/layout/page-header';
+import { ProvinceFilterNav } from '@/components/ui/province-filter-nav';
 import { DestinationCard } from '@/components/cards/destination-card';
 
 type Params = {
@@ -17,13 +17,6 @@ type Params = {
 };
 
 const regions = ['north', 'central', 'south'] as const;
-
-const chipClass = (active: boolean) =>
-  `inline-flex min-h-11 items-center rounded-pill border px-4 text-sm font-medium transition-colors duration-200 ease-gentle ${
-    active
-      ? 'border-primary bg-primary text-primary-foreground'
-      : 'border-border-strong bg-surface text-ink-700 hover:border-primary hover:text-primary-strong'
-  }`;
 
 export async function generateMetadata({ params, searchParams }: Params): Promise<Metadata> {
   const { locale } = await params;
@@ -84,26 +77,14 @@ export default async function DestinationsPage({ params, searchParams }: Params)
           </div>
         }
       >
-        <nav aria-label={t('provinceFilterLabel')} className="mb-3">
-          <ul className="flex list-none flex-wrap gap-2 p-0">
-            <li>
-              <Link href="/destinations" aria-current={province ? undefined : 'true'} className={chipClass(!province)}>
-                {t('allProvinces')}
-              </Link>
-            </li>
-            {provincesWithDestinations.map((p) => (
-              <li key={p.slug}>
-                <Link
-                  href={{ pathname: '/destinations', query: { province: p.slug } }}
-                  aria-current={province === p.slug ? 'true' : undefined}
-                  className={chipClass(province === p.slug)}
-                >
-                  {p.name[locale]}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <ProvinceFilterNav
+          basePath="/destinations"
+          active={province}
+          locale={locale}
+          label={t('provinceFilterLabel')}
+          allLabel={t('allProvinces')}
+          className="mb-3"
+        />
         <nav aria-label={t('filterLabel')}>
           <ul className="flex list-none flex-wrap gap-2 p-0">
             {grouped.map(({ region, items }) => (
