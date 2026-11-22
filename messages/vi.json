@@ -151,6 +151,8 @@
     "title": "Khám phá",
     "description": "Những nơi hai đứa đã đặt chân tới và những nơi hai đứa muốn đi, kèm mùa nên đi. Nơi chưa đi chỉ có thông tin chung.",
     "count": "{count} điểm đến",
+    "provinceFilterLabel": "Lọc theo tỉnh / thành phố",
+    "allProvinces": "Tất cả tỉnh / thành",
     "filterLabel": "Lọc theo vùng",
     "empty": "Chưa có điểm đến nào trong vùng này."
   },

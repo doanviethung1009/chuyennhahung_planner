@@ -151,6 +151,8 @@
     "title": "Destinations",
     "description": "Places we have been and places we hope to go, with the season to go. Places we have not been yet carry general information only.",
     "count": "{count} destinations",
+    "provinceFilterLabel": "Filter by province or city",
+    "allProvinces": "All provinces",
     "filterLabel": "Filter by region",
     "empty": "No destinations in this region yet."
   },

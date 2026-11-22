@@ -37,6 +37,12 @@ Helper: `destinationBySlug`, `getDestination(slug)`.
 
 ## Cách hoạt động
 
+Trang danh sách đọc `?province=` (`parseDestinationProvince` trong `src/lib/destinations-filter.ts`):
+một hàng liên kết thường, mỗi tỉnh có điểm đến một liên kết, thu hẹp các nhóm vùng
+ngay trên server. Giá trị lạ thì hiện tất cả; URL đã lọc là `noindex, follow` với
+canonical về danh sách gốc. Vì đọc `searchParams` nên trang được render theo từng
+request, không còn prerender.
+
 Cả hai trang là server component; trang chi tiết prerender mọi slug theo từng
 locale qua `generateStaticParams` và gọi `notFound()` khi slug lạ.
 
@@ -57,6 +63,8 @@ JSON-LD `TouristDestination` được phát ra, mang toạ độ thật dưới 
 | [`src/components/cards/destination-card.tsx`](../../src/components/cards/destination-card.tsx) | Card |
 | [`src/components/sections/explored-destinations.tsx`](../../src/components/sections/explored-destinations.tsx) | Khối ở trang chủ |
 | [`src/content/destinations.ts`](../../src/content/destinations.ts) | Dữ liệu seed + hàm tra cứu |
+| [`src/lib/destinations-filter.ts`](../../src/lib/destinations-filter.ts) | Kiểm tra `?province=` |
+| [`tests/destinations-province-filter.test.ts`](../../tests/destinations-province-filter.test.ts) | Test bộ lọc |
 
 ## Test
 
@@ -67,7 +75,7 @@ JSON-LD `TouristDestination` được phát ra, mang toạ độ thật dưới 
 
 ## Giới hạn và câu hỏi còn mở
 
-Chưa lọc theo vùng hay địa hình, dù cả hai field đã có và phần UI thì rẻ — với tám
+Tỉnh là bộ lọc duy nhất (mỗi lần một tỉnh); chưa lọc theo địa hình, dù field đã có và phần UI thì rẻ — với tám
 điểm đến, một thanh lọc là trang trí nhiều hơn là hữu ích. Chưa có chỉ mục ngược:
 các hàm tra tham chiếu chéo quét toàn bộ bộ dữ liệu ở mỗi lần build, điều đó miễn
 phí ở quy mô này và sẽ cần một map khi vượt vài trăm mục.
