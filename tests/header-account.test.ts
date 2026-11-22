@@ -90,3 +90,43 @@ describe('mobile drawer focus management', () => {
     expect(source).toMatch(/<nav aria-label=\{navLabel\} className="flex flex-col/);
   });
 });
+
+describe('header navigation (UXS-2)', () => {
+  const main = read('components/layout/main-nav.tsx');
+  const header = read('components/layout/site-header.tsx');
+  const account = read('components/layout/account-menu.tsx');
+  const footer = read('components/layout/site-footer.tsx');
+
+  it('picks the CTA by session: guests the planner page, members the new-trip page', () => {
+    expect(main).toMatch(/signedIn \? memberCta : guestCta/);
+    expect(header).toMatch(/guestCta=\{\{ href: '\/plan-your-trip'/);
+    expect(header).toMatch(/memberCta=\{\{ href: '\/my-trips\/new'/);
+  });
+
+  it('holds the CTA slot, hidden, while the session loads (no label flash)', () => {
+    expect(main).toMatch(/account\.status === 'loading'[\s\S]{0,80}'aria-hidden': true, tabIndex: -1/);
+    expect(main).toMatch(/invisible \[@media\(scripting:none\)\]:visible/);
+  });
+
+  it('shows the sign-in word from 2xl and the icon below', () => {
+    expect(account).toMatch(/hidden whitespace-nowrap 2xl:inline/);
+    expect(account).toMatch(/aria-label=\{t\('signIn'\)\}/);
+  });
+
+  it('discloses groups as buttons with aria-expanded, closing on Escape', () => {
+    expect(main).toMatch(/aria-expanded=\{open\}[\s\S]{0,80}aria-controls=\{panelId\}/);
+    expect(main).toMatch(/event\.key === 'Escape' && open/);
+  });
+
+  it('has no text under 12px in the header or footer (UXA-16)', () => {
+    for (const source of [header, main, account, footer]) expect(source).not.toMatch(/text-\[(?:0\.[0-6]\d*|0\.7[0-4]\d*)rem\]|text-\[(?:\d|1[01])px\]/);
+  });
+
+  it('keeps the footer to one theme per column and no sign-in surprise for guests', () => {
+    expect(footer).toMatch(/heading: 'exploreHeading'/);
+    expect(footer).toMatch(/heading: 'planHeading'/);
+    expect(footer).toMatch(/heading: 'aboutHeading'/);
+    expect(footer).not.toMatch(/href: '\/my-trips'/);
+    for (const href of ['/places', '/trip-templates', '/map']) expect(footer).toContain(`href: '${href}'`);
+  });
+});

@@ -264,3 +264,22 @@ Báo cáo dừng ở đây theo yêu cầu. Không có session UXS nào được
 
 ## Còn lại chưa kiểm (đề xuất đưa vào UXS-7 và build production)
 B2 (người dùng thực), B6 và B7 (độ trễ và lỗi), B9 (trình đọc màn hình), bẫy Tab của drawer và menu tài khoản desktop trên build production, viewport 1180 và 1536.
+
+---
+
+# Phụ lục B — Kết quả UXS-2: Header và điều hướng (2026-11-23)
+
+Quyết định của Owner: UXD-1 nhóm hai mục; UXD-2 khách → `/plan-your-trip`, thành viên → `/my-trips/new` ("Tạo chuyến đi"); UXD-4 chữ "Đăng nhập" từ 1536px; UXD-8 giữ query khi đổi ngôn ngữ. Tài liệu: [header-navigation](../../docs/features/header-navigation.vi.md).
+
+| Finding | Trạng thái | Cách xử lý |
+|---|---|---|
+| UXA-01 | **Đã xử lý** | Nhóm "Khám phá" (điểm đến, địa điểm, bản đồ nhà Hưng) và "Lên lịch trình" (lịch trình, lịch trình mẫu); mỗi trang một lần bấm (desktop và drawer). |
+| UXA-02 | **Đã xử lý** | CTA theo phiên: khách `/plan-your-trip`, thành viên `/my-trips/new`; ô giữ chỗ vô hình khi đang tải nên không đổi nhãn sau hydrate. |
+| UXA-04 | **Đã xử lý một phần** | Chữ "Đăng nhập" từ 1536px; dưới đó vẫn là icon (không còn chỗ ở 1280px). Cần nghiên cứu người dùng (B2) vẫn mở. |
+| UXA-05 | **Đã xử lý** | Link đổi ngôn ngữ giữ `?query` (gồm `returnTo`), vẫn là `<a>` thật. `returnTo` vẫn mang đường dẫn ngôn ngữ cũ; trang đăng nhập nhận cả hai. |
+| UXA-06 | **Giữ nguyên có chủ đích** | Drawer dưới 1280px; hàng VI ở 1280px chỉ dư 13px nên không hạ breakpoint. |
+| UXA-16 | **Đã xử lý** | Tagline 12px. |
+| UXA-18 | **Đã xử lý** | Footer ba cột Khám phá / Lập chuyến / Nhà Hưng; bỏ "Chuyến đi của tôi" khỏi footer. |
+| UXA-21 | **Đã xử lý** | `/map` là "Bản đồ nhà Hưng" / "Hưng's map"; tab thành viên là "Bản đồ của bạn" / "Your map" (chỉ chuỗi). |
+
+**Số đo (trình duyệt tích hợp, dev server, trang chủ, khách):** hàng nav một dòng, mục 44px, không đè, không cuộn ngang. VI dư 13px (1280), 21px (1440), 51px (1536, có chữ đăng nhập); EN dư 53, 133, 149px. 1024 và 1180: drawer cả hai ngôn ngữ. Chưa kiểm: thành viên đăng nhập trong trình duyệt (có test DOM), build production, bẫy Tab của drawer (UXS-7).

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { locales, pathnames, routing } from '../src/i18n/routing';
-import { footerExtraNav, primaryNav } from '../src/components/layout/nav-items';
+import { footerExtraNav, isGroup, primaryLinks, primaryNav } from '../src/components/layout/nav-items';
 import vi from '../messages/vi.json';
+import en from '../messages/en.json';
 
 describe('route topology', () => {
   it('defines every pathname in every locale', () => {
@@ -48,23 +49,39 @@ describe('route topology', () => {
   });
 
   it('points every navigation entry at a real, static route', () => {
-    for (const item of [...primaryNav, ...footerExtraNav]) {
+    for (const item of [...primaryLinks, ...footerExtraNav]) {
       expect(pathnames, `nav "${item.key}" → unknown route`).toHaveProperty(item.href);
       expect(item.href, `nav "${item.key}" is a dynamic route`).not.toContain('[');
       expect(vi.nav, `nav "${item.key}" has no label`).toHaveProperty(item.key);
     }
   });
 
-  it('exposes all seven primary navigation entries', () => {
-    expect(primaryNav.map((item) => item.key)).toEqual([
+  it('exposes the primary navigation, with places, templates and the map one click away', () => {
+    expect(primaryNav.map((entry) => entry.key)).toEqual([
       'home',
       'stories',
-      'destinations',
-      'itineraries',
+      'groupExplore',
+      'groupPlan',
       'communityTrips',
       'reviews',
       'about',
     ]);
+    expect(primaryLinks.map((item) => item.key)).toEqual([
+      'home',
+      'stories',
+      'destinations',
+      'places',
+      'map',
+      'itineraries',
+      'tripTemplates',
+      'communityTrips',
+      'reviews',
+      'about',
+    ]);
+    for (const group of primaryNav.filter(isGroup)) {
+      expect(vi.nav, `group "${group.key}" has no label`).toHaveProperty(group.key);
+      expect(en.nav, `group "${group.key}" has no EN label`).toHaveProperty(group.key);
+    }
   });
 
   it('localizes the admin content routes under the admin prefix', () => {

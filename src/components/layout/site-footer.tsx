@@ -6,10 +6,13 @@ import { Container } from '@/components/ui/container';
 import type { NavKey } from './nav-items';
 
 interface Column {
-  heading: 'exploreHeading' | 'aboutHeading';
+  heading: 'exploreHeading' | 'planHeading' | 'aboutHeading';
   links: Array<{ key: NavKey; href: StaticPathname }>;
 }
 
+// One theme per column. "My trips" is not here: the footer is static (it
+// cannot know who is signed in), and a guest who followed it would land on a
+// sign-in page; members reach it from the account menu.
 const columns: Column[] = [
   {
     heading: 'exploreHeading',
@@ -18,8 +21,14 @@ const columns: Column[] = [
       { key: 'destinations', href: '/destinations' },
       { key: 'places', href: '/places' },
       { key: 'map', href: '/map' },
+    ],
+  },
+  {
+    heading: 'planHeading',
+    links: [
       { key: 'itineraries', href: '/itineraries' },
       { key: 'tripTemplates', href: '/trip-templates' },
+      { key: 'planTrip', href: '/plan-your-trip' },
     ],
   },
   {
@@ -27,8 +36,7 @@ const columns: Column[] = [
     links: [
       { key: 'about', href: '/about' },
       { key: 'reviews', href: '/reviews' },
-      { key: 'planTrip', href: '/plan-your-trip' },
-      { key: 'myTrips', href: '/my-trips' },
+      { key: 'communityTrips', href: '/community-trips' },
     ],
   },
 ];
@@ -44,7 +52,7 @@ export async function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-border-subtle bg-surface-muted">
       <Container width="wide">
-        <div className="grid gap-10 py-14 md:grid-cols-2 md:py-16 lg:grid-cols-4">
+        <div className="grid gap-10 py-14 sm:grid-cols-2 md:grid-cols-3 md:py-16 lg:grid-cols-5">
           <div className="lg:col-span-1">
             <p className="font-display text-xl font-semibold text-ink-900">
               {siteConfig.name}

@@ -49,6 +49,7 @@ Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
 | CMS nội dung quản trị | [admin-content-cms.vi.md](admin-content-cms.vi.md) | `/quan-tri/noi-dung/...` — biên tập viên và admin sửa chuyến đi, địa điểm, đánh giá với vi/en song song, xuất bản và duyệt (ADR 0011) |
 | Trang Travel công khai từ kho nội dung | [public-travel-cms.vi.md](public-travel-cms.vi.md) | Trang chủ, chuyến đi, điểm đến và sitemap đọc chuyến đi đã xuất bản từ kho nội dung, động, nên sửa trong CMS hiện ngay ở request kế tiếp (ADR 0012) |
 | Tài khoản trên header | [header-account.vi.md](header-account.vi.md) | Biểu tượng đăng nhập cho khách, menu tài khoản (Chuyến đi của tôi, mật khẩu, quản trị, đăng xuất) cho thành viên, trên máy tính và điện thoại |
+| Điều hướng header | [header-navigation.vi.md](header-navigation.vi.md) | Menu chính gom nhóm (Khám phá, Lên lịch trình), CTA theo vai trò, chữ đăng nhập ở 2xl, đổi ngôn ngữ giữ query, footer ba chủ đề |
 | Continue Planning trên trang chủ | [home-continue-planning.vi.md](home-continue-planning.vi.md) | Dải phía trên hero cho thành viên đã đăng nhập: tạo chuyến đầu tiên, hoặc Continue Planning chuyến chưa xong kế tiếp; khách thấy trang không đổi |
 | Tạo chuyến đi trống | [create-blank-trip.vi.md](create-blank-trip.vi.md) | `/my-trips/new` — nút và biểu mẫu tạo chuyến đi trên Chuyến đi của tôi, `source: "blank"` |
 | Trạng thái lỗi và chờ | [error-loading-states.vi.md](error-loading-states.vi.md) | `error.tsx`, `global-error.tsx`, `loading.tsx` dùng chung, trang chủ rỗng, khung lỗi cho stories và chuyến đi cộng đồng (UXS-1) |
