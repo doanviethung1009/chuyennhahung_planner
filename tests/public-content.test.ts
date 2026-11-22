@@ -257,3 +257,21 @@ describe('PublicStory.reviews projection (STORY-REVIEWS-PROJ)', () => {
     );
   });
 });
+
+describe('PublicStory has no actualCost (STORY-API-PROJ)', () => {
+  it('never carries the recorded trip cost, in the list or on the detail', async () => {
+    await publish('with-cost', undefined, {
+      actualCost: {
+        partySize: 2,
+        currency: 'VND',
+        breakdown: [{ category: 'stay', label: bilingual('Khách sạn', 'Hotel'), amountVnd: 987654 }],
+        note: null,
+      },
+    });
+    const detail = await content().getStory('with-cost');
+    const listed = (await content().listStories()).find((s) => s.slug === 'with-cost');
+    expect(detail).not.toBeNull();
+    expect(Object.keys(detail ?? {})).not.toContain('actualCost');
+    expect(JSON.stringify([detail, listed])).not.toMatch(/actualCost|987654/);
+  });
+});

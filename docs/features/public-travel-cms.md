@@ -45,7 +45,7 @@ Every affected page and the sitemap declare `dynamic = 'force-dynamic'`; there i
 ## Limits and open questions
 
 - Every view reads the store; single instance only until the content PostgreSQL store exists.
-- `gallery` and `actualCost` are not rendered (gallery items have no alt text; no agreed layout for the cost summary).
+- `gallery` is not rendered (gallery items have no alt text). `actualCost` is not rendered and no longer reaches `PublicStory` or `GET /api/travel/stories*` (STORY-API-PROJ); re-add it, projected, when the cost summary layout is agreed.
 - Images from hosts other than `images.unsplash.com` are served unoptimized; the host list in `src/lib/image-src.ts` must stay in step with `next.config.ts`.
 - The seeded stories carry approximate trip dates (owner to correct).
 - The story page still loads template days through `@/server/content/instance`, because `PublicStory` carries only the template slug.

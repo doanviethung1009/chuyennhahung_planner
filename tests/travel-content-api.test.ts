@@ -231,6 +231,42 @@ describe('story publishing and the public read path', () => {
     expect((await detail.json()).slug).toBe(slug);
   });
 
+  it('serves the public story as an allow-list, with no cost, status or reference lists', async () => {
+    const costSlug = 'api-cost-story';
+    await routes.adminStories.POST(
+      authed(
+        storyFixture({
+          slug: costSlug,
+          actualCost: {
+            partySize: 2,
+            currency: 'VND',
+            breakdown: [{ category: 'stay', label: { vi: 'Khách sạn', en: 'Hotel' }, amountVnd: 987654 }],
+            note: null,
+          },
+        }),
+      ),
+    );
+    await routes.adminStoryStatus.POST(authed({ action: 'publish' }), params({ slug: costSlug }));
+    const keys = [
+      'content', 'cover', 'destinationSlug', 'excerpt', 'gallery', 'plannerTemplateSlug', 'publishedAt',
+      'readingMinutes', 'seo', 'slug', 'title', 'travelDates', 'travelStyle', 'updatedAt',
+    ];
+
+    const detail = await routes.publicStory.GET(
+      new Request(`${BASE}/api/travel/stories/${costSlug}`),
+      params({ slug: costSlug }),
+    );
+    const detailBody = await detail.json();
+    expect(Object.keys(detailBody).sort()).toEqual(keys);
+
+    const list = await routes.publicStories.GET(new Request(`${BASE}/api/travel/stories`));
+    const listed = (await list.json()).stories.find((x: { slug: string }) => x.slug === costSlug);
+    expect(Object.keys(listed).sort()).toEqual(keys);
+    expect(JSON.stringify([detailBody, listed])).not.toMatch(
+      /actualCost|"status"|createdAt|placeSlugs|reviewIds|itinerarySlugs|987654/,
+    );
+  });
+
   it('rejects an unknown publish action with 422', async () => {
     const response = await routes.adminStoryStatus.POST(
       authed({ action: 'delete-everything' }),

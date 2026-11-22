@@ -45,7 +45,7 @@ Chưa biết: hiện chạy bao nhiêu instance app (chưa kiểm `deploy/compos
    | `destinationSlugs: string[]` | `destinationSlug` (một, bắt buộc) | `destinationSlugs = [destinationSlug]` hoặc `[]` |
    | `featured: boolean` | không có | bỏ: không nơi nào đọc (trang chủ dùng mới-nhất-trước) |
    | `plannerTemplateSlug?` | không có (template trỏ ngược bằng `sourceStorySlug`) | `plannerTemplateSlug: string \| null`, lấy từ một trường story mới (bên dưới) |
-   | không có | `travelDates`, `gallery`, `actualCost`, `placeSlugs`, `reviewIds`, `itinerarySlugs`, `seo`, `updatedAt` | `places: Place[]`, `reviews: TravelReview[]` (chỉ published), `gallery`, `travelDates`, `actualCost`, `updatedAt`, `seo` đã resolve |
+   | không có | `travelDates`, `gallery`, `actualCost`, `placeSlugs`, `reviewIds`, `itinerarySlugs`, `seo`, `updatedAt` | `places: Place[]`, `reviews: TravelReview[]` (chỉ published), `gallery`, `travelDates`, `updatedAt`, `seo` đã resolve |
 
    Cần hai thay đổi schema thuần cộng thêm để sáu story tĩnh sống sót khi chuyển: `storyInputSchema.plannerTemplateSlug: slugSchema.nullable().default(null)` (story Đà Lạt tĩnh liên kết một template cắt từ một story *khác*, nên không suy ra được), và `storyInputSchema.destinationSlug` cùng `sourceSnapshotSchema.destinationSlug` thành **nullable** (hai story tĩnh không có destination). Cả hai chỉ mở rộng thứ được chấp nhận, nên mọi document đã lưu vẫn hợp lệ.
 
