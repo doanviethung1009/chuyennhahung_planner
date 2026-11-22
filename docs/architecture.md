@@ -127,6 +127,7 @@ missing translation.
 | Collection | File | Count |
 |---|---|---|
 | Destinations (8 visited, 8 not visited yet — those carry no `firstVisited`/`visits`) | [`destinations.ts`](../src/content/destinations.ts) | 16 |
+| Provinces (the 34 first-level units after the 2025 merger; reference data) | [`provinces.ts`](../src/content/provinces.ts) | 34 |
 | Stories (seed source / `static` adapter / test fixture; live stories come from the content repository) | [`stories.ts`](../src/content/stories.ts) | 6 |
 | Itineraries | [`itineraries.ts`](../src/content/itineraries.ts) | 4 |
 | Video reviews | [`video-reviews.ts`](../src/content/video-reviews.ts) | 6 |
@@ -138,6 +139,8 @@ Shapes live in [`src/content/types.ts`](../src/content/types.ts). Two fields
 carry architectural weight: a destination's `coords` are real WGS84 values that
 the map projects, and `cover` points at generated on-brand SVG artwork
 (`npm run covers`) so the site ships with no broken image.
+
+A destination is placed in a province once, through the required `Destination.provinceSlug`; places and every other entity derive their province through their destination, and nothing persisted carries one ([ADR 0034](adr/0034-province-destination-link.md)). `Destination.area` stays geographic.
 
 `site.ts` is flagged **owner action required** — the handles and contact email
 are plausible defaults, not verified accounts.
