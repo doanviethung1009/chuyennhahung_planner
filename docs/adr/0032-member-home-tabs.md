@@ -15,7 +15,7 @@ Separately, the owner suspected the shared map shows no data. It does not: it sh
 
 ## Decision
 
-1. **Three sections: Map (default), Trips, Sharing.** One at a time, one `<h1>` for the page, one `<h2>` per section.
+1. **Three sections: Trips (default), Map, Sharing.** One at a time, one `<h1>` for the page, one `<h2>` per section.
 2. **The section is `?tab=map|trips|share`, read on the server** (`searchParams`). A missing or unknown value is the default and a repeated parameter uses its first value; the raw value is never echoed. The page was already dynamic and private, so nothing is lost to caching. Deep links, Back/Forward and no-JavaScript browsers work; `returnTo` already keeps the query for `/my-trips`.
 3. **Real links, not an ARIA `tablist`.** A `<nav>` of three links, `aria-current="page"` on the open one, targets ≥44px. Each section is its own URL answered by the server, so the tablist pattern (roving tabindex, arrow keys, client state) would be both heavier and the wrong semantics.
 4. **Each section reads only its own data.** Map: `getMemberMap`. Sharing: `getMemberMapShareOverview` (the public preview plus one number). Trips: `getMemberSession` (`identify` only) and the client `MyTrips`. A guest sees the empty map and sign-in on every tab, with no tab bar, and `MyTrips` and the share panel are not mounted (ADR 0029 and 0031 invariants kept).

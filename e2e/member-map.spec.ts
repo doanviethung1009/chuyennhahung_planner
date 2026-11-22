@@ -32,12 +32,12 @@ test.describe('member map @smoke', () => {
       await page.getByLabel('Tên chuyến đi').fill('E2E bản đồ riêng');
       await page.getByRole('button', { name: 'Lưu chuyến đi' }).click();
       await expect(page).toHaveURL(/\/chuyen-di-cua-toi\/trip_/);
-      await page.goto('/chuyen-di-cua-toi');
+      await page.goto('/chuyen-di-cua-toi?tab=map');
       await expect(page.getByRole('heading', { name: 'Các điểm trên bản đồ' })).toBeVisible();
 
       const other = await browser.newContext({ storageState: storageStatePath('editor') });
       const otherPage = await other.newPage();
-      await otherPage.goto('/chuyen-di-cua-toi');
+      await otherPage.goto('/chuyen-di-cua-toi?tab=map');
       await expect(otherPage.getByRole('heading', { name: 'Các điểm trên bản đồ' })).toHaveCount(0);
       await expect(otherPage.getByRole('link', { name: 'Lên kế hoạch chuyến đi' }).first()).toBeVisible();
       await other.close();

@@ -80,25 +80,25 @@ describe('/my-trips page (ADR 0032)', () => {
     state.calls = [];
   });
 
-  it('shows the map under the tab bar by default and for an unknown tab, reading only the map', async () => {
-    for (const tab of [undefined, 'map', 'nope', ['nope', 'share']]) {
-      state.calls = [];
-      const { names, active } = await page(tab);
-      expect(names).toContain('MemberMapView');
-      expect(names).not.toContain('MyTrips');
-      expect(names).not.toContain('MemberMapSharePanel');
-      expect(active).toBe('map');
-      expect(state.calls).toEqual(['getMemberMap']);
-    }
+  it('shows the map on ?tab=map, reading only the map', async () => {
+    const { names, active } = await page('map');
+    expect(names).toContain('MemberMapView');
+    expect(names).not.toContain('MyTrips');
+    expect(names).not.toContain('MemberMapSharePanel');
+    expect(active).toBe('map');
+    expect(state.calls).toEqual(['getMemberMap']);
   });
 
-  it('shows only the trip list on ?tab=trips, reading the session but not the map or the overview', async () => {
-    const { names, active } = await page('trips');
-    expect(names).toContain('MyTrips');
-    expect(names).not.toContain('MemberMapView');
-    expect(names).not.toContain('MemberMapSharePanel');
-    expect(active).toBe('trips');
-    expect(state.calls).toEqual(['getMemberSession']);
+  it('shows only the trip list by default, on ?tab=trips and for an unknown tab, reading the session but not the map or the overview', async () => {
+    for (const tab of [undefined, 'trips', 'nope', ['nope', 'share']]) {
+      state.calls = [];
+      const { names, active } = await page(tab);
+      expect(names).toContain('MyTrips');
+      expect(names).not.toContain('MemberMapView');
+      expect(names).not.toContain('MemberMapSharePanel');
+      expect(active).toBe('trips');
+      expect(state.calls).toEqual(['getMemberSession']);
+    }
   });
 
   it('shows the sharing panel with its preview on ?tab=share', async () => {
