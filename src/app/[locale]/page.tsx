@@ -17,6 +17,7 @@ import { AboutSection } from '@/components/sections/about-section';
 import { CommunityTripsSection } from '@/components/sections/community-trips-section';
 import { getCommunityTrips } from '@/server/community/public';
 import { CommunityReviewsSection } from '@/components/sections/community-reviews-section';
+import { HomeEmpty } from '@/components/home/home-empty';
 import { HomeMemberBand } from '@/components/home/home-member-band';
 import { readHomeMember } from '@/server/planner/home-page';
 
@@ -43,7 +44,7 @@ export default async function HomePage({ params }: Params) {
 
   const storiesNewestFirst = await (await getPublicContent()).listStories();
   const featured = storiesNewestFirst[0];
-  if (!featured) return null;
+  if (!featured) return <HomeEmpty />;
 
   const communityTrips = await getCommunityTrips(3);
   // The only request-dependent read on this page, and only here (ADR 0022).

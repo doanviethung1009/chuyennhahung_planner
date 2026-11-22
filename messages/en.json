@@ -139,13 +139,21 @@
       "title": "Trips from fellow travellers",
       "lead": "Real itineraries shared by readers. Every trip is reviewed by the Nhà Hưng team before it appears here.",
       "viewAll": "See all trips"
+    },
+    "empty": {
+      "title": "The home page is being prepared",
+      "body": "No story has been published yet. In the meantime, you can browse the trip templates or start a new trip of your own.",
+      "templates": "Browse trip templates",
+      "newTrip": "Create a new trip"
     }
   },
   "stories": {
     "title": "Stories",
     "description": "Every trip we've written up — the ones that went well, and the ones that didn't.",
     "count": "{count} stories",
-    "empty": "No stories here yet."
+    "empty": "No stories here yet.",
+    "errorTitle": "The stories could not be loaded",
+    "errorBody": "Something went wrong while reading the data. The list is not empty, it just did not load. Please try again in a few minutes."
   },
   "destinations": {
     "title": "Destinations",
@@ -525,7 +533,9 @@
     "itinerary": "Itinerary",
     "day": "Day {number}",
     "anytime": "Flexible",
-    "budgetActual": "Actually spent"
+    "budgetActual": "Actually spent",
+    "errorTitle": "The trip could not be loaded",
+    "retry": "Try again"
   },
   "share": {
     "title": "Share this trip",
@@ -1322,7 +1332,9 @@
     "by": "Shared by {author}",
     "byAnonymous": "An anonymous traveller",
     "moderationNote": "Every trip is reviewed by Nhà Hưng before it is shown. The content is written by travellers and does not speak for Nhà Hưng.",
-    "takedown": "Want a trip removed? Send a request to"
+    "takedown": "Want a trip removed? Send a request to",
+    "errorTitle": "The community trips could not be loaded",
+    "errorBody": "Something went wrong while reading the data. The list is not empty, it just did not load. Please try again in a few minutes."
   },
   "adminRunbook": {
     "metaTitle": "Runbook",
@@ -1851,5 +1863,12 @@
     "bucket1": "1 visit",
     "bucket2": "2–3 visits",
     "bucket3": "4 or more visits"
+  },
+  "states": {
+    "loading": "Loading…",
+    "errorTitle": "This page could not load",
+    "errorBody": "Something went wrong while reading the data. Try again, or go back to the home page and return in a few minutes.",
+    "retry": "Try again",
+    "backHome": "Back to the home page"
   }
 }
