@@ -9,17 +9,17 @@ import { daLatTripInput, makeOwner, makePlanner } from './planner-helpers';
 /** ADR 0032: the member home's tab is a server-read query, and each tab reads only its own data. */
 
 describe('parseMemberHomeTab', () => {
-  it('accepts exactly the three known tabs and defaults to the map', () => {
+  it('accepts exactly the three known tabs and defaults to the trips', () => {
     for (const tab of MEMBER_HOME_TABS) expect(parseMemberHomeTab(tab)).toBe(tab);
-    expect(DEFAULT_MEMBER_HOME_TAB).toBe('map');
+    expect(DEFAULT_MEMBER_HOME_TAB).toBe('trips');
     for (const raw of [undefined, '', 'MAP', 'trips ', '<script>', '__proto__', 'archived']) {
-      expect(parseMemberHomeTab(raw)).toBe('map');
+      expect(parseMemberHomeTab(raw)).toBe('trips');
     }
   });
 
   it('uses the first value of a repeated parameter', () => {
     expect(parseMemberHomeTab(['share', 'trips'])).toBe('share');
-    expect(parseMemberHomeTab(['nope', 'share'])).toBe('map');
+    expect(parseMemberHomeTab(['nope', 'share'])).toBe('trips');
   });
 });
 

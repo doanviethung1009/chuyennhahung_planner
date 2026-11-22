@@ -6,7 +6,7 @@
  */
 export const MEMBER_HOME_TABS = ['map', 'trips', 'share'] as const;
 export type MemberHomeTab = (typeof MEMBER_HOME_TABS)[number];
-export const DEFAULT_MEMBER_HOME_TAB: MemberHomeTab = 'map';
+export const DEFAULT_MEMBER_HOME_TAB: MemberHomeTab = 'trips';
 
 export function parseMemberHomeTab(raw: string | string[] | undefined): MemberHomeTab {
   const value = Array.isArray(raw) ? raw[0] : raw;

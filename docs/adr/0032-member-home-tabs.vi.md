@@ -15,7 +15,7 @@ Ngoài ra chủ nghi bản đồ chia sẻ không có dữ liệu. Thực tế k
 
 ## Quyết định
 
-1. **Ba mục: Bản đồ (mặc định), Chuyến đi, Chia sẻ.** Mỗi lần một mục, một `<h1>` cho trang, một `<h2>` cho mỗi mục.
+1. **Ba mục: Chuyến đi (mặc định), Bản đồ, Chia sẻ.** Mỗi lần một mục, một `<h1>` cho trang, một `<h2>` cho mỗi mục.
 2. **Mục được chọn bằng `?tab=map|trips|share`, đọc phía server** (`searchParams`). Giá trị thiếu hoặc lạ → mặc định, tham số lặp lấy giá trị đầu; giá trị thô không bao giờ được phản chiếu ra. Trang vốn đã dynamic và private nên không mất cache. Liên kết sâu, Back/Forward và trình duyệt tắt JavaScript đều chạy; `returnTo` đã giữ query cho `/my-trips`.
 3. **Liên kết thật, không dùng ARIA `tablist`.** Một `<nav>` ba liên kết, mục đang mở có `aria-current="page"`, đích bấm ≥44px. Mỗi mục là một URL do server trả, nên mẫu tablist (roving tabindex, phím mũi tên, state client) vừa nặng hơn vừa sai ngữ nghĩa.
 4. **Mỗi mục chỉ đọc dữ liệu của nó.** Bản đồ: `getMemberMap`. Chia sẻ: `getMemberMapShareOverview` (bản xem trước công khai kèm một con số). Chuyến đi: `getMemberSession` (chỉ `identify`) và `MyTrips` phía client. Khách thấy bản đồ trống và đăng nhập ở mọi tab, không có thanh tab, và không mount `MyTrips` hay panel chia sẻ (giữ bất biến ADR 0029, 0031).
