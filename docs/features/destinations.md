@@ -37,6 +37,12 @@ Helpers: `destinationBySlug`, `getDestination(slug)`.
 
 ## How it works
 
+The index reads `?province=` (`parseDestinationProvince` in `src/lib/destinations-filter.ts`):
+a row of plain links, one per province that holds a destination, narrows the
+region groups on the server. An unknown value shows everything; a filtered URL
+is `noindex, follow` with the canonical on the bare list. Because it reads
+`searchParams` the index is rendered per request, no longer prerendered.
+
 Both pages are server components; the detail page prerenders every slug per
 locale through `generateStaticParams` and calls `notFound()` on an unknown slug.
 
@@ -57,6 +63,8 @@ no edit to the destination. Video reviews resolve through `destinationSlug`.
 | [`src/components/cards/destination-card.tsx`](../../src/components/cards/destination-card.tsx) | Card |
 | [`src/components/sections/explored-destinations.tsx`](../../src/components/sections/explored-destinations.tsx) | Home-page section |
 | [`src/content/destinations.ts`](../../src/content/destinations.ts) | Seed data + lookups |
+| [`src/lib/destinations-filter.ts`](../../src/lib/destinations-filter.ts) | `?province=` validation |
+| [`tests/destinations-province-filter.test.ts`](../../tests/destinations-province-filter.test.ts) | Filter tests |
 
 ## Tests
 
@@ -67,7 +75,7 @@ no edit to the destination. Video reviews resolve through `destinationSlug`.
 
 ## Limits and open questions
 
-No filtering by region or terrain, although both fields exist and the UI would be
+Province is the only filter (one province at a time); there is none for terrain, although the field exists and the UI would be
 cheap — at eight destinations a filter bar is more chrome than help. There is no
 reverse index: the cross-reference lookups scan the collections on every build,
 which is free at this size and would need a map past a few hundred items.
