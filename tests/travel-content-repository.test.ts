@@ -840,6 +840,16 @@ describe('story ↔ collection ↔ template links', () => {
     ).resolves.toBeDefined();
   });
 
+  it('treats an explicit undefined in a story patch as "not provided"', async () => {
+    await repo.createStory(storyFixture({ plannerTemplateSlug: 'ghost-template' }));
+    const updated = await repo.updateStory('test-story', {
+      plannerTemplateSlug: undefined,
+      excerpt: { vi: 'Mới', en: 'New' },
+    });
+    expect(updated.plannerTemplateSlug).toBe('ghost-template');
+    expect(updated.excerpt.en).toBe('New');
+  });
+
   it('reports a dangling plannerTemplateSlug in the integrity sweep', async () => {
     await repo.createStory(storyFixture({ plannerTemplateSlug: 'ghost-template' }));
     const issues = await repo.validateIntegrity();
