@@ -47,7 +47,16 @@ travel writing does, and in English falls back to `Intl.NumberFormat` currency.
 ## How it works
 
 Server components throughout. The index lists every itinerary with duration,
-price-from and pace; the detail page renders `highlights`, then `dayByDay` as an
+price-from and pace, and can be narrowed to one province with `?province=`
+(`parseItineraryProvince` in `src/lib/itineraries-filter.ts`). An itinerary belongs
+to a province when any destination in its `destinationSlugs` does. The chips are
+plain links rendered by `ProvinceFilterNav`, offering only provinces that match at
+least one itinerary, so no chip leads to an empty list; the count follows the
+filter, unknown values fall back to the full list, and a filtered URL is
+`noindex, follow` with the canonical on the bare list. Because the index now reads
+`searchParams`, it renders per request instead of being prerendered.
+
+ the detail page renders `highlights`, then `dayByDay` as an
 ordered list, then the destinations it covers. Unknown slug → `notFound()`.
 
 `generateStaticParams` prerenders every slug per locale. `dayByDay` is validated
@@ -61,6 +70,8 @@ its own headline.
 |---|---|
 | [`src/app/[locale]/itineraries/page.tsx`](../../src/app/[locale]/itineraries/page.tsx) | Index |
 | [`src/app/[locale]/itineraries/[slug]/page.tsx`](../../src/app/[locale]/itineraries/[slug]/page.tsx) | Detail, day-by-day, JSON-LD |
+| [`src/lib/itineraries-filter.ts`](../../src/lib/itineraries-filter.ts) | `?province=` validation, itinerary → province |
+| [`src/components/ui/province-filter-nav.tsx`](../../src/components/ui/province-filter-nav.tsx) | Province chips |
 | [`src/components/cards/itinerary-card.tsx`](../../src/components/cards/itinerary-card.tsx) | Card |
 | [`src/components/sections/featured-itineraries.tsx`](../../src/components/sections/featured-itineraries.tsx) | Home-page section |
 | [`src/content/itineraries.ts`](../../src/content/itineraries.ts) | Seed data + lookups |
@@ -69,7 +80,8 @@ its own headline.
 
 ## Tests
 
-`tests/content.test.ts` — unique URL-safe slugs, `destinationSlugs` resolve,
+`tests/itineraries-province-filter.test.ts` — parsing, every chip non-empty,
+every itinerary reachable. `tests/content.test.ts` — unique URL-safe slugs, `destinationSlugs` resolve,
 every `Localized<T>` field complete, `cover` on disk, and itinerary days
 numbered consecutively from 1 and matching `days`. The redirect table itself is
 not unit-tested (it is Next.js config, not code); `npm run build` is what proves
@@ -85,5 +97,5 @@ Prices are static numbers in a TypeScript file, so they go stale silently and a
 change needs a rebuild. If prices start moving, they want a dated field and a
 visible "as of" date rather than a quiet edit.
 
-Four itineraries need no filtering by pace or duration, though both fields exist
+Province is the only filter; four itineraries need none by pace or duration, though both fields exist
 for it.

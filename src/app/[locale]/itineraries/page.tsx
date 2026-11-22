@@ -2,33 +2,47 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
-import { itineraries } from '@/content/itineraries';
+import {
+  itinerariesInProvince,
+  parseItineraryProvince,
+  provincesWithItineraries,
+} from '@/lib/itineraries-filter';
+import { ProvinceFilterNav } from '@/components/ui/province-filter-nav';
 import { Container } from '@/components/ui/container';
 import { PageHeader } from '@/components/layout/page-header';
 import { ItineraryCard } from '@/components/cards/itinerary-card';
 import { ButtonLink } from '@/components/ui/button';
 
-type Params = { params: Promise<{ locale: Locale }> };
+type Params = {
+  params: Promise<{ locale: Locale }>;
+  searchParams: Promise<{ province?: string | string[] }>;
+};
 
-export async function generateMetadata({ params }: Params): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Params): Promise<Metadata> {
   const { locale } = await params;
+  const province = parseItineraryProvince((await searchParams).province);
   const t = await getTranslations({ locale, namespace: 'itineraries' });
 
-  return buildPageMetadata({
+  // The canonical is always the bare list, so a filtered URL never competes with it.
+  const metadata = buildPageMetadata({
     href: '/itineraries',
     locale,
     title: t('title'),
     description: t('description'),
   });
+  return province ? { ...metadata, robots: { index: false, follow: true } } : metadata;
 }
 
-export default async function ItinerariesPage({ params }: Params) {
+export default async function ItinerariesPage({ params, searchParams }: Params) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const province = parseItineraryProvince((await searchParams).province);
+  const visible = itinerariesInProvince(province);
 
-  const [t, tPlan] = await Promise.all([
+  const [t, tPlan, tDest] = await Promise.all([
     getTranslations('itineraries'),
     getTranslations('plan'),
+    getTranslations('destinations'),
   ]);
 
   return (
@@ -38,10 +52,19 @@ export default async function ItinerariesPage({ params }: Params) {
         description={t('description')}
         meta={
           <p className="text-sm text-foreground-muted">
-            {t('count', { count: itineraries.length })}
+            {t('count', { count: visible.length })}
           </p>
         }
       >
+        <ProvinceFilterNav
+          basePath="/itineraries"
+          active={province}
+          locale={locale}
+          label={tDest('provinceFilterLabel')}
+          allLabel={tDest('allProvinces')}
+          provinces={provincesWithItineraries}
+          className="mb-4"
+        />
         <ButtonLink href="/plan-your-trip" size="lg">
           {tPlan('title')}
         </ButtonLink>
@@ -50,7 +73,7 @@ export default async function ItinerariesPage({ params }: Params) {
       <Container width="wide">
         <div className="py-12 md:py-16">
           <ul className="grid list-none grid-cols-1 gap-5 p-0 xl:grid-cols-2">
-            {itineraries.map((itinerary, i) => (
+            {visible.map((itinerary, i) => (
               <li key={itinerary.slug}>
                 <ItineraryCard
                   itinerary={itinerary}
