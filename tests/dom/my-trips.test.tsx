@@ -107,7 +107,7 @@ describe('MyTrips card', () => {
     expect(screen.queryByRole('menu')).toBeNull();
   });
 
-  it('status change PATCHes with the current version', async () => {
+  it('status change PATCHes with If-Match of the current version', async () => {
     const user = userEvent.setup();
     const calls = mount();
     await openMenu(user);
@@ -116,6 +116,7 @@ describe('MyTrips card', () => {
     const patch = calls.find((c) => c.method === 'PATCH')!;
     expect(patch.path).toBe('/api/planner/trip-1');
     expect(patch.body).toEqual({ planningStatus: 'planned' });
+    expect(patch.ifMatch).toBe('"7"');
     expect(await screen.findByText(t.statusSaved)).toBeTruthy();
   });
 
@@ -128,17 +129,19 @@ describe('MyTrips card', () => {
     expect(calls.find((c) => c.method === 'POST')!.path).toBe('/api/planner/trip-1/duplicate');
   });
 
-  it('archive DELETEs; restore POSTs restore', async () => {
+  it('archive DELETEs and restore POSTs, each with If-Match of the current version', async () => {
     const user = userEvent.setup();
     const calls = mount({ archived: [trip()] });
     await openMenu(user);
     await user.click(screen.getByRole('menuitem', { name: t.archive }));
     await waitFor(() => expect(calls.some((c) => c.method === 'DELETE')).toBe(true));
     expect(calls.find((c) => c.method === 'DELETE')!.path).toBe('/api/planner/trip-1');
+    expect(calls.find((c) => c.method === 'DELETE')!.ifMatch).toBe('"7"');
 
     await user.click(screen.getByRole('button', { name: t.tabArchived }));
     await user.click(await screen.findByRole('button', { name: t.restore }));
     await waitFor(() => expect(calls.some((c) => c.path.endsWith('/restore'))).toBe(true));
+    expect(calls.find((c) => c.path.endsWith('/restore'))!.ifMatch).toBe('"7"');
   });
 
   it('purge asks for confirmation and only then DELETEs with purge=true', async () => {
@@ -152,9 +155,10 @@ describe('MyTrips card', () => {
     await user.click(within(group).getByRole('button', { name: t.purgeYes }));
     await waitFor(() => expect(calls.some((c) => c.method === 'DELETE')).toBe(true));
     expect(calls.find((c) => c.method === 'DELETE')!.path).toBe('/api/planner/trip-1?purge=true');
+    expect(calls.find((c) => c.method === 'DELETE')!.ifMatch).toBe('"7"');
   });
 
-  it('401 on an action goes to sign-in; 412 shows the stale message and reloads', async () => {
+  it('412 shows the stale message and reloads the list', async () => {
     const user = userEvent.setup();
     const stale = mount({ mutate: () => json(412, { error: { code: 'precondition_failed' } }) });
     await openMenu(user);
@@ -193,7 +197,7 @@ describe('MyTrips card', () => {
     await waitFor(() => expect((trigger as HTMLButtonElement).disabled).toBe(false));
   });
 
-  it('shows loading, empty and load-failed states', async () => {
+  it('shows loading, then the empty state with its CTA', async () => {
     stubFetch(() => json(200, { trips: [] }));
     renderWithIntl(<MyTrips />);
     expect(screen.getByText(t.loading)).toBeTruthy();

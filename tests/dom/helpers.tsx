@@ -21,7 +21,7 @@ export function renderWithIntl(ui: ReactElement, locale: 'vi' | 'en' = 'vi') {
   );
 }
 
-export type FetchCall = { path: string; method: string; body: unknown };
+export type FetchCall = { path: string; method: string; body: unknown; ifMatch?: string };
 
 /** A JSON `Response`; `headers` lets a test set `Retry-After`. */
 export function json(status: number, body: unknown, headers: Record<string, string> = {}): Response {
@@ -42,6 +42,7 @@ export function stubFetch(respond: (call: FetchCall) => Response | Promise<Respo
       path,
       method: init?.method ?? 'GET',
       body: typeof init?.body === 'string' ? JSON.parse(init.body) : undefined,
+      ifMatch: (init?.headers as Record<string, string> | undefined)?.['if-match'],
     };
     calls.push(call);
     return respond(call);
