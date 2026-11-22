@@ -9,6 +9,9 @@ const config = [
       'node_modules/**',
       'coverage/**',
       'next-env.d.ts',
+      // Playwright output (WEB-3), git-ignored.
+      'playwright-report/**',
+      'test-results/**',
       '.claude/skills/**',
       // Transient agent worktrees carry their own copy of the vendored skill.
       '.claude/worktrees/**',

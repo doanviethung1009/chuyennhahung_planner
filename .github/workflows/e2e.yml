@@ -1,0 +1,83 @@
+name: E2E
+
+# End-to-end smoke of the core flows (WEB-3, ADR 0033). A separate workflow from
+# `CI` so a browser failure never hides the unit-test result and the other way
+# round, and so the `paths` filter applies to it alone. Advisory like `CI`: the
+# repository is private on GitHub Free, so no check can be made required (see the
+# header of ci.yml and .claude/rules/05-git-governance.md).
+#
+# The run needs no database and no secret from the repository: it starts the
+# production build against a throwaway JSON store under .data/e2e/ and generates
+# its own accounts, tokens and secrets (e2e/global-setup.ts). It refuses to run
+# against anything that is not localhost.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'messages/**'
+      - 'e2e/**'
+      - 'db/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'playwright.config.ts'
+      - 'next.config.ts'
+      - '.github/workflows/**'
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'messages/**'
+      - 'e2e/**'
+      - 'db/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'playwright.config.ts'
+      - 'next.config.ts'
+      - '.github/workflows/**'
+  # Lets the owner run it by hand.
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      # Chromium only. The binary comes from the Playwright CDN, at the version
+      # pinned in package-lock.json.
+      - run: npx playwright install --with-deps chromium
+
+      - name: e2e
+        run: npm run e2e
+
+      # Traces can hold session cookies: upload only after a failure, keep them 7
+      # days, and never attach one to a PR comment.
+      - name: Upload report and traces (failure only)
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
