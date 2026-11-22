@@ -60,7 +60,8 @@ test.describe('Flow A: template to trip to shared link @smoke', () => {
 
     // 5. Archiving the trip revokes the link.
     await page.getByRole('button', { name: 'Lưu trữ' }).click();
-    await expect(page.getByText('Đã chuyển vào lưu trữ.')).toBeVisible();
+    // The detail page redirects to the member home on success, so the toast is never seen.
+    await expect(page).toHaveURL(/\/chuyen-di-cua-toi$/);
     expect((await guestPage.goto(sharePath))?.status()).toBe(404);
     await guest.close();
   });
