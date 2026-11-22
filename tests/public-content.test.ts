@@ -240,3 +240,20 @@ describe('PublicStory.places projection (PLACES-API-PROJ follow-up)', () => {
     expect(JSON.stringify(detail?.places)).not.toMatch(/affiliate|coords|createdAt|updatedAt|example\.com\/x/);
   });
 });
+
+describe('PublicStory.reviews projection (STORY-REVIEWS-PROJ)', () => {
+  it('carries only the allow-listed review fields, in the list and on the detail', async () => {
+    await repo.createReview(reviewFixture({ id: 'review-live', costVnd: 123456 }));
+    await repo.setReviewStatus('review-live', { action: 'publish' });
+    await publish('with-review', undefined, { reviewIds: ['review-live'] });
+    const keys = ['body', 'cons', 'id', 'pros', 'rating', 'title', 'visitedOn'];
+    const detail = await content().getStory('with-review');
+    expect(detail?.reviews.map((r) => r.id)).toEqual(['review-live']);
+    expect(Object.keys(detail?.reviews[0] ?? {}).sort()).toEqual(keys);
+    const listed = (await content().listStories()).find((s) => s.slug === 'with-review');
+    expect(Object.keys(listed?.reviews[0] ?? {}).sort()).toEqual(keys);
+    expect(JSON.stringify(detail?.reviews)).not.toMatch(
+      /"(status|publishedAt|createdAt|updatedAt|subject|costVnd|author)"|123456/,
+    );
+  });
+});

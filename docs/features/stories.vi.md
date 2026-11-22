@@ -71,3 +71,5 @@ kiểu block trong `src/content/types.ts`, và đó là quyết định xứng �
 thay vì vá dần.
 
 Ảnh cover vẫn là SVG sinh tự động cho tới khi chủ nhà đưa ảnh thật.
+
+**Đánh giá trong bài viết (STORY-REVIEWS-PROJ).** `PublicStory.reviews` chứa `PublicReview` (qua `toPublicReview` trong `src/server/content/public.ts`): chỉ có `id`, `title`, `rating`, `visitedOn`, `body`, `pros` và `cons`. Trang bài viết và RSC payload không bao giờ mang `status`, `publishedAt`, timestamp, `subject`, `costVnd` hay `author`. Chỉ đánh giá đã xuất bản được đưa vào. Test: `tests/public-content.test.ts`.
