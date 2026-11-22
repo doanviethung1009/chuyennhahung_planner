@@ -17,7 +17,7 @@ export const dynamic = 'force-dynamic';
 type Raw = string | string[] | undefined;
 type Params = {
   params: Promise<{ locale: Locale }>;
-  searchParams: Promise<{ q?: Raw; destination?: Raw; category?: Raw; page?: Raw }>;
+  searchParams: Promise<{ q?: Raw; destination?: Raw; province?: Raw; category?: Raw; page?: Raw }>;
 };
 
 export async function generateMetadata({ params, searchParams }: Params): Promise<Metadata> {
@@ -40,11 +40,12 @@ export default async function PlacesPage({ params, searchParams }: Params) {
     searchPublicPlaces({
       ...(list.q ? { q: list.q } : {}),
       ...(list.destination ? { destinationSlug: list.destination } : {}),
+      ...(list.province ? { provinceSlug: list.province } : {}),
       ...(list.category ? { category: list.category } : {}),
       page: list.page,
     }),
   ]);
-  const filtered = Boolean(list.q || list.destination || list.category);
+  const filtered = Boolean(list.q || list.destination || list.province || list.category);
 
   return (
     <>

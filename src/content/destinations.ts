@@ -8,6 +8,7 @@ import type { Destination } from './types';
 export const destinations: Destination[] = [
   {
     slug: 'ha-giang',
+    provinceSlug: 'tuyen-quang',
     name: { vi: 'Hà Giang', en: 'Hà Giang' },
     area: { vi: 'Cao nguyên đá Đồng Văn', en: 'Đồng Văn Karst Plateau' },
     region: 'north',
@@ -43,6 +44,7 @@ export const destinations: Destination[] = [
   },
   {
     slug: 'sa-pa',
+    provinceSlug: 'lao-cai',
     name: { vi: 'Sa Pa', en: 'Sa Pa' },
     area: { vi: 'Tây Bắc', en: 'Northwest highlands' },
     region: 'north',
@@ -78,6 +80,7 @@ export const destinations: Destination[] = [
   },
   {
     slug: 'ninh-binh',
+    provinceSlug: 'ninh-binh',
     name: { vi: 'Ninh Bình', en: 'Ninh Bình' },
     area: { vi: 'Đồng bằng sông Hồng', en: 'Red River Delta' },
     region: 'north',
@@ -113,6 +116,7 @@ export const destinations: Destination[] = [
   },
   {
     slug: 'hue',
+    provinceSlug: 'hue',
     name: { vi: 'Huế', en: 'Huế' },
     area: { vi: 'Bắc Trung Bộ', en: 'North Central Coast' },
     region: 'central',
@@ -148,6 +152,7 @@ export const destinations: Destination[] = [
   },
   {
     slug: 'hoi-an',
+    provinceSlug: 'da-nang',
     name: { vi: 'Hội An', en: 'Hội An' },
     area: { vi: 'Nam Trung Bộ', en: 'South Central Coast' },
     region: 'central',
@@ -183,6 +188,7 @@ export const destinations: Destination[] = [
   },
   {
     slug: 'da-lat',
+    provinceSlug: 'lam-dong',
     name: { vi: 'Đà Lạt', en: 'Đà Lạt' },
     area: { vi: 'Cao nguyên Lâm Viên', en: 'Lâm Viên Plateau' },
     region: 'central',
@@ -218,6 +224,7 @@ export const destinations: Destination[] = [
   },
   {
     slug: 'phu-quoc',
+    provinceSlug: 'an-giang',
     name: { vi: 'Phú Quốc', en: 'Phú Quốc' },
     area: { vi: 'Vịnh Thái Lan', en: 'Gulf of Thailand' },
     region: 'south',
@@ -253,6 +260,7 @@ export const destinations: Destination[] = [
   },
   {
     slug: 'moc-chau',
+    provinceSlug: 'son-la',
     name: { vi: 'Mộc Châu', en: 'Mộc Châu' },
     area: { vi: 'Cao nguyên Mộc Châu', en: 'Mộc Châu Plateau' },
     region: 'north',
@@ -291,6 +299,7 @@ export const destinations: Destination[] = [
   // `visits` are deliberately absent. ---
   {
     slug: 'ha-noi',
+    provinceSlug: 'ha-noi',
     name: { vi: 'Hà Nội', en: 'Hà Nội' },
     area: { vi: 'Đồng bằng sông Hồng', en: 'Red River Delta' },
     region: 'north',
@@ -320,6 +329,7 @@ export const destinations: Destination[] = [
   },
   {
     slug: 'quang-ninh',
+    provinceSlug: 'quang-ninh',
     name: { vi: 'Quảng Ninh (Hạ Long)', en: 'Quảng Ninh (Hạ Long)' },
     area: { vi: 'Vịnh Bắc Bộ', en: 'Gulf of Tonkin coast' },
     region: 'north',
@@ -347,6 +357,7 @@ export const destinations: Destination[] = [
   },
   {
     slug: 'quang-binh',
+    provinceSlug: 'quang-tri',
     name: { vi: 'Quảng Bình (Phong Nha)', en: 'Quảng Bình (Phong Nha)' },
     area: { vi: 'Phong Nha – Kẻ Bàng', en: 'Phong Nha – Kẻ Bàng' },
     region: 'central',
@@ -374,6 +385,7 @@ export const destinations: Destination[] = [
   },
   {
     slug: 'da-nang',
+    provinceSlug: 'da-nang',
     name: { vi: 'Đà Nẵng', en: 'Đà Nẵng' },
     area: { vi: 'Duyên hải miền Trung', en: 'Central coast' },
     region: 'central',
@@ -401,6 +413,7 @@ export const destinations: Destination[] = [
   },
   {
     slug: 'quy-nhon',
+    provinceSlug: 'gia-lai',
     name: { vi: 'Quy Nhơn', en: 'Quy Nhơn' },
     area: { vi: 'Duyên hải Nam Trung Bộ', en: 'South-central coast' },
     region: 'central',
@@ -428,6 +441,7 @@ export const destinations: Destination[] = [
   },
   {
     slug: 'nha-trang',
+    provinceSlug: 'khanh-hoa',
     name: { vi: 'Nha Trang', en: 'Nha Trang' },
     area: { vi: 'Duyên hải Nam Trung Bộ', en: 'South-central coast' },
     region: 'central',
@@ -455,6 +469,7 @@ export const destinations: Destination[] = [
   },
   {
     slug: 'tp-ho-chi-minh',
+    provinceSlug: 'tp-ho-chi-minh',
     name: { vi: 'TP. Hồ Chí Minh', en: 'Hồ Chí Minh City' },
     area: { vi: 'Đông Nam Bộ', en: 'Southeast' },
     region: 'south',
@@ -484,6 +499,7 @@ export const destinations: Destination[] = [
   },
   {
     slug: 'can-tho',
+    provinceSlug: 'can-tho',
     name: { vi: 'Cần Thơ', en: 'Cần Thơ' },
     area: { vi: 'Đồng bằng sông Cửu Long', en: 'Mekong Delta' },
     region: 'south',

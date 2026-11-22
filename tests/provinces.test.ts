@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { getProvince, provinces } from '@/content/provinces';
+import { destinations } from '@/content/destinations';
+import { destinationSlugsInProvince, getProvince, provinces, provincesWithDestinations } from '@/content/provinces';
 
 describe('Vietnam provinces reference data', () => {
   it('has the 34 units (6 cities + 28 provinces) with unique slugs', () => {
@@ -28,5 +29,15 @@ describe('Vietnam provinces reference data', () => {
   it('looks a unit up by slug', () => {
     expect(getProvince('da-nang')?.formerNames).toContain('Quảng Nam');
     expect(getProvince('nope')).toBeUndefined();
+  });
+});
+
+describe('destinations are placed in a province', () => {
+  it('every destination points at a real province', () => {
+    for (const d of destinations) expect(getProvince(d.provinceSlug), d.slug).toBeDefined();
+  });
+  it('offers only provinces that hold a destination, and finds their destinations', () => {
+    expect(provincesWithDestinations.every((p) => destinationSlugsInProvince(p.slug).length > 0)).toBe(true);
+    expect(destinationSlugsInProvince('da-nang').sort()).toEqual(['da-nang', 'hoi-an']);
   });
 });

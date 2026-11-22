@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import { getPathname, Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { destinations } from '@/content/destinations';
+import { provincesWithDestinations } from '@/content/provinces';
 import { buttonClass } from '@/components/ui/button';
 import { Field, inputClass } from '@/components/planner/field';
 import { placeCategories, type PlacesListParams } from './places-list-params';
@@ -12,7 +13,7 @@ import { placeCategories, type PlacesListParams } from './places-list-params';
  */
 export async function PlacesFilterForm({ params, locale }: { params: PlacesListParams; locale: Locale }) {
   const [t, tCat] = await Promise.all([getTranslations('placesList'), getTranslations('places')]);
-  const filtered = Boolean(params.q || params.destination || params.category);
+  const filtered = Boolean(params.q || params.destination || params.province || params.category);
 
   return (
     <form
@@ -20,7 +21,7 @@ export async function PlacesFilterForm({ params, locale }: { params: PlacesListP
       action={getPathname({ href: '/places', locale })}
       role="search"
       aria-label={t('filtersLabel')}
-      className="grid gap-4 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_auto] lg:items-end"
+      className="grid gap-4 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_auto] lg:items-end"
     >
       <div className="md:col-span-2 lg:col-span-1">
         <Field id="pl-q" label={t('searchLabel')}>
@@ -36,6 +37,16 @@ export async function PlacesFilterForm({ params, locale }: { params: PlacesListP
           />
         </Field>
       </div>
+      <Field id="pl-province" label={t('provinceLabel')}>
+        <select id="pl-province" name="province" defaultValue={params.province} className={inputClass}>
+          <option value="">{t('allProvinces')}</option>
+          {provincesWithDestinations.map((p) => (
+            <option key={p.slug} value={p.slug}>
+              {p.name[locale]}
+            </option>
+          ))}
+        </select>
+      </Field>
       <Field id="pl-destination" label={t('destinationLabel')}>
         <select id="pl-destination" name="destination" defaultValue={params.destination} className={inputClass}>
           <option value="">{t('allDestinations')}</option>

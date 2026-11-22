@@ -1,3 +1,4 @@
+import { destinations } from './destinations';
 import type { Province } from './types';
 
 type Row = [
@@ -70,4 +71,14 @@ export const provinces: Province[] = rows.map(
 
 export function getProvince(slug: string): Province | undefined {
   return provinces.find((p) => p.slug === slug);
+}
+
+/** Provinces that at least one destination lies in, in `provinces` order — the only ones worth offering as a filter. */
+export const provincesWithDestinations: Province[] = provinces.filter((p) =>
+  destinations.some((d) => d.provinceSlug === p.slug),
+);
+
+/** Slugs of the destinations inside one province. */
+export function destinationSlugsInProvince(provinceSlug: string): string[] {
+  return destinations.filter((d) => d.provinceSlug === provinceSlug).map((d) => d.slug);
 }

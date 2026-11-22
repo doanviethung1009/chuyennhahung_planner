@@ -14,12 +14,25 @@ describe('parsePlacesParams', () => {
   it('trims q, cuts it to 80 characters, drops unknown filters and bad pages', () => {
     const p = parsePlacesParams({ q: '  ' + 'a'.repeat(100), destination: 'nowhere', category: 'bogus', page: '-3' });
     expect(p.q).toBe('a'.repeat(80));
-    expect(p).toMatchObject({ destination: '', category: '', page: 1 });
+    expect(p).toMatchObject({ destination: '', province: '', category: '', page: 1 });
     expect(parsePlacesParams({ page: 'abc' }).page).toBe(1);
   });
   it('keeps known destination and category, takes the first of repeated values', () => {
     const p = parsePlacesParams({ q: ['da lat', 'x'], destination: 'da-lat', category: 'cafe', page: '2' });
-    expect(p).toEqual({ q: 'da lat', destination: 'da-lat', category: 'cafe', page: 2 });
+    expect(p).toEqual({ q: 'da lat', destination: 'da-lat', province: '', category: 'cafe', page: 2 });
+  });
+});
+
+describe('province filter params', () => {
+  it('keeps a province that has destinations, drops an unknown one or one with none', () => {
+    expect(parsePlacesParams({ province: 'lam-dong' }).province).toBe('lam-dong');
+    expect(parsePlacesParams({ province: 'nowhere' }).province).toBe('');
+    expect(parsePlacesParams({ province: 'cao-bang' }).province).toBe('');
+  });
+  it('is not indexable and is kept in paging links', () => {
+    const p = parsePlacesParams({ province: 'lam-dong', page: '2' });
+    expect(isIndexableList(p)).toBe(false);
+    expect(listQuery(p, 3)).toEqual({ province: 'lam-dong', page: '3' });
   });
 });
 

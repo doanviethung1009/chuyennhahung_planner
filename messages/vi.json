@@ -1796,6 +1796,8 @@
     "searchLabel": "Tìm theo tên hoặc khu vực",
     "searchPlaceholder": "Ví dụ: Đà Lạt, cà phê, chợ đêm",
     "searchButton": "Tìm",
+    "provinceLabel": "Tỉnh / thành phố",
+    "allProvinces": "Tất cả tỉnh / thành",
     "destinationLabel": "Điểm đến",
     "categoryLabel": "Loại địa điểm",
     "allDestinations": "Tất cả điểm đến",
