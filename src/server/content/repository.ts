@@ -325,6 +325,7 @@ export class TravelContentRepository {
 
       const merged = { ...existing, ...patch };
       this.validateStoryReferences(data, merged);
+      this.checkLinkedTemplate(data, existing, merged);
 
       const next: TravelStory = {
         ...merged,
@@ -436,6 +437,15 @@ export class TravelContentRepository {
           `cannot delete published story "${slug}" — unpublish or archive it first`,
         );
       }
+      // A collection (draft or published) must not be left holding a dead slug.
+      const collections = data.collections.filter((c) => c.storySlugs.includes(slug));
+      if (collections.length > 0) {
+        throw invalidState(
+          `story "${slug}" is still listed by collection(s) ${collections
+            .map((c) => c.slug)
+            .join(', ')}`,
+        );
+      }
       // Templates are NOT blocking: each holds an immutable source snapshot and
       // survives its story being deleted (ADR 0001 §4).
       data.stories.splice(index, 1);
@@ -481,6 +491,27 @@ export class TravelContentRepository {
     });
 
     TravelContentRepository.raiseIf(issues);
+  }
+
+  /**
+   * `plannerTemplateSlug` may point at a template that does not exist yet when the
+   * story is *created*: a template is cut from its story (`sourceStorySlug`), so the
+   * story always comes first. Once the story exists, a link that is being changed
+   * must resolve, so a typo is refused instead of silently dropping the "use this
+   * trip" button. An unchanged link is left alone; the integrity sweep reports it.
+   */
+  private checkLinkedTemplate(
+    data: ContentData,
+    existing: Pick<TravelStory, 'plannerTemplateSlug'>,
+    merged: Pick<TravelStory, 'plannerTemplateSlug'>,
+  ): void {
+    const slug = merged.plannerTemplateSlug;
+    if (slug === null || slug === existing.plannerTemplateSlug) return;
+    if (!data.templates.some((t) => t.slug === slug)) {
+      TravelContentRepository.raiseIf([
+        { path: 'plannerTemplateSlug', message: `template "${slug}" does not exist` },
+      ]);
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -1045,6 +1076,14 @@ export class TravelContentRepository {
           `cannot delete public template "${slug}" — set it private first`,
         );
       }
+      const linked = data.stories.filter((s) => s.plannerTemplateSlug === slug);
+      if (linked.length > 0) {
+        throw invalidState(
+          `template "${slug}" is still linked by story/stories ${linked
+            .map((s) => s.slug)
+            .join(', ')}`,
+        );
+      }
       data.templates.splice(index, 1);
     });
   }
@@ -1072,6 +1111,7 @@ export class TravelContentRepository {
     const placeSlugs = new Set(data.places.map((p) => p.slug));
     const storySlugs = new Set(data.stories.map((s) => s.slug));
     const reviewIds = new Set(data.reviews.map((r) => r.id));
+    const templateSlugs = new Set(data.templates.map((t) => t.slug));
 
     const report = (entity: string, id: string, issue: string) =>
       issues.push({ entity, id, issue });
@@ -1095,6 +1135,9 @@ export class TravelContentRepository {
         if (!this.itinerarySlugs.has(slug)) {
           report('story', story.slug, `unknown itinerary "${slug}"`);
         }
+      }
+      if (story.plannerTemplateSlug !== null && !templateSlugs.has(story.plannerTemplateSlug)) {
+        report('story', story.slug, `unknown template "${story.plannerTemplateSlug}"`);
       }
       if (story.actualCostTotalVnd !== totalFromCost(story.actualCost)) {
         report('story', story.slug, 'actualCostTotalVnd disagrees with the breakdown');

@@ -63,6 +63,12 @@ describe('a cloned trip is independent of its template', () => {
     await content.updateTemplate(SLUG, { visibility: 'private' });
     expect(JSON.stringify(await planner.getTrip(userId, view.trip.id))).toBe(before);
 
+    // A template a story still links cannot be deleted; unlink it first.
+    for (const story of await content.listStories()) {
+      if (story.plannerTemplateSlug === SLUG) {
+        await content.updateStory(story.slug, { plannerTemplateSlug: null });
+      }
+    }
     await content.deleteTemplate(SLUG);
     expect(JSON.stringify(await planner.getTrip(userId, view.trip.id))).toBe(before);
   });

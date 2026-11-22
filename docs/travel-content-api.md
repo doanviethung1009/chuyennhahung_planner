@@ -149,6 +149,14 @@ place in between is possible; `GET /api/admin/planner/integrity` ("unknown place
 is the backstop. A place cannot be unlinked from a story while still
 embedded in its body.
 
+**Story, collection and template links.** `DELETE /api/admin/travel/stories/[slug]`
+answers 409 `invalid_state` while any collection (draft or published) still lists the
+story, and `DELETE /api/admin/travel/templates/[slug]` while any story still names it in
+`plannerTemplateSlug`. `plannerTemplateSlug` may point at a template that does not exist
+yet when the story is created (a template is cut from its story, so the story comes
+first), but changing it on update must resolve, otherwise 422 `invalid_reference`. The
+integrity sweep reports a dangling `plannerTemplateSlug` as `unknown template`.
+
 **Templates** — days are numbered `1..n` and activity `order` runs `0..m` by
 construction, never by input. `durationDays`, `estimatedTotalVnd` and
 `placeSlugs` are derived on every write. `version` increments on every
