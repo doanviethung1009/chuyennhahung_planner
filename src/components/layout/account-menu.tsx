@@ -166,7 +166,7 @@ export function AccountMenu({ state }: { state: AccountState }) {
 
   if (state.status === 'guest') {
     return (
-      // Icon-only: the header row is capped at `max-w-7xl`, and the six nav
+      // Icon-only: the header row is capped at `max-w-7xl`, and the six inline nav
       // entries already fill it, so a text label wraps them onto two lines.
       // The label is the accessible name and the hover tooltip; the mobile
       // drawer shows it in full.

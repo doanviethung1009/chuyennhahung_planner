@@ -71,7 +71,7 @@ export function MainNav({
 
     // Resizing up to the desktop layout hides the drawer; drop its state too,
     // or the scroll lock above would outlive it.
-    const desktop = window.matchMedia('(min-width: 64rem)');
+    const desktop = window.matchMedia('(min-width: 80rem)');
     const onBreakpoint = (event: MediaQueryListEvent) => {
       if (event.matches) setOpenedAt(null);
     };
@@ -116,7 +116,7 @@ export function MainNav({
   }, [open]);
 
   const linkClass = (href: string) =>
-    `relative inline-flex min-h-11 items-center text-[0.9375rem] font-medium transition-colors duration-200 ease-gentle ${
+    `relative inline-flex min-h-11 items-center whitespace-nowrap text-[0.9375rem] font-medium transition-colors duration-200 ease-gentle ${
       isActive(pathname, href)
         ? 'text-primary-strong'
         : 'text-ink-700 hover:text-primary-strong'
@@ -125,8 +125,13 @@ export function MainNav({
   return (
     <>
       {/* ---------- Desktop ---------- */}
-      <nav aria-label={navLabel} className="hidden items-center gap-7 lg:flex">
-        {items.map((item) => (
+      {/* The inline row only fits from `xl` (1280px): below that the drawer is
+          used. No "home" entry here, since the logo already goes home; the
+          drawer keeps it. */}
+      <nav aria-label={navLabel} className="hidden items-center gap-4 xl:flex 2xl:gap-7">
+        {items
+          .filter((item) => item.key !== 'home')
+          .map((item) => (
           <Link
             key={item.key}
             href={item.href}
@@ -144,16 +149,16 @@ export function MainNav({
         ))}
       </nav>
 
-      <div className="hidden items-center gap-3 lg:flex">
+      <div className="hidden items-center gap-2 xl:flex 2xl:gap-3">
         <LocaleSwitcher />
         <AccountMenu state={account} />
-        <Link href={planHref} className={buttonClass({ size: 'sm' })}>
+        <Link href={planHref} className={buttonClass({ size: 'sm', className: 'whitespace-nowrap' })}>
           {planLabel}
         </Link>
       </div>
 
       {/* ---------- Mobile trigger ---------- */}
-      <div className="flex items-center gap-2 lg:hidden">
+      <div className="flex items-center gap-2 xl:hidden">
         <LocaleSwitcher />
         <button
           ref={toggleRef}
@@ -190,7 +195,7 @@ export function MainNav({
       */}
       {open && typeof document !== 'undefined'
         ? createPortal(
-            <div className="fixed inset-0 top-(--header-h) z-40 lg:hidden">
+            <div className="fixed inset-0 top-(--header-h) z-40 xl:hidden">
               <button
                 type="button"
                 aria-hidden="true"

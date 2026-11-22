@@ -72,7 +72,18 @@ describe('mobile drawer focus management', () => {
   });
 
   it('closes when the viewport grows to the desktop layout', () => {
-    expect(source).toMatch(/matchMedia\('\(min-width: 64rem\)'\)/);
+    expect(source).toMatch(/matchMedia\('\(min-width: 80rem\)'\)/);
+  });
+
+  it('switches between the inline row and the drawer at one breakpoint (xl)', () => {
+    expect(source).not.toMatch(/\blg:/);
+    expect(source).toMatch(/hidden items-center[^"]*xl:flex/);
+    expect(source).toMatch(/xl:hidden/);
+  });
+
+  it('keeps the inline row on one line and omits Home (the logo goes there)', () => {
+    expect(source).toMatch(/item\.key !== 'home'/);
+    expect(source).toMatch(/whitespace-nowrap/);
   });
 
   it('labels the drawer nav landmark', () => {

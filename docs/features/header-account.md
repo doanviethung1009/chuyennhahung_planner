@@ -45,7 +45,7 @@ None. The control links to existing routes:
 - **Guest.** A 44px icon link to the localized sign-in page with
   `returnTo` = the current path and query. Its accessible name and tooltip are
   "Đăng nhập" / "Sign in". It is icon-only on desktop because the header row is
-  capped at `max-w-7xl` and the six nav entries already fill it; a text label
+  capped at `max-w-7xl` and the six inline nav entries already fill it; a text label
   wraps them onto two lines.
 - **Signed in.** A 44px avatar button (`aria-expanded`, `aria-controls`, accessible
   name "Account for {name}") discloses a panel: "Signed in as {name}", My Trips,
@@ -54,7 +54,9 @@ None. The control links to existing routes:
   the server) and Sign out. It is a disclosure, not an ARIA `menu`: entries stay
   ordinary links, Tab works as usual, ↓/↑ move between entries, Escape closes and
   returns focus to the button, a click or focus outside closes it.
-- **Mobile.** The drawer in `main-nav.tsx` shows a full-width "Đăng nhập" button
+- **Mobile.** The inline header row only fits from `xl` (1280px), so below that
+  the drawer in `main-nav.tsx` replaces it (the inline row omits "Home" — the
+  logo goes there — and the drawer keeps it). The drawer shows a full-width "Đăng nhập" button
   for a guest, or the name and the same entries for a member. While open it is a
   modal dialog: focus moves into it, `main`, `footer` and the skip link are
   `inert`, Tab loops between the menu toggle and the panel, Escape closes it, and
