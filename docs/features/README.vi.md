@@ -54,6 +54,7 @@ Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
 | Tạo chuyến đi trống | [create-blank-trip.vi.md](create-blank-trip.vi.md) | `/my-trips/new` — nút và biểu mẫu tạo chuyến đi trên Chuyến đi của tôi, `source: "blank"` |
 | Trạng thái lỗi và chờ | [error-loading-states.vi.md](error-loading-states.vi.md) | `error.tsx`, `global-error.tsx`, `loading.tsx` dùng chung, trang chủ rỗng, khung lỗi cho stories và chuyến đi cộng đồng (UXS-1) |
 | Thẻ chuyến đi | [my-trips-card.vi.md](my-trips-card.vi.md) | `/my-trips?tab=trips` — thẻ đầu/thân/chân, menu thao tác `…` truy cập được |
+| Danh sách chuyến đi | [my-trips-list.vi.md](my-trips-list.vi.md) | `/my-trips?tab=trips&view=archived` — chế độ xem trên URL, tìm, lọc tình trạng, sắp xếp (UXS-3) |
 | Docker deploy trên một VM | [docker-deploy.vi.md](docker-deploy.vi.md) | Runbook: nginx + app + PostgreSQL tuỳ chọn, trạng thái bind mount, chuẩn bị host, sao lưu |
 | Tài khoản super admin | [super-admin-accounts.vi.md](super-admin-accounts.vi.md) | Role `super_admin` (ADR 0017): chỉ nó mở được Runbook, admin không quản lý được tài khoản admin |
 | Đăng nhập bằng handle | [handle-sign-in.vi.md](handle-sign-in.vi.md) | Đăng nhập bằng email hoặc mã tài khoản; cấp lại mật khẩu không cần email (ADR 0018) |

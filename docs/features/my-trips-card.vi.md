@@ -58,5 +58,5 @@ tải/rỗng/lỗi tải kèm thử lại, nhãn tiếng Anh. Kiểm tra hình �
 
 ## Limits and open questions
 
-Không có tìm kiếm, sắp xếp hay phân trang. Tab mặc định (`map`) giữ nguyên (ADR 0032).
+Tìm kiếm, lọc và sắp xếp (phía client) có từ UXS-3, xem [my-trips-list.vi.md](my-trips-list.vi.md); chưa có phân trang. Tab mặc định (`map`) giữ nguyên (ADR 0032).
 Thẻ đã lưu trữ không có menu `…` vì Khôi phục và Xoá vĩnh viễn luôn hiển thị.

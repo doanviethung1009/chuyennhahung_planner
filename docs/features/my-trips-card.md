@@ -59,5 +59,5 @@ a signed-in session and are not automated.
 
 ## Limits and open questions
 
-No search, sorting or pagination. The default tab (`map`) is unchanged (ADR 0032). Archived
+Search, filter and sort (client-side) arrived with UXS-3, see [my-trips-list.md](my-trips-list.md); there is still no pagination. The default tab (`map`) is unchanged (ADR 0032). Archived
 cards have no `…` menu because Restore and Delete permanently stay visible.
