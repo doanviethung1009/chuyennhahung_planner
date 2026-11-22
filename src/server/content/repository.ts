@@ -323,7 +323,7 @@ export class TravelContentRepository {
       if (index < 0 || !existing) throw notFound('story', slug);
       checkStamp('story', existing.updatedAt, expectedUpdatedAt);
 
-      const merged = { ...existing, ...patch };
+      const merged = { ...existing, ...definedOnly(patch) };
       this.validateStoryReferences(data, merged);
       this.checkLinkedTemplate(data, existing, merged);
 
@@ -1210,6 +1210,16 @@ export class TravelContentRepository {
 // ---------------------------------------------------------------------------
 // Pure helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * A patch key whose value is `undefined` means "not provided", the same as an
+ * omitted key. Spreading it over the stored record would blank the field instead.
+ */
+function definedOnly<T extends object>(patch: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(patch).filter(([, value]) => value !== undefined),
+  ) as Partial<T>;
+}
 
 /** Optimistic concurrency inside the transaction: no stamp = last write wins. */
 function checkStamp(entity: string, actual: string, expected: string | undefined): void {
