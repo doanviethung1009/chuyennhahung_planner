@@ -4,7 +4,7 @@
  * of the constants below (missing, unknown) is the default tab; a repeated parameter uses its first value — the
  * raw value is never echoed into the page, a URL or a log.
  */
-export const MEMBER_HOME_TABS = ['map', 'trips', 'share'] as const;
+export const MEMBER_HOME_TABS = ['trips', 'map', 'share'] as const;
 export type MemberHomeTab = (typeof MEMBER_HOME_TABS)[number];
 export const DEFAULT_MEMBER_HOME_TAB: MemberHomeTab = 'trips';
 
