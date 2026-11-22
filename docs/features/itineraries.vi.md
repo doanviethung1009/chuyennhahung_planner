@@ -47,7 +47,14 @@ du lịch, bản tiếng Anh dùng `Intl.NumberFormat` dạng tiền tệ.
 ## Cách hoạt động
 
 Toàn bộ là server component. Trang danh sách liệt kê mọi lịch trình kèm thời
-lượng, giá từ và nhịp đi; trang chi tiết render `highlights`, rồi `dayByDay` dưới
+lượng, giá từ và nhịp đi, và có thể thu hẹp theo một tỉnh bằng `?province=`
+(`parseItineraryProvince` trong `src/lib/itineraries-filter.ts`). Một lịch trình
+thuộc một tỉnh khi bất kỳ điểm đến nào trong `destinationSlugs` của nó thuộc tỉnh
+đó. Các chip là link thường do `ProvinceFilterNav` render, chỉ đưa ra những tỉnh
+khớp ít nhất một lịch trình, nên không chip nào dẫn tới danh sách rỗng; số lượng
+theo bộ lọc, giá trị lạ quay về danh sách đầy đủ, và URL đã lọc là `noindex,
+follow` với canonical trỏ về danh sách gốc. Vì trang danh sách giờ đọc
+`searchParams`, nó render theo từng request thay vì prerender. Trang chi tiết render `highlights`, rồi `dayByDay` dưới
 dạng danh sách có thứ tự, rồi các điểm đến mà nó đi qua. Slug lạ → `notFound()`.
 
 `generateStaticParams` prerender mọi slug theo từng locale. `dayByDay` được kiểm
@@ -61,6 +68,8 @@ chính tiêu đề của nó.
 |---|---|
 | [`src/app/[locale]/itineraries/page.tsx`](../../src/app/[locale]/itineraries/page.tsx) | Trang danh sách |
 | [`src/app/[locale]/itineraries/[slug]/page.tsx`](../../src/app/[locale]/itineraries/[slug]/page.tsx) | Trang chi tiết, kế hoạch từng ngày, JSON-LD |
+| [`src/lib/itineraries-filter.ts`](../../src/lib/itineraries-filter.ts) | Kiểm `?province=`, lịch trình → tỉnh |
+| [`src/components/ui/province-filter-nav.tsx`](../../src/components/ui/province-filter-nav.tsx) | Chip tỉnh |
 | [`src/components/cards/itinerary-card.tsx`](../../src/components/cards/itinerary-card.tsx) | Card |
 | [`src/components/sections/featured-itineraries.tsx`](../../src/components/sections/featured-itineraries.tsx) | Khối ở trang chủ |
 | [`src/content/itineraries.ts`](../../src/content/itineraries.ts) | Dữ liệu seed + hàm tra cứu |
@@ -69,7 +78,8 @@ chính tiêu đề của nó.
 
 ## Test
 
-`tests/content.test.ts` — slug không trùng và an toàn cho URL,
+`tests/itineraries-province-filter.test.ts` — phân tích tham số, mọi chip đều
+có kết quả, mọi lịch trình đều truy cập được. `tests/content.test.ts` — slug không trùng và an toàn cho URL,
 `destinationSlugs` trỏ đúng, mọi field `Localized<T>` đủ hai locale, `cover` có
 trên đĩa, và các ngày của lịch trình đánh số liên tiếp từ 1 và khớp `days`. Bảng
 redirect không được unit-test (nó là config của Next.js, không phải code);
@@ -85,5 +95,5 @@ Giá là số tĩnh trong một file TypeScript, nên nó âm thầm cũ đi và
 phải build lại. Nếu giá bắt đầu biến động, nó cần một field ngày tháng và một dòng
 "cập nhật ngày…" hiện ra, chứ không phải một lần sửa lặng lẽ.
 
-Bốn lịch trình thì chưa cần lọc theo nhịp đi hay thời lượng, dù cả hai field đã
+Tỉnh là bộ lọc duy nhất; bốn lịch trình thì chưa cần lọc theo nhịp đi hay thời lượng, dù cả hai field đã
 có sẵn cho việc đó.

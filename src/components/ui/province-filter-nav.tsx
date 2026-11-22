@@ -1,6 +1,7 @@
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { provincesWithDestinations } from '@/content/provinces';
+import type { Province } from '@/content/types';
 
 const chipClass = (active: boolean) =>
   `inline-flex min-h-11 items-center rounded-pill border px-4 text-sm font-medium transition-colors duration-200 ease-gentle ${
@@ -10,7 +11,7 @@ const chipClass = (active: boolean) =>
   }`;
 
 /**
- * One chip per province that holds a destination, as plain links to `?province=`
+ * One chip per offered province (default: those holding a destination), as plain links to `?province=`
  * so the filter works without JavaScript and every state is a shareable URL.
  * `active` is '' for "all" (see `parseDestinationProvince`).
  */
@@ -20,13 +21,16 @@ export function ProvinceFilterNav({
   locale,
   label,
   allLabel,
+  provinces = provincesWithDestinations,
   className,
 }: {
-  basePath: '/destinations' | '/map';
+  basePath: '/destinations' | '/map' | '/itineraries';
   active: string;
   locale: Locale;
   label: string;
   allLabel: string;
+  /** Provinces to offer; defaults to those holding a destination. */
+  provinces?: Province[];
   className?: string;
 }) {
   return (
@@ -37,7 +41,7 @@ export function ProvinceFilterNav({
             {allLabel}
           </Link>
         </li>
-        {provincesWithDestinations.map((p) => (
+        {provinces.map((p) => (
           <li key={p.slug}>
             <Link
               href={{ pathname: basePath, query: { province: p.slug } }}
