@@ -483,7 +483,10 @@
     "purgeYes": "Delete permanently",
     "purgeNo": "Keep it",
     "purged": "Trip deleted permanently.",
-    "createCta": "Create a new trip"
+    "createCta": "Create a new trip",
+    "open": "View / edit trip",
+    "menuLabel": "More actions for {title}",
+    "retry": "Try again"
   },
   "tripDetail": {
     "metaTitle": "Trip details",

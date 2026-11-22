@@ -51,6 +51,7 @@ New features start from [`_template.md`](_template.md) /
 | Header account | [header-account.md](header-account.md) | Sign-in icon for guests, account menu (My Trips, password, admin, sign out) for members, desktop and mobile |
 | Home Continue Planning | [home-continue-planning.md](home-continue-planning.md) | A band above the hero for signed-in members: create the first trip, or Continue Planning on the next unfinished trip; guests see the page unchanged |
 | Create a blank trip | [create-blank-trip.md](create-blank-trip.md) | `/my-trips/new` — create-trip button and form on My Trips, `source: "blank"` |
+| My Trips card | [my-trips-card.md](my-trips-card.md) | `/my-trips?tab=trips` — header/body/footer cards, accessible `…` action menu |
 | Docker deploy on one VM | [docker-deploy.md](docker-deploy.md) | Runbook: nginx + app + optional PostgreSQL, bind-mounted state, host setup, backup |
 | Super admin accounts | [super-admin-accounts.md](super-admin-accounts.md) | `super_admin` role (ADR 0017): only it opens the Runbook, admins cannot manage admin accounts |
 | Handle sign-in | [handle-sign-in.md](handle-sign-in.md) | Sign in with an email or account handle; reset password works without an email (ADR 0018) |
