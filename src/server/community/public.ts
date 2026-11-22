@@ -7,6 +7,22 @@ import type {
   PublicCommunityReview,
 } from '@/server/planner/schemas';
 
+export type CommunityTripsResult = { ok: true; trips: CommunityTripCard[] } | { ok: false };
+
+/**
+ * The same read, but a store failure is reported as `{ ok: false }` instead of an
+ * empty list. The gallery page needs the difference: "no approved trip yet" and
+ * "could not read the trips" are not the same message (UXS-1).
+ */
+export const loadCommunityTrips = cache(async (limit = 24): Promise<CommunityTripsResult> => {
+  try {
+    return { ok: true, trips: await (await getPlannerRepository()).listCommunityTrips(limit) };
+  } catch (error) {
+    console.error('[community] could not read the gallery', error instanceof Error ? error.name : 'error');
+    return { ok: false };
+  }
+});
+
 /**
  * The only way public pages read community trips (ADR 0014): approved, public,
  * still-shared listings, already projected to the allow-listed card.
@@ -16,12 +32,8 @@ import type {
  * simply hides its section.
  */
 export const getCommunityTrips = cache(async (limit = 24): Promise<CommunityTripCard[]> => {
-  try {
-    return await (await getPlannerRepository()).listCommunityTrips(limit);
-  } catch (error) {
-    console.error('[community] could not read the gallery', error instanceof Error ? error.name : 'error');
-    return [];
-  }
+  const result = await loadCommunityTrips(limit);
+  return result.ok ? result.trips : [];
 });
 
 export interface ReviewPlace {

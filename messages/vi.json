@@ -139,13 +139,21 @@
       "title": "Chuyến đi của những người đi cùng",
       "lead": "Lịch trình thật do người đọc chia sẻ. Mỗi chuyến đều được người của Nhà Hưng xem qua trước khi lên đây.",
       "viewAll": "Xem tất cả chuyến đi"
+    },
+    "empty": {
+      "title": "Trang chủ đang được chuẩn bị",
+      "body": "Chưa có chuyện nào được đăng. Trong lúc chờ, bạn có thể xem các lịch trình mẫu hoặc tự bắt đầu một chuyến đi mới.",
+      "templates": "Xem lịch trình mẫu",
+      "newTrip": "Tạo chuyến đi mới"
     }
   },
   "stories": {
     "title": "Chuyện đi chơi",
     "description": "Tất cả những chuyến đi mình đã viết lại — có chuyến suôn sẻ, có chuyến không.",
     "count": "{count} bài",
-    "empty": "Chưa có bài nào ở đây."
+    "empty": "Chưa có bài nào ở đây.",
+    "errorTitle": "Chưa tải được danh sách chuyện",
+    "errorBody": "Có trục trặc khi đọc dữ liệu. Danh sách không rỗng, chỉ là chưa tải được. Hãy thử lại sau ít phút."
   },
   "destinations": {
     "title": "Khám phá",
@@ -528,7 +536,9 @@
     "itinerary": "Lịch trình",
     "day": "Ngày {number}",
     "anytime": "Linh hoạt",
-    "budgetActual": "Đã chi thực tế"
+    "budgetActual": "Đã chi thực tế",
+    "errorTitle": "Chưa tải được chuyến đi",
+    "retry": "Thử lại"
   },
   "share": {
     "title": "Chia sẻ chuyến đi",
@@ -1325,7 +1335,9 @@
     "by": "Chia sẻ bởi {author}",
     "byAnonymous": "Một người đi ẩn danh",
     "moderationNote": "Mỗi chuyến đều do Nhà Hưng duyệt trước khi hiển thị. Nội dung do người đi tự viết và không đại diện cho Nhà Hưng.",
-    "takedown": "Muốn gỡ một chuyến đi? Gửi yêu cầu tới"
+    "takedown": "Muốn gỡ một chuyến đi? Gửi yêu cầu tới",
+    "errorTitle": "Chưa tải được các chuyến đi cộng đồng",
+    "errorBody": "Có trục trặc khi đọc dữ liệu. Danh sách không rỗng, chỉ là chưa tải được. Hãy thử lại sau ít phút."
   },
   "adminRunbook": {
     "metaTitle": "Runbook",
@@ -1854,5 +1866,12 @@
     "bucket1": "1 lần",
     "bucket2": "2–3 lần",
     "bucket3": "Từ 4 lần"
+  },
+  "states": {
+    "loading": "Đang tải…",
+    "errorTitle": "Trang này chưa tải được",
+    "errorBody": "Có trục trặc khi đọc dữ liệu. Hãy thử lại, hoặc quay về trang chủ rồi vào lại sau ít phút.",
+    "retry": "Thử lại",
+    "backHome": "Về trang chủ"
   }
 }

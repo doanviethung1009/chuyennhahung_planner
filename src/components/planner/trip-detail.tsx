@@ -50,17 +50,35 @@ export function TripDetail({ id }: { id: string }) {
   }, [fetchTrip]);
 
   if (load.state !== 'ready') {
+    // Three different situations, three different headings: still loading, the trip
+    // is not there (or not yours), and the read failed (retry makes sense only here).
+    const title =
+      load.state === 'loading' ? t('loadingTitle') : load.state === 'missing' ? t('missingTitle') : t('errorTitle');
     return (
       <>
-        <PageHeader title={load.state === 'loading' ? t('loadingTitle') : t('missingTitle')} />
+        <PageHeader title={title} />
         <Container width="default">
           <div className="py-10">
-            <p className="text-base text-foreground-muted">
+            <p role={load.state === 'error' ? 'alert' : undefined} className="text-base text-foreground-muted">
               {load.state === 'loading' ? t('loading') : load.state === 'missing' ? t('missing') : t('error')}
             </p>
-            <Link href="/my-trips" className={buttonClass({ variant: 'secondary', className: 'mt-6' })}>
-              {t('back')}
-            </Link>
+            <div className="mt-6 flex flex-wrap gap-3">
+              {load.state === 'error' ? (
+                <button
+                  type="button"
+                  className={buttonClass()}
+                  onClick={() => {
+                    setLoad({ state: 'loading' });
+                    void fetchTrip();
+                  }}
+                >
+                  {t('retry')}
+                </button>
+              ) : null}
+              <Link href="/my-trips" className={buttonClass({ variant: 'secondary' })}>
+                {t('back')}
+              </Link>
+            </div>
           </div>
         </Container>
       </>
