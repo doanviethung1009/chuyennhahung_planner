@@ -233,3 +233,34 @@ UXS-7 sau cùng — hoặc ngay sau UXS-2 nếu Owner muốn có lưới an toà
 ## 9. Dừng để review
 
 Báo cáo dừng ở đây theo yêu cầu. Không có session UXS nào được bắt đầu.
+
+---
+
+# Phụ lục A — Kết quả UXS-0: kiểm chứng trình duyệt (2026-11-22)
+
+**Môi trường:** `origin/main` @ `e79fd5d` (đã gồm PR #224, #225, #229), `next dev` cục bộ cổng 3000, trình duyệt tích hợp, JSON store `.data/` (gitignore). Tài khoản test `member` tạo bằng `npm run admin:create` (chỉ cục bộ, đã đặt lại mật khẩu qua UI). Mật khẩu **không** ghi vào báo cáo. Một chuyến thử "UXS0 chuyến thử Đà Lạt" (3 ngày, trống) nằm trong `.data/planner.json`. Phát hiện phụ: server dev **cache store JSON trong bộ nhớ**; tài khoản tạo sau khi server chạy chỉ đăng nhập được sau khi khởi động lại server. Đây là hành vi của môi trường test, không phải lỗi giao diện.
+**Giới hạn:** đây là bản dev, không phải build production; không có trình đọc màn hình, không throttle mạng, không ngắt DB; không kiểm viewport 1180 và 1536.
+
+| # | Kết quả | Chi tiết | Tác động lên finding |
+|---|---|---|---|
+| B1 | **Xác nhận, nặng hơn dự đoán** | VI ở 1280px: hàng nav một dòng, nhưng **chỉ còn 17px** trống giữa nav và cụm bên phải; ở 1440px còn **25px** (EN: 82px ở 1280, 90px ở 1440). 1024px dùng hamburger, không tràn. Thêm bất kỳ mục VI nào vào hàng inline sẽ làm xuống dòng hoặc đè lên cụm phải. | UXA-01, UXA-06: **không thể chỉ thêm mục lẻ**; cần UXD-1 (nhóm) hoặc dời breakpoint/`2xl`. Giữ P1/P2. |
+| B2 | **NOT RUN** | Cần người dùng thực; chỉ xác nhận icon đăng nhập hiện đúng cạnh bộ chuyển ngôn ngữ ở 1280px. | UXA-04 giữ nguyên, vẫn cần nghiên cứu người dùng. |
+| B3 | **Xác nhận, rộng hơn dự đoán** | Link đổi ngôn ngữ trỏ `/en/places` (mất `?q=…&page=…`), `/en/my-trips` (mất `?tab=trips`), và ở `/dang-nhap?returnTo=…` hay `/doi-mat-khau?returnTo=…` thì mất cả `returnTo`. Giống nhau cho khách và thành viên. | UXA-05: nâng ghi chú — ảnh hưởng cả luồng đăng nhập. **Đề xuất nâng P2 → P1** (đổi ngôn ngữ giữa luồng đăng nhập làm mất đích quay lại); chờ Owner. |
+| B4 | **Xác nhận** | Khách mở `?tab=trips` và `?tab=share`: URL giữ nguyên, nội dung là tab Bản đồ, **không có thanh tab**, tiêu đề "Chuyến đi của tôi" kèm mô tả về "chuyến đã lưu". Thành viên: tab `trips` đúng, `aria-current="page"` đúng. | UXA-10 xác nhận, giữ P2. |
+| B5 | **Xác nhận** | Chuyến trống 3 ngày ở 375px: trang cao **5,7 màn hình** (4664px / 812px), panel Chia sẻ bắt đầu ở y=3095 (≈3,8 màn hình), khối header 250px; form "Sửa thông tin chuyến đi" một mình ≈1050px; **0 anchor** trong trang; không tràn ngang. Ở 1280px: 3,6 màn hình. Thứ tự heading đúng (h1 → h2 → h3). | UXA-11 xác nhận, giữ P2. Chuyến có hoạt động và chi tiêu sẽ dài hơn. |
+| B6 | **NOT RUN** | Không có throttle mạng/DB trong phiên này. | UXA-03, UXA-07 vẫn chỉ [C]. |
+| B7 | **NOT RUN** | Không ngắt được store. | UXA-03, UXA-08 vẫn chỉ [C]. |
+| B8 | **Một phần** | Drawer 375px (thành viên): mở bằng Enter, focus vào panel, `main` được `inert`, 11 mục (7 nav + Chuyến đi của tôi + Tài khoản và bảo mật + Đăng xuất + CTA), Escape đóng và trả focus về nút "Mở menu", `inert` được gỡ. **Chưa kết luận về bẫy Tab:** sau 13 lần Tab focus rơi vào `nextjs-portal` (chỉ báo của Next dev), vì panel nằm cuối `body`. Cần lặp lại trên build production (UXS-7). Menu tài khoản desktop chưa kiểm. | UXA-15 giữ P2. Ghi nhận mục "Tab từ panel khi focus đang ở chính panel" để UXS-7 kiểm. |
+| B9 | **NOT RUN** | Không có trình đọc màn hình. | UXA-13 giữ [C]. |
+| B10 | **Xác nhận (nhẹ)** | `/dia-diem` ở 1280px: 4 điều khiển + nút trên một dòng, nhưng ba ô `select` (tỉnh, điểm đến, loại) chỉ rộng **129px** — nhãn dài như "Quảng Bình (Phong Nha)" sẽ bị cắt. Ở 375px form cao 388px (≈ nửa màn hình) trước khi tới kết quả; không tràn ngang. | UXA-24 xác nhận, giữ P3. |
+
+## Điều chỉnh đề xuất sau kiểm chứng
+
+| Finding | Trước | Đề xuất | Lý do |
+|---|---|---|---|
+| UXA-05 | P2 | **P1** (Owner quyết) | Mất `returnTo` khi đổi ngôn ngữ giữa luồng đăng nhập/đổi mật khẩu |
+| UXA-01 | P1 | P1, **thêm ràng buộc** | Hàng nav inline VI chỉ còn 17px ở 1280px; UXD-1 phải là phương án nhóm hoặc đổi breakpoint |
+| Các finding khác | — | Không đổi | Đã xác nhận hoặc vẫn chưa kiểm được |
+
+## Còn lại chưa kiểm (đề xuất đưa vào UXS-7 và build production)
+B2 (người dùng thực), B6 và B7 (độ trễ và lỗi), B9 (trình đọc màn hình), bẫy Tab của drawer và menu tài khoản desktop trên build production, viewport 1180 và 1536.
