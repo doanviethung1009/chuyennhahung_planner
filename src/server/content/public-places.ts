@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import { getRepository } from './instance';
+import { destinationSlugsInProvince } from '@/content/provinces';
 import { foldText, foldedIncludes } from '@/lib/fold';
 import { readCatalogueCache } from '@/server/public-catalogue-cache';
 import { isContentError } from './repository';
@@ -57,17 +58,19 @@ function loadCatalogue(): Promise<PublicPlace[]> {
 }
 
 /** Same rule as `listPlaces`: folded substring over name and location, vi and en. */
-function matches(place: PublicPlace, filter: Pick<PlaceSearch, 'q' | 'destinationSlug' | 'category'>, needle: string): boolean {
+function matches(place: PublicPlace, filter: Pick<PlaceSearch, 'q' | 'destinationSlug' | 'provinceSlug' | 'category'>, needle: string, inProvince: ReadonlySet<string> | null): boolean {
+  if (inProvince && !inProvince.has(place.destinationSlug)) return false;
   if (filter.destinationSlug && place.destinationSlug !== filter.destinationSlug) return false;
   if (filter.category && place.category !== filter.category) return false;
   if (!needle) return true;
   return foldedIncludes([place.name.vi, place.name.en, place.location.vi, place.location.en], needle);
 }
 
-async function readAll(filter: Pick<PlaceSearch, 'q' | 'destinationSlug' | 'category'>): Promise<PublicPlace[]> {
+async function readAll(filter: Pick<PlaceSearch, 'q' | 'destinationSlug' | 'provinceSlug' | 'category'>): Promise<PublicPlace[]> {
   const needle = filter.q ? foldText(filter.q.trim()) : '';
   const catalogue = await loadCatalogue();
-  return catalogue.filter((place) => matches(place, filter, needle));
+  const inProvince = filter.provinceSlug ? new Set(destinationSlugsInProvince(filter.provinceSlug)) : null;
+  return catalogue.filter((place) => matches(place, filter, needle, inProvince));
 }
 
 /** Strict read: a store failure rejects. The sitemap uses it so an outage is not read by crawlers as "all places removed". */
@@ -81,6 +84,8 @@ export interface PlaceSearch {
   /** Free text, 1–80 characters after trimming; anything else is ignored by the caller's validation. */
   q?: string;
   destinationSlug?: string;
+  /** Places whose destination lies in this province; unknown slug matches nothing. */
+  provinceSlug?: string;
   category?: Place['category'];
   /** 1-based. */
   page: number;
@@ -104,6 +109,7 @@ export async function searchPublicPlaces(search: PlaceSearch): Promise<PlaceSear
   const matches = await readAll({
     ...(search.q ? { q: search.q } : {}),
     ...(search.destinationSlug ? { destinationSlug: search.destinationSlug } : {}),
+    ...(search.provinceSlug ? { provinceSlug: search.provinceSlug } : {}),
     ...(search.category ? { category: search.category } : {}),
   });
   const pageCount = Math.max(1, Math.ceil(matches.length / PLACES_PAGE_SIZE));

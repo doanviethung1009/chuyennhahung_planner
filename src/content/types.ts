@@ -21,6 +21,8 @@ export interface Destination {
    */
   area: Localized<string>;
   region: 'north' | 'central' | 'south';
+  /** Slug of the `Province` this destination lies in (src/content/provinces.ts). */
+  provinceSlug: string;
   terrain: Terrain;
   /** WGS84 coordinates, used by the travel map projection. */
   coords: { lat: number; lng: number };

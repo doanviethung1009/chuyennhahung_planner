@@ -1796,6 +1796,8 @@
     "searchLabel": "Search by name or area",
     "searchPlaceholder": "For example: Da Lat, coffee, night market",
     "searchButton": "Search",
+    "provinceLabel": "Province / city",
+    "allProvinces": "All provinces",
     "destinationLabel": "Destination",
     "categoryLabel": "Type of place",
     "allDestinations": "All destinations",

@@ -21,8 +21,9 @@ not a boundary or centre. `formerNames` lists the 63 pre-2025 units merged in.
 
 ## How it works
 
-Static typed data plus `getProvince(slug)`. Nothing reads it yet, so there is no
-runtime effect. `Destination.area` stays geographic on purpose and is not linked.
+Static typed data plus `getProvince(slug)`. Each `Destination` carries a
+`provinceSlug`; the `/places` province filter uses it (see [places.md](places.md)).
+`Destination.area` stays geographic on purpose.
 
 ## Files
 

@@ -22,8 +22,9 @@ tròn 2 chữ số, không phải ranh giới hay tâm. `formerNames` liệt kê
 
 ## Cách hoạt động
 
-Dữ liệu tĩnh có kiểu cùng `getProvince(slug)`. Hiện chưa có nơi nào đọc nên chưa
-ảnh hưởng gì lúc chạy. `Destination.area` vẫn là nhãn địa lý và không liên kết.
+Dữ liệu tĩnh có kiểu cùng `getProvince(slug)`. Mỗi `Destination` có
+`provinceSlug`; bộ lọc tỉnh ở `/places` dùng nó (xem [places.vi.md](places.vi.md)).
+`Destination.area` vẫn là nhãn địa lý.
 
 ## Tệp
 

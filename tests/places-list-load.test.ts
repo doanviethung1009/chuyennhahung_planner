@@ -41,6 +41,15 @@ describe('public catalogue cache', () => {
     expect(reads).toHaveBeenCalledWith(expect.objectContaining({ offset: 0 }));
   });
 
+  it('filters by the province of the place destination, over the cached read', async () => {
+    const { searchPublicPlaces } = await api();
+    // 'a' sits in the fixture's default destination; 'b' in hoi-an, which is in Đà Nẵng.
+    const danang = await searchPublicPlaces({ provinceSlug: 'da-nang', page: 1 });
+    expect(danang.places.map((p) => p.slug)).toEqual(['b']);
+    expect((await searchPublicPlaces({ provinceSlug: 'cao-bang', page: 1 })).total).toBe(0);
+    expect(reads).toHaveBeenCalledTimes(1);
+  });
+
   it('shares one in-flight read between cold concurrent requests', async () => {
     const { searchPublicPlaces } = await api();
     const results = await Promise.all([
