@@ -2,12 +2,12 @@
 
 🇻🇳 Bản tiếng Việt: [0034-province-destination-link.vi.md](0034-province-destination-link.vi.md)
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-22
 - **Owner:** system-architect
 - **Affects:** `src/content/types.ts` (`Destination.provinceSlug`), `src/content/destinations.ts`, `src/content/provinces.ts`, `src/server/content/public-places.ts`, `src/app/[locale]/places/page.tsx`, `src/app/[locale]/destinations/page.tsx`, `tests/provinces.test.ts`, `docs/features/vietnam-provinces.*`
 
-This ADR records a decision the code already carries: the 34-province reference data (feature document `vietnam-provinces`) was merged in PR #222, and the destination link plus the `/places` and `/destinations` province filters followed in PRs #225 and #228 without an ADR. [`vietnam-provinces.md`](../features/vietnam-provinces.md) said a link "needs its own decision". It stays **Proposed** until the owner confirms it.
+This ADR records a decision the code already carries: the 34-province reference data (feature document `vietnam-provinces`) was merged in PR #222, and the destination link plus the `/places` and `/destinations` province filters followed in PRs #225 and #228 without an ADR. [`vietnam-provinces.md`](../features/vietnam-provinces.md) said a link "needs its own decision". The owner accepted it on 2026-11-22. Acceptance covers the link design only; the accuracy of the province data is still unverified (see Follow-up).
 
 ## Context
 
@@ -58,6 +58,6 @@ Harder:
 
 ## Follow-up
 
-- Owner: verify `provinces.ts` (merger lists, coordinates, region grouping) against Nghị quyết 202/2025/QH15, and confirm this ADR so it can move to Accepted.
+- Owner: verify `provinces.ts` (merger lists, coordinates, region grouping) against Nghị quyết 202/2025/QH15. Still open.
 - Documents: add a short province note to `docs/architecture.md` + `.vi.md` data section. `docs/features/vietnam-provinces.*` should link here instead of saying the link "needs its own decision".
 - Not part of this decision, and each needs its own: a province-level member map (ADR 0029 is country level), moving destinations into the content store, or a `provinceSlug` on trips.
