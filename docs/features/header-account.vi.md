@@ -44,7 +44,7 @@ Không thêm route. Control dẫn tới các route sẵn có:
 - **Khách.** Một link biểu tượng 44px tới trang đăng nhập đã bản địa hoá, kèm
   `returnTo` = đường dẫn và query hiện tại. Tên cho trình đọc màn hình và tooltip
   là "Đăng nhập" / "Sign in". Trên máy tính chỉ có biểu tượng vì hàng header bị giới
-  hạn ở `max-w-7xl` và sáu mục điều hướng đã chiếm hết; thêm chữ sẽ đẩy chúng xuống
+  hạn ở `max-w-7xl` và sáu mục điều hướng trên hàng đã chiếm hết; thêm chữ sẽ đẩy chúng xuống
   hai dòng.
 - **Đã đăng nhập.** Một nút avatar 44px (`aria-expanded`, `aria-controls`, tên
   "Tài khoản của {name}") mở một khung: "Đang đăng nhập: {name}", Chuyến đi của
@@ -53,7 +53,9 @@ Không thêm route. Control dẫn tới các route sẵn có:
   ở server) và Đăng xuất. Đây là disclosure, không phải ARIA `menu`: các mục vẫn là
   link thường, Tab hoạt động như bình thường, ↓/↑ di chuyển giữa các mục, Escape
   đóng và trả focus về nút, bấm hoặc focus ra ngoài cũng đóng.
-- **Điện thoại.** Menu kéo ra trong `main-nav.tsx` hiện nút "Đăng nhập" rộng hết
+- **Điện thoại.** Hàng điều hướng trên header chỉ vừa từ `xl` (1280px); dưới mức đó
+  menu kéo ra trong `main-nav.tsx` thay thế (hàng trên bỏ mục "Trang chủ" vì logo
+  đã dẫn về đó, menu kéo ra vẫn giữ). Menu kéo ra hiện nút "Đăng nhập" rộng hết
   hàng cho khách, hoặc tên và các mục như trên cho thành viên. Khi mở nó là hộp
   thoại modal: focus chuyển vào trong, `main`, `footer` và liên kết bỏ qua đều bị
   `inert`, Tab xoay vòng giữa nút menu và panel, Escape đóng lại, và khi viewport
