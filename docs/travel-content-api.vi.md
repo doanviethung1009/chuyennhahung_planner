@@ -94,6 +94,8 @@ Query khi lấy danh sách: `?destinationSlug=&category=&travelStyle=&limit=50&o
 **Hình dạng công khai (PLACES-API-PROJ).** Cả hai endpoint places trả về allow-list của ADR 0026, không phải bản ghi đã lưu: `slug`, `name`, `destinationSlug`, `location`, `category`, `images`, `description`, `suggestedMinutes`, `estimatedCostVnd`, `rating`, `personalNote`. `affiliateLinks`, `createdAt`, `updatedAt` và `coords` **không còn được trả về** (chỉ breaking với client từng đọc chúng; `/api/admin/travel/places*` vẫn trả đủ bản ghi). Vỏ phản hồi (`places`, `count`), `q`, `destinationSlug`, `category`, `limit`/`offset` và mã 404 không đổi.
 Place không có trạng thái xuất bản — một place thì tồn tại hoặc không.
 
+**Hình dạng story công khai (STORY-API-PROJ).** Cả hai endpoint story trả về allow-list, không phải bản ghi đã lưu: `slug`, `title`, `excerpt`, `content`, `cover`, `gallery`, `destinationSlug`, `plannerTemplateSlug`, `travelDates`, `travelStyle`, `readingMinutes`, `seo`, `publishedAt`, `updatedAt` (`toPublicStoryRecord`). Không trả `status`, `createdAt`, `actualCost`, `actualCostTotalVnd`, `placeSlugs`, `reviewIds` và `itinerarySlugs`; các route admin vẫn trả bản ghi đầy đủ. Đây là thay đổi phá vỡ với client nào từng đọc các trường đó. `GET /api/travel/reviews` vẫn trả review đã lưu (việc tiếp theo, làm riêng).
+
 ## Endpoint quản trị
 
 | Method | Đường dẫn | Mục đích |

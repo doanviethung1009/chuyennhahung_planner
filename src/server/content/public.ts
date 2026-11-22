@@ -9,7 +9,6 @@ import type {
   StoryBlock,
   TravelReview,
   TravelStory,
-  TripCost,
 } from "./schemas";
 
 /**
@@ -67,7 +66,6 @@ export interface PublicStory {
   reviews: PublicReview[];
   gallery: string[];
   travelDates: { start: string; end: string };
-  actualCost: TripCost | null;
   seo: {
     title: LocalizedText;
     description: LocalizedText;
@@ -179,7 +177,6 @@ async function toPublicStory(
     reviews,
     gallery: story.gallery,
     travelDates: story.travelDates,
-    actualCost: story.actualCost,
     seo: {
       title: story.seo.title ?? story.title,
       description: story.seo.description,
@@ -248,7 +245,6 @@ function staticToPublic(story: Story): PublicStory {
     reviews: [],
     gallery: [],
     travelDates: { start: story.publishedAt, end: story.publishedAt },
-    actualCost: null,
     seo: {
       title: story.title,
       description: story.excerpt,

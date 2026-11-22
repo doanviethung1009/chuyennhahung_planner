@@ -45,7 +45,7 @@ Unknown: how many app instances run today (`deploy/compose.app.yml` was not chec
    | `destinationSlugs: string[]` | `destinationSlug` (one, required) | `destinationSlugs = [destinationSlug]` or `[]` |
    | `featured: boolean` | none | dropped: nothing reads it (home uses newest-first) |
    | `plannerTemplateSlug?` | none (templates point back with `sourceStorySlug`) | `plannerTemplateSlug: string \| null`, from a new story field (below) |
-   | none | `travelDates`, `gallery`, `actualCost`, `placeSlugs`, `reviewIds`, `itinerarySlugs`, `seo`, `updatedAt` | `places: Place[]`, `reviews: TravelReview[]` (published only), `gallery`, `travelDates`, `actualCost`, `updatedAt`, resolved `seo` |
+   | none | `travelDates`, `gallery`, `actualCost`, `placeSlugs`, `reviewIds`, `itinerarySlugs`, `seo`, `updatedAt` | `places: Place[]`, `reviews: TravelReview[]` (published only), `gallery`, `travelDates`, `updatedAt`, resolved `seo` |
 
    Two additive schema changes are required so the six static stories survive the move: `storyInputSchema.plannerTemplateSlug: slugSchema.nullable().default(null)` (the static Đà Lạt story links a template that was cut from a *different* story, so it cannot be derived), and `storyInputSchema.destinationSlug` plus `sourceSnapshotSchema.destinationSlug` become **nullable** (two static stories have no destination). Both widen what is accepted, so every stored document still validates.
 

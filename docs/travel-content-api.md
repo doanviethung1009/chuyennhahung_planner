@@ -94,6 +94,8 @@ List query: `?destinationSlug=&category=&travelStyle=&limit=50&offset=0`.
 **Public shape (PLACES-API-PROJ).** Both places endpoints return the ADR 0026 allow-list, not the stored record: `slug`, `name`, `destinationSlug`, `location`, `category`, `images`, `description`, `suggestedMinutes`, `estimatedCostVnd`, `rating`, `personalNote`. `affiliateLinks`, `createdAt`, `updatedAt` and `coords` are **no longer returned** (breaking only for a client that read them; `/api/admin/travel/places*` still returns the full record). Envelope (`places`, `count`), `q`, `destinationSlug`, `category`, `limit`/`offset` and the 404 are unchanged.
 Places carry no publish status — a place exists or it does not.
 
+**Public story shape (STORY-API-PROJ).** Both story endpoints return an allow-list, not the stored record: `slug`, `title`, `excerpt`, `content`, `cover`, `gallery`, `destinationSlug`, `plannerTemplateSlug`, `travelDates`, `travelStyle`, `readingMinutes`, `seo`, `publishedAt`, `updatedAt` (`toPublicStoryRecord`). `status`, `createdAt`, `actualCost`, `actualCostTotalVnd`, `placeSlugs`, `reviewIds` and `itinerarySlugs` are not returned; the admin routes still serve the full record. This is a breaking change for any client that read those fields. `GET /api/travel/reviews` still returns the stored review (separate follow-up).
+
 ## Admin endpoints
 
 | Method | Path | Purpose |

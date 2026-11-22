@@ -45,7 +45,7 @@ Mọi trang bị ảnh hưởng và sitemap khai báo `dynamic = 'force-dynamic'
 ## Giới hạn và câu hỏi còn mở
 
 - Mỗi lượt xem đều đọc kho; chỉ chạy một instance cho đến khi có kho PostgreSQL cho nội dung.
-- `gallery` và `actualCost` chưa được hiển thị (ảnh gallery không có alt; chưa chốt bố cục tổng chi phí).
+- `gallery` chưa được hiển thị (ảnh gallery không có alt). `actualCost` chưa được hiển thị và không còn đi vào `PublicStory` hay `GET /api/travel/stories*` (STORY-API-PROJ); thêm lại, có chiếu trường, khi chốt bố cục tổng chi phí.
 - Ảnh từ host khác `images.unsplash.com` được phục vụ ở chế độ unoptimized; danh sách host trong `src/lib/image-src.ts` phải khớp với `next.config.ts`.
 - Các chuyến đi seed mang ngày đi xấp xỉ (chủ sở hữu cần sửa).
 - Trang chuyến đi vẫn nạp các ngày của template qua `@/server/content/instance`, vì `PublicStory` chỉ mang slug của template.
