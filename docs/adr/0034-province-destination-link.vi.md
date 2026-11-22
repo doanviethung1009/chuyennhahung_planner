@@ -58,6 +58,6 @@ Khó hơn:
 
 ## Việc kéo theo
 
-- Chủ dự án: kiểm `provinces.ts` (danh sách sáp nhập, tọa độ, nhóm vùng) với Nghị quyết 202/2025/QH15. Vẫn còn mở.
+- Chủ dự án: danh sách sáp nhập và loại thành phố/tỉnh đã được đối chiếu với Nghị quyết 202/2025/QH15 ngày 2026-11-23 (xem `docs/features/vietnam-provinces.vi.md`). Tọa độ và nhóm vùng vẫn chưa kiểm.
 - Tài liệu: thêm một ghi chú ngắn về tỉnh vào phần dữ liệu của `docs/architecture.md` + `.vi.md`. `docs/features/vietnam-provinces.*` nên trỏ về đây thay vì nói liên kết "cần một quyết định riêng".
 - Không thuộc quyết định này, mỗi việc cần ADR riêng: bản đồ thành viên cấp tỉnh (ADR 0029 là cấp quốc gia), đưa destination vào content store, hoặc `provinceSlug` trên chuyến đi.
