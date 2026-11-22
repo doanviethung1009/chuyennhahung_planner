@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { placeFixture, storyFixture } from './travel-content-helpers';
+import { placeFixture, reviewFixture, storyFixture } from './travel-content-helpers';
 
 /**
  * Exercises the real route handlers against a temp JSON file store, so the
@@ -25,6 +25,9 @@ let routes: {
   publicStories: typeof import('../src/app/api/travel/stories/route');
   publicStory: typeof import('../src/app/api/travel/stories/[slug]/route');
   publicTemplates: typeof import('../src/app/api/travel/templates/route');
+  adminReviews: typeof import('../src/app/api/admin/travel/reviews/route');
+  adminReviewStatus: typeof import('../src/app/api/admin/travel/reviews/[id]/status/route');
+  publicReviews: typeof import('../src/app/api/travel/reviews/route');
 };
 
 function authed(body?: unknown, method = 'POST'): Request {
@@ -81,6 +84,9 @@ beforeAll(async () => {
     publicStories: await import('../src/app/api/travel/stories/route'),
     publicStory: await import('../src/app/api/travel/stories/[slug]/route'),
     publicTemplates: await import('../src/app/api/travel/templates/route'),
+    adminReviews: await import('../src/app/api/admin/travel/reviews/route'),
+    adminReviewStatus: await import('../src/app/api/admin/travel/reviews/[id]/status/route'),
+    publicReviews: await import('../src/app/api/travel/reviews/route'),
   };
 });
 
@@ -401,5 +407,25 @@ describe('persistence survives a fresh repository', () => {
     const story = await fresh.getStory('api-da-lat-story');
     expect(story.status).toBe('published');
     expect((await fresh.getTemplate('api-da-lat-template')).version).toBe(2);
+  });
+});
+
+describe('GET /api/travel/reviews is an allow-list (REVIEWS-API-PROJ)', () => {
+  it('serves only the allowed fields of published reviews, never a draft', async () => {
+    await routes.adminReviews.POST(authed(reviewFixture({ id: 'api-review-live', costVnd: 876543, author: 'Chuyện Nhà Hưng' })));
+    await routes.adminReviewStatus.POST(authed({ action: 'publish' }), params({ id: 'api-review-live' }));
+    await routes.adminReviews.POST(authed(reviewFixture({ id: 'api-review-draft' })));
+
+    const keys = ['body', 'cons', 'id', 'pros', 'rating', 'title', 'visitedOn'];
+    for (const query of ['', '?status=draft']) {
+      const response = await routes.publicReviews.GET(new Request(`${BASE}/api/travel/reviews${query}`));
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body.reviews.map((r: { id: string }) => r.id)).toEqual(['api-review-live']);
+      expect(Object.keys(body.reviews[0]).sort()).toEqual(keys);
+      expect(JSON.stringify(body)).not.toMatch(
+        /"(status|publishedAt|createdAt|updatedAt|subject|costVnd|author)"|876543/,
+      );
+    }
   });
 });
