@@ -59,6 +59,24 @@ export function MainNav({
     const { overflow } = document.body.style;
     document.body.style.overflow = 'hidden';
 
+    // Everything outside the header and the drawer becomes inert, so neither
+    // Tab nor a screen reader can reach the page behind the overlay.
+    const behind = [
+      ...document.querySelectorAll<HTMLElement>('main, footer, body > a[href="#main"]'),
+    ].filter((element) => !element.hasAttribute('inert'));
+    behind.forEach((element) => element.setAttribute('inert', ''));
+
+    // Move focus into the dialog (the panel itself, so no link looks "chosen").
+    panelRef.current?.focus();
+
+    // Resizing up to the desktop layout hides the drawer; drop its state too,
+    // or the scroll lock above would outlive it.
+    const desktop = window.matchMedia('(min-width: 64rem)');
+    const onBreakpoint = (event: MediaQueryListEvent) => {
+      if (event.matches) setOpenedAt(null);
+    };
+    desktop.addEventListener('change', onBreakpoint);
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setOpenedAt(null);
@@ -68,17 +86,21 @@ export function MainNav({
 
       if (event.key !== 'Tab' || !panelRef.current) return;
 
-      const focusable = panelRef.current.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled])',
-      );
+      // The toggle sits in the header, outside the portalled panel, but stays
+      // operable — it is the first stop of the focus loop.
+      const focusable = [
+        ...(toggleRef.current ? [toggleRef.current] : []),
+        ...panelRef.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'),
+      ];
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
       if (!first || !last) return;
 
-      if (event.shiftKey && document.activeElement === first) {
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || active === panelRef.current)) {
         event.preventDefault();
         last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
+      } else if (!event.shiftKey && active === last) {
         event.preventDefault();
         first.focus();
       }
@@ -87,6 +109,8 @@ export function MainNav({
     document.addEventListener('keydown', onKeyDown);
     return () => {
       document.body.style.overflow = overflow;
+      behind.forEach((element) => element.removeAttribute('inert'));
+      desktop.removeEventListener('change', onBreakpoint);
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [open]);
@@ -180,9 +204,10 @@ export function MainNav({
                 role="dialog"
                 aria-modal="true"
                 aria-label={navLabel}
-                className="relative max-h-full overflow-y-auto border-t border-border-subtle bg-background shadow-lift"
+                tabIndex={-1}
+                className="relative max-h-full overflow-y-auto border-t border-border-subtle bg-background shadow-lift outline-none"
               >
-                <nav className="flex flex-col px-5 py-2">
+                <nav aria-label={navLabel} className="flex flex-col px-5 py-2">
                   {items.map((item) => (
                     <Link
                       key={item.key}

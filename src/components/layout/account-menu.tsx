@@ -157,8 +157,12 @@ export function AccountMenu({ state }: { state: AccountState }) {
     };
   }, [open]);
 
-  // Nothing until the session is known: no flash of "Sign in" for a member.
-  if (state.status === 'loading') return null;
+  // Nothing visible until the session is known (no flash of "Sign in" for a
+  // member), but the 44px slot is held so the header does not jump when the
+  // icon or avatar arrives.
+  if (state.status === 'loading') {
+    return <span aria-hidden="true" className="inline-block size-11 shrink-0" />;
+  }
 
   if (state.status === 'guest') {
     return (

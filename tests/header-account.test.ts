@@ -51,4 +51,31 @@ describe('header account control', () => {
   it('has no placeholder links', () => {
     expect(read('components/layout/account-menu.tsx')).not.toMatch(/href=["']#/);
   });
+
+  it('holds the 44px account slot while the session loads (no layout shift)', () => {
+    const source = read('components/layout/account-menu.tsx');
+    expect(source).toMatch(/status === 'loading'\) \{\s*return <span[^>]*size-11/);
+  });
+});
+
+describe('mobile drawer focus management', () => {
+  const source = read('components/layout/main-nav.tsx');
+
+  it('moves focus into the dialog and makes the page behind inert', () => {
+    expect(source).toMatch(/panelRef\.current\?\.focus\(\)/);
+    expect(source).toMatch(/setAttribute\('inert', ''\)/);
+    expect(source).toMatch(/removeAttribute\('inert'\)/);
+  });
+
+  it('keeps the toggle in the focus loop', () => {
+    expect(source).toMatch(/toggleRef\.current \? \[toggleRef\.current\]/);
+  });
+
+  it('closes when the viewport grows to the desktop layout', () => {
+    expect(source).toMatch(/matchMedia\('\(min-width: 64rem\)'\)/);
+  });
+
+  it('labels the drawer nav landmark', () => {
+    expect(source).toMatch(/<nav aria-label=\{navLabel\} className="flex flex-col/);
+  });
 });
