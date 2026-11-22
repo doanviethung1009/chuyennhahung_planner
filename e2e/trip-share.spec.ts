@@ -60,7 +60,9 @@ test.describe('Flow A: template to trip to shared link @smoke', () => {
 
     // 5. Archiving the trip revokes the link.
     await page.getByRole('button', { name: 'Lưu trữ' }).click();
-    await expect(page.getByText('Đã chuyển vào lưu trữ.')).toBeVisible();
+    // The page leaves the trip for the list right after archiving (`router.push('/my-trips')`),
+    // so the "archived" status text is gone before it can be asserted; the URL is the signal.
+    await expect(page).toHaveURL(/\/chuyen-di-cua-toi(\?.*)?$/);
     expect((await guestPage.goto(sharePath))?.status()).toBe(404);
     await guest.close();
   });
