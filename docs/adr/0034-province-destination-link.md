@@ -58,6 +58,6 @@ Harder:
 
 ## Follow-up
 
-- Owner: verify `provinces.ts` (merger lists, coordinates, region grouping) against Nghị quyết 202/2025/QH15. Still open.
+- Owner: the merger lists and city/province kinds were checked against Nghị quyết 202/2025/QH15 on 2026-11-23 (see `docs/features/vietnam-provinces.md`). Coordinates and region grouping are still unverified.
 - Documents: add a short province note to `docs/architecture.md` + `.vi.md` data section. `docs/features/vietnam-provinces.*` should link here instead of saying the link "needs its own decision".
 - Not part of this decision, and each needs its own: a province-level member map (ADR 0029 is country level), moving destinations into the content store, or a `provinceSlug` on trips.

@@ -41,7 +41,15 @@ mỗi cái xuất hiện đúng một lần, tên đủ hai ngôn ngữ, tọa �
 
 ## Giới hạn và câu hỏi còn mở
 
-Vùng (Bắc/Trung/Nam) theo cách chia truyền thống. Tọa độ và danh sách sáp nhập
-được viết từ kiến thức, không phải bộ dữ liệu chính thức: cần đối chiếu Nghị
-quyết 202/2025/QH15 trước khi dựa vào. Chưa có quận/huyện/xã. Việc nối chuyến đi
+**Đã kiểm (2026-11-23):** 34 đơn vị, đơn vị nào là thành phố và đơn vị nào là
+tỉnh, cùng `formerNames` của từng đơn vị khớp với Điều 1 của Nghị quyết
+202/2025/QH15 (23 đơn vị sáp nhập và 11 đơn vị giữ nguyên; 63 đơn vị cũ, mỗi
+đơn vị đúng một lần), so bằng script. Văn bản lấy từ một bản sao thứ cấp trên
+luatvietnam.vn, không phải Công báo. `Huế` mang `Thừa Thiên Huế` làm tên cũ;
+Nghị quyết chỉ ghi đơn vị này giữ nguyên, nên tên đó đến từ lần đổi tên trước
+đó, không đến từ Nghị quyết.
+
+**Chưa kiểm:** tọa độ (Nghị quyết không có; là một điểm thành phố đại diện làm
+tròn 2 chữ số, chưa kiểm từng đơn vị), nhóm vùng Bắc/Trung/Nam (cách chia
+truyền thống, không có trong Nghị quyết) và các slug. Chưa có quận/huyện/xã. Việc nối chuyến đi
 hoặc story với tỉnh, hay đưa tỉnh vào bản đồ thành viên, cần quyết định riêng. Liên kết với điểm đến đã được quyết định trong [ADR 0034](../adr/0034-province-destination-link.vi.md).
