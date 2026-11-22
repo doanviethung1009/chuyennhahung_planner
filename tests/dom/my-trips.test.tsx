@@ -28,7 +28,7 @@ const trip = (over: Record<string, unknown> = {}) => ({
 const t = messages.vi.myTrips;
 const assign = vi.fn();
 
-function mount(opts: { active?: unknown[]; archived?: unknown[]; mutate?: (call: { path: string; method: string }) => Response } = {}, locale: 'vi' | 'en' = 'vi') {
+function mount(opts: { view?: 'active' | 'archived'; active?: unknown[]; archived?: unknown[]; mutate?: (call: { path: string; method: string }) => Response } = {}, locale: 'vi' | 'en' = 'vi') {
   const calls = stubFetch((call) => {
     if (call.method === 'GET') {
       const list = call.path.includes('status=archived') ? (opts.archived ?? []) : (opts.active ?? [trip()]);
@@ -36,7 +36,7 @@ function mount(opts: { active?: unknown[]; archived?: unknown[]; mutate?: (call:
     }
     return opts.mutate?.(call) ?? json(200, { trip: trip({ id: 'new-1' }) });
   });
-  renderWithIntl(<MyTrips />, locale);
+  renderWithIntl(<MyTrips view={opts.view ?? 'active'} />, locale);
   return calls;
 }
 
@@ -83,9 +83,7 @@ describe('MyTrips card', () => {
   });
 
   it('archived trips show Restore and Delete permanently directly, with no menu or status select', async () => {
-    const user = userEvent.setup();
-    mount({ archived: [trip({ id: 'a-1' })] });
-    await user.click(await screen.findByRole('button', { name: t.tabArchived }));
+    mount({ view: 'archived', archived: [trip({ id: 'a-1' })] });
     expect(await screen.findByRole('button', { name: t.restore })).toBeTruthy();
     expect(screen.getByRole('button', { name: t.purge })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Thao tác khác/ })).toBeNull();
@@ -136,14 +134,17 @@ describe('MyTrips card', () => {
 
   it('archive DELETEs and restore POSTs, each with If-Match of the current version', async () => {
     const user = userEvent.setup();
-    const calls = mount({ archived: [trip()] });
+    const calls = mount();
     await openMenu(user);
     await user.click(screen.getByRole('menuitem', { name: t.archive }));
     await waitFor(() => expect(calls.some((c) => c.method === 'DELETE')).toBe(true));
     expect(calls.find((c) => c.method === 'DELETE')!.path).toBe('/api/planner/trip-1');
     expect(calls.find((c) => c.method === 'DELETE')!.ifMatch).toBe('"7"');
+  });
 
-    await user.click(screen.getByRole('button', { name: t.tabArchived }));
+  it('restore POSTs with If-Match of the current version', async () => {
+    const user = userEvent.setup();
+    const calls = mount({ view: 'archived', archived: [trip()] });
     await user.click(await screen.findByRole('button', { name: t.restore }));
     await waitFor(() => expect(calls.some((c) => c.path.endsWith('/restore'))).toBe(true));
     expect(calls.find((c) => c.path.endsWith('/restore'))!.ifMatch).toBe('"7"');
@@ -151,8 +152,7 @@ describe('MyTrips card', () => {
 
   it('purge asks for confirmation and only then DELETEs with purge=true', async () => {
     const user = userEvent.setup();
-    const calls = mount({ archived: [trip()] });
-    await user.click(await screen.findByRole('button', { name: t.tabArchived }));
+    const calls = mount({ view: 'archived', archived: [trip()] });
     await user.click(await screen.findByRole('button', { name: t.purge }));
     expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
     const group = await screen.findByRole('group', { name: /Xác nhận xoá/ });
@@ -203,16 +203,14 @@ describe('MyTrips card', () => {
 
   it('shows loading, then the empty state with its CTA', async () => {
     stubFetch(() => json(200, { trips: [] }));
-    renderWithIntl(<MyTrips />);
+    renderWithIntl(<MyTrips view="active" />);
     expect(screen.getByText(t.loading)).toBeTruthy();
     expect(await screen.findByText(t.empty)).toBeTruthy();
     expect(screen.getByRole('link', { name: t.emptyCta }).getAttribute('href')).toBe('/chuyen-di-choi');
   });
 
   it('archived empty state has no extra CTA', async () => {
-    const user = userEvent.setup();
-    mount({ archived: [] });
-    await user.click(await screen.findByRole('button', { name: t.tabArchived }));
+    mount({ view: 'archived', archived: [] });
     expect(await screen.findByText(t.emptyArchived)).toBeTruthy();
     expect(screen.queryByRole('link', { name: t.emptyCta })).toBeNull();
   });
@@ -221,7 +219,7 @@ describe('MyTrips card', () => {
     const user = userEvent.setup();
     let fail = true;
     stubFetch(() => (fail ? json(500, { error: { code: 'boom' } }) : json(200, { trips: [trip()] })));
-    renderWithIntl(<MyTrips />);
+    renderWithIntl(<MyTrips view="active" />);
     expect((await screen.findByRole('alert')).textContent).toContain(t.errorLoad);
     fail = false;
     await user.click(screen.getByRole('button', { name: t.retry }));
@@ -234,5 +232,37 @@ describe('MyTrips card', () => {
     expect(await screen.findByRole('link', { name: new RegExp(en.open) })).toBeTruthy();
     expect(screen.getByRole('button', { name: /More actions for/ })).toBeTruthy();
     expect(screen.getByText(en.datesOpen, { exact: false })).toBeTruthy();
+  });
+
+  it('view switch is a pair of links with the open one marked, archived carries ?view', async () => {
+    mount();
+    const nav = await screen.findByRole('navigation', { name: t.tabsLabel });
+    const current = within(nav).getByRole('link', { name: t.tabActive });
+    expect(current.getAttribute('aria-current')).toBe('page');
+    const archived = within(nav).getByRole('link', { name: t.tabArchived });
+    expect(archived.getAttribute('aria-current')).toBeNull();
+    expect(archived.getAttribute('href')).toContain('view=archived');
+  });
+
+  it('search, status filter and sort narrow the list on the client with a count and a way back', async () => {
+    const user = userEvent.setup();
+    const calls = mount({
+      active: [
+        trip({ id: 'a', title: 'Bình Thuận', destinationSlug: 'da-lat', startDate: '2027-02-01' }),
+        trip({ id: 'b', title: 'An Giang', destinationSlug: 'da-lat', startDate: '2027-01-01', planningStatus: 'planned' }),
+      ],
+    });
+    await screen.findByRole('heading', { name: 'Bình Thuận' });
+    const titles = () => screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
+    await user.selectOptions(screen.getByLabelText(t.sortLabel), 'title');
+    expect(titles()).toEqual(['An Giang', 'Bình Thuận']);
+    await user.selectOptions(screen.getByLabelText(t.sortLabel), 'start');
+    expect(titles()).toEqual(['An Giang', 'Bình Thuận']);
+    await user.type(screen.getByRole('searchbox'), 'binh');
+    expect(screen.getByText(t.noMatch)).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: t.clearFilters }));
+    await user.selectOptions(screen.getByLabelText(t.filterStatus), 'planned');
+    expect(titles()).toEqual(['An Giang']);
+    expect(calls.filter((c) => c.method === 'GET')).toHaveLength(1);
   });
 });

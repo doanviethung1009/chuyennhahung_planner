@@ -283,3 +283,15 @@ Quyết định của Owner: UXD-1 nhóm hai mục; UXD-2 khách → `/plan-your
 | UXA-21 | **Đã xử lý** | `/map` là "Bản đồ nhà Hưng" / "Hưng's map"; tab thành viên là "Bản đồ của bạn" / "Your map" (chỉ chuỗi). |
 
 **Số đo (trình duyệt tích hợp, dev server, trang chủ, khách):** hàng nav một dòng, mục 44px, không đè, không cuộn ngang. VI dư 13px (1280), 21px (1440), 51px (1536, có chữ đăng nhập); EN dư 53, 133, 149px. 1024 và 1180: drawer cả hai ngôn ngữ. Chưa kiểm: thành viên đăng nhập trong trình duyệt (có test DOM), build production, bẫy Tab của drawer (UXS-7).
+
+# Phụ lục C — Kết quả UXS-3: Chuyến đi của tôi (2026-11-23)
+
+Owner xác nhận: phần thẻ đã merge (PR #224, #226) chính là UI-MYTRIPS-1; UXS-3 làm phần còn thiếu. Tài liệu: [my-trips-list](../../docs/features/my-trips-list.vi.md).
+
+| Finding | Trạng thái | Cách xử lý |
+|---|---|---|
+| UXA-13 | **Đã xử lý một phần** | Có tìm, lọc tình trạng, sắp xếp (client). Nút Thử lại khi lỗi tải đã có từ trước. Còn mở: tóm tắt/ảnh/ngân sách trên thẻ, tải ở client, thông báo `role="status"` còn ở đầu danh sách (B9 chưa chạy). |
+| UXA-14 | **Đã xử lý** | Đang dùng/Lưu trữ là link `aria-current` với `?view=archived`, cùng mẫu với các mục trang chủ; Back/F5 giữ chế độ. |
+| UXA-20 | **Đã xử lý** | "Đang dùng" → "Hiện có" / "Current" ở danh sách chuyến; mô tả trang dùng "lưu trữ". `admin…viewActive` giữ nguyên (khái niệm khác). |
+| UXA-09, 10, 11 | **Không chạm** | Ngoài phạm vi UXS-3. |
+

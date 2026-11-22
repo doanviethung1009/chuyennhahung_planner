@@ -54,6 +54,7 @@ New features start from [`_template.md`](_template.md) /
 | Create a blank trip | [create-blank-trip.md](create-blank-trip.md) | `/my-trips/new` — create-trip button and form on My Trips, `source: "blank"` |
 | Error and loading states | [error-loading-states.md](error-loading-states.md) | `error.tsx`, `global-error.tsx`, shared `loading.tsx`, empty home, error panels on stories and community trips (UXS-1) |
 | My Trips card | [my-trips-card.md](my-trips-card.md) | `/my-trips?tab=trips` — header/body/footer cards, accessible `…` action menu |
+| My Trips list | [my-trips-list.md](my-trips-list.md) | `/my-trips?tab=trips&view=archived` — view in the URL, search, status filter, sort (UXS-3) |
 | Docker deploy on one VM | [docker-deploy.md](docker-deploy.md) | Runbook: nginx + app + optional PostgreSQL, bind-mounted state, host setup, backup |
 | Super admin accounts | [super-admin-accounts.md](super-admin-accounts.md) | `super_admin` role (ADR 0017): only it opens the Runbook, admins cannot manage admin accounts |
 | Handle sign-in | [handle-sign-in.md](handle-sign-in.md) | Sign in with an email or account handle; reset password works without an email (ADR 0018) |

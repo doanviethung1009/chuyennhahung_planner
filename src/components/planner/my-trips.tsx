@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
@@ -12,18 +12,26 @@ import type { TripView } from '@/server/planner/repository';
 import type { PlanningStatus, Trip } from '@/server/planner/schemas';
 import { ApiError, api, goToSignIn } from './api';
 import { ActionMenu, type ActionMenuSection } from './action-menu';
-import { StatusSelect } from './status-select';
+import { PLANNING_STATUSES, StatusSelect } from './status-select';
+import { TRIPS_VIEWS, type TripsView } from '@/lib/trips-view';
 
-type Tab = 'active' | 'archived';
+type Tab = TripsView;
+type SortKey = 'updated' | 'start' | 'title';
 
-export function MyTrips() {
+const fieldClass = 'min-h-11 rounded-lg border border-border-strong bg-surface px-3 text-base text-foreground';
+
+/** The caller remounts this on a view change (`key`), so state starts fresh per view. */
+export function MyTrips({ view }: { view: TripsView }) {
   const t = useTranslations('myTrips');
   const tVis = useTranslations('visibility');
   const tPlan = useTranslations('planning');
   const locale = useLocale() as Locale;
   const router = useRouter();
 
-  const [tab, setTab] = useState<Tab>('active');
+  const tab: Tab = view;
+  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | PlanningStatus>('all');
+  const [sort, setSort] = useState<SortKey>('updated');
   const [trips, setTrips] = useState<Trip[] | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -51,15 +59,6 @@ export function MyTrips() {
     void load(tab);
   }, [load, tab]);
 
-  function switchTab(next: Tab) {
-    if (next === tab) return;
-    setTrips(null);
-    setMessage('');
-    setFailed(false);
-    setConfirmId(null);
-    setTab(next);
-  }
-
   async function act(trip: Trip, done: string, call: () => Promise<unknown>, after?: (result: unknown) => void) {
     setBusyId(trip.id);
     setMessage('');
@@ -80,6 +79,23 @@ export function MyTrips() {
     }
   }
 
+  const visible = useMemo(() => {
+    const needle = query.trim().toLocaleLowerCase(locale);
+    const name = (trip: Trip) => getDestination(trip.destinationSlug)?.name[locale] ?? trip.destinationSlug;
+    const list = (trips ?? []).filter(
+      (trip) =>
+        (statusFilter === 'all' || trip.planningStatus === statusFilter) &&
+        (!needle || `${trip.title} ${name(trip)}`.toLocaleLowerCase(locale).includes(needle)),
+    );
+    if (sort === 'title') return [...list].sort((a, b) => a.title.localeCompare(b.title, locale));
+    if (sort === 'start') {
+      // Dated trips first, soonest first; undated trips keep the server order after them.
+      return [...list].sort((a, b) => (a.startDate ?? '9999').localeCompare(b.startDate ?? '9999'));
+    }
+    return list;
+  }, [trips, query, statusFilter, sort, locale]);
+  const narrowed = query.trim() !== '' || statusFilter !== 'all';
+
   const path = (trip: Trip) => `/api/planner/${encodeURIComponent(trip.id)}`;
 
   return (
@@ -90,19 +106,22 @@ export function MyTrips() {
         </Link>
       </p>
 
-      <div role="group" aria-label={t('tabsLabel')} className="mt-6 flex flex-wrap gap-2">
-        {(['active', 'archived'] as const).map((key) => (
-          <button
-            key={key}
-            type="button"
-            aria-pressed={tab === key}
-            onClick={() => switchTab(key)}
-            className={buttonClass({ size: 'sm', variant: tab === key ? 'primary' : 'secondary' })}
-          >
-            {t(key === 'active' ? 'tabActive' : 'tabArchived')}
-          </button>
-        ))}
-      </div>
+      <nav aria-label={t('tabsLabel')} className="mt-6">
+        <ul className="flex list-none flex-wrap gap-2 p-0">
+          {TRIPS_VIEWS.map((key) => (
+            <li key={key}>
+              <Link
+                href={{ pathname: '/my-trips', query: key === 'active' ? { tab: 'trips' } : { tab: 'trips', view: key } }}
+                scroll={false}
+                aria-current={view === key ? 'page' : undefined}
+                className={buttonClass({ size: 'sm', variant: view === key ? 'primary' : 'secondary' })}
+              >
+                {t(key === 'active' ? 'tabActive' : 'tabArchived')}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
 
       <p role="status" className="mt-4 min-h-6 text-sm text-foreground-muted">
         {failed ? '' : message}
@@ -136,8 +155,52 @@ export function MyTrips() {
           ) : null}
         </div>
       ) : (
+        <>
+        <div role="search" aria-label={t('findLabel')} className="mt-4 flex max-w-3xl flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+          <label className="flex flex-1 flex-col gap-1 text-sm font-medium sm:min-w-56">
+            {t('searchLabel')}
+            <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} className={fieldClass} />
+          </label>
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            {t('filterStatus')}
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as 'all' | PlanningStatus)} className={fieldClass}>
+              <option value="all">{t('filterAll')}</option>
+              {PLANNING_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {tPlan(status)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            {t('sortLabel')}
+            <select value={sort} onChange={(event) => setSort(event.target.value as SortKey)} className={fieldClass}>
+              <option value="updated">{t('sortUpdated')}</option>
+              <option value="start">{t('sortStart')}</option>
+              <option value="title">{t('sortTitle')}</option>
+            </select>
+          </label>
+        </div>
+        <p role="status" className="mt-3 text-sm text-foreground-muted">
+          {narrowed ? t('resultCount', { shown: visible.length, total: trips.length }) : ''}
+        </p>
+        {visible.length === 0 ? (
+          <div className="mt-2 max-w-3xl rounded-xl border border-border-subtle bg-surface p-6">
+            <p className="text-base text-foreground-muted">{t('noMatch')}</p>
+            <button
+              type="button"
+              className={buttonClass({ size: 'md', variant: 'secondary', className: 'mt-4' })}
+              onClick={() => {
+                setQuery('');
+                setStatusFilter('all');
+              }}
+            >
+              {t('clearFilters')}
+            </button>
+          </div>
+        ) : (
         <ul className="mt-4 grid max-w-3xl list-none gap-4 p-0">
-          {trips.map((trip) => {
+          {visible.map((trip) => {
             const busy = busyId === trip.id;
             const destination = getDestination(trip.destinationSlug)?.name[locale] ?? trip.destinationSlug;
             const sections: ActionMenuSection[] = [
@@ -272,6 +335,8 @@ export function MyTrips() {
             );
           })}
         </ul>
+        )}
+        </>
       )}
     </div>
   );

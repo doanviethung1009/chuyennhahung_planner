@@ -11,12 +11,13 @@ import { MemberMapSharePanel } from '@/components/map/member-map-share-panel';
 import { MemberMapSharePreview } from '@/components/map/member-map-share-preview';
 import { MyTrips } from '@/components/planner/my-trips';
 import { parseMemberHomeTab } from '@/lib/member-home-tab';
+import { parseTripsView } from '@/lib/trips-view';
 import { getMemberMap, getMemberSession } from '@/server/planner/member-map';
 import { getMemberMapShareOverview } from '@/server/planner/member-map-share-preview';
 
 type Params = {
   params: Promise<{ locale: Locale }>;
-  searchParams: Promise<{ tab?: string | string[] }>;
+  searchParams: Promise<{ tab?: string | string[]; view?: string | string[] }>;
 };
 
 /**
@@ -44,7 +45,9 @@ export default async function MyTripsPage({ params, searchParams }: Params) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('myTrips');
-  const tab = parseMemberHomeTab((await searchParams).tab);
+  const query = await searchParams;
+  const tab = parseMemberHomeTab(query.tab);
+  const view = parseTripsView(query.view);
   const knownSlugs = new Set(destinations.map((destination) => destination.slug));
 
   // A guest, on any tab, gets the empty map and the sign-in prompt: MyTrips would
@@ -82,7 +85,7 @@ export default async function MyTripsPage({ params, searchParams }: Params) {
               {t('listTitle')}
             </h2>
             <div className="mt-6">
-              <MyTrips />
+              <MyTrips key={view} view={view} />
             </div>
           </section>
         )}
