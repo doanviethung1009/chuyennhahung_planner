@@ -2,7 +2,7 @@
 
 🇻🇳 Bản tiếng Việt: [0035-place-publish-status.vi.md](0035-place-publish-status.vi.md)
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-25
 - **Owner:** system-architect
 - **Affects:** `src/server/content/schemas.ts` (`placeSchema`, `isPublishedPlace`), `src/server/content/repository.ts`, `src/server/content/public-places.ts`, `src/server/content/public.ts`, `src/server/community/public.ts`, `src/server/planner/repository.ts`, `src/server/persistence/content-rows.ts`, `db/migrations/0017_place_status.sql`, `src/app/api/travel/places/**`, `src/app/api/admin/travel/places/**`, `src/components/admin/content/**`, `docs/features/place-publish-status.*`

@@ -2,7 +2,7 @@
 
 🇬🇧 English version: [0035-place-publish-status.md](0035-place-publish-status.md)
 
-- **Trạng thái:** Đề xuất
+- **Trạng thái:** Đã chấp nhận
 - **Ngày:** 2026-11-25
 - **Người sở hữu:** system-architect
 - **Ảnh hưởng:** `src/server/content/schemas.ts` (`placeSchema`, `isPublishedPlace`), `src/server/content/repository.ts`, `src/server/content/public-places.ts`, `src/server/content/public.ts`, `src/server/community/public.ts`, `src/server/planner/repository.ts`, `src/server/persistence/content-rows.ts`, `db/migrations/0017_place_status.sql`, `src/app/api/travel/places/**`, `src/app/api/admin/travel/places/**`, `src/components/admin/content/**`, `docs/features/place-publish-status.*`
