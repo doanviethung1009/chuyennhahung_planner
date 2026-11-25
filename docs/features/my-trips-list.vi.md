@@ -36,8 +36,12 @@ cùng ý với `parseMemberHomeTab`, ADR 0032) rồi truyền vào `MyTrips`, v�
 - **Tìm và sắp xếp (phía client, trên danh sách đã tải):** ô tìm (tên chuyến và tên điểm
   đến, không phân biệt hoa thường), bộ lọc tình trạng, và sắp xếp (mới cập nhật = thứ tự
   server, ngày khởi hành với chuyến chưa có ngày xếp cuối, tên A–Z). Khi có bộ lọc, dòng
-  trạng thái báo "Hiển thị x/y"; không khớp thì có thông báo và nút "Xóa bộ lọc". Bộ lọc
-  không nằm trên URL.
+  trạng thái báo "Hiển thị x/y"; không khớp thì có thông báo và nút "Xóa bộ lọc". Từ khóa, trạng thái và
+  sắp xếp nằm trên URL dưới dạng `?q=`, `?status=` và `?sort=` (giá trị mặc định được
+  bỏ), nên F5, Back và liên kết chia sẻ đều giữ lại: server đọc chúng và truyền cho danh
+  sách, danh sách sau đó cập nhật thanh địa chỉ bằng `history.replaceState` (không điều
+  hướng, không tải lại). Giá trị lạ về mặc định và `q` cắt còn 80 ký tự
+  (`src/lib/trips-filter.ts`). Đổi giữa Hiện có/Đã lưu trữ thì mục đó bắt đầu không có bộ lọc.
 - Lỗi tải kèm Thử lại, thao tác trên thẻ và các yêu cầu không đổi.
 
 ## Files
@@ -59,7 +63,6 @@ VoiceOver với dòng trạng thái (B9 của audit) và ảnh chụp ở 375/76
 
 ## Limits and open questions
 
-Không tìm kiếm phía server và không phân trang (danh sách nhỏ, tải đủ). Bộ lọc không
-nằm trên URL. Thông báo trạng thái vẫn ở đầu danh sách chứ chưa ở thẻ vừa thao tác
+Không tìm kiếm phía server và không phân trang (danh sách nhỏ, tải đủ). Thông báo trạng thái vẫn ở đầu danh sách chứ chưa ở thẻ vừa thao tác
 (UXA-13, để mở). Màn quản trị tài khoản vẫn dùng "Đang dùng" (`viewActive`), khái niệm
 khác.

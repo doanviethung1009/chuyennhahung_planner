@@ -257,7 +257,7 @@ describe('the member home boundary (ADR 0029, ADR 0031)', () => {
     const page = read('app/[locale]/my-trips/page.tsx');
     expect(page).toMatch(/getMemberSession\(\)/);
     expect(page).toMatch(/<MemberMapView/);
-    expect(page).toMatch(/<MyTrips key=\{view\} view=\{view\} \/>/);
+    expect(page).toMatch(/<MyTrips key=\{view\} view=\{view\} initialFilter=\{parseTripsFilter\(query\)\} \/>/);
     // A guest, on any tab, falls through to the map branch and never reaches <MyTrips />.
     expect(page).toMatch(/tab === 'map' \|\| guest/);
     expect(page.indexOf('<MyTrips ')).toBeGreaterThan(page.indexOf('tab === \'map\' || guest'));

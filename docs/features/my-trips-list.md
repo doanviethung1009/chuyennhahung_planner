@@ -36,7 +36,12 @@ are reworded, in both `vi.json` and `en.json`.
   destination name, case-insensitive), a planning-status filter, and a sort (recently
   updated = server order, start date with undated trips last, name A–Z). When a filter
   is active a status line says "Showing x of y"; no match shows a message and a
-  "Clear filters" button. Filters are not in the URL.
+  "Clear filters" button. The search, status and sort are kept in the URL as
+  `?q=`, `?status=` and `?sort=` (defaults are left out), so F5, Back and a shared link
+  keep them: the server reads them and passes them to the list, which then updates the
+  address bar with `history.replaceState` (no navigation, no refetch). Unknown values
+  fall back to the default and `q` is cut to 80 characters (`src/lib/trips-filter.ts`).
+  Switching Current/Archived starts that view with no filters.
 - Load failure with Retry, the card actions and their requests are unchanged.
 
 ## Files
@@ -58,7 +63,6 @@ VoiceOver on the status line (audit B9) and a screenshot pass at 375/768/1280.
 
 ## Limits and open questions
 
-No server-side search or pagination (the list is small, loaded in full). Filters are not
-kept in the URL. The status message still sits at the top of the list rather than on the
+No server-side search or pagination (the list is small, loaded in full). The status message still sits at the top of the list rather than on the
 card that changed (UXA-13, left open). The admin account view still says "Đang dùng"
 (`admin…viewActive`), a different concept.
