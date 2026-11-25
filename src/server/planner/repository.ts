@@ -2921,7 +2921,7 @@ export class PlannerRepository {
       const place = input.placeSlug ? await this.catalog.getPlace(input.placeSlug) : null;
       if (input.placeSlug && (!place || !isPublishedPlace(place))) {
         throw invalidReference([
-          { path: 'placeSlug', message: `place "${input.placeSlug}" does not exist` },
+          { path: 'placeSlug', message: `place "${input.placeSlug}" does not exist or is not published` },
         ]);
       }
       // Enforced on create only: a place never changes afterwards (the PATCH

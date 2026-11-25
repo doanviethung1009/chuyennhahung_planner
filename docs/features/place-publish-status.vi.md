@@ -36,7 +36,7 @@ Route địa điểm công khai không đổi; địa điểm chưa xuất bản
 
 ## Tests
 
-`tests/place-status.test.ts`: tạo mặc định và tạo nháp, địa điểm cũ không có status, lọc ở danh sách và đọc công khai, vòng đời, và hai ràng buộc với chuyến đi. `tests/travel-content-api.test.ts`: `POST` quản trị trả bản nháp và route công khai trả 404 đến khi xuất bản. `tests/runbook.test.ts` kiểm tra route đã được ghi tài liệu. Chưa phủ: các nút trong trình sửa trên trình duyệt (môi trường này không có jsdom) và migration PostgreSQL trên database thật.
+`tests/place-status.test.ts`: tạo mặc định và tạo nháp, địa điểm cũ không có status, lọc ở danh sách và đọc công khai, vòng đời, và hai ràng buộc với chuyến đi. `tests/travel-content-api.test.ts`: `POST` quản trị trả bản nháp và route công khai trả 404 đến khi xuất bản. `tests/runbook.test.ts` kiểm tra route đã được ghi tài liệu. Ngoài ra: ánh xạ cột `status`/`published_at` cho Postgres (`tests/content-rows.test.ts`), nhập bản nháp và địa điểm không có status (`tests/content-transfer.test.ts`), và Planner từ chối địa điểm chưa xuất bản (`tests/planner-repository.test.ts`, `tests/planner-clone-independence.test.ts`). Chưa phủ: các nút trong trình sửa trên trình duyệt (môi trường này không có jsdom) và migration PostgreSQL trên database thật.
 
 ## Limits and open questions
 

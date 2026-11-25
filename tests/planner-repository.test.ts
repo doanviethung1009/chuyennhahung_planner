@@ -192,6 +192,28 @@ describe('activities', () => {
     );
   });
 
+  it('refuses a catalog place that is not published (ADR 0035)', async () => {
+    for (const status of ['draft', 'archived'] as const) {
+      const base = fakeCatalog();
+      const planner = makePlanner({
+        catalog: fakeCatalog({
+          getPlace: async (slug) => {
+            const place = await base.getPlace(slug);
+            return place && slug === 'ho-xuan-huong' ? { ...place, status } : place;
+          },
+        }),
+      });
+      const { userId } = await makeOwner(planner);
+      const { trip } = await planner.createTrip(userId, daLatTripInput());
+      await expectCode(
+        planner.addActivity(userId, trip.id, activityInput({ placeSlug: 'ho-xuan-huong' }), null),
+        'invalid_reference',
+      );
+      // A published place in the same catalogue still works.
+      await planner.addActivity(userId, trip.id, activityInput({ placeSlug: 'vuon-ca-phe-me-linh' }), null);
+    }
+  });
+
   it('refuses a catalog place from another destination, and leaves the trip untouched', async () => {
     const planner = makePlanner();
     const { userId } = await makeOwner(planner);

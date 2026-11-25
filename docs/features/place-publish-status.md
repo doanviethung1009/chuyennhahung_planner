@@ -36,7 +36,7 @@ The public place routes are unchanged; they answer 404 for a place that is not p
 
 ## Tests
 
-`tests/place-status.test.ts`: default and draft creation, legacy place without status, list and public-read filtering, the lifecycle, and both story guards. `tests/travel-content-api.test.ts`: the admin `POST` returns a draft and the public route 404s until it is published. `tests/runbook.test.ts` checks the route is documented. Not covered: the editor buttons in a browser (no jsdom in this environment) and the PostgreSQL migration against a real database.
+`tests/place-status.test.ts`: default and draft creation, legacy place without status, list and public-read filtering, the lifecycle, and both story guards. `tests/travel-content-api.test.ts`: the admin `POST` returns a draft and the public route 404s until it is published. `tests/runbook.test.ts` checks the route is documented. Also: the Postgres row mapping of `status`/`published_at` (`tests/content-rows.test.ts`), import of a draft and of a place with no status (`tests/content-transfer.test.ts`), and the Planner refusing a non-published place (`tests/planner-repository.test.ts`, `tests/planner-clone-independence.test.ts`). Not covered: the editor buttons in a browser (no jsdom in this environment) and the PostgreSQL migration against a real database.
 
 ## Limits and open questions
 
