@@ -1333,9 +1333,14 @@ export class PlannerRepository {
     // Resolve every referenced place once, so each activity's cost category can
     // be inferred without a lookup per row.
     const categoryBySlug = new Map<string, PlaceCategory>();
+    const withdrawn = new Set<string>();
     for (const slug of template.placeSlugs) {
       const place = await this.catalog.getPlace(slug);
-      if (place) categoryBySlug.set(place.slug, place.category);
+      if (!place) continue;
+      // ADR 0035: a place taken down after the template was written is not linked
+      // into a new trip; the activity stays as a plain one with the template's title.
+      if (isPublishedPlace(place)) categoryBySlug.set(place.slug, place.category);
+      else withdrawn.add(slug);
     }
 
     const days = this.buildDays(
@@ -1356,7 +1361,7 @@ export class PlannerRepository {
           tripId,
           dayId: day.id,
           order,
-          placeSlug: source.placeSlug,
+          placeSlug: source.placeSlug && withdrawn.has(source.placeSlug) ? null : source.placeSlug,
           title: source.title.vi,
           startTime: source.startTime,
           durationMinutes: source.durationMinutes,
