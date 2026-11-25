@@ -47,7 +47,7 @@ export function EditorProvider({ value, children }: { value: EditorContext; chil
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
-function useEditor(): EditorContext {
+export function useEditor(): EditorContext {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error('form field used outside EditorProvider');
   return ctx;
