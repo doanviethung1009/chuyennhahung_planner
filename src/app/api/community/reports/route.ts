@@ -1,3 +1,4 @@
+import { invalidateOverviewPayloadsAfter } from '@/server/overview-cache';
 import { NextResponse } from 'next/server';
 import { isContentError } from '@/server/content/repository';
 import { rateLimited } from '@/server/content/errors';
@@ -61,5 +62,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true }, { status: 201, headers: HEADERS });
   } catch (error) {
     return toErrorResponse(error);
+  } finally {
+    invalidateOverviewPayloadsAfter(request);
   }
 }
