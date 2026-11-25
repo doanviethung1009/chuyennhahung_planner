@@ -65,3 +65,12 @@ describe('placesList messages', () => {
     expect(en_.nav.places).toBeTruthy();
   });
 });
+
+describe('province and destination consistency', () => {
+  it('drops a destination that is outside the chosen province', () => {
+    const lamDong = parsePlacesParams({ province: 'lam-dong', destination: 'da-lat' });
+    expect(lamDong.destination).toBe('da-lat');
+    const other = parsePlacesParams({ province: 'ha-noi', destination: 'da-lat' });
+    expect(other.destination).toBe('');
+  });
+});
