@@ -802,6 +802,10 @@
       "description": "Mọi thứ bạn quản lý được trên trang, gom về một chỗ.",
       "cardsHeading": "Việc đang chờ",
       "cardsLabel": {
+        "reportsOpen": "Báo cáo chờ xử lý",
+        "restrictionsActive": "Hạn chế đang hiệu lực",
+        "contentPublished": "Nội dung đã xuất bản",
+        "integrityIssues": "Lỗi toàn vẹn dữ liệu",
         "listingsPending": "Chuyến đi chờ duyệt",
         "reviewsPending": "Đánh giá chờ duyệt",
         "contentDrafts": "Bản nháp (chuyến đi và đánh giá)",

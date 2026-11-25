@@ -83,12 +83,29 @@ describe('GET /api/admin/overview role matrix', () => {
     const response = await route.GET(req({ cookie: editor.cookie }));
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('no-store');
-    expect(await ids(response)).toEqual(['listingsPending', 'reviewsPending', 'contentDrafts']);
+    expect(await ids(response)).toEqual([
+      'listingsPending',
+      'reviewsPending',
+      'reportsOpen',
+      'contentDrafts',
+      'contentPublished',
+      'integrityIssues',
+    ]);
   });
 
   it('admin adds the two user cards (no integrity card); the service token matches; no runtime card', async () => {
     const admin = await makeUser('admin');
-    const expected = ['listingsPending', 'reviewsPending', 'contentDrafts', 'usersActive', 'usersDisabled'];
+    const expected = [
+      'listingsPending',
+      'reviewsPending',
+      'reportsOpen',
+      'restrictionsActive',
+      'contentDrafts',
+      'contentPublished',
+      'integrityIssues',
+      'usersActive',
+      'usersDisabled',
+    ];
     expect(await ids(await route.GET(req({ cookie: admin.cookie })))).toEqual(expected);
     expect(await ids(await route.GET(req({ bearer: ADMIN_TOKEN })))).not.toContain('runtime');
   });
@@ -134,7 +151,11 @@ describe('buildOverview degraded and empty paths', () => {
   const ok: OverviewSources = {
     pendingListings: async () => 2,
     pendingReviews: async () => 0,
+    openReports: async () => 1,
+    activeRestrictions: async () => 0,
     contentDrafts: async () => 3,
+    contentPublished: async () => 4,
+    integrityIssues: async () => 0,
     users: async () => ({ active: 5, disabled: 1 }),
     runtime: () => 'file',
   };

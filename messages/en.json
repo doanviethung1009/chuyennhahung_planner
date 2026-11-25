@@ -802,6 +802,10 @@
       "description": "Everything you can manage on the site, in one place.",
       "cardsHeading": "Waiting for you",
       "cardsLabel": {
+        "reportsOpen": "Open reports",
+        "restrictionsActive": "Active restrictions",
+        "contentPublished": "Published content",
+        "integrityIssues": "Data integrity issues",
         "listingsPending": "Trip listings waiting for review",
         "reviewsPending": "Reviews waiting for review",
         "contentDrafts": "Drafts (stories and reviews)",

@@ -10,7 +10,11 @@ import { can, type Action, type Principal } from '@/server/identity/permissions'
 export const OVERVIEW_CARD_IDS = [
   'listingsPending',
   'reviewsPending',
+  'reportsOpen',
+  'restrictionsActive',
   'contentDrafts',
+  'contentPublished',
+  'integrityIssues',
   'usersActive',
   'usersDisabled',
   'runtime',
@@ -20,6 +24,7 @@ export type OverviewCardId = (typeof OVERVIEW_CARD_IDS)[number];
 export type OverviewHref =
   | '/admin/community'
   | '/admin/content/stories'
+  | '/admin/content/integrity'
   | '/admin/users'
   | '/admin/runbook';
 
@@ -47,7 +52,11 @@ export interface Overview {
 export interface OverviewSources {
   pendingListings(): Promise<number>;
   pendingReviews(): Promise<number>;
+  openReports(): Promise<number>;
+  activeRestrictions(): Promise<number>;
   contentDrafts(): Promise<number>;
+  contentPublished(): Promise<number>;
+  integrityIssues(): Promise<number>;
   users(): Promise<{ active: number; disabled: number }>;
   runtime(): 'postgres' | 'file' | 'mixed';
 }
@@ -62,11 +71,28 @@ type Definition = {
 const DEFINITIONS: readonly Definition[] = [
   { id: 'listingsPending', action: 'community:moderate', href: '/admin/community' },
   { id: 'reviewsPending', action: 'community:moderate', href: '/admin/community' },
+  { id: 'reportsOpen', action: 'community:moderate', href: '/admin/community' },
+  { id: 'restrictionsActive', action: 'community:restrict', href: '/admin/community' },
   { id: 'contentDrafts', action: 'content:write', href: '/admin/content/stories' },
+  { id: 'contentPublished', action: 'content:write', href: '/admin/content/stories' },
+  { id: 'integrityIssues', action: 'content:write', href: '/admin/content/integrity' },
   { id: 'usersActive', action: 'user:provision', href: '/admin/users' },
   { id: 'usersDisabled', action: 'user:provision', href: '/admin/users' },
   { id: 'runtime', action: 'runbook:read', href: '/admin/runbook' },
 ];
+
+type CountId = Exclude<OverviewCardId, 'usersActive' | 'usersDisabled' | 'runtime'>;
+const COUNT_SOURCES: Record<CountId, (sources: OverviewSources) => () => Promise<number>> = {
+  listingsPending: (s) => s.pendingListings,
+  reviewsPending: (s) => s.pendingReviews,
+  reportsOpen: (s) => s.openReports,
+  restrictionsActive: (s) => s.activeRestrictions,
+  contentDrafts: (s) => s.contentDrafts,
+  contentPublished: (s) => s.contentPublished,
+  integrityIssues: (s) => s.integrityIssues,
+};
+/** Cards that flag "needs action" when above zero. */
+const ATTENTION = new Set<OverviewCardId>(['listingsPending', 'reviewsPending', 'reportsOpen', 'integrityIssues']);
 
 async function count(read: () => Promise<number>): Promise<{ count?: number; state: 'ok' | 'unavailable' }> {
   try {
@@ -94,21 +120,19 @@ export async function buildOverview(principal: Principal, sources: OverviewSourc
       switch (definition.id) {
         case 'listingsPending':
         case 'reviewsPending':
-        case 'contentDrafts': {
-          const read =
-            definition.id === 'listingsPending'
-              ? sources.pendingListings
-              : definition.id === 'reviewsPending'
-                ? sources.pendingReviews
-                : sources.contentDrafts;
-          const result = await count(read);
+        case 'reportsOpen':
+        case 'restrictionsActive':
+        case 'contentDrafts':
+        case 'contentPublished':
+        case 'integrityIssues': {
+          const result = await count(COUNT_SOURCES[definition.id](sources));
           return {
             ...base,
             ...result,
             ...(definition.id === 'reviewsPending' && (result.count ?? 0) >= REVIEW_QUEUE_CAP
               ? { atLeast: true }
               : {}),
-            ...(result.count !== undefined && result.count > 0 && definition.id !== 'contentDrafts'
+            ...(result.count !== undefined && result.count > 0 && ATTENTION.has(definition.id)
               ? { severity: 'attention' as const }
               : {}),
           };
@@ -138,6 +162,17 @@ export async function defaultOverviewSources(): Promise<OverviewSources> {
       (await (await getPlannerRepository()).listListingQueue()).filter((item) => item.listing.status === 'pending')
         .length,
     pendingReviews: async () => (await (await getPlannerRepository()).listReviewQueue('pending')).length,
+    openReports: async () => (await (await getPlannerRepository()).listReports('open')).length,
+    activeRestrictions: async () => (await (await getPlannerRepository()).listRestrictions(true)).length,
+    contentPublished: async () => {
+      const content = await getRepository();
+      const [stories, reviews] = await Promise.all([
+        content.listStories({ status: 'published' }),
+        content.listReviews({ status: 'published' }),
+      ]);
+      return stories.length + reviews.length;
+    },
+    integrityIssues: async () => (await (await getRepository()).validateIntegrity()).length,
     contentDrafts: async () => {
       const content = await getRepository();
       const [stories, reviews] = await Promise.all([
