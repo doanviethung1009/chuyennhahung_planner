@@ -12,12 +12,19 @@ import { MemberMapSharePreview } from '@/components/map/member-map-share-preview
 import { MyTrips } from '@/components/planner/my-trips';
 import { parseMemberHomeTab } from '@/lib/member-home-tab';
 import { parseTripsView } from '@/lib/trips-view';
+import { parseTripsFilter } from '@/lib/trips-filter';
 import { getMemberMap, getMemberSession } from '@/server/planner/member-map';
 import { getMemberMapShareOverview } from '@/server/planner/member-map-share-preview';
 
 type Params = {
   params: Promise<{ locale: Locale }>;
-  searchParams: Promise<{ tab?: string | string[]; view?: string | string[] }>;
+  searchParams: Promise<{
+    tab?: string | string[];
+    view?: string | string[];
+    q?: string | string[];
+    status?: string | string[];
+    sort?: string | string[];
+  }>;
 };
 
 /**
@@ -85,7 +92,7 @@ export default async function MyTripsPage({ params, searchParams }: Params) {
               {t('listTitle')}
             </h2>
             <div className="mt-6">
-              <MyTrips key={view} view={view} />
+              <MyTrips key={view} view={view} initialFilter={parseTripsFilter(query)} />
             </div>
           </section>
         )}

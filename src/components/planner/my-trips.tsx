@@ -14,14 +14,15 @@ import { ApiError, api, goToSignIn } from './api';
 import { ActionMenu, type ActionMenuSection } from './action-menu';
 import { PLANNING_STATUSES, StatusSelect } from './status-select';
 import { TRIPS_VIEWS, type TripsView } from '@/lib/trips-view';
+import { DEFAULT_TRIPS_FILTER, withTripsFilter, type TripsFilter } from '@/lib/trips-filter';
 
 type Tab = TripsView;
-type SortKey = 'updated' | 'start' | 'title';
+type SortKey = TripsFilter['sort'];
 
 const fieldClass = 'min-h-11 rounded-lg border border-border-strong bg-surface px-3 text-base text-foreground';
 
 /** The caller remounts this on a view change (`key`), so state starts fresh per view. */
-export function MyTrips({ view }: { view: TripsView }) {
+export function MyTrips({ view, initialFilter = DEFAULT_TRIPS_FILTER }: { view: TripsView; initialFilter?: TripsFilter }) {
   const t = useTranslations('myTrips');
   const tVis = useTranslations('visibility');
   const tPlan = useTranslations('planning');
@@ -29,9 +30,9 @@ export function MyTrips({ view }: { view: TripsView }) {
   const router = useRouter();
 
   const tab: Tab = view;
-  const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | PlanningStatus>('all');
-  const [sort, setSort] = useState<SortKey>('updated');
+  const [query, setQuery] = useState(initialFilter.q);
+  const [statusFilter, setStatusFilter] = useState<'all' | PlanningStatus>(initialFilter.status);
+  const [sort, setSort] = useState<SortKey>(initialFilter.sort);
   const [trips, setTrips] = useState<Trip[] | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -58,6 +59,14 @@ export function MyTrips({ view }: { view: TripsView }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load(tab);
   }, [load, tab]);
+
+  // Keep the filter in the address bar without navigating: no server render, no refetch.
+  useEffect(() => {
+    const next = withTripsFilter(window.location.search, { q: query, status: statusFilter, sort });
+    if (next !== window.location.search) {
+      window.history.replaceState(window.history.state, '', `${window.location.pathname}${next}${window.location.hash}`);
+    }
+  }, [query, statusFilter, sort]);
 
   async function act(trip: Trip, done: string, call: () => Promise<unknown>, after?: (result: unknown) => void) {
     setBusyId(trip.id);
