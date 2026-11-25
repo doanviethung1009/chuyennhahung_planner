@@ -14,6 +14,8 @@ import { placeCategories, type PlacesListParams } from './places-list-params';
 export async function PlacesFilterForm({ params, locale }: { params: PlacesListParams; locale: Locale }) {
   const [t, tCat] = await Promise.all([getTranslations('placesList'), getTranslations('places')]);
   const filtered = Boolean(params.q || params.destination || params.province || params.category);
+  // Once a province is chosen, offer only its destinations: any other pairing returns nothing.
+  const destinationOptions = params.province ? destinations.filter((d) => d.provinceSlug === params.province) : destinations;
 
   return (
     <form
@@ -50,7 +52,7 @@ export async function PlacesFilterForm({ params, locale }: { params: PlacesListP
       <Field id="pl-destination" label={t('destinationLabel')}>
         <select id="pl-destination" name="destination" defaultValue={params.destination} className={inputClass}>
           <option value="">{t('allDestinations')}</option>
-          {destinations.map((d) => (
+          {destinationOptions.map((d) => (
             <option key={d.slug} value={d.slug}>
               {d.name[locale]}
             </option>

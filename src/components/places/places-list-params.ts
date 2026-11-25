@@ -25,14 +25,20 @@ const first = (value: Raw): string => (Array.isArray(value) ? (value[0] ?? '') :
  * and rendered through React, never built into a pattern.
  */
 export function parsePlacesParams(raw: { q?: Raw; destination?: Raw; province?: Raw; category?: Raw; page?: Raw }): PlacesListParams {
-  const destination = first(raw.destination);
-  const province = first(raw.province);
+  const rawDestination = first(raw.destination);
+  const province = provincesWithDestinations.some((p) => p.slug === first(raw.province)) ? first(raw.province) : '';
+  // A destination outside the chosen province can never match; drop it so the list is not empty by accident.
+  const destination =
+    destinationBySlug.has(rawDestination) &&
+    (!province || destinationBySlug.get(rawDestination)?.provinceSlug === province)
+      ? rawDestination
+      : '';
   const category = first(raw.category);
   const page = Number.parseInt(first(raw.page), 10);
   return {
     q: first(raw.q).trim().slice(0, Q_MAX).trim(),
-    destination: destinationBySlug.has(destination) ? destination : '',
-    province: provincesWithDestinations.some((p) => p.slug === province) ? province : '',
+    destination,
+    province,
     category: (placeCategories as readonly string[]).includes(category) ? (category as PlaceCategory) : '',
     page: Number.isInteger(page) && page > 0 ? page : 1,
   };
