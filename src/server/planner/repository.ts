@@ -12,7 +12,7 @@ import {
 } from '@/server/content/errors';
 import { can, canManageRole, isAdminRole, userRole, type Role } from '@/server/identity/permissions';
 import type { IntegrityIssue } from '@/server/content/repository';
-import type { CostCategory, PlaceCategory } from '@/server/content/schemas';
+import { isPublishedPlace, type CostCategory, type PlaceCategory } from '@/server/content/schemas';
 import {
   authorizePlannerUser,
   findSessionByToken,
@@ -1333,9 +1333,14 @@ export class PlannerRepository {
     // Resolve every referenced place once, so each activity's cost category can
     // be inferred without a lookup per row.
     const categoryBySlug = new Map<string, PlaceCategory>();
+    const withdrawn = new Set<string>();
     for (const slug of template.placeSlugs) {
       const place = await this.catalog.getPlace(slug);
-      if (place) categoryBySlug.set(place.slug, place.category);
+      if (!place) continue;
+      // ADR 0035: a place taken down after the template was written is not linked
+      // into a new trip; the activity stays as a plain one with the template's title.
+      if (isPublishedPlace(place)) categoryBySlug.set(place.slug, place.category);
+      else withdrawn.add(slug);
     }
 
     const days = this.buildDays(
@@ -1356,7 +1361,7 @@ export class PlannerRepository {
           tripId,
           dayId: day.id,
           order,
-          placeSlug: source.placeSlug,
+          placeSlug: source.placeSlug && withdrawn.has(source.placeSlug) ? null : source.placeSlug,
           title: source.title.vi,
           startTime: source.startTime,
           durationMinutes: source.durationMinutes,
@@ -2753,7 +2758,8 @@ export class PlannerRepository {
   }
 
   private async requireKnownPlace(placeSlug: string): Promise<void> {
-    if (!(await this.catalog.getPlace(placeSlug))) {
+    const place = await this.catalog.getPlace(placeSlug);
+    if (!place || !isPublishedPlace(place)) {
       throw invalidReference([{ path: 'placeSlug', message: `no place "${placeSlug}" in the catalogue` }]);
     }
   }
@@ -2913,9 +2919,9 @@ export class PlannerRepository {
       if (!day) throw notFound(`trip "${tripId}" day`, String(input.dayNumber));
 
       const place = input.placeSlug ? await this.catalog.getPlace(input.placeSlug) : null;
-      if (input.placeSlug && !place) {
+      if (input.placeSlug && (!place || !isPublishedPlace(place))) {
         throw invalidReference([
-          { path: 'placeSlug', message: `place "${input.placeSlug}" does not exist` },
+          { path: 'placeSlug', message: `place "${input.placeSlug}" does not exist or is not published` },
         ]);
       }
       // Enforced on create only: a place never changes afterwards (the PATCH

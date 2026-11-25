@@ -45,7 +45,7 @@ export interface ReviewPlace {
 /** Catalogue places a visitor may review (the form's picker). Empty on a store failure. */
 export const getReviewPlaces = cache(async (): Promise<ReviewPlace[]> => {
   try {
-    const places = await (await getRepository()).listPlaces();
+    const places = await (await getRepository()).listPlaces({ status: 'published' });
     return places.map((place) => ({
       slug: place.slug,
       name: place.name,

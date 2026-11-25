@@ -65,9 +65,9 @@ export function PlaceEditor({ slug, canDelete = false }: { slug: string; canDele
   return (
     <RecordShell
       apiPath={`/api/admin/travel/places/${encodeURIComponent(slug)}`}
-      statusPath={null}
+      statusPath={`/api/admin/travel/places/${encodeURIComponent(slug)}/status`}
       fields={FIELDS}
-      lifecycle={false}
+      lifecycle
       back="places"
       canDelete={canDelete}
     >

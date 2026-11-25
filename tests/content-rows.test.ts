@@ -70,6 +70,25 @@ describe('content row mapping', () => {
     expect(rowsToData<ContentData>(rows, CONTENT_TABLES)).toEqual(data);
   });
 
+  it('round-trips a place status and publish date, and writes both columns (ADR 0035)', async () => {
+    const before = await seeded();
+    const after = structuredClone(before);
+    const place = after.places[0]!;
+    place.status = 'draft';
+    place.publishedAt = '2030-01-01T00:00:00.000Z';
+    place.updatedAt = '2030-01-02T00:00:00.000Z';
+
+    const statements = planStatements(before, after, CONTENT_TABLES);
+    expect(statements).toHaveLength(1);
+    expect(statements[0]!.text).toContain('"status"');
+    expect(statements[0]!.text).toContain('"published_at"');
+
+    const spec = CONTENT_TABLES.find((s) => s.collection === 'places')!;
+    const row = asDriverRow(toRow(spec, place as unknown as Record<string, unknown>), spec.columns);
+    expect(row.status).toBe('draft');
+    expect(row.published_at).toBe(place.publishedAt);
+  });
+
   it('writes no statement for a mutation that changed nothing', async () => {
     const data = await seeded();
     expect(planStatements(data, structuredClone(data), CONTENT_TABLES)).toEqual([]);

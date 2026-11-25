@@ -64,7 +64,7 @@ function mapIssue(path: string): string {
 /**
  * "New" form for a story or place: only the fields the create schema requires.
  * The rest is filled in on the normal edit page, where the record opens after
- * creation (ADR 0011). A story is always created as a draft by the server.
+ * creation (ADR 0011). A story or place is always created as a draft by the server (ADR 0035).
  */
 export function ContentCreate({ kind }: { kind: 'stories' | 'places' }) {
   const t = useTranslations('adminContent');

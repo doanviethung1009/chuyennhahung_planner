@@ -48,7 +48,7 @@ hay bỏ một route nghĩa là sửa bảng này ở cả hai ngôn ngữ.
 |---|---|---|---|
 | GET | `/api/health` | Công khai | Probe sống cho healthcheck của container |
 | GET | `/api/travel/places` | Công khai | Danh sách địa điểm đã đăng |
-| GET | `/api/travel/places/[slug]` | Công khai | Một địa điểm |
+| GET | `/api/travel/places/[slug]` | Công khai | Một địa điểm đã xuất bản (404 khi còn nháp hoặc đã lưu trữ) |
 | GET | `/api/travel/stories` | Công khai | Danh sách chuyện đã đăng |
 | GET | `/api/travel/stories/[slug]` | Công khai | Một chuyện |
 | GET | `/api/travel/collections` | Công khai | Danh sách bộ sưu tập |
@@ -129,6 +129,7 @@ hay bỏ một route nghĩa là sửa bảng này ở cả hai ngôn ngữ.
 | GET | `/api/admin/travel/places/[slug]` | Admin token hoặc phiên nhân viên | Một địa điểm |
 | PATCH | `/api/admin/travel/places/[slug]` | Admin token hoặc phiên nhân viên | Sửa địa điểm (bắt buộc If-Match) |
 | DELETE | `/api/admin/travel/places/[slug]` | Admin token hoặc session admin (`content:delete`; editor bị từ chối) | Xóa địa điểm (409 `place_in_use` khi còn được tham chiếu) |
+| POST | `/api/admin/travel/places/[slug]/status` | Admin token hoặc phiên nhân viên (`story:publish`) | Xuất bản, gỡ hoặc lưu trữ địa điểm (409 `invalid_state` khi còn chuyến đi đã xuất bản hiển thị nó) |
 | GET | `/api/admin/travel/stories` | Admin token hoặc phiên nhân viên | Danh sách chuyện (mọi trạng thái) |
 | POST | `/api/admin/travel/stories` | Admin token hoặc phiên nhân viên | Tạo chuyện |
 | GET | `/api/admin/travel/stories/[slug]` | Admin token hoặc phiên nhân viên | Một chuyện |

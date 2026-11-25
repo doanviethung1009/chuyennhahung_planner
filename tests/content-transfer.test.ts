@@ -25,6 +25,24 @@ describe('content transfer', () => {
     expect(await target.read()).toEqual(data);
   });
 
+  it('keeps a draft place a draft, and reads a place with no status as published (ADR 0035)', async () => {
+    const data = await seededData();
+    const draft = structuredClone(data.places[0]!);
+    draft.slug = 'nhap-chua-xuat-ban';
+    draft.status = 'draft';
+    draft.publishedAt = null;
+    const legacy = JSON.parse(JSON.stringify(data.places[1]!)) as Record<string, unknown>;
+    delete legacy.status;
+    delete legacy.publishedAt;
+    const document = JSON.parse(JSON.stringify({ ...data, places: [...data.places.slice(0, 1), legacy, ...data.places.slice(2), draft] }));
+
+    const target = createMemoryStore();
+    await importContentDocument(target, document);
+    const places = (await target.read()).places;
+    expect(places.find((p) => p.slug === draft.slug)?.status).toBe('draft');
+    expect(places.find((p) => p.slug === (legacy.slug as string))?.status).toBe('published');
+  });
+
   it('refuses a store that already holds content, and writes nothing', async () => {
     const data = await seededData();
     const target = createMemoryStore(structuredClone(data));

@@ -26,7 +26,7 @@ interface Item {
 
 const STATUSES = ['', 'draft', 'published', 'archived'] as const;
 
-/** Stories, places and collections index. Places have no lifecycle, so no status filter. */
+/** Stories, places and collections index. Collections have no server-side status filter. */
 export function ContentList({ kind }: { kind: 'stories' | 'places' | 'collections' }) {
   const t = useTranslations('adminContent');
   const locale = useLocale() as Locale;
@@ -42,7 +42,7 @@ export function ContentList({ kind }: { kind: 'stories' | 'places' | 'collection
   const load = useCallback(async () => {
     setError(null);
     try {
-      const query = kind === 'stories' && filter ? `?status=${filter}` : '';
+      const query = (kind === 'stories' || kind === 'places') && filter ? `?status=${filter}` : '';
       const data = await api<Record<string, Item[]>>(`/api/admin/travel/${kind}${query}`);
       setItems(data[kind] ?? []);
     } catch (failure) {
@@ -121,7 +121,7 @@ export function ContentList({ kind }: { kind: 'stories' | 'places' | 'collection
           </div>
         </div>
       </div>
-      {kind === 'stories' ? (
+      {kind === 'stories' || kind === 'places' ? (
         <div className="max-w-xs">
           <label htmlFor="content-status-filter" className="block text-sm font-medium text-foreground">
             {t('list.filterLabel')}

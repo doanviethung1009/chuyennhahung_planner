@@ -12,6 +12,7 @@ import {
   slugConflict,
   staleContent,
 } from './errors';
+import { isPublishedPlace } from './schemas';
 import type { ContentData, ContentStore } from './store';
 import type {
   CollectionCreateInput,
@@ -23,6 +24,7 @@ import type {
   PlaceCreateInput,
   PlaceUpdateInput,
   PublishAction,
+  PublishStatus,
   ReorderActivitiesInput,
   ReviewCreateInput,
   ReviewUpdateInput,
@@ -171,6 +173,10 @@ export class TravelContentRepository {
     if (query.category) {
       places = places.filter((p) => p.category === query.category);
     }
+    if (query.status) {
+      // A stored place without a status predates ADR 0035 and was public.
+      places = places.filter((p) => (p.status ?? 'published') === query.status);
+    }
     if (query.q) {
       // Plain folded substring test over name and location (vi, en); the term is data, never a pattern.
       const needle = foldText(query.q.trim());
@@ -191,7 +197,22 @@ export class TravelContentRepository {
     return place;
   }
 
-  createPlace(input: PlaceCreateInput): Promise<Place> {
+  /** Public read path: an unpublished place is a 404, not a 403 (ADR 0035). */
+  async getPublishedPlace(slug: string): Promise<Place> {
+    const place = await this.getPlace(slug);
+    if (!isPublishedPlace(place)) throw notFound('place', slug);
+    return place;
+  }
+
+  /**
+   * `status` defaults to `published` so seeds and in-process callers keep working;
+   * the admin POST handler passes `draft`, so a place authored in the CMS is never
+   * public before someone publishes it (ADR 0035).
+   */
+  createPlace(
+    input: PlaceCreateInput,
+    options: { status?: PublishStatus } = {},
+  ): Promise<Place> {
     return this.transaction((data) => {
       if (data.places.some((p) => p.slug === input.slug)) {
         throw slugConflict('place', input.slug);
@@ -201,9 +222,58 @@ export class TravelContentRepository {
       TravelContentRepository.raiseIf(issues);
 
       const at = this.timestamp();
-      const place: Place = { ...input, createdAt: at, updatedAt: at };
+      const status = options.status ?? 'published';
+      const place: Place = {
+        ...input,
+        status,
+        publishedAt: status === 'published' ? at : null,
+        createdAt: at,
+        updatedAt: at,
+      };
       data.places.push(place);
       return place;
+    });
+  }
+
+  /**
+   * Publish lifecycle of a place (ADR 0035). Taking it down is refused while a
+   * published story still shows it, so a live story never links to a hidden place.
+   */
+  setPlaceStatus(slug: string, action: PublishAction): Promise<Place> {
+    return this.transaction((data) => {
+      const index = data.places.findIndex((p) => p.slug === slug);
+      const existing = data.places[index];
+      if (index < 0 || !existing) throw notFound('place', slug);
+
+      const at = this.timestamp();
+      let next: Place;
+      if (action.action === 'publish') {
+        next = {
+          ...existing,
+          status: 'published',
+          publishedAt: action.publishedAt ?? existing.publishedAt ?? at,
+          updatedAt: at,
+        };
+      } else {
+        const blocking = data.stories.filter(
+          (s) => s.status === 'published' && storyPlaceSlugs(s).has(slug),
+        );
+        if (blocking.length > 0) {
+          throw invalidState(
+            `cannot ${action.action} place "${slug}": published story/stories show it — ${blocking
+              .map((s) => s.slug)
+              .join(', ')}`,
+          );
+        }
+        // `publishedAt` is kept, as for a story: re-publishing does not re-date it.
+        next = {
+          ...existing,
+          status: action.action === 'unpublish' ? 'draft' : 'archived',
+          updatedAt: at,
+        };
+      }
+      data.places[index] = next;
+      return next;
     });
   }
 
@@ -356,6 +426,15 @@ export class TravelContentRepository {
         if (hidden.length > 0) {
           throw invalidState(
             `cannot publish "${slug}": linked review(s) not published — ${hidden.join(', ')}`,
+          );
+        }
+        const hiddenPlaces = [...storyPlaceSlugs(existing)].filter((placeSlug) => {
+          const place = data.places.find((p) => p.slug === placeSlug);
+          return place !== undefined && !isPublishedPlace(place);
+        });
+        if (hiddenPlaces.length > 0) {
+          throw invalidState(
+            `cannot publish "${slug}": linked place(s) not published — ${hiddenPlaces.join(', ')}`,
           );
         }
         next = {
@@ -1293,6 +1372,15 @@ export interface ContentPlaceUsage {
   collections: number;
   templates: number;
   contentReviews: number;
+}
+
+/** Every place a story shows: its related list plus the place blocks in its body. */
+function storyPlaceSlugs(story: TravelStory): Set<string> {
+  const slugs = new Set(story.placeSlugs);
+  for (const block of story.content) {
+    if (block.type === 'place') slugs.add(block.placeSlug);
+  }
+  return slugs;
 }
 
 function placeUsage(data: { stories: TravelStory[]; collections: { placeSlugs: string[] }[]; templates: { placeSlugs: string[] }[]; reviews: { subject: { kind: string; ref: string } }[] }, slug: string): ContentPlaceUsage {

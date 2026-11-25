@@ -82,6 +82,7 @@ export const CONTENT_TABLES: readonly TableSpec<keyof ContentData>[] = [
       col('rating', 'rating', 'float', 'nullable'),
       col('personalNote', 'personal_note', 'jsonb', 'nullable'),
       col('affiliateLinks', 'affiliate_links', 'jsonb'),
+      ...lifecycle,
       ...stamps,
     ],
   },

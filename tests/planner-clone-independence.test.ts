@@ -111,6 +111,26 @@ describe('a cloned trip is independent of its template', () => {
     expect(JSON.stringify(await planner.getTrip(userId, view.trip.id))).toBe(before);
   });
 
+  it('does not link a place that was taken down into a new trip (ADR 0035)', async () => {
+    const { content } = await makeSeededPlanner();
+    const base = createContentCatalog(content);
+    const template = await content.getPublicTemplate(SLUG);
+    const hidden = template.placeSlugs[0]!;
+    const catalog: PlannerCatalog = {
+      ...heldCatalog(template, base),
+      getPlace: async (slug) => {
+        const place = await base.getPlace(slug);
+        return place && slug === hidden ? { ...place, status: 'draft' } : place;
+      },
+    };
+    const planner = makePlanner({ catalog });
+    const { userId } = await makeOwner(planner);
+    const view = await planner.createTrip(userId, fromTemplate);
+    const slugs = view.days.flatMap((day) => day.activities.map((activity) => activity.placeSlug));
+    expect(slugs).not.toContain(hidden);
+    expect(slugs.some((slug) => slug !== null)).toBe(true);
+  });
+
   it('leaves the template untouched, and still clonable, when a clone is purged', async () => {
     const { planner, content } = await makeSeededPlanner();
     const { userId } = await makeOwner(planner);

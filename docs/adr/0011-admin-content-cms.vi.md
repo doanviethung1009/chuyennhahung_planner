@@ -93,6 +93,6 @@ Khó hơn: `content:write` và wrapper mới là phần trọng yếu về bảo
 
 - Task Contract: `.claude/contracts/phase07-admin-content-cms.md`. Tài liệu tính năng `docs/features/admin-content-cms.md` + `.vi.md` (frontend-engineer).
 - `docs/architecture.md` / `.vi.md`: bảng route, hợp đồng guard, backlog Phase 07. `docs/usage.md` / `.vi.md`: đăng nhập editor và header `If-Match`. `docs/travel-content-api.md`: `If-Match` và quyền truy cập bằng session.
-- Bổ sung P07-16: `POST stories` và `POST places` nay chấp nhận session (`content:write`); xoá vẫn chỉ dùng token. Địa điểm không có trạng thái nên địa điểm mới tạo hiển thị công khai ngay.
+- Bổ sung P07-16: `POST stories` và `POST places` nay chấp nhận session (`content:write`); xoá vẫn chỉ dùng token. Trước đây địa điểm không có trạng thái nên địa điểm mới tạo hiển thị công khai ngay; đã được [ADR 0035](0035-place-publish-status.vi.md) thay thế.
 - Các lát sau: audit log, xoá, sửa template và collection, MFA cho `admin`/`editor`, revalidate theo yêu cầu.
 - Còn ngỏ: tài khoản editor được tạo thế nào (`role: 'editor'` qua cổng quản trị hiện có) và ai là editor đầu tiên.
