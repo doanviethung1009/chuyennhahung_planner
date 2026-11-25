@@ -4,7 +4,7 @@
 
 ## Tóm tắt
 
-`/admin` cho thấy việc đang chờ theo từng vai trò: chuyến đi và đánh giá chờ duyệt, bản nháp chuyến đi và đánh giá, tài khoản hoạt động và bị khóa/xóa mềm, và (super admin) nơi lưu hai kho dữ liệu. Mỗi thẻ dẫn tới màn hình tương ứng. Chỉ có số đếm, chỉ đọc, không tự làm mới.
+`/admin` cho thấy việc đang chờ theo từng vai trò: chuyến đi và đánh giá chờ duyệt, báo cáo chờ xử lý, hạn chế đang hiệu lực, bản nháp chuyến đi và đánh giá, nội dung đã xuất bản, lỗi toàn vẹn dữ liệu, tài khoản hoạt động và bị khóa/xóa mềm, và (super admin) nơi lưu hai kho dữ liệu. Mỗi thẻ dẫn tới màn hình tương ứng. Chỉ có số đếm, chỉ đọc, không tự làm mới.
 
 ## Route
 
@@ -17,12 +17,15 @@ API nhận admin token hoặc phiên staff (`content:write` trở lên), trả `
 
 ## Dữ liệu
 
-Không có bảng, thao tác ghi hay phương thức repository mới. Số đếm lấy từ phương thức sẵn có: `listListingQueue`, `listReviewQueue('pending')`, `listStories`/`listReviews` (chỉ bản nháp; place không có trạng thái nháp), `listUsers`.
+Không có bảng, thao tác ghi hay phương thức repository mới. Số đếm lấy từ phương thức sẵn có: `listListingQueue`, `listReviewQueue('pending')`, `listReports('open')`, `listRestrictions(true)`, `listStories`/`listReviews` (bản nháp và đã xuất bản; place không có trạng thái nháp), `validateIntegrity`, `listUsers`.
 
 | Thẻ | Cần quyền | Mở tới |
 |---|---|---|
 | `listingsPending`, `reviewsPending` | `community:moderate` | `/admin/community` |
-| `contentDrafts` | `content:write` | `/admin/content/stories` |
+| `reportsOpen` | `community:moderate` | `/admin/community` |
+| `restrictionsActive` | `community:restrict` | `/admin/community` |
+| `contentDrafts`, `contentPublished` | `content:write` | `/admin/content/stories` |
+| `integrityIssues` | `content:write` | `/admin/content/integrity` |
 | `usersActive`, `usersDisabled` | `user:provision` | `/admin/users` |
 | `runtime` | `runbook:read` | `/admin/runbook` |
 
@@ -34,7 +37,7 @@ Không có bảng, thao tác ghi hay phương thức repository mới. Số đ�
 
 | Đường dẫn | Vai trò |
 |---|---|
-| `src/server/admin/overview.ts` | Định nghĩa thẻ, `buildOverview`, nguồn thật |
+| `src/server/admin/overview.ts` | Định nghĩa thẻ, bảng nguồn đếm, `buildOverview`, nguồn thật |
 | `src/app/api/admin/overview/route.ts` | `GET /api/admin/overview` |
 | `src/components/admin/dashboard/overview-cards.tsx` | Thẻ, trạng thái không khả dụng và trống |
 | `src/app/[locale]/admin/page.tsx` | Trang bảng điều khiển |
@@ -45,4 +48,4 @@ Không có bảng, thao tác ghi hay phương thức repository mới. Số đ�
 
 ## Giới hạn và câu hỏi còn mở
 
-Chưa có thẻ hoạt động: route events (`/api/admin/community/events`) cần `targetId` nên không có luồng hoạt động gần đây để tóm tắt; chờ trình xem audit (P07-13). Không có thẻ toàn vẹn: các route integrity chỉ nhận token và giữ nguyên cho tới khi P07-15 chốt quyền truy cập. Kiểm tra giao diện ở 375/768/1280px: xem PR.
+Chưa có thẻ hoạt động: route events (`/api/admin/community/events`) cần `targetId` nên không có luồng hoạt động gần đây để tóm tắt; chờ trình xem audit (P07-13). `reportsOpen` và `integrityIssues` báo "cần xử lý" khi lớn hơn 0; số lỗi toàn vẹn chạy một lượt quét đầy đủ nên dựa vào cache 15 giây. Các route integrity vẫn chỉ nhận token; bảng điều khiển đọc thẳng repository và chỉ hiện số đếm. Kiểm tra giao diện ở 375/768/1280px: xem PR.

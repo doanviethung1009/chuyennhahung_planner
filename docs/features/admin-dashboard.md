@@ -4,7 +4,7 @@
 
 ## Summary
 
-`/admin` shows what is waiting, per role: pending trip listings and reviews, story and review drafts, active and banned/soft-deleted accounts, and (super admin) where the two stores live. Each card links to its screen. Counts only, read-only, no polling.
+`/admin` shows what is waiting, per role: pending trip listings and reviews, open reports, active restrictions, story and review drafts, published content, data integrity issues, active and banned/soft-deleted accounts, and (super admin) where the two stores live. Each card links to its screen. Counts only, read-only, no polling.
 
 ## Routes
 
@@ -17,12 +17,15 @@ The API takes the admin token or a staff session (`content:write` or higher), an
 
 ## Data
 
-No new table, write or repository method. Counts come from existing methods: `listListingQueue`, `listReviewQueue('pending')`, `listStories`/`listReviews` (drafts only; places have no draft status), `listUsers`.
+No new table, write or repository method. Counts come from existing methods: `listListingQueue`, `listReviewQueue('pending')`, `listReports('open')`, `listRestrictions(true)`, `listStories`/`listReviews` (drafts and published; places have no draft status), `validateIntegrity`, `listUsers`.
 
 | Card | Needs action | Opens |
 |---|---|---|
 | `listingsPending`, `reviewsPending` | `community:moderate` | `/admin/community` |
-| `contentDrafts` | `content:write` | `/admin/content/stories` |
+| `reportsOpen` | `community:moderate` | `/admin/community` |
+| `restrictionsActive` | `community:restrict` | `/admin/community` |
+| `contentDrafts`, `contentPublished` | `content:write` | `/admin/content/stories` |
+| `integrityIssues` | `content:write` | `/admin/content/integrity` |
 | `usersActive`, `usersDisabled` | `user:provision` | `/admin/users` |
 | `runtime` | `runbook:read` | `/admin/runbook` |
 
@@ -34,7 +37,7 @@ No new table, write or repository method. Counts come from existing methods: `li
 
 | Path | Role |
 |---|---|
-| `src/server/admin/overview.ts` | Card definitions, `buildOverview`, real sources |
+| `src/server/admin/overview.ts` | Card definitions, count-source table, `buildOverview`, real sources |
 | `src/app/api/admin/overview/route.ts` | `GET /api/admin/overview` |
 | `src/components/admin/dashboard/overview-cards.tsx` | Cards, unavailable and empty states |
 | `src/app/[locale]/admin/page.tsx` | Dashboard page |
@@ -45,4 +48,4 @@ No new table, write or repository method. Counts come from existing methods: `li
 
 ## Limits and open questions
 
-No activity card: the events route (`/api/admin/community/events`) needs a `targetId`, so there is no recent-activity feed to summarise; it waits for the audit viewer (P07-13). There is no integrity card: its routes are token-only and stay so until P07-15 settles their access. Visual pass at 375/768/1280px: see the PR.
+No activity card: the events route (`/api/admin/community/events`) needs a `targetId`, so there is no recent-activity feed to summarise; it waits for the audit viewer (P07-13). `reportsOpen` and `integrityIssues` flag "needs action" above zero; the integrity count runs a full sweep, so it relies on the 15-second cache. The integrity routes themselves stay token-only; the dashboard reads the repository directly and shows a count only. Visual pass at 375/768/1280px: see the PR.
