@@ -906,7 +906,8 @@
         "title": "Theo tên",
         "slug": "Theo slug"
       },
-      "noMatches": "Không có mục nào khớp với tìm kiếm."
+      "noMatches": "Không có mục nào khớp với tìm kiếm.",
+      "clearFilters": "Xóa bộ lọc"
     },
     "stories": {
       "metaTitle": "Quản lý chuyến đi",

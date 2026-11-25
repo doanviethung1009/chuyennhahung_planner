@@ -906,7 +906,8 @@
         "title": "Name",
         "slug": "Slug"
       },
-      "noMatches": "Nothing matches your search."
+      "noMatches": "Nothing matches your search.",
+      "clearFilters": "Clear filters"
     },
     "stories": {
       "metaTitle": "Manage stories",

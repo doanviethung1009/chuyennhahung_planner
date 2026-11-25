@@ -157,9 +157,21 @@ export function ContentList({ kind }: { kind: 'stories' | 'places' | 'collection
       ) : items.length === 0 ? (
         <p className="text-base text-foreground-muted">{t('list.empty')}</p>
       ) : visible && visible.length === 0 ? (
-        <p role="status" className="text-base text-foreground-muted">
-          {t('list.noMatches')}
-        </p>
+        <div className="grid justify-items-start gap-3">
+          <p role="status" className="text-base text-foreground-muted">
+            {t('list.noMatches')}
+          </p>
+          <button
+            type="button"
+            className={buttonClass({ variant: 'secondary', size: 'sm' })}
+            onClick={() => {
+              setQuery('');
+              setFilter('');
+            }}
+          >
+            {t('list.clearFilters')}
+          </button>
+        </div>
       ) : (
         <>
           <p className="text-sm text-foreground-muted">{t('list.count', { count: visible?.length ?? 0 })}</p>
