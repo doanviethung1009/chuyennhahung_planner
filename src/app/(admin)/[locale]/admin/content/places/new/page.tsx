@@ -8,6 +8,7 @@ import { Container } from '@/components/ui/container';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { ContentNotice } from '@/components/admin/content-notice';
 import { ContentCreate } from '@/components/admin/content/content-create';
+import { destinationOptions } from '@/lib/destination-options';
 
 // Reads the session cookie on every request: never prerendered or cached.
 export const dynamic = 'force-dynamic';
@@ -41,7 +42,7 @@ export default async function AdminNewPlacePage({ params }: Params) {
       <Container width="wide">
         <div className="grid gap-8 py-10 md:py-14">
           <ContentNotice />
-          <ContentCreate kind="places" />
+          <ContentCreate kind="places" destinations={destinationOptions()} />
         </div>
       </Container>
     </>

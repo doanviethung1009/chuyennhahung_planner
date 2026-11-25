@@ -1006,7 +1006,8 @@
       "fieldLocation": "Location",
       "fieldDescription": "Description",
       "fieldNote": "Hưng's personal note",
-      "fieldDestination": "Destination slug",
+      "fieldDestination": "Destination",
+      "destinationEmpty": "Select a destination",
       "fieldCategory": "Category",
       "categories": {
         "cafe": "Cafe",
