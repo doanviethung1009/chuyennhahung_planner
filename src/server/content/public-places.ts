@@ -7,9 +7,8 @@ import { isContentError } from './repository';
 import type { LocalizedText, Place } from './schemas';
 
 /**
- * Public read of the place catalogue (ADR 0026). A place has no publish state,
- * so every place in the catalogue is public; the projection below is the
- * allow-list of fields a page or the public API may show — affiliate links, timestamps and coordinates stay out.
+ * Public read of the place catalogue (ADR 0026). Only a published place is public
+ * (ADR 0035); the projection below is the allow-list of fields a page or the public API may show — affiliate links, timestamps and coordinates stay out.
  */
 export interface PublicPlace {
   slug: string;
@@ -52,7 +51,7 @@ function loadCatalogue(): Promise<PublicPlace[]> {
   return readCatalogueCache(async () => {
     const repository = await getRepository();
     // `limit` is only validated at the HTTP edge; this is one read, not a 100-item loop.
-    const all = await repository.listPlaces({ limit: Number.MAX_SAFE_INTEGER, offset: 0 });
+    const all = await repository.listPlaces({ limit: Number.MAX_SAFE_INTEGER, offset: 0, status: 'published' });
     return all.map(toPublicPlace);
   });
 }
@@ -134,7 +133,7 @@ export async function getPublicPlaces(destinationSlug?: string): Promise<PublicP
 /** Null for an unknown slug. A store failure rejects, so the page errors instead of lying with a 404. */
 export const getPublicPlace = cache(async (slug: string): Promise<PublicPlace | null> => {
   try {
-    return toPublicPlace(await (await getRepository()).getPlace(slug));
+    return toPublicPlace(await (await getRepository()).getPublishedPlace(slug));
   } catch (error) {
     if (isContentError(error) && error.code === 'not_found') return null;
     throw error;

@@ -140,7 +140,7 @@ async function toPublicStory(
   }
   const places: PublicPlace[] = [];
   for (const slug of slugs) {
-    const place = await optional(() => repository.getPlace(slug));
+    const place = await optional(() => repository.getPublishedPlace(slug));
     if (place) places.push(toPublicPlace(place));
     else
       console.warn(

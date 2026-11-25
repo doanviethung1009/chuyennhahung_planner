@@ -8,6 +8,6 @@ export function GET(_request: Request, context: { params: Promise<{ slug: string
   return publicRoute(async () => {
     const { slug } = await context.params;
     const repository = await getRepository();
-    return jsonOk(toPublicPlace(await repository.getPlace(slug)));
+    return jsonOk(toPublicPlace(await repository.getPublishedPlace(slug)));
   });
 }

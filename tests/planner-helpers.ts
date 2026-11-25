@@ -112,6 +112,8 @@ const place = (
   rating: 4,
   personalNote: null,
   affiliateLinks: [],
+  status: 'published',
+  publishedAt: FROZEN_NOW,
   createdAt: FROZEN_NOW,
   updatedAt: FROZEN_NOW,
 });

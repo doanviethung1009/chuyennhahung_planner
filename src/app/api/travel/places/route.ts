@@ -9,9 +9,9 @@ export function GET(request: Request) {
   return publicRoute(async () => {
     const repository = await getRepository();
     const query = parseListQuery(request);
-    // Places carry no publish status: a place exists or it does not. The public
+    // Only published places (ADR 0035), whatever `status` the caller sent. The public
     // shape is the ADR 0026 allow-list; the raw record stays on the admin routes.
-    const places = (await repository.listPlaces(query)).map(toPublicPlace);
+    const places = (await repository.listPlaces({ ...query, status: 'published' })).map(toPublicPlace);
     return jsonOk({ places, count: places.length });
   });
 }

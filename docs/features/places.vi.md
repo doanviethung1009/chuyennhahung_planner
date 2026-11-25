@@ -17,7 +17,7 @@ Người xem duyệt được các địa điểm của một điểm đến và
 
 ## Data
 
-Đọc collection `Place` của content repository (`placeInputSchema`) và review đã duyệt (`getApprovedReviews`). Namespace thông điệp `places` (VI và EN). Địa điểm không có trạng thái publish nên mọi địa điểm trong catalogue đều công khai. Hiển thị: tên, vị trí, loại, ảnh, mô tả, `suggestedMinutes`, `estimatedCostVnd`, `rating`, `personalNote`. Không bao giờ hiển thị: `affiliateLinks`, mốc thời gian. Địa điểm và điểm seed là nội dung chủ dự án cần xác nhận trước khi ra mắt.
+Đọc collection `Place` của content repository (`placeInputSchema`) và review đã duyệt (`getApprovedReviews`). Namespace thông điệp `places` (VI và EN). Chỉ địa điểm `published` mới công khai; bản nháp và bản đã lưu trữ trả 404 và không có trong danh sách, sitemap hay ô chọn địa điểm khi viết review ([ADR 0035](../adr/0035-place-publish-status.vi.md)). Hiển thị: tên, vị trí, loại, ảnh, mô tả, `suggestedMinutes`, `estimatedCostVnd`, `rating`, `personalNote`. Không bao giờ hiển thị: `affiliateLinks`, mốc thời gian. Địa điểm và điểm seed là nội dung chủ dự án cần xác nhận trước khi ra mắt.
 
 ## How it works
 

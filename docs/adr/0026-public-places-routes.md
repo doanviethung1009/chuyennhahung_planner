@@ -16,7 +16,7 @@ Facts from the code: a place has no publish or archive state (`publishStatusSche
 ## Decision
 
 1. **URLs.** Internal `/places/[slug]`; Vietnamese `/dia-diem/[slug]` (unprefixed), English `/en/places/[slug]`. The slug is the catalogue slug, which is permanent. There is no public places index in this step: places are listed on their destination page (`/destinations/[slug]`).
-2. **Every place in the catalogue is public.** There is no draft state to filter on; removing a place from the catalogue removes its page (404).
+2. **Every place in the catalogue is public.** *(Amended by [ADR 0035](0035-place-publish-status.md): only a `published` place is public.)* Removing a place from the catalogue removes its page (404).
 3. **Read path.** Pages read through `src/server/content/public-places.ts`, which projects a place to an allow-list (no `affiliateLinks`, no timestamps). A listing failure yields an empty list, so the destination page hides the section; the detail page lets a store failure surface as an error rather than a false 404. An unknown slug is a 404.
 4. **Images.** The schema has no alt text, so photos carry an alt built from the place name and the photo number, in the page language. Cards use a decorative image next to the name.
 5. **Reviews are read-only here.** The page reuses `getApprovedReviews` and `ReviewList`. The review form belongs to a later contract.

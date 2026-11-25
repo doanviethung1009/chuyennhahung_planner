@@ -12,7 +12,7 @@ import {
 } from '@/server/content/errors';
 import { can, canManageRole, isAdminRole, userRole, type Role } from '@/server/identity/permissions';
 import type { IntegrityIssue } from '@/server/content/repository';
-import type { CostCategory, PlaceCategory } from '@/server/content/schemas';
+import { isPublishedPlace, type CostCategory, type PlaceCategory } from '@/server/content/schemas';
 import {
   authorizePlannerUser,
   findSessionByToken,
@@ -2753,7 +2753,8 @@ export class PlannerRepository {
   }
 
   private async requireKnownPlace(placeSlug: string): Promise<void> {
-    if (!(await this.catalog.getPlace(placeSlug))) {
+    const place = await this.catalog.getPlace(placeSlug);
+    if (!place || !isPublishedPlace(place)) {
       throw invalidReference([{ path: 'placeSlug', message: `no place "${placeSlug}" in the catalogue` }]);
     }
   }
@@ -2913,7 +2914,7 @@ export class PlannerRepository {
       if (!day) throw notFound(`trip "${tripId}" day`, String(input.dayNumber));
 
       const place = input.placeSlug ? await this.catalog.getPlace(input.placeSlug) : null;
-      if (input.placeSlug && !place) {
+      if (input.placeSlug && (!place || !isPublishedPlace(place))) {
         throw invalidReference([
           { path: 'placeSlug', message: `place "${input.placeSlug}" does not exist` },
         ]);

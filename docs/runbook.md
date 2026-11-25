@@ -48,7 +48,7 @@ adding or removing a route means editing this table in both languages.
 |---|---|---|---|
 | GET | `/api/health` | Public | Liveness probe for the container healthcheck |
 | GET | `/api/travel/places` | Public | List published places |
-| GET | `/api/travel/places/[slug]` | Public | One place |
+| GET | `/api/travel/places/[slug]` | Public | One published place (404 while draft or archived) |
 | GET | `/api/travel/stories` | Public | List published stories |
 | GET | `/api/travel/stories/[slug]` | Public | One story |
 | GET | `/api/travel/collections` | Public | List collections |
@@ -129,6 +129,7 @@ adding or removing a route means editing this table in both languages.
 | GET | `/api/admin/travel/places/[slug]` | Admin token or staff session | One place |
 | PATCH | `/api/admin/travel/places/[slug]` | Admin token or staff session | Edit a place (If-Match required) |
 | DELETE | `/api/admin/travel/places/[slug]` | Admin token or admin session (`content:delete`; editors refused) | Delete a place (409 `place_in_use` while referenced) |
+| POST | `/api/admin/travel/places/[slug]/status` | Admin token or staff session (`story:publish`) | Publish, unpublish or archive a place (409 `invalid_state` while a published story shows it) |
 | GET | `/api/admin/travel/stories` | Admin token or staff session | List stories (all statuses) |
 | POST | `/api/admin/travel/stories` | Admin token or staff session | Create a story |
 | GET | `/api/admin/travel/stories/[slug]` | Admin token or staff session | One story |

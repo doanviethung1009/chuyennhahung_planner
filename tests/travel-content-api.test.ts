@@ -16,6 +16,9 @@ let workdir: string;
 let routes: {
   adminPlaces: typeof import('../src/app/api/admin/travel/places/route');
   adminPlace: typeof import('../src/app/api/admin/travel/places/[slug]/route');
+  adminPlaceStatus: typeof import('../src/app/api/admin/travel/places/[slug]/status/route');
+  publicPlace: typeof import('../src/app/api/travel/places/[slug]/route');
+  publicPlaces: typeof import('../src/app/api/travel/places/route');
   adminStories: typeof import('../src/app/api/admin/travel/stories/route');
   adminStoryStatus: typeof import('../src/app/api/admin/travel/stories/[slug]/status/route');
   adminStoryPlaces: typeof import('../src/app/api/admin/travel/stories/[slug]/places/route');
@@ -75,6 +78,9 @@ beforeAll(async () => {
   routes = {
     adminPlaces: await import('../src/app/api/admin/travel/places/route'),
     adminPlace: await import('../src/app/api/admin/travel/places/[slug]/route'),
+    adminPlaceStatus: await import('../src/app/api/admin/travel/places/[slug]/status/route'),
+    publicPlace: await import('../src/app/api/travel/places/[slug]/route'),
+    publicPlaces: await import('../src/app/api/travel/places/route'),
     adminStories: await import('../src/app/api/admin/travel/stories/route'),
     adminStoryStatus: await import('../src/app/api/admin/travel/stories/[slug]/status/route'),
     adminStoryPlaces: await import('../src/app/api/admin/travel/stories/[slug]/places/route'),
@@ -132,6 +138,20 @@ describe('admin place CRUD over HTTP', () => {
     const place = await response.json();
     expect(place.slug).toBe('ho-tuyen-lam');
     expect(place.createdAt).toBeTruthy();
+    // ADR 0035: a place authored through the CMS starts as a draft.
+    expect(place.status).toBe('draft');
+    expect(place.publishedAt).toBeNull();
+  });
+
+  it('keeps a draft place off the public API until it is published', async () => {
+    expect((await routes.publicPlace.GET(new Request(`${BASE}/api/travel/places/ho-tuyen-lam`), params({ slug: 'ho-tuyen-lam' }))).status).toBe(404);
+    const listed = await (await routes.publicPlaces.GET(new Request(`${BASE}/api/travel/places?status=draft`))).json();
+    expect(listed.places.map((p: { slug: string }) => p.slug)).not.toContain('ho-tuyen-lam');
+
+    const published = await routes.adminPlaceStatus.POST(authed({ action: 'publish' }), params({ slug: 'ho-tuyen-lam' }));
+    expect(published.status).toBe(200);
+    expect((await published.json()).status).toBe('published');
+    expect((await routes.publicPlace.GET(new Request(`${BASE}/api/travel/places/ho-tuyen-lam`), params({ slug: 'ho-tuyen-lam' }))).status).toBe(200);
   });
 
   it('returns 409 on a duplicate slug', async () => {

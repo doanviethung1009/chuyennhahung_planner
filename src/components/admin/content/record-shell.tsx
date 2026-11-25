@@ -94,7 +94,7 @@ export function RecordShell({ apiPath, statusPath, fields, lifecycle, back, canD
               />
             </>
           ) : null}
-          {back === 'places' && typeof record.slug === 'string' ? <PlaceSiteLink slug={record.slug} /> : null}
+          {back === 'places' && typeof record.slug === 'string' && status !== 'draft' && status !== 'archived' ? <PlaceSiteLink slug={record.slug} /> : null}
           <p className="text-sm text-foreground-muted md:ml-auto">
             {t('form.updatedAt', { date: new Date(String(record.updatedAt)).toLocaleString(state.locale) })}
           </p>

@@ -195,9 +195,24 @@ export const placeCreateSchema = placeInputSchema.refine(notReservedSlug, reserv
 export const placeUpdateSchema = z.object(updateShape(placeInputSchema.omit({ slug: true }).shape)).partial();
 
 export const placeSchema = placeInputSchema.extend({
+  /**
+   * Publish state (ADR 0035). A record stored before this field existed has none
+   * and was public, so parsing defaults it to `published`.
+   */
+  status: publishStatusSchema.default('published'),
+  publishedAt: timestampSchema.nullable().default(null),
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
 });
+
+/**
+ * True when a place may be shown to visitors or added to a trip. Reads a missing
+ * `status` as published, because a JSON store file written before ADR 0035 holds
+ * places without one and the file store does not re-parse them.
+ */
+export function isPublishedPlace(place: { status?: PublishStatus | undefined }): boolean {
+  return (place.status ?? 'published') === 'published';
+}
 
 // ---------------------------------------------------------------------------
 // Travel Stories — rich content as typed blocks

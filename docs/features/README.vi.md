@@ -20,6 +20,7 @@ Tính năng mới bắt đầu từ [`_template.md`](_template.md) /
 | Lịch trình | [itineraries.vi.md](itineraries.vi.md) | `/len-lich-trinh` cùng các redirect tour vĩnh viễn |
 | Góc review video | [video-reviews.vi.md](video-reviews.vi.md) | `/goc-review` — card cố ý không link, nút kênh |
 | Tỉnh thành Việt Nam | [vietnam-provinces.vi.md](vietnam-provinces.vi.md) | Danh sách tham chiếu 34 đơn vị cấp tỉnh (sau sáp nhập 2025) kèm 63 đơn vị cũ; chỉ là dữ liệu, chưa có UI |
+| Trạng thái xuất bản địa điểm | [place-publish-status.vi.md](place-publish-status.vi.md) | Địa điểm có nháp / xuất bản / lưu trữ; CMS tạo bản nháp và chỉ địa điểm đã xuất bản mới công khai |
 | Thiết kế chuyến đi | [plan-your-trip.vi.md](plan-your-trip.vi.md) | `/thiet-ke-chuyen-di` — điểm vào Planner, chủ đích không form |
 | Hệ thiết kế | [design-system.vi.md](design-system.vi.md) | Token `@theme`, primitive, test tương phản |
 | SEO và metadata | [seo-and-metadata.vi.md](seo-and-metadata.vi.md) | Canonical, `hreflang`, sitemap, JSON-LD |

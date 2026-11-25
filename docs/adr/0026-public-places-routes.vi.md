@@ -16,7 +16,7 @@ Sự thật từ code: địa điểm không có trạng thái publish hay archi
 ## Quyết định
 
 1. **URL.** Nội bộ `/places/[slug]`; tiếng Việt `/dia-diem/[slug]` (không tiền tố), tiếng Anh `/en/places/[slug]`. Slug là slug trong catalogue, cố định vĩnh viễn. Bước này chưa có trang danh sách địa điểm: địa điểm được liệt kê trên trang điểm đến (`/destinations/[slug]`).
-2. **Mọi địa điểm trong catalogue đều công khai.** Không có trạng thái nháp để lọc; bỏ một địa điểm khỏi catalogue thì trang của nó trả 404.
+2. **Mọi địa điểm trong catalogue đều công khai.** *(Được [ADR 0035](0035-place-publish-status.vi.md) sửa: chỉ địa điểm `published` mới công khai.)* bỏ một địa điểm khỏi catalogue thì trang của nó trả 404.
 3. **Đường đọc.** Trang đọc qua `src/server/content/public-places.ts`, chiếu địa điểm về danh sách trường cho phép (không có `affiliateLinks`, không có mốc thời gian). Lỗi khi liệt kê trả danh sách rỗng nên trang điểm đến ẩn mục; trang chi tiết để lỗi store nổi lên thành lỗi thay vì 404 giả. Slug lạ trả 404.
 4. **Ảnh.** Schema không có alt, nên ảnh mang alt ghép từ tên địa điểm và số thứ tự ảnh, theo ngôn ngữ trang. Thẻ dùng ảnh trang trí đặt cạnh tên.
 5. **Review chỉ đọc ở đây.** Trang dùng lại `getApprovedReviews` và `ReviewList`. Form review thuộc contract sau.

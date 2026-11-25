@@ -17,7 +17,7 @@ Visitors can browse the places of a destination and open a page for each one: ca
 
 ## Data
 
-Reads the `Place` collection of the content repository (`placeInputSchema`) and approved reviews (`getApprovedReviews`). Message namespace `places` (VI and EN). A place has no publish state, so every catalogue place is public. Shown: name, location, category, images, description, `suggestedMinutes`, `estimatedCostVnd`, `rating`, `personalNote`. Never shown: `affiliateLinks`, timestamps. Seed places and ratings are the owner's content to confirm before launch.
+Reads the `Place` collection of the content repository (`placeInputSchema`) and approved reviews (`getApprovedReviews`). Message namespace `places` (VI and EN). Only a `published` place is public; drafts and archived places answer 404 and are left out of lists, the sitemap and the review picker ([ADR 0035](../adr/0035-place-publish-status.md)). Shown: name, location, category, images, description, `suggestedMinutes`, `estimatedCostVnd`, `rating`, `personalNote`. Never shown: `affiliateLinks`, timestamps. Seed places and ratings are the owner's content to confirm before launch.
 
 ## How it works
 

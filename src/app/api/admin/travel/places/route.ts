@@ -22,6 +22,6 @@ export function POST(request: Request) {
   return adminContentRoute(request, { action: 'content:write', session: true }, async () => {
     const input = await parseJsonBody(request, placeCreateSchema);
     const repository = await getRepository();
-    return jsonCreated(await repository.createPlace(input));
+    return jsonCreated(await repository.createPlace(input, { status: 'draft' }));
   });
 }
