@@ -807,7 +807,7 @@
         "contentPublished": "Published content",
         "integrityIssues": "Data integrity issues",
         "listingsPending": "Trip listings waiting for review",
-        "reviewsPending": "Reviews waiting for review",
+        "reviewsHeld": "Reviews on hold (waiting for the author)",
         "contentDrafts": "Drafts (stories and reviews)",
         "usersActive": "Active accounts",
         "usersDisabled": "Banned or soft-deleted accounts",

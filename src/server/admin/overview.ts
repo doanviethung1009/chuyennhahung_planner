@@ -9,7 +9,7 @@ import { can, type Action, type Principal } from '@/server/identity/permissions'
  */
 export const OVERVIEW_CARD_IDS = [
   'listingsPending',
-  'reviewsPending',
+  'reviewsHeld',
   'reportsOpen',
   'restrictionsActive',
   'contentDrafts',
@@ -28,7 +28,7 @@ export type OverviewHref =
   | '/admin/users'
   | '/admin/runbook';
 
-/** `listReviewQueue` returns at most this many rows, so a count at the cap is a minimum. */
+/** `listReviewQueue` returns at most this many rows, so a count at the cap is a minimum. Reviews are published on submission now, so the queue only holds `held` rows (hidden, waiting for the author). */
 export const REVIEW_QUEUE_CAP = 200;
 
 export interface OverviewCard {
@@ -51,7 +51,7 @@ export interface Overview {
 /** The sources the dashboard reads; injectable so tests can fail one. */
 export interface OverviewSources {
   pendingListings(): Promise<number>;
-  pendingReviews(): Promise<number>;
+  heldReviews(): Promise<number>;
   openReports(): Promise<number>;
   activeRestrictions(): Promise<number>;
   contentDrafts(): Promise<number>;
@@ -70,7 +70,7 @@ type Definition = {
 // Order is the display order. Actions mirror the screen each card opens.
 const DEFINITIONS: readonly Definition[] = [
   { id: 'listingsPending', action: 'community:moderate', href: '/admin/community' },
-  { id: 'reviewsPending', action: 'community:moderate', href: '/admin/community' },
+  { id: 'reviewsHeld', action: 'community:moderate', href: '/admin/community' },
   { id: 'reportsOpen', action: 'community:moderate', href: '/admin/community' },
   { id: 'restrictionsActive', action: 'community:restrict', href: '/admin/community' },
   { id: 'contentDrafts', action: 'content:write', href: '/admin/content/stories' },
@@ -84,7 +84,7 @@ const DEFINITIONS: readonly Definition[] = [
 type CountId = Exclude<OverviewCardId, 'usersActive' | 'usersDisabled' | 'runtime'>;
 const COUNT_SOURCES: Record<CountId, (sources: OverviewSources) => () => Promise<number>> = {
   listingsPending: (s) => s.pendingListings,
-  reviewsPending: (s) => s.pendingReviews,
+  reviewsHeld: (s) => s.heldReviews,
   reportsOpen: (s) => s.openReports,
   restrictionsActive: (s) => s.activeRestrictions,
   contentDrafts: (s) => s.contentDrafts,
@@ -92,7 +92,7 @@ const COUNT_SOURCES: Record<CountId, (sources: OverviewSources) => () => Promise
   integrityIssues: (s) => s.integrityIssues,
 };
 /** Cards that flag "needs action" when above zero. */
-const ATTENTION = new Set<OverviewCardId>(['listingsPending', 'reviewsPending', 'reportsOpen', 'integrityIssues']);
+const ATTENTION = new Set<OverviewCardId>(['listingsPending', 'reportsOpen', 'integrityIssues']);
 
 async function count(read: () => Promise<number>): Promise<{ count?: number; state: 'ok' | 'unavailable' }> {
   try {
@@ -119,7 +119,7 @@ export async function buildOverview(principal: Principal, sources: OverviewSourc
       const base = { id: definition.id, href: definition.href };
       switch (definition.id) {
         case 'listingsPending':
-        case 'reviewsPending':
+        case 'reviewsHeld':
         case 'reportsOpen':
         case 'restrictionsActive':
         case 'contentDrafts':
@@ -129,7 +129,7 @@ export async function buildOverview(principal: Principal, sources: OverviewSourc
           return {
             ...base,
             ...result,
-            ...(definition.id === 'reviewsPending' && (result.count ?? 0) >= REVIEW_QUEUE_CAP
+            ...(definition.id === 'reviewsHeld' && (result.count ?? 0) >= REVIEW_QUEUE_CAP
               ? { atLeast: true }
               : {}),
             ...(result.count !== undefined && result.count > 0 && ATTENTION.has(definition.id)
@@ -161,7 +161,7 @@ export async function defaultOverviewSources(): Promise<OverviewSources> {
     pendingListings: async () =>
       (await (await getPlannerRepository()).listListingQueue()).filter((item) => item.listing.status === 'pending')
         .length,
-    pendingReviews: async () => (await (await getPlannerRepository()).listReviewQueue('pending')).length,
+    heldReviews: async () => (await (await getPlannerRepository()).listReviewQueue('held')).length,
     openReports: async () => (await (await getPlannerRepository()).listReports('open')).length,
     activeRestrictions: async () => (await (await getPlannerRepository()).listRestrictions(true)).length,
     contentPublished: async () => {

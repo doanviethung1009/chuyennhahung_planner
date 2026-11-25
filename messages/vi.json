@@ -807,7 +807,7 @@
         "contentPublished": "Nội dung đã xuất bản",
         "integrityIssues": "Lỗi toàn vẹn dữ liệu",
         "listingsPending": "Chuyến đi chờ duyệt",
-        "reviewsPending": "Đánh giá chờ duyệt",
+        "reviewsHeld": "Đánh giá đang giữ (chờ tác giả sửa)",
         "contentDrafts": "Bản nháp (chuyến đi và đánh giá)",
         "usersActive": "Tài khoản đang hoạt động",
         "usersDisabled": "Tài khoản bị khóa hoặc đã xóa mềm",

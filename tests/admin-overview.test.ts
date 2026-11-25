@@ -87,7 +87,7 @@ describe('GET /api/admin/overview role matrix', () => {
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(await ids(response)).toEqual([
       'listingsPending',
-      'reviewsPending',
+      'reviewsHeld',
       'reportsOpen',
       'contentDrafts',
       'contentPublished',
@@ -99,7 +99,7 @@ describe('GET /api/admin/overview role matrix', () => {
     const admin = await makeUser('admin');
     const expected = [
       'listingsPending',
-      'reviewsPending',
+      'reviewsHeld',
       'reportsOpen',
       'restrictionsActive',
       'contentDrafts',
@@ -142,7 +142,7 @@ describe('counts equal the underlying lists', () => {
     expect(card('usersDisabled').count).toBe(disabled);
     expect(body.cards.map((c: { id: string }) => c.id)).not.toContain('integrity');
     expect(card('usersActive').count + card('usersDisabled').count).toBe((await planner_.listUsers()).length);
-    expect(card('reviewsPending').count).toBe((await planner_.listReviewQueue('pending')).length);
+    expect(card('reviewsHeld').count).toBe((await planner_.listReviewQueue('held')).length);
     expect(card('listingsPending').count).toBe(
       (await planner_.listListingQueue()).filter((i) => i.listing.status === 'pending').length,
     );
@@ -152,7 +152,7 @@ describe('counts equal the underlying lists', () => {
 describe('buildOverview degraded and empty paths', () => {
   const ok: OverviewSources = {
     pendingListings: async () => 2,
-    pendingReviews: async () => 0,
+    heldReviews: async () => 0,
     openReports: async () => 1,
     activeRestrictions: async () => 0,
     contentDrafts: async () => 3,
@@ -167,7 +167,7 @@ describe('buildOverview degraded and empty paths', () => {
       { role: 'super_admin' },
       {
         ...ok,
-        pendingReviews: async () => {
+        heldReviews: async () => {
           throw new Error('db down');
         },
         users: async () => {
@@ -176,8 +176,8 @@ describe('buildOverview degraded and empty paths', () => {
       },
     );
     const byId = Object.fromEntries(overview.cards.map((c) => [c.id, c]));
-    expect(byId.reviewsPending).toMatchObject({ state: 'unavailable' });
-    expect(byId.reviewsPending?.count).toBeUndefined();
+    expect(byId.reviewsHeld).toMatchObject({ state: 'unavailable' });
+    expect(byId.reviewsHeld?.count).toBeUndefined();
     expect(byId.usersActive).toMatchObject({ state: 'unavailable' });
     expect(byId.usersDisabled).toMatchObject({ state: 'unavailable' });
     expect(byId.listingsPending).toMatchObject({ state: 'ok', count: 2, severity: 'attention' });
@@ -191,14 +191,14 @@ describe('buildOverview degraded and empty paths', () => {
 
   it('zero counts carry no severity', async () => {
     const overview = await buildOverview({ role: 'admin' }, ok);
-    expect(overview.cards.find((c) => c.id === 'reviewsPending')).not.toHaveProperty('severity');
+    expect(overview.cards.find((c) => c.id === 'reviewsHeld')).not.toHaveProperty('severity');
   });
 
-  it('a pending-review count at the cap is a lower bound, below it is exact', async () => {
-    const capped = await buildOverview({ role: 'editor' }, { ...ok, pendingReviews: async () => REVIEW_QUEUE_CAP });
-    expect(capped.cards.find((c) => c.id === 'reviewsPending')).toMatchObject({ count: 200, atLeast: true });
-    const exact = await buildOverview({ role: 'editor' }, { ...ok, pendingReviews: async () => REVIEW_QUEUE_CAP - 1 });
-    expect(exact.cards.find((c) => c.id === 'reviewsPending')).not.toHaveProperty('atLeast');
+  it('a held-review count at the cap is a lower bound, below it is exact', async () => {
+    const capped = await buildOverview({ role: 'editor' }, { ...ok, heldReviews: async () => REVIEW_QUEUE_CAP });
+    expect(capped.cards.find((c) => c.id === 'reviewsHeld')).toMatchObject({ count: 200, atLeast: true });
+    const exact = await buildOverview({ role: 'editor' }, { ...ok, heldReviews: async () => REVIEW_QUEUE_CAP - 1 });
+    expect(exact.cards.find((c) => c.id === 'reviewsHeld')).not.toHaveProperty('atLeast');
   });
 
   it('state and detail come from closed sets; a thrown message never reaches the payload', async () => {
@@ -253,6 +253,21 @@ describe('overview cache (security review warning: unrate-limited full reads)', 
     expect(await drafts(t0 + 1)).toBe(before); // a read keeps the cache
     invalidateOverviewCacheAfter(new Request('http://x/api', { method: 'POST' }));
     expect(await drafts(t0 + 2)).toBe(before + 1); // a write refreshes at once
+  });
+});
+
+describe('reviews on hold card', () => {
+  it('counts held reviews, never flags them, and the pending queue is gone', async () => {
+    const overview = await buildOverview(
+      { role: 'editor' },
+      { pendingListings: async () => 0, heldReviews: async () => 3, openReports: async () => 0, activeRestrictions: async () => 0,
+        contentDrafts: async () => 0, contentPublished: async () => 0, integrityIssues: async () => 0,
+        users: async () => ({ active: 0, disabled: 0 }), runtime: () => 'file' },
+    );
+    const card = overview.cards.find((c) => c.id === 'reviewsHeld');
+    expect(card).toMatchObject({ state: 'ok', count: 3 });
+    expect(card).not.toHaveProperty('severity');
+    expect(OVERVIEW_CARD_IDS).not.toContain('reviewsPending' as never);
   });
 });
 
