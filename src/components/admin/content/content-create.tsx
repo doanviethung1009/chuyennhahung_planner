@@ -13,6 +13,8 @@ import { LiveNotice } from './notices';
 import { RESERVED_SLUGS, SlugField } from './slug-field';
 import { slugify } from '@/lib/slug';
 import { useErrorNotice, type Notice } from './use-record';
+import { DestinationField } from './destination-field';
+import type { DestinationOption } from '@/lib/destination-options';
 
 const PLACE_CATEGORIES = [
   'cafe',
@@ -67,7 +69,7 @@ function mapIssue(path: string): string {
  * The rest is filled in on the normal edit page, where the record opens after
  * creation (ADR 0011). A story or place is always created as a draft by the server (ADR 0035).
  */
-export function ContentCreate({ kind }: { kind: 'stories' | 'places' }) {
+export function ContentCreate({ kind, destinations = [] }: { kind: 'stories' | 'places'; destinations?: readonly DestinationOption[] }) {
   const t = useTranslations('adminContent');
   const ts = useTranslations('adminContent.stories');
   const tp = useTranslations('adminContent.places');
@@ -232,7 +234,7 @@ export function ContentCreate({ kind }: { kind: 'stories' | 'places' }) {
               <LocalizedField path="location" label={tp('fieldLocation')} />
               <LocalizedListField path="description" label={tp('fieldDescription')} paragraphs />
               <div className="grid gap-5 md:grid-cols-2">
-                <TextField path="destinationSlug" label={tp('fieldDestination')} />
+                <DestinationField path="destinationSlug" options={destinations} />
                 <SelectField
                   path="category"
                   label={tp('fieldCategory')}

@@ -3,6 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { LinesField, LocalizedField, LocalizedListField, SelectField, TextField } from './form-kit';
 import { RecordShell } from './record-shell';
+import { DestinationField } from './destination-field';
+import type { DestinationOption } from '@/lib/destination-options';
 
 /** The `placeUpdateSchema` keys this editor sends. Affiliate links are not edited here. */
 const FIELDS = [
@@ -32,7 +34,7 @@ const CATEGORIES = [
   'transport',
 ] as const;
 
-function Fields() {
+function Fields({ destinations }: { destinations: readonly DestinationOption[] }) {
   const t = useTranslations('adminContent.places');
   return (
     <section aria-labelledby="place-general" className="grid gap-5">
@@ -44,7 +46,7 @@ function Fields() {
       <LocalizedListField path="description" label={t('fieldDescription')} paragraphs />
       <LocalizedField path="personalNote" label={t('fieldNote')} multiline nullable />
       <div className="grid gap-5 md:grid-cols-2">
-        <TextField path="destinationSlug" label={t('fieldDestination')} />
+        <DestinationField path="destinationSlug" options={destinations} />
         <SelectField
           path="category"
           label={t('fieldCategory')}
@@ -61,7 +63,15 @@ function Fields() {
   );
 }
 
-export function PlaceEditor({ slug, canDelete = false }: { slug: string; canDelete?: boolean }) {
+export function PlaceEditor({
+  slug,
+  canDelete = false,
+  destinations = [],
+}: {
+  slug: string;
+  canDelete?: boolean;
+  destinations?: readonly DestinationOption[];
+}) {
   return (
     <RecordShell
       apiPath={`/api/admin/travel/places/${encodeURIComponent(slug)}`}
@@ -71,7 +81,7 @@ export function PlaceEditor({ slug, canDelete = false }: { slug: string; canDele
       back="places"
       canDelete={canDelete}
     >
-      {() => <Fields />}
+      {() => <Fields destinations={destinations} />}
     </RecordShell>
   );
 }

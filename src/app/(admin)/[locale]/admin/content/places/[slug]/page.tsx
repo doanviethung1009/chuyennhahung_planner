@@ -9,6 +9,7 @@ import { Container } from '@/components/ui/container';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { ContentNotice } from '@/components/admin/content-notice';
 import { PlaceEditor } from '@/components/admin/content/place-editor';
+import { destinationOptions } from '@/lib/destination-options';
 
 // Reads the session cookie on every request: never prerendered or cached.
 export const dynamic = 'force-dynamic';
@@ -42,7 +43,7 @@ export default async function AdminPlaceEditPage({ params }: Params) {
       <Container width="wide">
         <div className="grid gap-8 py-10 md:py-14">
           <ContentNotice />
-          <PlaceEditor slug={slug} canDelete={can(access.principal, 'content:delete')} />
+          <PlaceEditor slug={slug} canDelete={can(access.principal, 'content:delete')} destinations={destinationOptions()} />
         </div>
       </Container>
     </>

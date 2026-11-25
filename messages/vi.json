@@ -1018,7 +1018,8 @@
       "fieldLocation": "Vị trí",
       "fieldDescription": "Mô tả",
       "fieldNote": "Ghi chú riêng của Hưng",
-      "fieldDestination": "Mã điểm đến",
+      "fieldDestination": "Điểm đến",
+      "destinationEmpty": "Chọn điểm đến",
       "fieldCategory": "Loại địa điểm",
       "categories": {
         "cafe": "Quán cà phê",
