@@ -30,7 +30,9 @@ export function slugify(text: string): string {
   if (slug.length > SLUG_MAX) {
     const cut = slug.slice(0, SLUG_MAX);
     // Cut at a word boundary when the next character would continue a word.
-    slug = slug[SLUG_MAX] === '-' ? cut : cut.slice(0, Math.max(cut.lastIndexOf('-'), 0)) || cut;
+    const atBoundary = cut.slice(0, Math.max(cut.lastIndexOf('-'), 0));
+    // A boundary cut that leaves under SLUG_MIN characters would empty the whole slug: hard-cut instead.
+    slug = slug[SLUG_MAX] === '-' || atBoundary.length < SLUG_MIN ? cut : atBoundary;
     slug = slug.replace(/-+$/g, '');
   }
   return slug.length >= SLUG_MIN ? slug : '';

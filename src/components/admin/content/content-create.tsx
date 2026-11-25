@@ -10,7 +10,7 @@ import type { Draft, Json } from './form-kit';
 import { getAt, setAt } from './form-kit';
 import { LiveNotice } from './notices';
 import { RESERVED_SLUGS, SlugField } from './slug-field';
-import { slugify } from '@/lib/slug';
+import { isValidSlug, slugify } from '@/lib/slug';
 import { useErrorNotice, type Notice } from './use-record';
 
 const PLACE_CATEGORIES = [
@@ -112,6 +112,12 @@ export function ContentCreate({ kind }: { kind: 'stories' | 'places' }) {
     if (RESERVED_SLUGS.includes(slug)) {
       setIssues(new Set(['slug']));
       setNotice({ kind: 'error', text: tc('reservedSlug') });
+      return;
+    }
+    // Same rules as the server's `slugSchema`: an empty or malformed slug would only come back as a 422.
+    if (!isValidSlug(slug)) {
+      setIssues(new Set(['slug']));
+      setNotice({ kind: 'error', text: tc('slugInvalid') });
       return;
     }
     setPending(true);
