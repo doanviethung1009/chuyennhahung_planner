@@ -813,8 +813,12 @@
       "description": "Everything you can manage on the site, in one place.",
       "cardsHeading": "Waiting for you",
       "cardsLabel": {
+        "reportsOpen": "Open reports",
+        "restrictionsActive": "Active restrictions",
+        "contentPublished": "Published content",
+        "integrityIssues": "Data integrity issues",
         "listingsPending": "Trip listings waiting for review",
-        "reviewsPending": "Reviews waiting for review",
+        "reviewsHeld": "Reviews on hold (waiting for the author)",
         "contentDrafts": "Drafts (stories and reviews)",
         "usersActive": "Active accounts",
         "usersDisabled": "Banned or soft-deleted accounts",
@@ -1527,7 +1531,6 @@
       "otherReviewsHeading": "Other reviews",
       "emptyPending": {
         "trips": "No trips are waiting for review.",
-        "reviews": "No reviews are waiting for approval.",
         "held": "No review is being held."
       },
       "history": {

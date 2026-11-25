@@ -9,8 +9,12 @@ import { can, type Action, type Principal } from '@/server/identity/permissions'
  */
 export const OVERVIEW_CARD_IDS = [
   'listingsPending',
-  'reviewsPending',
+  'reviewsHeld',
+  'reportsOpen',
+  'restrictionsActive',
   'contentDrafts',
+  'contentPublished',
+  'integrityIssues',
   'usersActive',
   'usersDisabled',
   'runtime',
@@ -20,10 +24,11 @@ export type OverviewCardId = (typeof OVERVIEW_CARD_IDS)[number];
 export type OverviewHref =
   | '/admin/community'
   | '/admin/content/stories'
+  | '/admin/content/integrity'
   | '/admin/users'
   | '/admin/runbook';
 
-/** `listReviewQueue` returns at most this many rows, so a count at the cap is a minimum. */
+/** `listReviewQueue` returns at most this many rows, so a count at the cap is a minimum. Reviews are published on submission now, so the queue only holds `held` rows (hidden, waiting for the author). */
 export const REVIEW_QUEUE_CAP = 200;
 
 export interface OverviewCard {
@@ -46,8 +51,12 @@ export interface Overview {
 /** The sources the dashboard reads; injectable so tests can fail one. */
 export interface OverviewSources {
   pendingListings(): Promise<number>;
-  pendingReviews(): Promise<number>;
+  heldReviews(): Promise<number>;
+  openReports(): Promise<number>;
+  activeRestrictions(): Promise<number>;
   contentDrafts(): Promise<number>;
+  contentPublished(): Promise<number>;
+  integrityIssues(): Promise<number>;
   users(): Promise<{ active: number; disabled: number }>;
   runtime(): 'postgres' | 'file' | 'mixed';
 }
@@ -61,12 +70,29 @@ type Definition = {
 // Order is the display order. Actions mirror the screen each card opens.
 const DEFINITIONS: readonly Definition[] = [
   { id: 'listingsPending', action: 'community:moderate', href: '/admin/community' },
-  { id: 'reviewsPending', action: 'community:moderate', href: '/admin/community' },
+  { id: 'reviewsHeld', action: 'community:moderate', href: '/admin/community' },
+  { id: 'reportsOpen', action: 'community:moderate', href: '/admin/community' },
+  { id: 'restrictionsActive', action: 'community:restrict', href: '/admin/community' },
   { id: 'contentDrafts', action: 'content:write', href: '/admin/content/stories' },
+  { id: 'contentPublished', action: 'content:write', href: '/admin/content/stories' },
+  { id: 'integrityIssues', action: 'content:write', href: '/admin/content/integrity' },
   { id: 'usersActive', action: 'user:provision', href: '/admin/users' },
   { id: 'usersDisabled', action: 'user:provision', href: '/admin/users' },
   { id: 'runtime', action: 'runbook:read', href: '/admin/runbook' },
 ];
+
+type CountId = Exclude<OverviewCardId, 'usersActive' | 'usersDisabled' | 'runtime'>;
+const COUNT_SOURCES: Record<CountId, (sources: OverviewSources) => () => Promise<number>> = {
+  listingsPending: (s) => s.pendingListings,
+  reviewsHeld: (s) => s.heldReviews,
+  reportsOpen: (s) => s.openReports,
+  restrictionsActive: (s) => s.activeRestrictions,
+  contentDrafts: (s) => s.contentDrafts,
+  contentPublished: (s) => s.contentPublished,
+  integrityIssues: (s) => s.integrityIssues,
+};
+/** Cards that flag "needs action" when above zero. */
+const ATTENTION = new Set<OverviewCardId>(['listingsPending', 'reportsOpen', 'integrityIssues']);
 
 async function count(read: () => Promise<number>): Promise<{ count?: number; state: 'ok' | 'unavailable' }> {
   try {
@@ -93,22 +119,20 @@ export async function buildOverview(principal: Principal, sources: OverviewSourc
       const base = { id: definition.id, href: definition.href };
       switch (definition.id) {
         case 'listingsPending':
-        case 'reviewsPending':
-        case 'contentDrafts': {
-          const read =
-            definition.id === 'listingsPending'
-              ? sources.pendingListings
-              : definition.id === 'reviewsPending'
-                ? sources.pendingReviews
-                : sources.contentDrafts;
-          const result = await count(read);
+        case 'reviewsHeld':
+        case 'reportsOpen':
+        case 'restrictionsActive':
+        case 'contentDrafts':
+        case 'contentPublished':
+        case 'integrityIssues': {
+          const result = await count(COUNT_SOURCES[definition.id](sources));
           return {
             ...base,
             ...result,
-            ...(definition.id === 'reviewsPending' && (result.count ?? 0) >= REVIEW_QUEUE_CAP
+            ...(definition.id === 'reviewsHeld' && (result.count ?? 0) >= REVIEW_QUEUE_CAP
               ? { atLeast: true }
               : {}),
-            ...(result.count !== undefined && result.count > 0 && definition.id !== 'contentDrafts'
+            ...(result.count !== undefined && result.count > 0 && ATTENTION.has(definition.id)
               ? { severity: 'attention' as const }
               : {}),
           };
@@ -137,7 +161,18 @@ export async function defaultOverviewSources(): Promise<OverviewSources> {
     pendingListings: async () =>
       (await (await getPlannerRepository()).listListingQueue()).filter((item) => item.listing.status === 'pending')
         .length,
-    pendingReviews: async () => (await (await getPlannerRepository()).listReviewQueue('pending')).length,
+    heldReviews: async () => (await (await getPlannerRepository()).listReviewQueue('held')).length,
+    openReports: async () => (await (await getPlannerRepository()).listReports('open')).length,
+    activeRestrictions: async () => (await (await getPlannerRepository()).listRestrictions(true)).length,
+    contentPublished: async () => {
+      const content = await getRepository();
+      const [stories, reviews] = await Promise.all([
+        content.listStories({ status: 'published' }),
+        content.listReviews({ status: 'published' }),
+      ]);
+      return stories.length + reviews.length;
+    },
+    integrityIssues: async () => (await (await getRepository()).validateIntegrity()).length,
     contentDrafts: async () => {
       const content = await getRepository();
       const [stories, reviews] = await Promise.all([

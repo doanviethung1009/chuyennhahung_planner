@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { ContentError, notFound } from '@/server/content/errors';
 import { toErrorResponse } from '@/server/content/http';
+import { invalidateOverviewPayloads } from '@/server/overview-cache';
 import {
   exchangeGoogleCode,
   googleConfig,
@@ -113,6 +114,8 @@ export async function GET(request: Request) {
       allowSignup: () => allowSignup(key),
     });
     if (!result.ok) return redirectToSignIn(request, locale, result.reason, attempt.returnTo);
+    // A first sign-in creates an account: the dashboard's account counts changed.
+    invalidateOverviewPayloads();
 
     const response = clearStateCookie(redirectTo(request, attempt.returnTo), request);
     return setSessionCookie(response, request, result.session.token, result.session.expiresAt);

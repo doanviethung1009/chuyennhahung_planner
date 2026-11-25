@@ -17,9 +17,11 @@ import { useReportCount } from './workspace';
 type Decision = 'approve' | 'reject' | 'remove' | 'hold';
 
 /**
- * Staff queue for traveller place reviews (ADR 0014). Planner-written reviews
- * wait here as `pending`; guest reviews are already live and can only be
- * removed. Review text is shown as plain text.
+ * Staff queue for traveller place reviews (ADR 0014, amended 2026-11-15).
+ * Reviews are published on submission, so the list is mostly live reviews that
+ * staff can hold or remove, and held reviews waiting for their author. A
+ * `pending` section appears only while legacy pending rows exist. Review text
+ * is shown as plain text.
  */
 export function CommunityReviewQueue({ canRestrict, canErase = false }: { canRestrict: boolean; canErase?: boolean }) {
   const t = useTranslations('adminCommunity');
@@ -389,20 +391,16 @@ export function CommunityReviewQueue({ canRestrict, canErase = false }: { canRes
 
   return (
     <>
-      <QueueSection id={sectionId('reviews')} heading={t('reviewsHeading')} count={groups ? groups.pending.length : null}>
+      {groups && groups.pending.length > 0 ? (
+        <QueueSection id={sectionId('reviews')} heading={t('reviewsHeading')} count={groups.pending.length}>
+          {list(groups.pending)}
+        </QueueSection>
+      ) : null}
+      <QueueSection id={sectionId('held')} heading={t('workspace.heldHeading')} count={groups ? groups.held.length : null}>
         <LiveNotice notice={notice} onReload={() => void load()} />
         {groups === null ? (
           loadingOrError
-        ) : items?.length === 0 ? (
-          <EmptyState>{tr('empty')}</EmptyState>
-        ) : groups.pending.length === 0 ? (
-          <EmptyState>{t('workspace.emptyPending.reviews')}</EmptyState>
-        ) : (
-          list(groups.pending)
-        )}
-      </QueueSection>
-      <QueueSection id={sectionId('held')} heading={t('workspace.heldHeading')} count={groups ? groups.held.length : null}>
-        {groups === null ? null : groups.held.length === 0 ? (
+        ) : groups.held.length === 0 ? (
           <EmptyState>{t('workspace.emptyPending.held')}</EmptyState>
         ) : (
           list(groups.held)

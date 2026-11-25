@@ -813,8 +813,12 @@
       "description": "Mọi thứ bạn quản lý được trên trang, gom về một chỗ.",
       "cardsHeading": "Việc đang chờ",
       "cardsLabel": {
+        "reportsOpen": "Báo cáo chờ xử lý",
+        "restrictionsActive": "Hạn chế đang hiệu lực",
+        "contentPublished": "Nội dung đã xuất bản",
+        "integrityIssues": "Lỗi toàn vẹn dữ liệu",
         "listingsPending": "Chuyến đi chờ duyệt",
-        "reviewsPending": "Đánh giá chờ duyệt",
+        "reviewsHeld": "Đánh giá đang giữ (chờ tác giả sửa)",
         "contentDrafts": "Bản nháp (chuyến đi và đánh giá)",
         "usersActive": "Tài khoản đang hoạt động",
         "usersDisabled": "Tài khoản bị khóa hoặc đã xóa mềm",
@@ -1527,7 +1531,6 @@
       "otherReviewsHeading": "Các đánh giá khác",
       "emptyPending": {
         "trips": "Không có chuyến nào đang chờ duyệt.",
-        "reviews": "Không có đánh giá nào đang chờ duyệt.",
         "held": "Không có đánh giá nào đang bị giữ."
       },
       "history": {

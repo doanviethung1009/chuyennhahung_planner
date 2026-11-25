@@ -30,7 +30,7 @@ New features start from [`_template.md`](_template.md) /
 | Travel Content on PostgreSQL | [content-postgres-tables.md](content-postgres-tables.md) | `CONTENT_DATABASE_URL` store, one table per collection on the shared table engine, seeding under a lock, import and export |
 | Admin roles | [admin-roles.md](admin-roles.md) | `role` on the user, `permissions.ts`, `PATCH /api/admin/planner/users/[userId]` to promote the first admin |
 | Admin shell | [admin-shell.md](admin-shell.md) | One layout for every admin page: grouped role-aware sidebar, breadcrumb, skip link, phone menu; `/admin` overview and the user console at `/admin/users` (ADR 0020) |
-| Admin dashboard | [admin-dashboard.md](admin-dashboard.md) | `/admin` cards per role: pending listings and reviews, story/review drafts, accounts, runtime; `GET /api/admin/overview` (P07-11) |
+| Admin dashboard | [admin-dashboard.md](admin-dashboard.md) | `/admin` cards per role: pending listings, reviews on hold, open reports, active restrictions, drafts and published content, integrity issues, accounts, runtime; `GET /api/admin/overview` (P07-11) |
 | Admin portal | [admin-portal.md](admin-portal.md) | `/quan-tri` — admin-only user list, create, role change and password reset in the browser (ADR 0010) |
 | Admin user filter | [admin-user-filter.md](admin-user-filter.md) | Search (name, handle, email) and role filter on the `/quan-tri` users table, client-side |
 | Admin place delete | [admin-place-delete.md](admin-place-delete.md) | "Delete place" on `/admin/content/places/[slug]` for admin and super admin only; `content:delete`, confirm dialog, 409 `place_in_use` with counts (CORE-10) |

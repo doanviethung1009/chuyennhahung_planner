@@ -1,4 +1,5 @@
-import { invalidateOverviewCacheAfter } from '@/server/overview-cache';
+import { invalidateOverviewCacheAfter, invalidateOverviewPayloadsAfter, overviewCache } from '@/server/overview-cache';
+import { NextResponse } from 'next/server';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -13,6 +14,7 @@ import {
   resetOverviewCache, type OverviewSources,
 } from '../src/server/admin/overview';
 import { storyFixture } from './travel-content-helpers';
+import { daLatTripInput } from './planner-helpers';
 
 vi.mock('../src/server/planner/password', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/server/planner/password')>()),
@@ -83,12 +85,29 @@ describe('GET /api/admin/overview role matrix', () => {
     const response = await route.GET(req({ cookie: editor.cookie }));
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('no-store');
-    expect(await ids(response)).toEqual(['listingsPending', 'reviewsPending', 'contentDrafts']);
+    expect(await ids(response)).toEqual([
+      'listingsPending',
+      'reviewsHeld',
+      'reportsOpen',
+      'contentDrafts',
+      'contentPublished',
+      'integrityIssues',
+    ]);
   });
 
   it('admin adds the two user cards (no integrity card); the service token matches; no runtime card', async () => {
     const admin = await makeUser('admin');
-    const expected = ['listingsPending', 'reviewsPending', 'contentDrafts', 'usersActive', 'usersDisabled'];
+    const expected = [
+      'listingsPending',
+      'reviewsHeld',
+      'reportsOpen',
+      'restrictionsActive',
+      'contentDrafts',
+      'contentPublished',
+      'integrityIssues',
+      'usersActive',
+      'usersDisabled',
+    ];
     expect(await ids(await route.GET(req({ cookie: admin.cookie })))).toEqual(expected);
     expect(await ids(await route.GET(req({ bearer: ADMIN_TOKEN })))).not.toContain('runtime');
   });
@@ -123,7 +142,7 @@ describe('counts equal the underlying lists', () => {
     expect(card('usersDisabled').count).toBe(disabled);
     expect(body.cards.map((c: { id: string }) => c.id)).not.toContain('integrity');
     expect(card('usersActive').count + card('usersDisabled').count).toBe((await planner_.listUsers()).length);
-    expect(card('reviewsPending').count).toBe((await planner_.listReviewQueue('pending')).length);
+    expect(card('reviewsHeld').count).toBe((await planner_.listReviewQueue('held')).length);
     expect(card('listingsPending').count).toBe(
       (await planner_.listListingQueue()).filter((i) => i.listing.status === 'pending').length,
     );
@@ -133,8 +152,12 @@ describe('counts equal the underlying lists', () => {
 describe('buildOverview degraded and empty paths', () => {
   const ok: OverviewSources = {
     pendingListings: async () => 2,
-    pendingReviews: async () => 0,
+    heldReviews: async () => 0,
+    openReports: async () => 1,
+    activeRestrictions: async () => 0,
     contentDrafts: async () => 3,
+    contentPublished: async () => 4,
+    integrityIssues: async () => 0,
     users: async () => ({ active: 5, disabled: 1 }),
     runtime: () => 'file',
   };
@@ -144,7 +167,7 @@ describe('buildOverview degraded and empty paths', () => {
       { role: 'super_admin' },
       {
         ...ok,
-        pendingReviews: async () => {
+        heldReviews: async () => {
           throw new Error('db down');
         },
         users: async () => {
@@ -153,8 +176,8 @@ describe('buildOverview degraded and empty paths', () => {
       },
     );
     const byId = Object.fromEntries(overview.cards.map((c) => [c.id, c]));
-    expect(byId.reviewsPending).toMatchObject({ state: 'unavailable' });
-    expect(byId.reviewsPending?.count).toBeUndefined();
+    expect(byId.reviewsHeld).toMatchObject({ state: 'unavailable' });
+    expect(byId.reviewsHeld?.count).toBeUndefined();
     expect(byId.usersActive).toMatchObject({ state: 'unavailable' });
     expect(byId.usersDisabled).toMatchObject({ state: 'unavailable' });
     expect(byId.listingsPending).toMatchObject({ state: 'ok', count: 2, severity: 'attention' });
@@ -168,14 +191,14 @@ describe('buildOverview degraded and empty paths', () => {
 
   it('zero counts carry no severity', async () => {
     const overview = await buildOverview({ role: 'admin' }, ok);
-    expect(overview.cards.find((c) => c.id === 'reviewsPending')).not.toHaveProperty('severity');
+    expect(overview.cards.find((c) => c.id === 'reviewsHeld')).not.toHaveProperty('severity');
   });
 
-  it('a pending-review count at the cap is a lower bound, below it is exact', async () => {
-    const capped = await buildOverview({ role: 'editor' }, { ...ok, pendingReviews: async () => REVIEW_QUEUE_CAP });
-    expect(capped.cards.find((c) => c.id === 'reviewsPending')).toMatchObject({ count: 200, atLeast: true });
-    const exact = await buildOverview({ role: 'editor' }, { ...ok, pendingReviews: async () => REVIEW_QUEUE_CAP - 1 });
-    expect(exact.cards.find((c) => c.id === 'reviewsPending')).not.toHaveProperty('atLeast');
+  it('a held-review count at the cap is a lower bound, below it is exact', async () => {
+    const capped = await buildOverview({ role: 'editor' }, { ...ok, heldReviews: async () => REVIEW_QUEUE_CAP });
+    expect(capped.cards.find((c) => c.id === 'reviewsHeld')).toMatchObject({ count: 200, atLeast: true });
+    const exact = await buildOverview({ role: 'editor' }, { ...ok, heldReviews: async () => REVIEW_QUEUE_CAP - 1 });
+    expect(exact.cards.find((c) => c.id === 'reviewsHeld')).not.toHaveProperty('atLeast');
   });
 
   it('state and detail come from closed sets; a thrown message never reaches the payload', async () => {
@@ -230,5 +253,79 @@ describe('overview cache (security review warning: unrate-limited full reads)', 
     expect(await drafts(t0 + 1)).toBe(before); // a read keeps the cache
     invalidateOverviewCacheAfter(new Request('http://x/api', { method: 'POST' }));
     expect(await drafts(t0 + 2)).toBe(before + 1); // a write refreshes at once
+  });
+});
+
+describe('reviews on hold card', () => {
+  it('counts held reviews, never flags them, and the pending queue is gone', async () => {
+    const overview = await buildOverview(
+      { role: 'editor' },
+      { pendingListings: async () => 0, heldReviews: async () => 3, openReports: async () => 0, activeRestrictions: async () => 0,
+        contentDrafts: async () => 0, contentPublished: async () => 0, integrityIssues: async () => 0,
+        users: async () => ({ active: 0, disabled: 0 }), runtime: () => 'file' },
+    );
+    const card = overview.cards.find((c) => c.id === 'reviewsHeld');
+    expect(card).toMatchObject({ state: 'ok', count: 3 });
+    expect(card).not.toHaveProperty('severity');
+    expect(OVERVIEW_CARD_IDS).not.toContain('reviewsPending' as never);
+  });
+});
+
+describe('overview cache and member writes', () => {
+  const warm = async (at: number) => {
+    await loadOverview({ role: 'editor' }, at);
+    expect(overviewCache().size).toBe(1);
+  };
+
+  it('a member or reader write drops only the dashboard payloads, a read keeps them', async () => {
+    await warm(3_000_000);
+    invalidateOverviewPayloadsAfter(new Request('http://x/api', { method: 'GET' }));
+    expect(overviewCache().size).toBe(1);
+    invalidateOverviewPayloadsAfter(new Request('http://x/api', { method: 'POST' }));
+    expect(overviewCache().size).toBe(0);
+  });
+
+  it('plannerRoute drops the payloads after a member write, even when the handler throws', async () => {
+    const { plannerRoute } = await import('../src/server/planner/http');
+    const member = await makeUser('member');
+    const request = (method: string) =>
+      new Request(`${ORIGIN}/api/planner/x`, { method, headers: { cookie: `${SESSION_COOKIE}=${member.cookie}`, origin: ORIGIN } });
+
+    await warm(4_000_000);
+    await plannerRoute(request('GET'), async () => NextResponse.json({ ok: true }));
+    expect(overviewCache().size).toBe(1);
+
+    await plannerRoute(request('PUT'), async () => NextResponse.json({ ok: true }));
+    expect(overviewCache().size).toBe(0);
+
+    await warm(4_000_001);
+    await plannerRoute(request('POST'), async () => {
+      throw new Error('boom');
+    });
+    expect(overviewCache().size).toBe(0);
+  });
+
+  it('a member listing request shows on the dashboard at once, not after the window', async () => {
+    const repo = await planner.getPlannerRepository();
+    const { plannerRoute } = await import('../src/server/planner/http');
+    const owner = await makeUser('member');
+    const { trip } = await repo.createTrip(owner.id, daLatTripInput());
+    await repo.setVisibility(owner.id, trip.id, 'public');
+    await repo.acceptTerms(owner.id, (await import('../src/content/site')).termsVersion, 'vi');
+
+    const pending = async (at: number) =>
+      (await loadOverview({ role: 'editor' }, at)).cards.find((c) => c.id === 'listingsPending')?.count ?? -1;
+    const before = await pending(5_000_000);
+    await plannerRoute(
+      new Request(`${ORIGIN}/api/planner/${trip.id}/listing`, {
+        method: 'PUT',
+        headers: { cookie: `${SESSION_COOKIE}=${owner.cookie}`, origin: ORIGIN },
+      }),
+      async ({ userId }) => {
+        await repo.requestListing(userId, trip.id, 'name');
+        return NextResponse.json({ ok: true });
+      },
+    );
+    expect(await pending(5_000_001)).toBe(before + 1); // same 15s window, fresh count
   });
 });

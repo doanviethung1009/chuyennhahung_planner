@@ -16,14 +16,31 @@ export function overviewCache(): Map<string, OverviewCacheEntry> {
   return (holder[CACHE_KEY] ??= new Map());
 }
 
+/**
+ * Drop only the dashboard payloads. Member and reader writes (a trip listing, a
+ * report) change a dashboard count but not the public catalogue, so they must
+ * not pay for clearing the catalogue cache as well.
+ */
+export function invalidateOverviewPayloads(): void {
+  overviewCache().clear();
+}
+
 /** Forget every cached payload: call after a write that changes a count. */
 export function invalidateOverviewCache(): void {
-  overviewCache().clear();
+  invalidateOverviewPayloads();
   // The public place catalogue is cached for the same reason: a write must show at once.
   invalidateCatalogueCache();
 }
 
 const SAFE = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+/**
+ * Drop the dashboard payloads after a state-changing member or reader request
+ * (not staff: those use `invalidateOverviewCacheAfter`). Whatever its outcome.
+ */
+export function invalidateOverviewPayloadsAfter(request: Request): void {
+  if (!SAFE.has(request.method.toUpperCase())) invalidateOverviewPayloads();
+}
 
 /** Drop the cache after a state-changing admin request, whatever its outcome. */
 export function invalidateOverviewCacheAfter(request: Request): void {
