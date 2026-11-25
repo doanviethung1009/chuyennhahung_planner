@@ -36,7 +36,7 @@ export function WorkspaceNav({ canRestrict }: { canRestrict: boolean }) {
     <nav aria-label={t('navLabel')} className="border-b border-border-subtle bg-surface-muted">
       <Container width="wide">
       <ul className="flex flex-wrap gap-2 py-3">
-        {visibleSections(canRestrict).map((key) => {
+        {visibleSections(canRestrict, context?.counts.reviews ?? 0).map((key) => {
           const count = context?.counts[key] ?? null;
           return (
             <li key={key}>

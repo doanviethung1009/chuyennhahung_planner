@@ -18,8 +18,14 @@ describe('moderation workspace model (P07-14)', () => {
   });
 
   it('hides restrictions without community:restrict, keeping the order', () => {
-    expect(visibleSections(true)).toEqual([...SECTION_ORDER]);
-    expect(visibleSections(false)).toEqual(['trips', 'reviews', 'held', 'reports']);
+    expect(visibleSections(true, 1)).toEqual([...SECTION_ORDER]);
+    expect(visibleSections(false, 1)).toEqual(['trips', 'reviews', 'held', 'reports']);
+  });
+
+  it('shows the pending reviews section only while legacy pending reviews exist', () => {
+    expect(visibleSections(true)).toEqual(['trips', 'held', 'reports', 'restrictions']);
+    expect(visibleSections(false, 0)).toEqual(['trips', 'held', 'reports']);
+    expect(visibleSections(false, 2)).toContain('reviews');
   });
 
   it('gives each section a distinct anchor id', () => {

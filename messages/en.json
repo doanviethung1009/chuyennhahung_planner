@@ -1519,7 +1519,6 @@
       "otherReviewsHeading": "Other reviews",
       "emptyPending": {
         "trips": "No trips are waiting for review.",
-        "reviews": "No reviews are waiting for approval.",
         "held": "No review is being held."
       },
       "history": {

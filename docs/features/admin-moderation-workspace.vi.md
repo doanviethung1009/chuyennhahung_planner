@@ -4,7 +4,7 @@
 
 ## Summary
 
-`/admin/community` trở thành một không gian phân loại thay vì bốn danh sách xếp chồng. Đầu trang có thanh liên kết nhảy với số đếm theo từng mục; các mục theo thứ tự cố định (chuyến chờ duyệt → đánh giá chờ duyệt → đánh giá đang giữ → báo cáo → tác giả bị tắt); mỗi danh sách có trạng thái rỗng; mọi thẻ có cùng bố cục; chuyến và đánh giá có lịch sử chỉ-đọc (P07-14). Chỉ thay đổi cách trình bày: không đổi quy tắc kiểm duyệt, state machine, API, route hay request.
+`/admin/community` trở thành một không gian phân loại thay vì bốn danh sách xếp chồng. Đầu trang có thanh liên kết nhảy với số đếm theo từng mục; các mục theo thứ tự cố định (chuyến chờ duyệt → đánh giá đang giữ → báo cáo → tác giả bị tắt; mục "đánh giá chờ duyệt" chỉ được thêm khi còn đánh giá chờ duyệt cũ); mỗi danh sách có trạng thái rỗng; mọi thẻ có cùng bố cục; chuyến và đánh giá có lịch sử chỉ-đọc (P07-14). Chỉ thay đổi cách trình bày: không đổi quy tắc kiểm duyệt, state machine, API, route hay request.
 
 ## Routes
 
@@ -21,7 +21,7 @@ Không lưu gì. Mỗi danh sách vẫn gọi đúng một GET như trước; s�
 ## How it works
 
 - **Thứ tự và số đếm** là các hàm thuần trong `src/components/admin/community/workspace-model.ts`: `SECTION_ORDER`, `visibleSections(canRestrict)`, `splitTrips`, `splitReviews`, `reportCount`.
-- **Số đếm** là số việc cần làm: chuyến chờ duyệt, đánh giá chờ duyệt, đánh giá đang giữ, báo cáo **đang mở** (số biến mất khi bộ lọc báo cáo xem trạng thái khác), và mọi dòng của danh sách tác giả bị tắt. Chuyến và đánh giá đã xử lý vẫn nằm bên dưới danh sách chờ (`Đã xử lý`, `Các đánh giá khác`); không tính vào số đếm.
+- **Số đếm** là số việc cần làm: chuyến chờ duyệt, đánh giá đang giữ (và đánh giá chờ duyệt khi còn dữ liệu cũ: đánh giá được đăng ngay khi gửi, ADR 0014 sửa đổi 2026-11-15, nên mục này và liên kết nhảy của nó bị ẩn khi không có), báo cáo **đang mở** (số biến mất khi bộ lọc báo cáo xem trạng thái khác), và mọi dòng của danh sách tác giả bị tắt. Chuyến và đánh giá đã xử lý vẫn nằm bên dưới danh sách chờ (`Đã xử lý`, `Các đánh giá khác`); không tính vào số đếm.
 - **Bố cục** dùng chung qua `queue-parts.tsx`: `QueueSection`, `EmptyState`, `StatusBadge`, `ItemActions`. Tiêu đề thẻ là `h3` dưới `h2` của mục; trang chỉ có một `h1`.
 - **Thứ tự bàn phím** = thứ tự DOM = thứ tự đọc: liên kết nhảy, rồi từng mục từ trên xuống; trong thẻ là nội dung, các nút hành động, cuối cùng là Lịch sử.
 - **`canRestrict`** vẫn quyết định mục tác giả bị tắt và liên kết nav (cùng nút tắt tác giả sẵn có), đúng như trước.
@@ -40,7 +40,7 @@ Không lưu gì. Mỗi danh sách vẫn gọi đúng một GET như trước; s�
 
 ## Tests
 
-`tests/admin-moderation-workspace.test.ts` kiểm các hàm thuần (thứ tự, hiển thị, nhóm, số đếm cộng đúng độ dài danh sách, quy tắc đếm báo cáo). Các suite `community-*` và `review-restrictions-routes` giữ nguyên. Chưa kiểm: render component (chưa có hạ tầng test component) và thử trên trình duyệt.
+`tests/admin-moderation-workspace.test.ts` kiểm các hàm thuần (thứ tự, hiển thị gồm quy tắc đánh giá chờ duyệt cũ, nhóm, số đếm cộng đúng độ dài danh sách, quy tắc đếm báo cáo). Các suite `community-*` và `review-restrictions-routes` giữ nguyên. Chưa kiểm: render component (chưa có hạ tầng test component) và thử trên trình duyệt.
 
 ## Limits and open questions
 

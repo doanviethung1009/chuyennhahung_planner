@@ -19,9 +19,15 @@ export function sectionId(key: SectionKey): string {
   return `section-${key}`;
 }
 
-/** Sections shown to this staff member, in fixed order. Restrictions need `community:restrict`. */
-export function visibleSections(canRestrict: boolean): SectionKey[] {
-  return SECTION_ORDER.filter((key) => key !== 'restrictions' || canRestrict);
+/**
+ * Sections shown to this staff member, in fixed order. Restrictions need
+ * `community:restrict`. Reviews are published on submission, so the pending
+ * reviews section only exists while legacy `pending` rows do: pass how many.
+ */
+export function visibleSections(canRestrict: boolean, pendingReviews = 0): SectionKey[] {
+  return SECTION_ORDER.filter(
+    (key) => (key !== 'restrictions' || canRestrict) && (key !== 'reviews' || pendingReviews > 0),
+  );
 }
 
 /** Trips split into the ones awaiting a decision and the already decided, API order kept inside each group. */
@@ -32,7 +38,7 @@ export function splitTrips(items: readonly ListingQueueItem[]): { pending: Listi
   };
 }
 
-/** Reviews split into pending, held and the rest (live, rejected, removed), API order kept inside each group. */
+/** Reviews split into pending (legacy only: none are created any more), held and the rest, API order kept inside each group. */
 export function splitReviews(items: readonly ReviewQueueItem[]): {
   pending: ReviewQueueItem[];
   held: ReviewQueueItem[];
