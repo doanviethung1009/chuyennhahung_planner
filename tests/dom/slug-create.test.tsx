@@ -88,12 +88,12 @@ describe('ContentCreate slug UX', () => {
 
   it('does not POST an empty or malformed slug and says why', async () => {
     const calls = stubFetch(() => json(404, {}));
-    renderWithIntl(<ContentCreate kind="places" />);
+    renderWithIntl(<ContentCreate kind="stories" />);
     type(slugBox(), '');
-    fireEvent.click(screen.getByRole('button', { name: tc.submitPlace }));
+    fireEvent.click(screen.getByRole('button', { name: tc.submitStory }));
     expect(await screen.findAllByText(tc.slugInvalid)).not.toHaveLength(0);
     type(slugBox(), 'Bad Slug');
-    fireEvent.click(screen.getByRole('button', { name: tc.submitPlace }));
+    fireEvent.click(screen.getByRole('button', { name: tc.submitStory }));
     expect(calls.filter((c) => c.method === 'POST')).toHaveLength(0);
   });
 
