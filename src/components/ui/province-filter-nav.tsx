@@ -4,7 +4,7 @@ import { provincesWithDestinations } from '@/content/provinces';
 import type { Province } from '@/content/types';
 
 const chipClass = (active: boolean) =>
-  `inline-flex min-h-11 items-center rounded-pill border px-4 text-sm font-medium transition-colors duration-200 ease-gentle ${
+  `inline-flex min-h-11 shrink-0 whitespace-nowrap items-center rounded-pill border px-4 text-sm font-medium transition-colors duration-200 ease-gentle ${
     active
       ? 'border-primary bg-primary text-primary-foreground'
       : 'border-border-strong bg-surface text-ink-700 hover:border-primary hover:text-primary-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary'
@@ -35,7 +35,7 @@ export function ProvinceFilterNav({
 }) {
   return (
     <nav aria-label={label} className={className}>
-      <ul className="flex list-none flex-wrap gap-2 p-0">
+      <ul className="-mx-1 flex list-none gap-2 overflow-x-auto px-1 py-1 sm:flex-wrap sm:overflow-visible">
         <li>
           <Link href={basePath} aria-current={active ? undefined : 'page'} className={chipClass(!active)}>
             {allLabel}
