@@ -22,6 +22,7 @@ export function SlugField({
   kind,
   value,
   invalid,
+  reason,
   disabled,
   onChange,
   onRegenerate,
@@ -29,6 +30,8 @@ export function SlugField({
   kind: 'stories' | 'places';
   value: string;
   invalid: boolean;
+  /** Why the last submit refused the slug, worded; the generic line shows without it. */
+  reason?: string;
   disabled: boolean;
   onChange: (value: string) => void;
   onRegenerate: () => void;
@@ -122,7 +125,7 @@ export function SlugField({
       ) : null}
       {bad ? (
         <p id={`${id}-err`} className="mt-1.5 text-sm font-medium text-primary-strong">
-          {tf('invalid')}
+          {reason ?? tf('invalid')}
         </p>
       ) : null}
     </div>

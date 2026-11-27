@@ -3,6 +3,7 @@
 import { createContext, useContext, useId, useState, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { inputClass } from '@/components/planner/field';
+import { numberToText, parseNumberText } from './number-text';
 
 /**
  * Small form kit for the content editors. The draft is a plain JSON record;
@@ -129,6 +130,54 @@ export function TextField({
         ) : (
           <input {...common} type={type} onChange={(e) => onText(e.target.value)} />
         )}
+      </div>
+      <Hint id={`${id}-hint`} text={hint} />
+      {bad ? <Invalid id={`${id}-err`} text={reasons?.get(path)} /> : null}
+    </div>
+  );
+}
+
+/**
+ * A number typed as text (see `number-text.ts`). The draft holds a number when the
+ * text reads as one, the raw string when it does not (so the check can say so),
+ * and `null` when the box is empty. `integer` also accepts `50.000` as 50000.
+ */
+export function NumberField({
+  path,
+  label,
+  hint,
+  integer,
+}: {
+  path: string;
+  label: string;
+  hint?: string;
+  integer?: boolean;
+}) {
+  const { draft, issues, reasons, disabled, set } = useEditor();
+  const id = useId();
+  const [text, setText] = useState(() => numberToText(getAt(draft, path)));
+  const bad = issues.has(path);
+  return (
+    <div>
+      <label htmlFor={id} className="block text-sm font-medium text-foreground">
+        {label}
+      </label>
+      <div className="mt-1.5">
+        <input
+          id={id}
+          type="text"
+          inputMode={integer ? 'numeric' : 'decimal'}
+          autoComplete="off"
+          value={text}
+          disabled={disabled}
+          aria-invalid={bad || undefined}
+          aria-describedby={describedBy(hint && `${id}-hint`, bad && `${id}-err`)}
+          className={`${inputClass} ${bad ? invalidClass : ''}`}
+          onChange={(e) => {
+            setText(e.target.value);
+            set(path, parseNumberText(e.target.value, integer === true));
+          }}
+        />
       </div>
       <Hint id={`${id}-hint`} text={hint} />
       {bad ? <Invalid id={`${id}-err`} text={reasons?.get(path)} /> : null}

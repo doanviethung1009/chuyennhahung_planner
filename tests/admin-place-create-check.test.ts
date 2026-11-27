@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { placeCreateSchema } from '@/server/content/schemas';
-import { checkPlaceDraft, problemsFromIssues, reasonOf } from '@/components/admin/content/issue-reason';
+import { parseNumberText } from '@/components/admin/content/number-text';
+import { checkPlaceDraft, checkSlugDraft, problemsFromIssues, reasonOf } from '@/components/admin/content/issue-reason';
 
 const filled = {
   slug: 'ca-phe-moi',
@@ -101,11 +102,52 @@ describe('the client check agrees with placeCreateSchema', () => {
     { estimatedCostVnd: 1.5 },
     { estimatedCostVnd: 1_000_000_000_001 },
     { estimatedCostVnd: null },
+    { estimatedCostVnd: 'abc' },
+    { coords: { lat: 'x', lng: 108 } },
   ];
   it.each(variants.map((patch, index) => [index, patch] as const))('variant %i', (_index, patch) => {
     const draft = { ...filled, ...patch };
     const parsed = placeCreateSchema.safeParse(draft);
     const server = parsed.success ? [] : [...new Set(parsed.error.issues.map((issue) => issue.path.join('.')))];
     expect(checkPlaceDraft(draft).map((problem) => problem.path).sort()).toEqual(server.sort());
+  });
+});
+
+describe('number text (a Vietnamese editor types 50.000, not 50000)', () => {
+  it.each([
+    ['50000', true, 50000],
+    ['50.000', true, 50000],
+    ['1.250.000', true, 1250000],
+    ['1,250,000', true, 1250000],
+    ['50 000', true, 50000],
+    ['50.000 đ', true, 50000],
+    ['  ', true, null],
+    ['', false, null],
+    ['11.94', false, 11.94],
+    ['11,94', false, 11.94],
+    ['-3.5', false, -3.5],
+    ['45', true, 45],
+  ])('%s (integer=%s) -> %s', (text, integer, expected) => {
+    expect(parseNumberText(text, integer)).toBe(expected);
+  });
+
+  it('keeps text it cannot read as a string, so the check can name it', () => {
+    expect(parseNumberText('abc', true)).toBe('abc');
+    expect(parseNumberText('1.5', true)).toBe(1.5);
+    expect(checkPlaceDraft({ ...filled, estimatedCostVnd: 'abc' }).find((p) => p.path === 'estimatedCostVnd')?.reason).toEqual({ key: 'number' });
+    expect(reasonOf('Invalid input: expected number, received string')).toEqual({ key: 'number' });
+  });
+
+  it('a fractional amount typed with a decimal point is refused, not rounded', () => {
+    expect(checkPlaceDraft({ ...filled, estimatedCostVnd: parseNumberText('50.5', true) }).find((p) => p.path === 'estimatedCostVnd')?.reason).toEqual({ key: 'whole' });
+  });
+});
+
+describe('slug check shared by both create forms', () => {
+  it('an empty or short slug is named for stories too', () => {
+    expect(checkSlugDraft({ slug: '' })).toEqual([{ path: 'slug', reason: { key: 'required' } }]);
+    expect(checkSlugDraft({ slug: 'ab' })).toEqual([{ path: 'slug', reason: { key: 'minLength', n: 3 } }]);
+    expect(checkSlugDraft({ slug: 'new' })).toEqual([{ path: 'slug', reason: { key: 'reserved' } }]);
+    expect(checkSlugDraft({ slug: 'ha-long' })).toEqual([]);
   });
 });

@@ -8,7 +8,7 @@ import { getAt, type Json } from './form-kit';
  * the client-side check (same schema) and to a server answer.
  */
 export interface Reason {
-  key: 'required' | 'minLength' | 'maxLength' | 'min' | 'max' | 'whole' | 'format' | 'reference' | 'reserved' | 'invalid';
+  key: 'required' | 'number' | 'minLength' | 'maxLength' | 'min' | 'max' | 'whole' | 'format' | 'reference' | 'reserved' | 'invalid';
   n?: number;
 }
 
@@ -25,6 +25,7 @@ const number = (text: string, pattern: RegExp): number | undefined => {
 /** Reads one zod / repository message. Unknown wording falls back to `invalid`. */
 export function reasonOf(message: string): Reason {
   if (/received null|received undefined|is required/i.test(message)) return { key: 'required' };
+  if (/expected number, received string/.test(message)) return { key: 'number' };
   const chars = number(message, /to have >=(\d+) characters/);
   if (chars !== undefined) return chars <= 1 ? { key: 'required' } : { key: 'minLength', n: chars };
   if (/expected array to have >=1 items/.test(message)) return { key: 'required' };
@@ -54,24 +55,35 @@ export function problemsFromIssues(issues: readonly { path: string; message: str
 }
 
 /**
- * The create form's check before it calls the server. A client file may not import
- * `@/server/**` (ADR 0006), so this mirrors `placeCreateSchema`; the server stays
- * the authority and `tests/admin-place-create-check.test.ts` fails when the two
- * disagree about which fields are refused.
+ * The create forms' check before they call the server. A client file may not import
+ * `@/server/**` (ADR 0006), so this mirrors the create schemas; the server stays the
+ * authority and `tests/admin-place-create-check.test.ts` fails when the two disagree
+ * about which fields are refused.
  */
+type Sink = (path: string, reason: Reason) => void;
+
+function checkSlug(draft: unknown, path: string, reserve: boolean, add: Sink): void {
+  const raw = getAt(draft as Json, path);
+  const value = typeof raw === 'string' ? raw.trim() : '';
+  if (value === '') add(path, { key: 'required' });
+  else if (reserve && value === 'new') add(path, { key: 'reserved' });
+  else if (value.length < SLUG_MIN) add(path, { key: 'minLength', n: SLUG_MIN });
+  else if (value.length > SLUG_MAX) add(path, { key: 'maxLength', n: SLUG_MAX });
+  else if (!isValidSlug(value)) add(path, { key: 'format' });
+}
+
+/** Story create form: only the slug is checked here; the server names the rest. */
+export function checkSlugDraft(draft: unknown): FieldProblem[] {
+  const out: FieldProblem[] = [];
+  checkSlug(draft, 'slug', true, (path, reason) => out.push({ path, reason }));
+  return out;
+}
+
 export function checkPlaceDraft(draft: unknown): FieldProblem[] {
   const out: FieldProblem[] = [];
   const at = (path: string) => getAt(draft as Json, path);
-  const add = (path: string, reason: Reason) => out.push({ path, reason });
+  const add: Sink = (path, reason) => out.push({ path, reason });
 
-  const slugLike = (path: string, reserve: boolean) => {
-    const value = typeof at(path) === 'string' ? String(at(path)).trim() : '';
-    if (value === '') add(path, { key: 'required' });
-    else if (reserve && value === 'new') add(path, { key: 'reserved' });
-    else if (value.length < SLUG_MIN) add(path, { key: 'minLength', n: SLUG_MIN });
-    else if (value.length > SLUG_MAX) add(path, { key: 'maxLength', n: SLUG_MAX });
-    else if (!isValidSlug(value)) add(path, { key: 'format' });
-  };
   const text = (path: string) => {
     for (const locale of ['vi', 'en']) {
       const value = at(`${path}.${locale}`);
@@ -80,15 +92,17 @@ export function checkPlaceDraft(draft: unknown): FieldProblem[] {
   };
   const num = (path: string, min: number, max: number, whole: boolean) => {
     const value = at(path);
-    if (typeof value !== 'number' || !Number.isFinite(value)) add(path, { key: 'required' });
+    if (value === null || value === undefined) add(path, { key: 'required' });
+    // Typed text the number reader could not understand stays a string (`number-text.ts`).
+    else if (typeof value !== 'number' || !Number.isFinite(value)) add(path, { key: 'number' });
     else if (whole && !Number.isInteger(value)) add(path, { key: 'whole' });
     else if (value < min) add(path, { key: 'min', n: min });
     else if (value > max) add(path, { key: 'max', n: max });
   };
 
-  slugLike('slug', true);
+  checkSlug(draft, 'slug', true, add);
   text('name');
-  slugLike('destinationSlug', false);
+  checkSlug(draft, 'destinationSlug', false, add);
   text('location');
   num('coords.lat', -90, 90, false);
   num('coords.lng', -180, 180, false);

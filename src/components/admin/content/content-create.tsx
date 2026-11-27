@@ -5,10 +5,10 @@ import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { buttonClass } from '@/components/ui/button';
 import { ApiError, api } from '@/components/planner/api';
-import { EditorProvider, LocalizedField, LocalizedListField, SelectField, TextField } from './form-kit';
+import { EditorProvider, LocalizedField, LocalizedListField, NumberField, SelectField, TextField } from './form-kit';
 import type { Draft, Json } from './form-kit';
 import { getAt, setAt } from './form-kit';
-import { checkPlaceDraft, problemsFromIssues, type FieldProblem } from './issue-reason';
+import { checkPlaceDraft, checkSlugDraft, problemsFromIssues, type FieldProblem } from './issue-reason';
 import { LiveNotice } from './notices';
 import { RESERVED_SLUGS, SlugField } from './slug-field';
 import { slugify } from '@/lib/slug';
@@ -126,7 +126,15 @@ export function ContentCreate({ kind, destinations = [] }: { kind: 'stories' | '
   function showProblems(problems: FieldProblem[]) {
     setIssues(new Set(problems.map((problem) => problem.path)));
     setReasons(
-      new Map(problems.map((problem) => [problem.path, tf(`reasons.${problem.reason.key}`, { n: problem.reason.n ?? 0 })])),
+      new Map(
+        problems.map((problem) => [
+          problem.path,
+          // An empty slug usually means a title too short to make one: say what to do.
+          problem.path === 'slug' && problem.reason.key === 'required'
+            ? tc('slugRequired')
+            : tf(`reasons.${problem.reason.key}`, { n: problem.reason.n ?? 0 }),
+        ]),
+      ),
     );
     setFocusTick((tick) => tick + 1);
   }
@@ -140,7 +148,7 @@ export function ContentCreate({ kind, destinations = [] }: { kind: 'stories' | '
       return;
     }
     // Same rules as the server, so an editor sees every gap at once instead of one failed save.
-    const problems = kind === 'places' ? checkPlaceDraft(draft) : [];
+    const problems = kind === 'places' ? checkPlaceDraft(draft) : checkSlugDraft(draft);
     if (problems.length > 0) {
       showProblems(problems);
       setNotice({ kind: 'error', text: te('validation_failed') });
@@ -201,6 +209,7 @@ export function ContentCreate({ kind, destinations = [] }: { kind: 'stories' | '
                 kind={kind}
                 value={String(draft.slug ?? '')}
                 invalid={issues.has('slug')}
+                reason={reasons.get('slug')}
                 disabled={pending}
                 onChange={setSlug}
                 onRegenerate={regenerateSlug}
@@ -226,6 +235,7 @@ export function ContentCreate({ kind, destinations = [] }: { kind: 'stories' | '
                 kind={kind}
                 value={String(draft.slug ?? '')}
                 invalid={issues.has('slug')}
+                reason={reasons.get('slug')}
                 disabled={pending}
                 onChange={setSlug}
                 onRegenerate={regenerateSlug}
@@ -240,10 +250,10 @@ export function ContentCreate({ kind, destinations = [] }: { kind: 'stories' | '
                   label={tp('fieldCategory')}
                   options={PLACE_CATEGORIES.map((value) => ({ value, label: tp(`categories.${value}`) }))}
                 />
-                <TextField path="coords.lat" label={tp('fieldLat')} hint={tc('hintLat')} type="number" />
-                <TextField path="coords.lng" label={tp('fieldLng')} hint={tc('hintLng')} type="number" />
-                <TextField path="suggestedMinutes" label={tp('fieldMinutes')} hint={tc('hintMinutes')} type="number" />
-                <TextField path="estimatedCostVnd" label={tp('fieldCost')} hint={tc('hintCost')} type="number" />
+                <NumberField path="coords.lat" label={tp('fieldLat')} hint={tc('hintLat')} />
+                <NumberField path="coords.lng" label={tp('fieldLng')} hint={tc('hintLng')} />
+                <NumberField path="suggestedMinutes" label={tp('fieldMinutes')} hint={tc('hintMinutes')} integer />
+                <NumberField path="estimatedCostVnd" label={tp('fieldCost')} hint={tc('hintCost')} integer />
               </div>
             </section>
           )}
