@@ -101,10 +101,10 @@ describe('ContentCreate slug UX', () => {
     stubFetch((c) =>
       c.method === 'POST' ? json(409, { error: { code: 'slug_conflict', message: 'x' } }) : json(404, {}),
     );
-    renderWithIntl(<ContentCreate kind="places" />);
+    renderWithIntl(<ContentCreate kind="stories" />);
     type(slugBox(), 'da-lat');
     await settle();
-    fireEvent.click(screen.getByRole('button', { name: tc.submitPlace }));
+    fireEvent.click(screen.getByRole('button', { name: tc.submitStory }));
     expect(await screen.findByText(tc.slugConflict)).toBeTruthy();
   });
 
