@@ -33,6 +33,12 @@ describe('slugify', () => {
     expect(slug).toMatch(/^(di-)*di$/);
     expect(slugify('a'.repeat(200))).toBe('a'.repeat(96));
   });
+  it('does not lose a long title whose first word is short', () => {
+    // The word-boundary cut would leave 'a' (1 char) and the whole slug became ''.
+    const slug = slugify('a ' + 'b'.repeat(200));
+    expect(slug).toBe('a-' + 'b'.repeat(94));
+    expect(isValidSlug(slug)).toBe(true);
+  });
   it('is idempotent and always accepted by slugSchema', () => {
     const inputs = ['Chợ đêm Đà Lạt', 'Tết 2026 – Huế!', 'x'.repeat(150), 'ABC def  ghi', 'Quán Ăn Ngon Số 1 ' + 'a '.repeat(80)];
     for (const input of inputs) {

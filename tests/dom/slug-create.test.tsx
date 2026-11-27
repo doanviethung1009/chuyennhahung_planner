@@ -86,14 +86,25 @@ describe('ContentCreate slug UX', () => {
     expect(calls.filter((c) => c.method === 'POST')).toHaveLength(0);
   });
 
+  it('does not POST an empty or malformed slug and says why', async () => {
+    const calls = stubFetch(() => json(404, {}));
+    renderWithIntl(<ContentCreate kind="stories" />);
+    type(slugBox(), '');
+    fireEvent.click(screen.getByRole('button', { name: tc.submitStory }));
+    expect(await screen.findAllByText(tc.slugInvalid)).not.toHaveLength(0);
+    type(slugBox(), 'Bad Slug');
+    fireEvent.click(screen.getByRole('button', { name: tc.submitStory }));
+    expect(calls.filter((c) => c.method === 'POST')).toHaveLength(0);
+  });
+
   it('still shows the notice when submit returns 409', async () => {
     stubFetch((c) =>
       c.method === 'POST' ? json(409, { error: { code: 'slug_conflict', message: 'x' } }) : json(404, {}),
     );
-    renderWithIntl(<ContentCreate kind="places" />);
+    renderWithIntl(<ContentCreate kind="stories" />);
     type(slugBox(), 'da-lat');
     await settle();
-    fireEvent.click(screen.getByRole('button', { name: tc.submitPlace }));
+    fireEvent.click(screen.getByRole('button', { name: tc.submitStory }));
     expect(await screen.findByText(tc.slugConflict)).toBeTruthy();
   });
 
