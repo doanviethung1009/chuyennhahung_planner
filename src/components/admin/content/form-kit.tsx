@@ -3,6 +3,7 @@
 import { createContext, useContext, useId, useState, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { inputClass } from '@/components/planner/field';
+import { numberToText, parseNumberText } from './number-text';
 
 /**
  * Small form kit for the content editors. The draft is a plain JSON record;
@@ -37,6 +38,8 @@ export function setAt(root: Draft, path: string, value: Json): Draft {
 interface EditorContext {
   draft: Draft;
   issues: ReadonlySet<string>;
+  /** Why each marked path was refused, already worded; a path without one shows the generic line. */
+  reasons?: ReadonlyMap<string, string>;
   disabled: boolean;
   set: (path: string, value: Json) => void;
 }
@@ -55,11 +58,11 @@ export function useEditor(): EditorContext {
 
 const invalidClass = 'border-primary';
 
-function Invalid({ id }: { id: string }) {
+function Invalid({ id, text }: { id: string; text?: string }) {
   const t = useTranslations('adminContent.form');
   return (
     <p id={id} className="mt-1.5 text-sm font-medium text-primary-strong">
-      {t('invalid')}
+      {text ?? t('invalid')}
     </p>
   );
 }
@@ -98,7 +101,7 @@ export function TextField({
   type?: 'text' | 'number' | 'date';
   lang?: string;
 }) {
-  const { draft, issues, disabled, set } = useEditor();
+  const { draft, issues, reasons, disabled, set } = useEditor();
   const id = useId();
   const raw = getAt(draft, path);
   const value = raw === null || raw === undefined ? '' : String(raw);
@@ -129,7 +132,55 @@ export function TextField({
         )}
       </div>
       <Hint id={`${id}-hint`} text={hint} />
-      {bad ? <Invalid id={`${id}-err`} /> : null}
+      {bad ? <Invalid id={`${id}-err`} text={reasons?.get(path)} /> : null}
+    </div>
+  );
+}
+
+/**
+ * A number typed as text (see `number-text.ts`). The draft holds a number when the
+ * text reads as one, the raw string when it does not (so the check can say so),
+ * and `null` when the box is empty. `integer` also accepts `50.000` as 50000.
+ */
+export function NumberField({
+  path,
+  label,
+  hint,
+  integer,
+}: {
+  path: string;
+  label: string;
+  hint?: string;
+  integer?: boolean;
+}) {
+  const { draft, issues, reasons, disabled, set } = useEditor();
+  const id = useId();
+  const [text, setText] = useState(() => numberToText(getAt(draft, path)));
+  const bad = issues.has(path);
+  return (
+    <div>
+      <label htmlFor={id} className="block text-sm font-medium text-foreground">
+        {label}
+      </label>
+      <div className="mt-1.5">
+        <input
+          id={id}
+          type="text"
+          inputMode={integer ? 'numeric' : 'decimal'}
+          autoComplete="off"
+          value={text}
+          disabled={disabled}
+          aria-invalid={bad || undefined}
+          aria-describedby={describedBy(hint && `${id}-hint`, bad && `${id}-err`)}
+          className={`${inputClass} ${bad ? invalidClass : ''}`}
+          onChange={(e) => {
+            setText(e.target.value);
+            set(path, parseNumberText(e.target.value, integer === true));
+          }}
+        />
+      </div>
+      <Hint id={`${id}-hint`} text={hint} />
+      {bad ? <Invalid id={`${id}-err`} text={reasons?.get(path)} /> : null}
     </div>
   );
 }
@@ -147,7 +198,7 @@ export function SelectField({
   allowEmpty?: boolean;
   emptyLabel?: string;
 }) {
-  const { draft, issues, disabled, set } = useEditor();
+  const { draft, issues, reasons, disabled, set } = useEditor();
   const id = useId();
   const raw = getAt(draft, path);
   const bad = issues.has(path);
@@ -174,7 +225,7 @@ export function SelectField({
           ))}
         </select>
       </div>
-      {bad ? <Invalid id={`${id}-err`} /> : null}
+      {bad ? <Invalid id={`${id}-err`} text={reasons?.get(path)} /> : null}
     </div>
   );
 }
@@ -240,6 +291,15 @@ export function LinesField({ path, label, hint }: { path: string; label: string;
 
 const LOCALES = ['vi', 'en'] as const;
 
+/** The reason under one language box, when the server or the pre-check named that exact path. */
+function LocaleReason({ id, text }: { id: string; text?: string }) {
+  return text ? (
+    <p id={id} className="mt-1.5 text-sm font-medium text-primary-strong">
+      {text}
+    </p>
+  ) : null;
+}
+
 function LocalizedShell({
   legend,
   hint,
@@ -281,7 +341,7 @@ export function LocalizedField({
   nullable?: boolean;
   hint?: string;
 }) {
-  const { draft, issues, disabled, set } = useEditor();
+  const { draft, issues, reasons, disabled, set } = useEditor();
   const t = useTranslations('adminContent.form');
   const baseId = useId();
   const raw = getAt(draft, path);
@@ -290,6 +350,7 @@ export function LocalizedField({
     Json
   >;
   const bad = [...issues].some((issue) => issue === path || issue.startsWith(`${path}.`));
+  const explained = LOCALES.some((locale) => issues.has(`${path}.${locale}`) && reasons?.has(`${path}.${locale}`));
 
   function change(locale: (typeof LOCALES)[number], text: string) {
     const next = { vi: String(current.vi ?? ''), en: String(current.en ?? ''), [locale]: text };
@@ -297,7 +358,7 @@ export function LocalizedField({
   }
 
   return (
-    <LocalizedShell legend={label} hint={hint} bad={bad}>
+    <LocalizedShell legend={label} hint={hint} bad={bad && !explained}>
       {LOCALES.map((locale) => {
         const id = `${baseId}-${locale}`;
         const fieldBad = issues.has(`${path}.${locale}`);
@@ -307,6 +368,7 @@ export function LocalizedField({
           disabled,
           value: String(current[locale] ?? ''),
           'aria-invalid': fieldBad || undefined,
+          'aria-describedby': fieldBad && reasons?.has(`${path}.${locale}`) ? `${id}-err` : undefined,
           className: `${inputClass} ${fieldBad ? invalidClass : ''}`,
           onChange: (e: { target: { value: string } }) => change(locale, e.target.value),
         };
@@ -316,6 +378,7 @@ export function LocalizedField({
               {t(locale === 'vi' ? 'langVi' : 'langEn')}
             </label>
             <div className="mt-1.5">{multiline ? <textarea {...props} rows={rows} /> : <input {...props} />}</div>
+            {fieldBad ? <LocaleReason id={`${id}-err`} text={reasons?.get(`${path}.${locale}`)} /> : null}
           </div>
         );
       })}
@@ -338,7 +401,7 @@ export function LocalizedListField({
   paragraphs?: boolean;
   hint?: string;
 }) {
-  const { draft, issues, disabled, set } = useEditor();
+  const { draft, issues, reasons, disabled, set } = useEditor();
   const t = useTranslations('adminContent.form');
   const baseId = useId();
   const sep = paragraphs ? '\n\n' : '\n';
@@ -352,6 +415,7 @@ export function LocalizedListField({
     en: Array.isArray(source.en) ? source.en.join(sep) : '',
   }));
   const bad = [...issues].some((issue) => issue === path || issue.startsWith(`${path}.`));
+  const explained = LOCALES.some((locale) => issues.has(`${path}.${locale}`) && reasons?.has(`${path}.${locale}`));
 
   function change(locale: (typeof LOCALES)[number], text: string) {
     const nextTexts = { ...texts, [locale]: text };
@@ -365,7 +429,7 @@ export function LocalizedListField({
     <LocalizedShell
       legend={label}
       hint={hint ?? t(paragraphs ? 'paragraphsHint' : 'linesHint')}
-      bad={bad}
+      bad={bad && !explained}
     >
       {LOCALES.map((locale) => {
         const id = `${baseId}-${locale}`;
@@ -382,10 +446,12 @@ export function LocalizedListField({
                 disabled={disabled}
                 value={texts[locale] ?? ''}
                 aria-invalid={issues.has(`${path}.${locale}`) || undefined}
+                aria-describedby={issues.has(`${path}.${locale}`) && reasons?.has(`${path}.${locale}`) ? `${id}-err` : undefined}
                 className={`${inputClass} ${issues.has(`${path}.${locale}`) ? invalidClass : ''}`}
                 onChange={(e) => change(locale, e.target.value)}
               />
             </div>
+            {issues.has(`${path}.${locale}`) ? <LocaleReason id={`${id}-err`} text={reasons?.get(`${path}.${locale}`)} /> : null}
           </div>
         );
       })}

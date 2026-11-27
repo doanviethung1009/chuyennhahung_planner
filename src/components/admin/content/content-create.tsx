@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { buttonClass } from '@/components/ui/button';
 import { ApiError, api } from '@/components/planner/api';
-import { EditorProvider, LocalizedField, LocalizedListField, SelectField, TextField } from './form-kit';
+import { EditorProvider, LocalizedField, LocalizedListField, NumberField, SelectField, TextField } from './form-kit';
 import type { Draft, Json } from './form-kit';
 import { getAt, setAt } from './form-kit';
+import { checkPlaceDraft, checkSlugDraft, problemsFromIssues, type FieldProblem } from './issue-reason';
 import { LiveNotice } from './notices';
 import { RESERVED_SLUGS, SlugField } from './slug-field';
 import { slugify } from '@/lib/slug';
@@ -73,10 +74,16 @@ export function ContentCreate({ kind, destinations = [] }: { kind: 'stories' | '
   const ts = useTranslations('adminContent.stories');
   const tp = useTranslations('adminContent.places');
   const tc = useTranslations('adminContent.create');
+  const tf = useTranslations('adminContent.form');
+  const te = useTranslations('adminContent.errors');
+  const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const describe = useErrorNotice();
   const [draft, setDraft] = useState<Draft>(kind === 'stories' ? EMPTY_STORY : EMPTY_PLACE);
   const [issues, setIssues] = useState<ReadonlySet<string>>(new Set());
+  const [reasons, setReasons] = useState<ReadonlyMap<string, string>>(new Map());
+  // Bumped on every refusal so the first marked box takes focus, even far above the sticky bar.
+  const [focusTick, setFocusTick] = useState(0);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -108,17 +115,49 @@ export function ContentCreate({ kind, destinations = [] }: { kind: 'stories' | '
     setNotice(next === '' ? { kind: 'error', text: tc('slugRegenerateEmpty') } : null);
   };
 
+  useEffect(() => {
+    if (focusTick === 0) return;
+    const first = formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]');
+    first?.focus();
+    first?.scrollIntoView({ block: 'center' });
+  }, [focusTick]);
+
+  /** Marks every refused field and says why under it. */
+  function showProblems(problems: FieldProblem[]) {
+    setIssues(new Set(problems.map((problem) => problem.path)));
+    setReasons(
+      new Map(
+        problems.map((problem) => [
+          problem.path,
+          // An empty slug usually means a title too short to make one: say what to do.
+          problem.path === 'slug' && problem.reason.key === 'required'
+            ? tc('slugRequired')
+            : tf(`reasons.${problem.reason.key}`, { n: problem.reason.n ?? 0 }),
+        ]),
+      ),
+    );
+    setFocusTick((tick) => tick + 1);
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const slug = String(draft.slug ?? '').trim();
     if (RESERVED_SLUGS.includes(slug)) {
-      setIssues(new Set(['slug']));
+      showProblems([{ path: 'slug', reason: { key: 'reserved' } }]);
       setNotice({ kind: 'error', text: tc('reservedSlug') });
+      return;
+    }
+    // Same rules as the server, so an editor sees every gap at once instead of one failed save.
+    const problems = kind === 'places' ? checkPlaceDraft(draft) : checkSlugDraft(draft);
+    if (problems.length > 0) {
+      showProblems(problems);
+      setNotice({ kind: 'error', text: te('validation_failed') });
       return;
     }
     setPending(true);
     setNotice(null);
     setIssues(new Set());
+    setReasons(new Map());
     try {
       const body = kind === 'stories' ? toStoryBody(draft) : draft;
       const created = await api<{ slug: string }>(`/api/admin/travel/${kind}`, { method: 'POST', body });
@@ -129,10 +168,10 @@ export function ContentCreate({ kind, destinations = [] }: { kind: 'stories' | '
       }
     } catch (failure) {
       if (failure instanceof ApiError && failure.code === 'validation_failed') {
-        setIssues(new Set(failure.issuePaths.map(mapIssue)));
+        showProblems(problemsFromIssues(failure.issues.map((issue) => ({ ...issue, path: mapIssue(issue.path) }))));
       }
       if (failure instanceof ApiError && failure.code === 'slug_conflict') {
-        setIssues(new Set(['slug']));
+        showProblems([{ path: 'slug', reason: { key: 'invalid' } }]);
         setNotice({ kind: 'error', text: tc('slugConflict') });
       } else {
         setNotice(describe(failure));
@@ -156,10 +195,11 @@ export function ContentCreate({ kind, destinations = [] }: { kind: 'stories' | '
       </p>
       <p className="rounded-md border border-border-subtle bg-surface p-4 text-base text-foreground">
         {kind === 'stories' ? tc('storyNote') : tc('placeNote')}
+        {kind === 'places' ? <span className="mt-2 block">{tc('placeRequiredNote')}</span> : null}
       </p>
 
-      <form onSubmit={(event) => void submit(event)} aria-busy={pending} className="grid gap-8">
-        <EditorProvider value={{ draft, issues, disabled: pending, set }}>
+      <form ref={formRef} noValidate onSubmit={(event) => void submit(event)} aria-busy={pending} className="grid gap-8">
+        <EditorProvider value={{ draft, issues, reasons, disabled: pending, set }}>
           {kind === 'stories' ? (
             <section aria-labelledby="create-general" className="grid gap-5">
               <h2 id="create-general" className="font-display text-2xl text-foreground">
@@ -169,6 +209,7 @@ export function ContentCreate({ kind, destinations = [] }: { kind: 'stories' | '
                 kind={kind}
                 value={String(draft.slug ?? '')}
                 invalid={issues.has('slug')}
+                reason={reasons.get('slug')}
                 disabled={pending}
                 onChange={setSlug}
                 onRegenerate={regenerateSlug}
@@ -194,6 +235,7 @@ export function ContentCreate({ kind, destinations = [] }: { kind: 'stories' | '
                 kind={kind}
                 value={String(draft.slug ?? '')}
                 invalid={issues.has('slug')}
+                reason={reasons.get('slug')}
                 disabled={pending}
                 onChange={setSlug}
                 onRegenerate={regenerateSlug}
@@ -208,10 +250,10 @@ export function ContentCreate({ kind, destinations = [] }: { kind: 'stories' | '
                   label={tp('fieldCategory')}
                   options={PLACE_CATEGORIES.map((value) => ({ value, label: tp(`categories.${value}`) }))}
                 />
-                <TextField path="coords.lat" label={tp('fieldLat')} type="number" />
-                <TextField path="coords.lng" label={tp('fieldLng')} type="number" />
-                <TextField path="suggestedMinutes" label={tp('fieldMinutes')} type="number" />
-                <TextField path="estimatedCostVnd" label={tp('fieldCost')} type="number" />
+                <NumberField path="coords.lat" label={tp('fieldLat')} hint={tc('hintLat')} />
+                <NumberField path="coords.lng" label={tp('fieldLng')} hint={tc('hintLng')} />
+                <NumberField path="suggestedMinutes" label={tp('fieldMinutes')} hint={tc('hintMinutes')} integer />
+                <NumberField path="estimatedCostVnd" label={tp('fieldCost')} hint={tc('hintCost')} integer />
               </div>
             </section>
           )}

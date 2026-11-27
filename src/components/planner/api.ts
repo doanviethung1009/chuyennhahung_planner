@@ -13,6 +13,8 @@ export class ApiError extends Error {
     readonly reason: string | null = null,
     /** Non-identifying numbers a refusal may carry (e.g. `place_in_use` counts). */
     readonly details: Record<string, number> | null = null,
+    /** The same 422 `issues`, with the server's wording, for callers that explain each field. */
+    readonly issues: { path: string; message: string }[] = [],
   ) {
     super(code);
     this.name = 'ApiError';
@@ -51,8 +53,9 @@ export async function api<T = undefined>(path: string, options: Options = {}): P
     let issuePaths: string[] = [];
     let reason: string | null = null;
     let details: Record<string, number> | null = null;
+    let issues: { path: string; message: string }[] = [];
     try {
-      const data = (await response.json()) as { error?: { code?: string; reason?: string; details?: { counts?: Record<string, unknown> }; issues?: { path?: string }[] } };
+      const data = (await response.json()) as { error?: { code?: string; reason?: string; details?: { counts?: Record<string, unknown> }; issues?: { path?: string; message?: string }[] } };
       code = data.error?.code ?? code;
       reason = typeof data.error?.reason === 'string' ? data.error.reason : null;
       const counts = data.error?.details?.counts;
@@ -62,6 +65,9 @@ export async function api<T = undefined>(path: string, options: Options = {}): P
         );
       }
       issuePaths = (data.error?.issues ?? []).flatMap((issue) => (typeof issue.path === 'string' ? [issue.path] : []));
+      issues = (data.error?.issues ?? []).flatMap((issue) =>
+        typeof issue.path === 'string' ? [{ path: issue.path, message: String(issue.message ?? '') }] : [],
+      );
     } catch {
       // Non-JSON error body: keep the generic code.
     }
@@ -71,7 +77,7 @@ export async function api<T = undefined>(path: string, options: Options = {}): P
       goToChangePassword();
     }
     const retry = Number(response.headers.get('retry-after'));
-    throw new ApiError(response.status, code, Number.isFinite(retry) && retry > 0 ? retry : null, issuePaths, reason, details);
+    throw new ApiError(response.status, code, Number.isFinite(retry) && retry > 0 ? retry : null, issuePaths, reason, details, issues);
   }
 
   return (await response.json()) as T;
