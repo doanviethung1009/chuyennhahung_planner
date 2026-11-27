@@ -117,7 +117,7 @@ export function ContentCreate({ kind }: { kind: 'stories' | 'places' }) {
     if (focusTick === 0) return;
     const first = formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]');
     first?.focus();
-    first?.scrollIntoView({ block: 'center' });
+    first?.scrollIntoView?.({ block: 'center' }); // jsdom has no scrollIntoView
   }, [focusTick]);
 
   /** Marks every refused field and says why under it. */
